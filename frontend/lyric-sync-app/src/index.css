@@ -1,17 +1,9 @@
-html, body {
-  height: 100%;
+body {
   margin: 0;
-}
-
-.home-container {
-  display: flex;
-  justify-content: center; /* Horizontally center content */
-  align-items: center;     /* Vertically center content */
-  flex-direction: column;  /* Stack children vertically */
-  height: 100vh;           /* Full viewport height */
-  background-color: #8a2be2; /* Purple background */
-  color: white;            /* White text */
-  font-family: Arial, sans-serif;
-  text-align: center;      /* Center text */
-  padding: 0 20px;         /* Optional: Add padding to prevent content sticking to sides */
+  padding: 0;
+  height: 100vh;
+  background-color: #8a2be2;
+  font-family: 'Inter', sans-serif;
+  color: white;
+  overflow-x: hidden;
 }
