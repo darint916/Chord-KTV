@@ -6,6 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>40f013b4-de83-4977-bbcd-b746e538a160</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+	<AnalysisLevel>latest</AnalysisLevel>
+	<CodeAnalysisRuleSet>Strict.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
   <ItemGroup>
