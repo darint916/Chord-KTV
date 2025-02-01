@@ -224,7 +224,7 @@ csharp_prefer_static_local_function = true:warning
 
 # .NET Unnecessary code rules
 [*.{cs,csx,cake,vb,vbx}]
-dotnet_code_quality_unused_parameters = all:silent
+dotnet_code_quality_unused_parameters = all:suggestion
 dotnet_remove_unnecessary_suppression_exclusions = none:warning
 
 # C# Unnecessary code rules
