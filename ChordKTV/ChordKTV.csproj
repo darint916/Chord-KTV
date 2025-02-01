@@ -8,7 +8,6 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 	<AnalysisLevel>latest</AnalysisLevel>
-	<CodeAnalysisRuleSet>Strict.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
   <ItemGroup>
