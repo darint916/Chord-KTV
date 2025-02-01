@@ -504,3 +504,5 @@ dotnet_style_allow_statement_immediately_after_block_experimental = true:silent
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 ##########################################
+
+dotnet_diagnostic.IDE0005.severity = suggestion

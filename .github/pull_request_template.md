@@ -21,13 +21,6 @@ Before submitting your PR, make sure you've checked the following:
 - [ ] I have performed a **self-review** of my code.
 - [ ] I have added necessary **tests** (if applicable).
 - [ ] Documentation has been **updated** (if needed).
-- [ ] This PR has been tested on multiple environments.
-
-## 🔬 Testing Instructions
-<!-- How should reviewers test your changes? -->
-1. Pull this branch.
-2. Run `dotnet test` (or equivalent).
-3. Verify that XYZ works correctly.
 
 ## 📷 Screenshots (if applicable)
 <!-- Add screenshots or GIFs if visual changes were made. -->
