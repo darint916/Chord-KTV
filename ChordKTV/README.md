@@ -20,4 +20,39 @@
 3. Use DTOs for API responses to separate models from exposed data.
 4. Always test your changes before making a pull request.
 
+## PostgreSQL setup:
+
+Make sure you have the PostgreSQL Docker image pulled, and that Docker Desktop is running.
+
+Before building, run this command:
+```bash
+docker run -d -e POSTGRES_USER=<uname-for-postgres> -e POSTGRES_PASSWORD=<pwd-for-postgres> -p <free-port-number>:5432 postgres:15.4
+```
+This will start up a local containerized instance of PostgreSQL.
+
+Create a secrets.json file with these contents:
+```
+{
+    "ConnectionStrings:PostgreSql": "Host=localhost;Port=<port-no-for-postgres>;Database=postgres;Username=<uname-for-postgres>;Password=<pwd-for-postgres>"
+}
+```
+
+After building, if you see an error like this:
+```
+fail: Microsoft.EntityFrameworkCore.Database.Command[20102]
+      Failed executing DbCommand (17ms) [Parameters=[], CommandType='Text', CommandTimeout='5']
+      SELECT "MigrationId", "ProductVersion"
+      FROM "__EFMigrationsHistory"
+      ORDER BY "MigrationId";
+```
+It's likely due to an issue with .NET EF core, this can be resolved by running
+```bash
+dotnet tool install --global dotnet-ef
+```
+
+This should allow you to build the project successfully using ```dotnet run```.
+
+## License 📜📝⚖️
+This project is licensed under the [**MIT License**](LICENSE). 🎼🎵🎧
+
 If you have any questions, feel free to ask in the **issues** section! 🚀🎶
