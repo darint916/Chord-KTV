@@ -14,14 +14,6 @@ Fixes #
 - [ ] Refactor: Improved code readability
 - [ ] Documentation: Updated README or comments
 
-## ✅ Checklist
-Before submitting your PR, make sure you've checked the following:
-
-- [ ] My code follows the project's coding style.
-- [ ] I have performed a **self-review** of my code.
-- [ ] I have added necessary **tests** (if applicable).
-- [ ] Documentation has been **updated** (if needed).
-
 ## 📷 Screenshots (if applicable)
 <!-- Add screenshots or GIFs if visual changes were made. -->
 
