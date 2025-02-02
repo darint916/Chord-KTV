@@ -1,10 +1,10 @@
 namespace ChordKTV.Services.Service;
 
-using ChordKTV.Services.Api;
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using System;
+using ChordKTV.Services.Api;
 
 public class LRCService : ILRCService
 {
