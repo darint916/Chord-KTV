@@ -17,8 +17,7 @@ jobs:
             const requiredFields = [
               "## 📋 Summary",
               "## 🔍 Related Issues",
-              "## 💡 Changes Proposed",
-              "## ✅ Checklist"
+              "## 💡 Changes Proposed"
             ];
 
             const prBody = context.payload.pull_request.body || "";
