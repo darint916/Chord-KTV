@@ -1,5 +1,7 @@
 using ChordKTV.Data;
 using Microsoft.EntityFrameworkCore;
+using ChordKTV.Services.Api;
+using ChordKTV.Services.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +23,7 @@ builder.Services.AddCors(opt =>
 
 
 // Add services to the container.
+builder.Services.AddHttpClient<ILRCService, LRCService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
