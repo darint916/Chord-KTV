@@ -11,7 +11,7 @@ Fixes #
 <!-- List major changes in this PR -->
 - [ ] Feature: Added XYZ functionality
 - [ ] Bugfix: Resolved an issue with ABC
-- [ ] Refactor: Improved code readability
+- [ ] Refactor: Improved code readability/optimization
 - [ ] Documentation: Updated README or comments
 
 ## 📷 Screenshots (if applicable)
