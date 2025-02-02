@@ -1,6 +1,6 @@
-﻿namespace ChordKTV.Services.Context
+namespace ChordKTV.Services.Context;
+
+public class DbContext
 {
-    public class DbContext
-    {
-    }
 }
+
