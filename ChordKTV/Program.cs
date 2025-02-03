@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using ChordKTV.Data;
 using ChordKTV.Services.Api;
 using ChordKTV.Services.Service;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
