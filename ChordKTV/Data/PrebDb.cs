@@ -6,8 +6,8 @@ public static class PrepDb
 {
     public static void Prep(IApplicationBuilder application, IWebHostEnvironment environment)
     {
-        using var serviceScope = application.ApplicationServices.CreateScope();
-        var dbContext = serviceScope.ServiceProvider.GetService<AppDbContext>() ?? throw new InvalidOperationException("No DbContext found");
+        using IServiceScope? serviceScope = application.ApplicationServices.CreateScope();
+        AppDbContext? dbContext = serviceScope.ServiceProvider.GetService<AppDbContext>() ?? throw new InvalidOperationException("No DbContext found");
         Seed(dbContext, true);
     }
 
