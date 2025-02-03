@@ -3,30 +3,42 @@ namespace ChordKTV.Services.Service;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Globalization;
 using ChordKTV.Services.Api;
-using Newtonsoft.Json;
 
 public class LRCService : ILRCService
 {
     private readonly HttpClient _httpClient;
 
-    public LRCService(HttpClient httpClient) => _httpClient = httpClient;
-
-    public async Task<ILRCService.LyricsDetails> GetLRCLIBLyrics(string title, string artist)
+    public LRCService(HttpClient httpClient)
     {
-        var query = $"track_name={Uri.EscapeDataString(title)}";
+        _httpClient = httpClient;
+    }
+
+    public async Task<string?> GetLRCLIBLyrics(string title, string artist, string? albumName, float? duration)
+    {
+        string query = $"track_name={Uri.EscapeDataString(title)}";
         query += $"&artist_name={Uri.EscapeDataString(artist)}";
 
-        var response = await _httpClient.GetAsync($"https://lrclib.net/api/get?{query}");
+        if (!string.IsNullOrEmpty(albumName))
+        {
+            query += $"&album_name={Uri.EscapeDataString(albumName)}";
+        }
+
+        if (duration.HasValue)
+        {
+            query += $"&duration={duration.Value.ToString(CultureInfo.InvariantCulture)}";
+        }
+
+        HttpResponseMessage response = await _httpClient.GetAsync($"https://lrclib.net/api/get?{query}");
 
         if (response.IsSuccessStatusCode)
         {
-            var content = await response.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<ILRCService.LyricsDetails>(content);
+            string content = await response.Content.ReadAsStringAsync();
 
-            return result ?? throw new InvalidOperationException("Lyrics not found.");
+            return content;
         }
 
-        throw new InvalidOperationException("Lyrics not found.");
+        return null;
     }
 }

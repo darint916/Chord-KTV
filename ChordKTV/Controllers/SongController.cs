@@ -1,8 +1,8 @@
 namespace ChordKTV.Controllers;
 
-using System.Formats.Asn1;
 using Microsoft.AspNetCore.Mvc;
 using ChordKTV.Services.Api;
+using System.ComponentModel.DataAnnotations;
 
 [ApiController]
 [Route("api/song")]
@@ -12,7 +12,11 @@ public class SongController : Controller
     private readonly ILRCService _lRCService;
     //ADD your interfaces here, this is how you call your services
     //TODO: Add mapper here later (for dto mapping)
-    public SongController(ILRCService lRCService) => _lRCService = lRCService;
+    public SongController(ILRCService lRCService)
+    {
+        _lRCService = lRCService;
+    }
+
 
     // [HttpGet("genius/song/{title:string}")]
     // public async Task<IActionResult> GetSongByArtistTitle(string title, string? artist)
@@ -21,22 +25,17 @@ public class SongController : Controller
     //     //return Ok(song);
     // }
 
-    [HttpGet("lrclib")]
-    public async Task<IActionResult> GetLRCLIBLyrics([FromQuery] string title, [FromQuery] string artist)
+    [HttpGet("lrclib/search")]
+    public async Task<IActionResult> GetLRCLIBLyrics([FromQuery, Required] string title, [FromQuery, Required] string artist,
+                                    [FromQuery] string? albumName, [FromQuery] float? duration)
     {
-        if (string.IsNullOrEmpty(title))
+        string? lyrics = await _lRCService.GetLRCLIBLyrics(title, artist, albumName, duration);
+
+        if (lyrics == null)
         {
-            return BadRequest("Track title is required.");
+            return NotFound(new { message = "Lyrics not found for the specified track." });
         }
 
-        try
-        {
-            var lyrics = await _lRCService.GetLRCLIBLyrics(title, artist);
-            return Ok(lyrics);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while querying LRCLIB.", error = ex.Message });
-        }
+        return Ok(lyrics);
     }
 }

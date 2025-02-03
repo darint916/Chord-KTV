@@ -3,7 +3,7 @@ using ChordKTV.Services.Api;
 using ChordKTV.Services.Service;
 using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
 
 //Register DB
 Console.WriteLine($"Connecting to: {builder.Configuration.GetConnectionString("PostgreSql")}");
@@ -30,7 +30,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 app.UseCors();
 
