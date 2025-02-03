@@ -3,21 +3,21 @@ namespace ChordKTV.Services.Service;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using ChordKTV.Services.Api;
+using Newtonsoft.Json;
 
 public class LRCService : ILRCService
 {
     private readonly HttpClient _httpClient;
 
-    public LRCService(HttpClient httpClient) => this._httpClient = httpClient;
+    public LRCService(HttpClient httpClient) => _httpClient = httpClient;
 
     public async Task<ILRCService.LyricsDetails> GetLRCLIBLyrics(string title, string artist)
     {
         var query = $"track_name={Uri.EscapeDataString(title)}";
         query += $"&artist_name={Uri.EscapeDataString(artist)}";
 
-        var response = await this._httpClient.GetAsync($"https://lrclib.net/api/get?{query}");
+        var response = await _httpClient.GetAsync($"https://lrclib.net/api/get?{query}");
 
         if (response.IsSuccessStatusCode)
         {
