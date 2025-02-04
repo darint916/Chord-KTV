@@ -1,8 +1,8 @@
-﻿namespace ChordKTV.Controllers;
+namespace ChordKTV.Controllers;
 
-using ChordKTV.Services.Api;
 using Microsoft.AspNetCore.Mvc;
 using ChordKTV.Models.ApiModels;
+using ChordKTV.Services.Api;
 
 [ApiController]
 [Route("api/song")]
