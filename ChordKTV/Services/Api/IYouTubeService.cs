@@ -1,7 +1,9 @@
-namespace ChordKTV.Services.Api
+namespace ChordKTV.Services.Api;
+
+using System.Threading.Tasks;
+using ChordKTV.Models.ApiModels;
+
+public interface IYouTubeService
 {
-    public interface IYouTubeService
-    {
-        Task<string> GetPlaylistDetails(string playlistId);
-    }
+    Task<PlaylistDetailsDto> GetPlaylistDetails(string playlistId);
 }

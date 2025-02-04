@@ -1,7 +1,8 @@
 ﻿namespace ChordKTV.Controllers;
 
-//using ChordKTV.Services.Api;
+using ChordKTV.Services.Api;
 using Microsoft.AspNetCore.Mvc;
+using ChordKTV.Models.ApiModels;
 
 [ApiController]
 [Route("api/song")]
@@ -10,8 +11,6 @@ public class SongController : Controller
     // private readonly IGeniusRepo _geniusRepo;
     private readonly IYouTubeService _youTubeService;
 
-    //ADD your interfaces here, this is how you call your services
-    //TODO: Add mapper here later (for dto mapping)
     public SongController(/*IGeniusRepo geniusRepo,*/ IYouTubeService youTubeService)
     {
         // _geniusRepo = geniusRepo;
@@ -29,7 +28,7 @@ public class SongController : Controller
     [HttpGet("youtube/playlist/{playlistId}")]
     public async Task<IActionResult> GetYouTubePlaylist(string playlistId)
     {
-        var result = await _youTubeService.GetPlaylistDetails(playlistId);
-        return Content(result, "application/json");
+        PlaylistDetailsDto result = await _youTubeService.GetPlaylistDetails(playlistId);
+        return Ok(result);
     }
 }
