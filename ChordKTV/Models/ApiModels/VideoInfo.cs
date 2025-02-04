@@ -2,7 +2,8 @@ namespace ChordKTV.Models.ApiModels;
 
 using System;
 
-public record VideoInfo(
+public record VideoInfo
+(
     string Title,
     string Channel,
     string Url,
