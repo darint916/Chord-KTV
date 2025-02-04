@@ -6,16 +6,17 @@ using System.Threading.Tasks;
 using System.Globalization;
 using ChordKTV.Services.Api;
 
-public class LRCService : ILRCService
+public class LrcService : ILrcService
+// public class LrcService : IDisposable
 {
     private readonly HttpClient _httpClient;
 
-    public LRCService(HttpClient httpClient)
+    public LrcService(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
 
-    public async Task<string?> GetLRCLIBLyrics(string title, string artist, string? albumName, float? duration)
+    public async Task<string?> GetLrcLibLyricsAsync(string title, string artist, string? albumName, float? duration)
     {
         string query = $"track_name={Uri.EscapeDataString(title)}";
         query += $"&artist_name={Uri.EscapeDataString(artist)}";

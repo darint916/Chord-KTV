@@ -3,7 +3,7 @@ using ChordKTV.Services.Api;
 using ChordKTV.Services.Service;
 using Microsoft.EntityFrameworkCore;
 
-WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 //Register DB
 Console.WriteLine($"Connecting to: {builder.Configuration.GetConnectionString("PostgreSql")}");
@@ -23,7 +23,7 @@ builder.Services.AddCors(opt =>
 
 
 // Add services to the container.
-builder.Services.AddHttpClient<ILRCService, LRCService>();
+builder.Services.AddHttpClient<ILrcService, LrcService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

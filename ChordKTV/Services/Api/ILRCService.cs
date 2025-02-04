@@ -1,5 +1,5 @@
 namespace ChordKTV.Services.Api;
-public interface ILRCService
+public interface ILrcService
 {
-    public Task<string?> GetLRCLIBLyrics(string title, string artist, string? albumName, float? duration);
+    public Task<string?> GetLrcLibLyricsAsync(string title, string artist, string? albumName, float? duration);
 }
