@@ -1,5 +1,9 @@
-using ChordKTV.Data;
+using System;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using ChordKTV.Data;
+using ChordKTV.Services;
+using ChordKTV.Services.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +28,7 @@ builder.Services.AddCors(opt =>
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddScoped<IYouTubeService, YouTubeApiClient>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
