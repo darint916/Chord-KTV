@@ -29,7 +29,7 @@ public class SongController : Controller
     [HttpGet("youtube/playlist/{playlistId}")]
     public async Task<IActionResult> GetYouTubePlaylist(string playlistId)
     {
-        PlaylistDetailsDto result = await _youTubeService.GetPlaylistDetails(playlistId);
+        PlaylistDetailsDto result = await _youTubeService.GetPlaylistDetailsAsync(playlistId);
         return Ok(result);
     }
 }

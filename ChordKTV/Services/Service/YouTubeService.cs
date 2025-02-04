@@ -19,7 +19,7 @@ public class YouTubeApiClient : IYouTubeService
         _apiKey = configuration["YouTube:ApiKey"] ?? throw new InvalidOperationException("YouTube API key not configured.");
     }
 
-    public async Task<PlaylistDetailsDto> GetPlaylistDetails(string playlistId)
+    public async Task<PlaylistDetailsDto> GetPlaylistDetailsAsync(string playlistId)
     {
         YouTubeService googleYouTube = new YouTubeService(
             new BaseClientService.Initializer
