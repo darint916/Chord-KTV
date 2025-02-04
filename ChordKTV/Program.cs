@@ -1,7 +1,6 @@
-using System;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using ChordKTV.Data;
+using ChordKTV.Services;
 using ChordKTV.Services.Service;
 using ChordKTV.Services.Api;
 
