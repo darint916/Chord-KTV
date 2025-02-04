@@ -3,10 +3,10 @@ namespace ChordKTV.Services;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
-using Microsoft.Extensions.Configuration;
 using ChordKTV.Models.ApiModels;
 using ChordKTV.Services.Api;
 
