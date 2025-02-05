@@ -1,6 +1,6 @@
 @ChordKTV_HostAddress = http://localhost:5259
 
-GET {{ChordKTV_HostAddress}}/weatherforecast/
+GET {{ChordKTV_HostAddress}}/api/
 Accept: application/json
 
 ###
