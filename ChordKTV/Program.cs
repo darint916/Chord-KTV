@@ -27,7 +27,7 @@ builder.Services.AddCors(opt =>
 builder.Services.AddHttpClient<ILrcService, LrcService>();
 
 builder.Services.AddControllers();
-builder.Services.AddScoped<IYouTubeService, YouTubeApiClient>();
+builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

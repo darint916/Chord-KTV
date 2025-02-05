@@ -3,18 +3,18 @@ namespace ChordKTV.Controllers;
 using System;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using ChordKTV.Models.ApiModels;
 using ChordKTV.Services.Api;
+using ChordKTV.Dtos;
 
 [ApiController]
 [Route("api/song")]
 public class SongController : Controller
 {
     // private readonly IGeniusRepo _geniusRepo;
-    private readonly IYouTubeService _youTubeService;
+    private readonly IYouTubeClientService _youTubeService;
     private readonly ILrcService _lrcService;
 
-    public SongController(/*IGeniusRepo geniusRepo,*/ IYouTubeService youTubeService, ILrcService lRCService)
+    public SongController(/*IGeniusRepo geniusRepo,*/ IYouTubeClientService youTubeService, ILrcService lRCService)
     {
         // _geniusRepo = geniusRepo;
         _youTubeService = youTubeService;

@@ -1,4 +1,4 @@
-namespace ChordKTV.Models.ApiModels;
+namespace ChordKTV.Dtos;
 
 using System;
 

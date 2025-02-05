@@ -7,14 +7,14 @@ using Microsoft.Extensions.Configuration;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
-using ChordKTV.Models.ApiModels;
 using ChordKTV.Services.Api;
+using ChordKTV.Dtos;
 
-public class YouTubeApiClient : IYouTubeService
+public class YouTubeApiClientService : IYouTubeClientService
 {
     private readonly string? _apiKey;
 
-    public YouTubeApiClient(IConfiguration configuration)
+    public YouTubeApiClientService(IConfiguration configuration)
     {
         _apiKey = configuration["YouTube:ApiKey"];
     }
