@@ -3,6 +3,8 @@ using ChordKTV.Data;
 using ChordKTV.Services;
 using ChordKTV.Services.Service;
 using ChordKTV.Services.Api;
+using ChordKTV.Data.Api.SongData;
+using ChordKTV.Data.Repo;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +30,8 @@ builder.Services.AddHttpClient<ILrcService, LrcService>();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
+builder.Services.AddScoped<ISongRepo, SongRepo>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

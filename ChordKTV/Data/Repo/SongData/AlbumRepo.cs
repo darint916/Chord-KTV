@@ -30,6 +30,8 @@ public class AlbumRepo : IAlbumRepo
         await _context.SaveChangesAsync();
     }
 
+    // Note these are exact matches, due to copying from genius
+    // If we want client search db use .Contains for similar matching (slower).
     public async Task<Album?> GetAlbumAsync(string name)
     {
         return await _context.Albums.FirstOrDefaultAsync(a => a.Name == name);
