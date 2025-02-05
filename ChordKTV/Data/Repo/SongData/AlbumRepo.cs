@@ -1,9 +1,10 @@
+using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using Microsoft.EntityFrameworkCore;
 
 
 namespace ChordKTV.Data.Repo.SongData;
-public class AlbumRepo
+public class AlbumRepo : IAlbumRepo
 {
     private readonly AppDbContext _context;
 
@@ -37,5 +38,10 @@ public class AlbumRepo
     public async Task<Album?> GetAlbumAsync(string name, string artist)
     {
         return await _context.Albums.FirstOrDefaultAsync(a => a.Name == name && a.Artist == artist);
+    }
+
+    public async Task<List<Album>> GetAllAlbumsAsync()
+    {
+        return await _context.Albums.ToListAsync();
     }
 }

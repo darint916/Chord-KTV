@@ -1,10 +1,11 @@
 
+using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using Microsoft.EntityFrameworkCore;
 namespace ChordKTV.Data.Repo;
 
 
-public class SongRepo
+public class SongRepo : ISongRepo
 {
     private readonly AppDbContext _context;
 
@@ -32,9 +33,8 @@ public class SongRepo
 
     public async Task<Song?> GetSongAsync(string name)
     {
-        Song? song = await _context.Songs.FirstOrDefaultAsync(s => s.Name == name) ??
+        return await _context.Songs.FirstOrDefaultAsync(s => s.Name == name) ??
             await _context.Songs.FirstOrDefaultAsync(s => s.AlternateNames.Contains(name));
-        return song;
     }
 
     // Will null if artist isnt direct match, as we expect direct artist match (assuming this is from genius data)
