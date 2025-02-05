@@ -5,5 +5,5 @@ using ChordKTV.Models.ApiModels;
 
 public interface IYouTubeService
 {
-    public Task<PlaylistDetailsDto> GetPlaylistDetailsAsync(string playlistId);
+    public Task<PlaylistDetailsDto?> GetPlaylistDetailsAsync(string playlistId);
 }

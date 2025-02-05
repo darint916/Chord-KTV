@@ -27,7 +27,6 @@ builder.Services.AddCors(opt =>
 builder.Services.AddHttpClient<ILrcService, LrcService>();
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddScoped<IYouTubeService, YouTubeApiClient>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
