@@ -7,7 +7,7 @@ using ChordKTV.Models.ApiModels;
 using ChordKTV.Services.Api;
 
 [ApiController]
-[Route("api/song")]
+[Route("api")]
 public class SongController : Controller
 {
     // private readonly IGeniusRepo _geniusRepo;
