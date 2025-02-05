@@ -1,4 +1,5 @@
-![Build Status](https://github.com/darint916/Chord-KTV/workflows/dotnet-build-run/badge.svg)
+![Build Status](https://github.com/darint916/Chord-KTV/actions/workflows/dotnet-build-run-check.yml/badge.svg)
+![Style Police Status](https://github.com/darint916/Chord-KTV/actions/workflows/enforce-code-style.yml/badge.svg)
 
 ## 📝 Directory Explanation
 
