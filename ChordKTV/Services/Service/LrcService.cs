@@ -7,7 +7,6 @@ using System.Globalization;
 using ChordKTV.Services.Api;
 
 public class LrcService : ILrcService
-// public class LrcService : IDisposable
 {
     private readonly HttpClient _httpClient;
 

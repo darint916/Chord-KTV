@@ -1,9 +1,9 @@
 namespace ChordKTV.Services.Api;
 
 using System.Threading.Tasks;
-using ChordKTV.Models.ApiModels;
+using ChordKTV.Dtos;
 
-public interface IYouTubeService
+public interface IYouTubeClientService
 {
     public Task<PlaylistDetailsDto?> GetPlaylistDetailsAsync(string playlistId);
 }

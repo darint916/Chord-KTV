@@ -7,14 +7,14 @@ using Microsoft.Extensions.Configuration;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
-using ChordKTV.Models.ApiModels;
 using ChordKTV.Services.Api;
+using ChordKTV.Dtos;
 
-public class YouTubeApiClient : IYouTubeService
+public class YouTubeApiClientService : IYouTubeClientService
 {
     private readonly string? _apiKey;
 
-    public YouTubeApiClient(IConfiguration configuration)
+    public YouTubeApiClientService(IConfiguration configuration)
     {
         _apiKey = configuration["YouTube:ApiKey"];
     }
@@ -60,7 +60,7 @@ public class YouTubeApiClient : IYouTubeService
                 string url = $"https://www.youtube.com/watch?v={videoId}";
                 string channelName = item.Snippet.ChannelTitle;
 
-                TimeSpan duration = await GetVideoDuration(googleYouTube, videoId);
+                TimeSpan duration = await GetVideoDurationAsync(googleYouTube, videoId);
 
                 videos.Add(new VideoInfo(title, channelName, url, duration));
             }
@@ -72,7 +72,7 @@ public class YouTubeApiClient : IYouTubeService
         return new PlaylistDetailsDto(playlistTitle, videos);
     }
 
-    private static async Task<TimeSpan> GetVideoDuration(YouTubeService googleYouTube, string videoId)
+    private static async Task<TimeSpan> GetVideoDurationAsync(YouTubeService googleYouTube, string videoId)
     {
         VideosResource.ListRequest videoRequest = googleYouTube.Videos.List("contentDetails");
         videoRequest.Id = videoId;

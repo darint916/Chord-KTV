@@ -3,22 +3,26 @@ namespace ChordKTV.Controllers;
 using System;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using ChordKTV.Models.ApiModels;
 using ChordKTV.Services.Api;
+using ChordKTV.Dtos;
+using ChordKTV.Data.Api.SongData;
+using ChordKTV.Models.SongData;
+using ChordKTV.Utils.Extensions;
 
 [ApiController]
-[Route("api/song")]
+[Route("api")]
 public class SongController : Controller
 {
-    // private readonly IGeniusRepo _geniusRepo;
-    private readonly IYouTubeService _youTubeService;
+    private readonly ISongRepo _songRepo;
+    private readonly IYouTubeClientService _youTubeService;
     private readonly ILrcService _lrcService;
 
-    public SongController(/*IGeniusRepo geniusRepo,*/ IYouTubeService youTubeService, ILrcService lRCService)
+    public SongController(/*IGeniusRepo geniusRepo,*/ IYouTubeClientService youTubeService, ILrcService lrcService, ISongRepo songRepo)
     {
         // _geniusRepo = geniusRepo;
+        _songRepo = songRepo;
         _youTubeService = youTubeService;
-        _lrcService = lRCService;
+        _lrcService = lrcService;
     }
 
     // [HttpGet("genius/{song:string}")]
@@ -64,5 +68,35 @@ public class SongController : Controller
         {
             return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
         }
+    }
+
+    [DevelopmentOnly]
+    [HttpGet("database/song/get")]
+    public async Task<IActionResult> GetSongFromDb([FromQuery, Required] string title, [FromQuery] string? artist, [FromQuery] string? albumName)
+    {
+        //there is no case for album name but no artist, maybe add in future or not need. This for dev testing
+        Song? song = null;
+        if (!string.IsNullOrEmpty(albumName) && !string.IsNullOrEmpty(artist))
+        {
+            song = await _songRepo.GetSongAsync(title, artist, albumName);
+        }
+        else if (!string.IsNullOrEmpty(artist))
+        {
+            song = await _songRepo.GetSongAsync(title, artist);
+        }
+        song ??= await _songRepo.GetSongAsync(title);
+        if (song == null)
+        {
+            return NotFound(new { message = "Song not found in database." });
+        }
+        return Ok(song);
+    }
+
+    [DevelopmentOnly]
+    [HttpPost("database/song/add")]
+    public async Task<IActionResult> AddSongToDb([FromBody] Song song)
+    {
+        await _songRepo.AddAsync(song);
+        return Ok();
     }
 }
