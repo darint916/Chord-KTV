@@ -1,7 +1,6 @@
-![Build Status](https://github.com/darint916/Chord-KTV/actions/workflows/dotnet-build-run-check.yml/badge.svg)
-![Style Police Status](https://github.com/darint916/Chord-KTV/actions/workflows/enforce-code-style.yml/badge.svg)
-
 ## 📝 Directory Explanation
+![Build Status](https://github.com/darint916/Chord-KTV/actions/workflows/dotnet-build-run-check.yml/badge.svg) ![Style Police Status](https://github.com/darint916/Chord-KTV/actions/workflows/enforce-code-style.yml/badge.svg)
+
 
 - **Controllers/** - Contains API controllers that handle incoming HTTP requests.
 - **Dtos/** - Houses Data Transfer Objects (DTOs) to structure API responses.
