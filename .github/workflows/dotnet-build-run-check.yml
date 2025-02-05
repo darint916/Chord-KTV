@@ -53,8 +53,11 @@ jobs:
 
       - name: Start Web API
         run: |
-          cd /home/runner/work/Chord-KTV/ChordKTV
-          dotnet run --no-build --configuration Release &
+          echo "Dir"
+          ls -la
+          echo "Dir ChordKtv"
+          ls -la ChordKtv
+          dotnet run --project  --no-build --configuration Release &
           sleep 5 # Give it time to start
 
       - name: Check If API Health is Ok
