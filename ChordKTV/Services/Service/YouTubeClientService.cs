@@ -60,7 +60,7 @@ public class YouTubeApiClientService : IYouTubeClientService
                 string url = $"https://www.youtube.com/watch?v={videoId}";
                 string channelName = item.Snippet.ChannelTitle;
 
-                TimeSpan duration = await GetVideoDuration(googleYouTube, videoId);
+                TimeSpan duration = await GetVideoDurationAsync(googleYouTube, videoId);
 
                 videos.Add(new VideoInfo(title, channelName, url, duration));
             }
@@ -72,7 +72,7 @@ public class YouTubeApiClientService : IYouTubeClientService
         return new PlaylistDetailsDto(playlistTitle, videos);
     }
 
-    private static async Task<TimeSpan> GetVideoDuration(YouTubeService googleYouTube, string videoId)
+    private static async Task<TimeSpan> GetVideoDurationAsync(YouTubeService googleYouTube, string videoId)
     {
         VideosResource.ListRequest videoRequest = googleYouTube.Videos.List("contentDetails");
         videoRequest.Id = videoId;

@@ -7,18 +7,18 @@ using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
 
 [ApiController]
-[Route("api/song")]
+[Route("api")]
 public class SongController : Controller
 {
     // private readonly IGeniusRepo _geniusRepo;
     private readonly IYouTubeClientService _youTubeService;
     private readonly ILrcService _lrcService;
 
-    public SongController(/*IGeniusRepo geniusRepo,*/ IYouTubeClientService youTubeService, ILrcService lRCService)
+    public SongController(/*IGeniusRepo geniusRepo,*/ IYouTubeClientService youTubeService, ILrcService lrcService)
     {
         // _geniusRepo = geniusRepo;
         _youTubeService = youTubeService;
-        _lrcService = lRCService;
+        _lrcService = lrcService;
     }
 
     // [HttpGet("genius/{song:string}")]
