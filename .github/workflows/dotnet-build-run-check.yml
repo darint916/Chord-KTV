@@ -30,35 +30,37 @@ jobs:
       - name: Run Unit Tests
         run: dotnet test --no-build --configuration Release --verbosity normal
 
-  run-app:
-    needs: build-and-test
-    runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+  # TODO: RUN WE NEED TO HOOK UP DB + CONNECTION STRINGS
+  # run-app:
+  #   needs: build-and-test
+  #   runs-on: ubuntu-latest
 
-      #   run: mv /home/runner/work/Chord-KTV/Chord-KTV /home/runner/work/Chord-KTV/ChordKtv
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v3
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'  # Change version if needed
+  #     #   run: mv /home/runner/work/Chord-KTV/Chord-KTV /home/runner/work/Chord-KTV/ChordKtv
 
-      - name: Restore Dependencies
-        run: dotnet restore
+  #     - name: Setup .NET
+  #       uses: actions/setup-dotnet@v3
+  #       with:
+  #         dotnet-version: '8.0.x'  # Change version if needed
 
-      - name: Build Application
-        run: dotnet build --no-restore --configuration Release
+  #     - name: Restore Dependencies
+  #       run: dotnet restore
 
-      - name: Start Web API
-        run: |
-          echo "Dir"
-          ls -la
-          echo "Dir ChordKtv"
-          ls -la ChordKTV
-          dotnet run --project ./ChordKTV --no-build --configuration Release &
-          sleep 5 # Give it time to start
+  #     - name: Build Application
+  #       run: dotnet build --no-restore --configuration Release
 
-      - name: Check If API Health is Ok
-        run: curl --fail app:5259/api/health || exit 1
+  #     - name: Start Web API
+  #       run: |
+  #         echo "Dir"
+  #         ls -la
+  #         echo "Dir ChordKtv"
+  #         ls -la ChordKTV
+  #         dotnet run --project ./ChordKTV --no-build --configuration Release &
+  #         sleep 5 # Give it time to start
+
+  #     - name: Check If API Health is Ok
+  #       run: curl --fail app:5259/api/health || exit 1

@@ -1,4 +1,4 @@
-![Build and Api Health Status](https://github.com/darint916/Chord-KTV/workflows/dotnet-build-run/badge.svg)
+![Build Status](https://github.com/darint916/Chord-KTV/workflows/dotnet-build-run/badge.svg)
 
 ## 📝 Directory Explanation
 
