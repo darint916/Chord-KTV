@@ -1,11 +1,10 @@
-using System;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using ChordKTV.Data;
 using ChordKTV.Services;
+using ChordKTV.Services.Service;
 using ChordKTV.Services.Api;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 //Register DB
 Console.WriteLine($"Connecting to: {builder.Configuration.GetConnectionString("PostgreSql")}");
@@ -25,14 +24,14 @@ builder.Services.AddCors(opt =>
 
 
 // Add services to the container.
+builder.Services.AddHttpClient<ILrcService, LrcService>();
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddScoped<IYouTubeService, YouTubeApiClient>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 app.UseCors();
 

@@ -12,15 +12,20 @@ using ChordKTV.Services.Api;
 
 public class YouTubeApiClient : IYouTubeService
 {
-    private readonly string _apiKey;
+    private readonly string? _apiKey;
 
     public YouTubeApiClient(IConfiguration configuration)
     {
-        _apiKey = configuration["YouTube:ApiKey"] ?? throw new InvalidOperationException("YouTube API key not configured.");
+        _apiKey = configuration["YouTube:ApiKey"];
     }
 
-    public async Task<PlaylistDetailsDto> GetPlaylistDetailsAsync(string playlistId)
+    public async Task<PlaylistDetailsDto?> GetPlaylistDetailsAsync(string playlistId)
     {
+        if (string.IsNullOrEmpty(_apiKey))
+        {
+            return null;
+        }
+
         YouTubeService googleYouTube = new YouTubeService(
             new BaseClientService.Initializer
             {
