@@ -15,8 +15,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          path: /home/runner/work/Chord-KTV/ChordKtv
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -39,6 +37,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+
+      - name: Fix Repository Folder Name
+        run: mv /home/runner/work/Chord-KTV/Chord-KTV /home/runner/work/Chord-KTV/ChordKtv
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
