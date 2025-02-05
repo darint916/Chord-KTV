@@ -65,4 +65,10 @@ public class SongController : Controller
             return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
         }
     }
+
+    [HttpGet("health")]
+    public IActionResult HealthCheck()
+    {
+        return Ok(new { message = "Song API is healthy." });
+    }
 }
