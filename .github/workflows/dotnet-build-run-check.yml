@@ -38,13 +38,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Fix Repository Folder Name
-        run: |
-          cd /home/runner/work/Chord-KTV
-          ls
-          cd Chord-KTV
-          ls
-
       #   run: mv /home/runner/work/Chord-KTV/Chord-KTV /home/runner/work/Chord-KTV/ChordKtv
 
       - name: Setup .NET
@@ -60,6 +53,7 @@ jobs:
 
       - name: Start Web API
         run: |
+          cd /home/runner/work/Chord-KTV/ChordKTV
           dotnet run --no-build --configuration Release &
           sleep 5 # Give it time to start
 
