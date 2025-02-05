@@ -70,6 +70,12 @@ public class SongController : Controller
         }
     }
 
+    [HttpGet("health")]
+    public IActionResult HealthCheck()
+    {
+        return Ok(new { message = "Song API is healthy." });
+    }
+
     [DevelopmentOnly]
     [HttpGet("database/song/get")]
     public async Task<IActionResult> GetSongFromDb([FromQuery, Required] string title, [FromQuery] string? artist, [FromQuery] string? albumName)
