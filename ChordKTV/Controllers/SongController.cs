@@ -42,7 +42,7 @@ public class SongController : Controller
     }
 
     [HttpGet("lrclib/search")]
-    public async Task<IActionResult> GetLRCLIBLyrics([FromQuery, Required] string title, [FromQuery, Required] string artist,
+    public async Task<IActionResult> GetLrcLibLyrics([FromQuery, Required] string title, [FromQuery, Required] string artist,
                                     [FromQuery] string? albumName, [FromQuery] float? duration)
     {
         try
