@@ -3,9 +3,10 @@
 
 
 - **Controllers/** - Contains API controllers that handle incoming HTTP requests.
-- **Dtos/** - Houses Data Transfer Objects (DTOs) to structure API responses.
+- **Data/** - Holds Repository facing files to directly query database, migrate database, and context.
+- **Dtos/** - Houses Data Transfer Objects (DTOs) to structure API responses and also any other business logic models
 - **Migrations/** - Stores database migration scripts for schema updates.
-- **Models/** - Defines the application's core data models.
+- **Models/** - Defines the application's core data models. (From Db)
 - **Profiles/** - AutoMapper profiles for object transformations.
 - **Properties/** - Holds project-level configuration settings.
 - **Services/** - Contains business logic, API integrations (Interfaces), and service classes.
