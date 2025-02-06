@@ -27,6 +27,7 @@ builder.Services.AddCors(opt =>
 
 // Add services to the container.
 builder.Services.AddHttpClient<ILrcService, LrcService>();
+builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();

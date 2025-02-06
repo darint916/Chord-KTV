@@ -16,13 +16,15 @@ public class SongController : Controller
     private readonly ISongRepo _songRepo;
     private readonly IYouTubeClientService _youTubeService;
     private readonly ILrcService _lrcService;
+    private readonly IChatGptService _chatGptService;
 
-    public SongController(/*IGeniusRepo geniusRepo,*/ IYouTubeClientService youTubeService, ILrcService lrcService, ISongRepo songRepo)
+    public SongController(/*IGeniusRepo geniusRepo,*/ IYouTubeClientService youTubeService, ILrcService lrcService, ISongRepo songRepo, IChatGptService chatGptService)
     {
         // _geniusRepo = geniusRepo;
         _songRepo = songRepo;
         _youTubeService = youTubeService;
         _lrcService = lrcService;
+        _chatGptService = chatGptService;
     }
 
     // [HttpGet("genius/{song:string}")]
@@ -70,6 +72,13 @@ public class SongController : Controller
         }
     }
 
+    [HttpPost("chatgpt/translations")]
+    public async Task<IActionResult> PostChatGptTranslations([FromBody] LrcLyricsDto request)
+    {
+        string translatedLyrics = await _chatGptService.TranslateLyricsAsync(request.Lyrics, request.LanguageCode);
+        return Ok(translatedLyrics);
+    }
+ 
     [HttpGet("health")]
     public IActionResult HealthCheck()
     {
@@ -77,7 +86,7 @@ public class SongController : Controller
     }
 
     [DevelopmentOnly]
-    [HttpGet("database/song/get")]
+    [HttpGet("database/song")]
     public async Task<IActionResult> GetSongFromDb([FromQuery, Required] string title, [FromQuery] string? artist, [FromQuery] string? albumName)
     {
         //there is no case for album name but no artist, maybe add in future or not need. This for dev testing
@@ -99,7 +108,7 @@ public class SongController : Controller
     }
 
     [DevelopmentOnly]
-    [HttpPost("database/song/add")]
+    [HttpPost("database/song")]
     public async Task<IActionResult> AddSongToDb([FromBody] Song song)
     {
         await _songRepo.AddAsync(song);
