@@ -1,10 +1,13 @@
 using System.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace ChordKTV.Dtos;
 
 //Follows ISO 639 Language Codes
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum LanguageCode
 {
+    [Description("Unknown")] UNK,
     [Description("Afrikaans")] AF,
     [Description("Arabic")] AR,
     [Description("Bulgarian")] BG,
