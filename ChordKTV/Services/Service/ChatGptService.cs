@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -60,7 +61,12 @@ public class ChatGptService : IChatGptService
 
         try
         {
+            // benchmark
+            var sw = new Stopwatch();
+            sw.Start();
             using var response = await _httpClient.SendAsync(requestMessage);
+            sw.Stop();
+            Console.WriteLine($"⏱️ ChatGPT API call took: {sw.ElapsedMilliseconds}ms");
 
             if (!response.IsSuccessStatusCode)
             {
