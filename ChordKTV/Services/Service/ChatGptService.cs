@@ -4,12 +4,14 @@ using System.Text;
 using System.Text.Json;
 using ChordKTV.Dtos;
 using ChordKTV.Services.Api;
+using Microsoft.Extensions.Logging;
 
 namespace ChordKTV.Services.Service;
 public class ChatGptService : IChatGptService
 {
     private readonly HttpClient _httpClient;
     private readonly string? _apiKey;
+    private readonly ILogger<ChatGptService> _logger;
     private const string ChatGptEndpoint = "https://api.openai.com/v1/chat/completions";
 
     //Context window: 128,000 tokens, max tokens: 16,384 tokens , about 4 chars per token avg ~ 32000 chars, reference: Eminem love the way you lie : 4.4k chars
@@ -17,10 +19,11 @@ public class ChatGptService : IChatGptService
     // price as of testing seems like ~$0.01 after 26k tokens lol
     private const string Model = "gpt-4o-mini"; //last updated 2024-07-18 , knowledge cutoff 10/2023
 
-    public ChatGptService(HttpClient httpClient, IConfiguration configuration)
+    public ChatGptService(HttpClient httpClient, IConfiguration configuration, ILogger<ChatGptService> logger)
     {
         _httpClient = httpClient;
         _apiKey = configuration["OpenAI:ApiKey"];// ?? throw new ArgumentNullException("OpenAI:ApiKey is missing in configuration");
+        _logger = logger;
         if (string.IsNullOrEmpty(_apiKey))
         {
             throw new ArgumentNullException(nameof(configuration), "OpenAI:ApiKey is missing or not set in configuration.");
@@ -41,9 +44,9 @@ public class ChatGptService : IChatGptService
                     romanize ? "Romanize the lyrics, Latin script, while preserving LRC format exactly, no translation needed" :
                     "Translate the lyrics into English while preserving the LRC format. No romanization needed.")}
             Respond using this format, keep '---':
-            {(romanize ? "Romanized Lyrics Go Here" : "")}
+            {(romanize ? "Romanized Lyrics Go Here (preserve the LRC Format)" : "")}
             ---
-            {(translate ? "Translated English Meaning Lyrics Here" : "")}
+            {(translate ? "Translated English Meaning Lyrics Here (preserve the LRC Format)" : "")}
 
             Input:
             {originalLyrics}";
@@ -60,7 +63,6 @@ public class ChatGptService : IChatGptService
         };
 
         var jsonRequest = JsonSerializer.Serialize(requestBody);
-        Console.WriteLine("🔍 JSON Request: " + jsonRequest);
         using var requestMessage = new HttpRequestMessage(HttpMethod.Post, ChatGptEndpoint);
         requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
         requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
@@ -72,7 +74,7 @@ public class ChatGptService : IChatGptService
             sw.Start();
             using var response = await _httpClient.SendAsync(requestMessage);
             sw.Stop();
-            Console.WriteLine($"⏱️ ChatGPT API call took: {sw.ElapsedMilliseconds}ms");
+            _logger.LogInformation("⏱️ ChatGPT API call took: {ElapsedMilliseconds}ms", sw.ElapsedMilliseconds);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -112,7 +114,7 @@ public class ChatGptService : IChatGptService
 
             if ((romanize && romanizedLyrics == null) || (translate && translatedLyrics == null))
             {
-                Console.WriteLine("messageContent: " + messageContent);
+                _logger.LogCritical("messageContent: {MessageContent}", messageContent);
                 throw new InvalidOperationException("The ChatGPT API response did not contain the expected translations.");
             }
             return new TranslationResponseDto
