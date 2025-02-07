@@ -2,9 +2,11 @@ namespace ChordKTV.Services.Service;
 
 using System;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Globalization;
 using ChordKTV.Services.Api;
+using ChordKTV.Dtos;
 
 public class LrcService : ILrcService
 {
@@ -15,7 +17,7 @@ public class LrcService : ILrcService
         _httpClient = httpClient;
     }
 
-    public async Task<string?> GetLrcLibLyricsAsync(string title, string artist, string? albumName, float? duration)
+    public async Task<LrcLyricsDto?> GetLrcLibLyricsAsync(string title, string artist, string? albumName, float? duration)
     {
         string query = $"track_name={Uri.EscapeDataString(title)}";
         query += $"&artist_name={Uri.EscapeDataString(artist)}";
@@ -35,8 +37,22 @@ public class LrcService : ILrcService
         if (response.IsSuccessStatusCode)
         {
             string content = await response.Content.ReadAsStringAsync();
+            JsonElement apiResponse = JsonSerializer.Deserialize<JsonElement>(content);
 
-            return content;
+            LrcLyricsDto lrcLyricsDto = new LrcLyricsDto(
+                LrcLibId: apiResponse.GetProperty("id").GetInt32(),
+                Name: apiResponse.GetProperty("name").GetString() ?? "",
+                TrackName: apiResponse.GetProperty("trackName").GetString() ?? "",
+                ArtistName: apiResponse.GetProperty("artistName").GetString() ?? "",
+                AlbumName: apiResponse.GetProperty("albumName").GetString() ?? "",
+                Duration: TimeSpan.FromSeconds(apiResponse.GetProperty("duration").GetSingle()),
+                Instrumental: apiResponse.GetProperty("instrumental").GetBoolean(),
+                PlainLyrics: apiResponse.GetProperty("plainLyrics").GetString() ?? "",
+                SyncedLyrics: apiResponse.GetProperty("syncedLyrics").GetString() ?? "",
+                Romanized: false
+            );
+
+            return lrcLyricsDto;
         }
 
         return null;

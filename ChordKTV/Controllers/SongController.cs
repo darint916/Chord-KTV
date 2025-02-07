@@ -53,7 +53,7 @@ public class SongController : Controller
     {
         try
         {
-            string? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, duration);
+            LrcLyricsDto? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, duration);
 
             if (lyrics == null)
             {
