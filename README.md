@@ -1,4 +1,5 @@
 # 🎶 Chord KTV 🎼🎤🎵
+![Build Status](https://github.com/darint916/Chord-KTV/actions/workflows/dotnet-build-run-check.yml/badge.svg) ![Style Police Status](https://github.com/darint916/Chord-KTV/actions/workflows/enforce-code-style.yml/badge.svg)
 
 ## Overview 
 Chord KTV is a web-based application designed to enhance language learning through music. 🎵 By synchronizing lyrics with audio playback, the platform provides users with native text, transliterations, and contextual English translations, facilitating an immersive and engaging learning experience. 🎼🎤🎶
