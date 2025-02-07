@@ -5,6 +5,7 @@ using ChordKTV.Services.Service;
 using ChordKTV.Services.Api;
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Data.Repo;
+using ChordKTV.Data.Repo.SongData;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,12 @@ builder.Services.AddCors(opt =>
     });
 });
 
+// Add logging
+builder.Services.AddLogging(logging =>
+{
+    logging.AddConsole();
+    logging.AddDebug();
+});
 
 // Add services to the container.
 builder.Services.AddHttpClient<ILrcService, LrcService>();
@@ -31,6 +38,8 @@ builder.Services.AddHttpClient<ILrcService, LrcService>();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
 builder.Services.AddScoped<ISongRepo, SongRepo>();
+builder.Services.AddScoped<IGeniusService, GeniusService>();
+builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -46,7 +55,8 @@ app.UseSwagger();
 app.UseSwaggerUI();
 //}
 
-app.UseHttpsRedirection();
+// Comment out HTTPS redirection for development
+//app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
