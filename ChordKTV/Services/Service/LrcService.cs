@@ -5,10 +5,12 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
 
-public class LrcService : ILrcService
+public partial class LrcService : ILrcService
 {
     private readonly HttpClient _httpClient;
 
@@ -16,6 +18,29 @@ public class LrcService : ILrcService
     {
         _httpClient = httpClient;
     }
+
+    [GeneratedRegex(@"[^\p{IsBasicLatin}\p{IsLatin-1Supplement}]")]
+    private static partial Regex NonLatinRegex(); // Generates the regex at compile-time
+
+    private static bool IsRomanized(string? lyrics, double threshold = 0.3)
+    {
+        if (string.IsNullOrWhiteSpace(lyrics))
+        {
+            return true;
+        }
+        // Count total characters
+        int totalChars = lyrics.Length;
+
+        // Regex to match non-Latin characters
+        Regex nonLatinRegex = NonLatinRegex();
+
+        // Count non-Latin characters
+        int nonLatinCount = nonLatinRegex.Matches(lyrics).Count;
+
+        // If non-Latin characters make up a significant portion, assume original script
+        return (nonLatinCount / (double)totalChars) < threshold;
+    }
+
 
     public async Task<LrcLyricsDto?> GetLrcLibLyricsAsync(string title, string artist, string? albumName, float? duration)
     {
@@ -49,7 +74,7 @@ public class LrcService : ILrcService
                 Instrumental: apiResponse.GetProperty("instrumental").GetBoolean(),
                 PlainLyrics: apiResponse.GetProperty("plainLyrics").GetString() ?? "",
                 SyncedLyrics: apiResponse.GetProperty("syncedLyrics").GetString() ?? "",
-                Romanized: false
+                Romanized: IsRomanized(apiResponse.GetProperty("plainLyrics").GetString())
             );
 
             return lrcLyricsDto;
