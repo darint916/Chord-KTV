@@ -14,6 +14,7 @@ public class ChatGptService : IChatGptService
 
     //Context window: 128,000 tokens, max tokens: 16,384 tokens , about 4 chars per token avg ~ 32000 chars, reference: Eminem love the way you lie : 4.4k chars
     //KR + other lang use more tokens, but as ref, https://platform.openai.com/tokenizer to calc, 2793 char -> 1564 tokens (sick enough to die)
+    // price as of testing seems like ~$0.01 after 26k tokens lol
     private const string Model = "gpt-4o-mini"; //last updated 2024-07-18 , knowledge cutoff 10/2023
 
     public ChatGptService(HttpClient httpClient, IConfiguration configuration)
@@ -35,14 +36,14 @@ public class ChatGptService : IChatGptService
         }
         string prompt = $@"
             The lyrics input contains timestamps LRC Format and a language hint subscript in ISO 639: {languageCode}.
-            Do not change any timestamps or the formatting.
+            Do not change any timestamps or the formatting. Do not add any other titles other than the lyrics from original format
             {(romanize && translate ? "Romanize the lyrics, Latin script, while preserving LRC format exactly, then translate them into English." :
                     romanize ? "Romanize the lyrics, Latin script, while preserving LRC format exactly, no translation needed" :
                     "Translate the lyrics into English while preserving the LRC format. No romanization needed.")}
-            Respond using this format, keeping the '---' delimiter between sections, if section was not prompted for, leave it empty:
-            [Romanized Lyrics]
+            Respond using this format, keep '---':
+            {(romanize ? "Romanized Lyrics Go Here" : "")}
             ---
-            [Translated English Lyrics]
+            {(translate ? "Translated English Meaning Lyrics Here" : "")}
 
             Input:
             {originalLyrics}";
@@ -103,16 +104,17 @@ public class ChatGptService : IChatGptService
                 throw new InvalidOperationException("The ChatGPT API returned an empty response.");
             }
 
-            string[] sections = messageContent.Split("---", StringSplitOptions.RemoveEmptyEntries);
-            if (sections.Length < 2)
-            {
-                throw new InvalidOperationException("The ChatGPT API response does not contain the expected sections.");
-            }
+            string[] sections = messageContent.Split("---");
             string? romanizedLyrics = sections[0].Trim();
-            string? translatedLyrics = sections[1].Trim();
+            string? translatedLyrics = sections.Length > 1 ? sections[1].Trim() : null;
             romanizedLyrics = string.IsNullOrEmpty(romanizedLyrics) ? null : romanizedLyrics;
             translatedLyrics = string.IsNullOrEmpty(translatedLyrics) ? null : translatedLyrics;
 
+            if ((romanize && romanizedLyrics == null) || (translate && translatedLyrics == null))
+            {
+                Console.WriteLine("messageContent: " + messageContent);
+                throw new InvalidOperationException("The ChatGPT API response did not contain the expected translations.");
+            }
             return new TranslationResponseDto
             {
                 OriginalLyrics = originalLyrics,
