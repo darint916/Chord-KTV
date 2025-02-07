@@ -3,5 +3,7 @@ namespace ChordKTV.Dtos;
 public record TranslationRequestDto
 (
     string OriginalLyrics,
-    LanguageCode LanguageCode
+    LanguageCode LanguageCode,
+    bool Romanize,
+    bool Translate
 );

@@ -26,15 +26,20 @@ public class ChatGptService : IChatGptService
         }
     }
 
-    public async Task<LrcLyricsDto> TranslateLyricsAsync(string originalLyrics, LanguageCode languageCode)
+    public async Task<TranslationResponseDto> TranslateLyricsAsync(string originalLyrics, LanguageCode languageCode, bool romanize, bool translate)
     {
         // Construct the prompt. You can adjust this prompt as needed.
+        if (!romanize && !translate)
+        {
+            throw new ArgumentException("At least one of romanize or translate must be true.");
+        }
         string prompt = $@"
-            You are a helpful assistant that romanizes and translates lyrics.
-            The input is in LRC format with timestamps and a language subscript in ISO 639 (e.g. _{languageCode}).
-            Translate the lyrics into their romanized version (i.e. using the Latin alphabet) while preserving the LRC format exactly and hen translate it to English
+            The lyrics input contains timestamps LRC Format and a language hint subscript in ISO 639: {languageCode}.
             Do not change any timestamps or the formatting.
-            Respond using this format keeping the '---' delimiter between your response section:
+            {(romanize && translate ? "Romanize the lyrics, Latin script, while preserving LRC format exactly, then translate them into English." :
+                    romanize ? "Romanize the lyrics, Latin script, while preserving LRC format exactly, no translation needed" :
+                    "Translate the lyrics into English while preserving the LRC format. No romanization needed.")}
+            Respond using this format, keeping the '---' delimiter between sections, if section was not prompted for, leave it empty:
             [Romanized Lyrics]
             ---
             [Translated English Lyrics]
@@ -47,7 +52,7 @@ public class ChatGptService : IChatGptService
             model = Model,
             messages = new object[]
             {
-                    new { role = "system", content = "You are a helpful assistant that translates LRC formatted lyrics into english and romanized version." },
+                    new { role = "system", content = "You are a helpful assistant that translates LRC formatted lyrics into english and/or romanized version." },
                     new { role = "user", content = prompt }
             },
             temperature = 0
@@ -103,10 +108,12 @@ public class ChatGptService : IChatGptService
             {
                 throw new InvalidOperationException("The ChatGPT API response does not contain the expected sections.");
             }
-            string romanizedLyrics = sections[0].Trim();
-            string translatedLyrics = sections[1].Trim();
+            string? romanizedLyrics = sections[0].Trim();
+            string? translatedLyrics = sections[1].Trim();
+            romanizedLyrics = string.IsNullOrEmpty(romanizedLyrics) ? null : romanizedLyrics;
+            translatedLyrics = string.IsNullOrEmpty(translatedLyrics) ? null : translatedLyrics;
 
-            return new LrcLyricsDto
+            return new TranslationResponseDto
             {
                 OriginalLyrics = originalLyrics,
                 LanguageCode = languageCode,
@@ -127,11 +134,11 @@ public class ChatGptService : IChatGptService
     }
 
     /// <inheritdoc/>
-    public async Task<List<LrcLyricsDto>> BatchTranslateLyricsAsync(List<TranslationRequestDto> lrcLyrics)
+    public async Task<List<TranslationResponseDto>> BatchTranslateLyricsAsync(List<TranslationRequestDto> lrcLyrics)
     {
         //TODO: Revise for batch call to save on api calls
         // For batch processing, we can run multiple translation calls in parallel.
-        var translationTasks = lrcLyrics.Select(request => TranslateLyricsAsync(request.OriginalLyrics, request.LanguageCode));
+        var translationTasks = lrcLyrics.Select(request => TranslateLyricsAsync(request.OriginalLyrics, request.LanguageCode, request.Romanize, request.Translate));
 
         try
         {

@@ -1,6 +1,6 @@
 namespace ChordKTV.Dtos;
 
-public class LrcLyricsDto
+public class TranslationResponseDto
 {
     public required string OriginalLyrics { get; set; }
     public LanguageCode LanguageCode { get; set; }
