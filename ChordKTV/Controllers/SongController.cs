@@ -73,7 +73,7 @@ public class SongController : Controller
     }
 
     [HttpPost("chatgpt/translations")]
-    public async Task<IActionResult> PostChatGptTranslations([FromBody] LrcLyricsDto request)
+    public async Task<IActionResult> PostChatGptTranslations([FromBody] TranslationRequestDto request)
     {
         LrcLyricsDto lyricsDto = await _chatGptService.TranslateLyricsAsync(request.OriginalLyrics, request.LanguageCode);
         return Ok(lyricsDto);

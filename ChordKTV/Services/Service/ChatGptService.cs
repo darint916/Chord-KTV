@@ -19,6 +19,10 @@ public class ChatGptService : IChatGptService
     {
         _httpClient = httpClient;
         _apiKey = configuration["OpenAI:ApiKey"];// ?? throw new ArgumentNullException("OpenAI:ApiKey is missing in configuration");
+        if (string.IsNullOrEmpty(_apiKey))
+        {
+            throw new ArgumentNullException(nameof(configuration), "OpenAI:ApiKey is missing or not set in configuration.");
+        }
     }
 
     public async Task<LrcLyricsDto> TranslateLyricsAsync(string originalLyrics, LanguageCode languageCode)
@@ -49,6 +53,7 @@ public class ChatGptService : IChatGptService
         };
 
         var jsonRequest = JsonSerializer.Serialize(requestBody);
+        Console.WriteLine("🔍 JSON Request: " + jsonRequest);
         using var requestMessage = new HttpRequestMessage(HttpMethod.Post, ChatGptEndpoint);
         requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
         requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
