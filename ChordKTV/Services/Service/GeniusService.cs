@@ -145,7 +145,7 @@ public class GeniusService : IGeniusService
             SongImageUrl = result.GetProperty("song_art_image_url").GetString()
         };
 
-        string artistName = result.GetProperty("artist_names").GetString() ?? string.Empty;
+        string artistName = result.GetProperty("primary_artist_names").GetString() ?? string.Empty;
         
         // More robust album handling with optional chaining
         string albumName = string.Empty;
@@ -213,7 +213,7 @@ public class GeniusService : IGeniusService
 
             JsonElement songDetails = root.GetProperty("response").GetProperty("song");
             
-            // Try to parse language
+            // Parse language
             if (songDetails.TryGetProperty("language", out JsonElement langElement) && 
                 !string.IsNullOrEmpty(langElement.GetString()))
             {
@@ -224,18 +224,57 @@ public class GeniusService : IGeniusService
                 }
             }
 
-            // Get plain lyrics if available
-            if (songDetails.TryGetProperty("lyrics", out JsonElement lyricsElement) && 
-                !string.IsNullOrEmpty(lyricsElement.GetString()))
+            // Parse featured artists
+            if (songDetails.TryGetProperty("featured_artists", out JsonElement featuredArtists))
             {
-                song.PlainLyrics = lyricsElement.GetString() ?? string.Empty;
+                song.FeaturedArtists = featuredArtists
+                    .EnumerateArray()
+                    .Select(a => a.GetProperty("name").GetString() ?? string.Empty)
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .ToList();
+            }
+
+            // Parse album details
+            if (songDetails.TryGetProperty("album", out JsonElement albumElement) && 
+                albumElement.ValueKind != JsonValueKind.Null)
+            {
+                string albumName = albumElement.GetProperty("name").GetString() ?? string.Empty;
+                if (!string.IsNullOrEmpty(albumName))
+                {
+                    Album? existingAlbum = await _albumRepo.GetAlbumAsync(albumName, song.PrimaryArtist);
+                    if (existingAlbum == null)
+                    {
+                        existingAlbum = new Album
+                        {
+                            Name = albumName,
+                            Artist = song.PrimaryArtist,
+                            IsSingle = false // You might want to determine this based on album type if available
+                        };
+                        await _albumRepo.AddAsync(existingAlbum);
+                    }
+                    
+                    if (!song.Albums.Any(a => a.Name == albumName))
+                    {
+                        song.Albums.Add(existingAlbum);
+                    }
+                }
+            }
+
+            // Parse release date
+            if (songDetails.TryGetProperty("release_date", out JsonElement releaseDateElement) && 
+                !string.IsNullOrEmpty(releaseDateElement.GetString()))
+            {
+                if (DateOnly.TryParse(releaseDateElement.GetString(), out DateOnly releaseDate))
+                {
+                    song.ReleaseDate = releaseDate;
+                }
             }
 
             return song;
         }
-        catch
+        catch (Exception ex)
         {
-            // If enrichment fails, return original song
+            _logger.LogError(ex, "Error enriching song details from Genius API");
             return song;
         }
     }
