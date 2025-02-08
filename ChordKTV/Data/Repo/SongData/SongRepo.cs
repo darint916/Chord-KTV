@@ -1,4 +1,3 @@
-
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using Microsoft.EntityFrameworkCore;
@@ -33,14 +32,30 @@ public class SongRepo : ISongRepo
 
     public async Task<Song?> GetSongAsync(string name)
     {
-        return await _context.Songs.FirstOrDefaultAsync(s => s.Name == name) ??
-            await _context.Songs.FirstOrDefaultAsync(s => s.AlternateNames.Contains(name));
+        string normalizedName = name.Trim().ToLower();
+        return await _context.Songs
+            .Include(s => s.GeniusMetaData)
+            .Include(s => s.Albums)
+            .FirstOrDefaultAsync(s => 
+                s.Name.Trim().ToLower() == normalizedName || 
+                s.AlternateNames.Any(n => n.Trim().ToLower() == normalizedName)
+            );
     }
 
     // Will null if artist isnt direct match, as we expect direct artist match (assuming this is from genius data)
     public async Task<Song?> GetSongAsync(string name, string artist)
     {
-        return await _context.Songs.FirstOrDefaultAsync(s => s.Name == name && ((s.PrimaryArtist == artist) || s.FeaturedArtists.Contains(artist)));
+        string normalizedName = name.Trim().ToLower();
+        string normalizedArtist = artist.Trim().ToLower();
+        
+        return await _context.Songs
+            .Include(s => s.GeniusMetaData)
+            .Include(s => s.Albums)
+            .FirstOrDefaultAsync(s => 
+                s.Name.Trim().ToLower() == normalizedName && 
+                ((s.PrimaryArtist.Trim().ToLower() == normalizedArtist) || 
+                 s.FeaturedArtists.Any(a => a.Trim().ToLower() == normalizedArtist))
+            );
     }
 
 

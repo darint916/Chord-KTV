@@ -39,52 +39,82 @@ public class GeniusService : IGeniusService
 
     public async Task<Song?> GetSongByArtistTitleAsync(string title, string? artist)
     {
+        // Check cache first
         Song? existingSong = artist != null
             ? await _songRepo.GetSongAsync(title, artist)
             : await _songRepo.GetSongAsync(title);
 
-        // Only return if the cached record is fully enriched
-        if (existingSong != null && existingSong.GeniusMetaData.GeniusId != 0)
+        // If we have a fully enriched song in cache, return it 
+        if (existingSong != null && 
+            existingSong.GeniusMetaData.GeniusId != 0 ) // && !string.IsNullOrEmpty(existingSong.PlainLyrics)
         {
-            _logger.LogInformation("Using enriched song from database: {Title} by {Artist}", title, artist);
+            _logger.LogInformation("Using cached song from database: {Title} by {Artist}", title, artist);
             return existingSong;
         }
 
-        // Continue with the Genius API call if no cached record exists or if it is incomplete
+        // Continue with Genius API call
         string query = artist != null ? $"{title} {artist}" : title;
         string requestUrl = $"/search?q={Uri.EscapeDataString(query)}";
-        _logger.LogInformation("Calling Genius API: {BaseUrl}{RequestUrl}", BaseUrl, requestUrl);
-        _logger.LogInformation("Authorization: Bearer {Token}", _accessToken[..6] + "...");
         
-        HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
-        string jsonResponse = await response.Content.ReadAsStringAsync();
-        
-        if (!response.IsSuccessStatusCode)
+        try 
         {
-            _logger.LogError("Genius API error: {StatusCode} - {Response}", response.StatusCode, jsonResponse);
-            return null;
-        }
+            HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
+            string jsonResponse = await response.Content.ReadAsStringAsync();
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Genius API error: {StatusCode} - {Response}", response.StatusCode, jsonResponse);
+                return existingSong;
+            }
 
-        _logger.LogInformation("Genius API Response: {Response}", jsonResponse);
-        using JsonDocument doc = JsonDocument.Parse(jsonResponse);
-        JsonElement root = doc.RootElement;
-        
-        if (root.GetProperty("meta").GetProperty("status").GetInt32() != 200)
-        {
-            _logger.LogError("Genius API returned non-200 status");
-            return null;
+            _logger.LogInformation("Genius API Response: {Response}", jsonResponse);
+            using JsonDocument doc = JsonDocument.Parse(jsonResponse);
+            JsonElement root = doc.RootElement;
+            
+            if (root.GetProperty("meta").GetProperty("status").GetInt32() != 200)
+            {
+                _logger.LogError("Genius API returned non-200 status");
+                return existingSong;
+            }
+            
+            JsonElement hits = root.GetProperty("response").GetProperty("hits");
+            if (!hits.EnumerateArray().Any())
+            {
+                _logger.LogInformation("No results found for query: {Query}", query);
+                return existingSong;
+            }
+            
+            JsonElement result = hits.EnumerateArray().First().GetProperty("result");
+            Song newSong = await MapGeniusResultToSongAsync(result);
+            
+            // Enrich the song with additional details
+            newSong = await EnrichSongDetailsAsync(newSong);
+
+            // If we got this far, store the fully enriched song
+            if (newSong.GeniusMetaData.GeniusId != 0)
+            {
+                if (existingSong != null)
+                {
+                    // Update existing record
+                    existingSong.GeniusMetaData = newSong.GeniusMetaData;
+                    existingSong.PlainLyrics = newSong.PlainLyrics;
+                    await _songRepo.UpdateAsync(existingSong);
+                }
+                else
+                {
+                    // Add new record
+                    await _songRepo.AddAsync(newSong);
+                }
+                await _songRepo.SaveChangesAsync();
+            }
+
+            return newSong;
         }
-        
-        JsonElement hits = root.GetProperty("response").GetProperty("hits");
-        if (!hits.EnumerateArray().Any())
+        catch (Exception ex)
         {
-            _logger.LogInformation("No results found for query: {Query}", query);
-            return null;
+            _logger.LogError(ex, "Error fetching song from Genius API");
+            return existingSong; // Return partial cache if available
         }
-        
-        JsonElement result = hits.EnumerateArray().First().GetProperty("result");
-        Song newSong = await MapGeniusResultToSongAsync(result);
-        return newSong;
     }
 
     public async Task<List<Song>> GetSongsByArtistTitleAsync(List<VideoInfo> videos)

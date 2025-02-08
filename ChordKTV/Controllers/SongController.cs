@@ -124,29 +124,7 @@ public class SongController : Controller
                 return NotFound(new { message = "Song not found on Genius." });
             }
 
-            // Enrich with additional details
-            song = await _geniusService.EnrichSongDetailsAsync(song);
-
-            // Handle albums (this part already checks for duplicates)
-            if (song?.Albums != null)
-            {
-                foreach (Album album in song.Albums)
-                {
-                    Album? existingAlbum = await _albumRepo.GetAlbumAsync(album.Name, album.Artist);
-                    if (existingAlbum == null)
-                    {
-                        await _albumRepo.AddAsync(album);
-                    }
-                }
-            }
-
-            // Instead of always adding the song, check first
-            Song? existingSong = await _songRepo.GetSongAsync(song.Name, song.PrimaryArtist);
-            if (existingSong == null)
-            {
-                await _songRepo.AddAsync(song);
-            }
-
+            // No need to check/add to database - the service already handled that
             SongDto dto = new(
                 song.Name,
                 song.PrimaryArtist,
