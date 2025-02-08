@@ -6,6 +6,7 @@ using ChordKTV.Services.Api;
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Data.Repo;
 using ChordKTV.Data.Repo.SongData;
+using AutoMapper;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +44,11 @@ builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(typeof(Program).Assembly);
+});
 
 WebApplication app = builder.Build();
 

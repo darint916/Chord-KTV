@@ -11,6 +11,7 @@ using ChordKTV.Utils.Extensions;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AutoMapper;
 
 [ApiController]
 [Route("api")]
@@ -22,10 +23,18 @@ public class SongController : Controller
     private readonly IGeniusService _geniusService;
     private readonly IAlbumRepo _albumRepo;
     private readonly ILogger<SongController> _logger;
+    private readonly IMapper _mapper;
 
-    public SongController(/*IGeniusRepo geniusRepo,*/ IYouTubeClientService youTubeService, ILrcService lrcService, ISongRepo songRepo, IGeniusService geniusService, IAlbumRepo albumRepo, ILogger<SongController> logger)
+    public SongController(
+        IMapper mapper,
+        IYouTubeClientService youTubeService, 
+        ILrcService lrcService, 
+        ISongRepo songRepo, 
+        IGeniusService geniusService, 
+        IAlbumRepo albumRepo, 
+        ILogger<SongController> logger)
     {
-        // _geniusRepo = geniusRepo;
+        _mapper = mapper;
         _songRepo = songRepo;
         _youTubeService = youTubeService;
         _lrcService = lrcService;
@@ -126,23 +135,7 @@ public class SongController : Controller
                 return NotFound(new { message = "Song not found on Genius." });
             }
 
-            // No need to check/add to database - the service already handled that
-            SongDto dto = new(
-                song.Name,
-                song.PrimaryArtist,
-                song.FeaturedArtists,
-                song.Albums.Select(a => a.Name).ToList(),
-                song.Genre,
-                song.PlainLyrics,
-                new GeniusMetaDataDto(
-                    song.GeniusMetaData.GeniusId,
-                    song.GeniusMetaData.HeaderImageUrl,
-                    song.GeniusMetaData.SongImageUrl,
-                    song.GeniusMetaData.Language
-                )
-            );
-
-            return Ok(dto);
+            return Ok(_mapper.Map<SongDto>(song));
         }
         catch (HttpRequestException ex)
         {
@@ -179,22 +172,7 @@ public class SongController : Controller
                 return NotFound(new { message = "No songs found on Genius." });
             }
 
-            List<SongDto> dtos = songs.Select(song => new SongDto(
-                song.Name,
-                song.PrimaryArtist,
-                song.FeaturedArtists,
-                song.Albums.Select(a => a.Name).ToList(),
-                song.Genre,
-                song.PlainLyrics,
-                new GeniusMetaDataDto(
-                    song.GeniusMetaData.GeniusId,
-                    song.GeniusMetaData.HeaderImageUrl,
-                    song.GeniusMetaData.SongImageUrl,
-                    song.GeniusMetaData.Language
-                )
-            )).ToList();
-
-            return Ok(dtos);
+            return Ok(_mapper.Map<List<SongDto>>(songs));
         }
         catch (JsonException ex)
         {
