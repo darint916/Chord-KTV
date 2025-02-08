@@ -10,5 +10,6 @@ public record LrcLyricsDto(
     bool Instrumental,
     string PlainLyrics,
     string SyncedLyrics,
-    bool Romanized
+    string? RomanizedPlainLyrics,
+    string? RomanizedSyncedLyrics
 );

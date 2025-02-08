@@ -6,11 +6,10 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Globalization;
 using System.Linq;
-using System.Text.RegularExpressions;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
 
-public partial class LrcService : ILrcService
+public class LrcService : ILrcService
 {
     private readonly HttpClient _httpClient;
 
@@ -19,67 +18,118 @@ public partial class LrcService : ILrcService
         _httpClient = httpClient;
     }
 
-    [GeneratedRegex(@"[^\p{IsBasicLatin}\p{IsLatin-1Supplement}]")]
-    private static partial Regex NonLatinRegex(); // Generates the regex at compile-time
-
-    private static bool IsRomanized(string? lyrics, double threshold = 0.3)
+    private static bool IsRomanized(string? lyrics)
     {
         if (string.IsNullOrWhiteSpace(lyrics))
         {
-            return true;
+            return true; // Assume empty input is romanized
         }
-        // Count total characters
-        int totalChars = lyrics.Length;
 
-        // Regex to match non-Latin characters
-        Regex nonLatinRegex = NonLatinRegex();
-
-        // Count non-Latin characters
-        int nonLatinCount = nonLatinRegex.Matches(lyrics).Count;
-
-        // If non-Latin characters make up a significant portion, assume original script
-        return (nonLatinCount / (double)totalChars) < threshold;
+        // Return true only if all characters are Latin
+        return lyrics.All(IsLatinCharacter);
     }
 
+    private static bool IsLatinCharacter(char c) => c switch
+    {
+        >= '\u0000' and <= '\u024F' => true, // Latin scripts: ASCII, Latin-1, Extended-A & B
+        _ => false
+    };
 
-    public async Task<LrcLyricsDto?> GetLrcLibLyricsAsync(string title, string artist, string? albumName, float? duration)
+    public async Task<LrcLyricsDto?> GetLrcLibLyricsAsync(string title, string? artist, string? albumName)
     {
         string query = $"track_name={Uri.EscapeDataString(title)}";
-        query += $"&artist_name={Uri.EscapeDataString(artist)}";
+
+        if (!string.IsNullOrEmpty(artist))
+        {
+            query += $"&artist_name={Uri.EscapeDataString(artist)}";
+        }
 
         if (!string.IsNullOrEmpty(albumName))
         {
             query += $"&album_name={Uri.EscapeDataString(albumName)}";
         }
 
-        if (duration.HasValue)
-        {
-            query += $"&duration={duration.Value.ToString(CultureInfo.InvariantCulture)}";
-        }
-
-        HttpResponseMessage response = await _httpClient.GetAsync($"https://lrclib.net/api/get?{query}");
+        HttpResponseMessage response = await _httpClient.GetAsync($"https://lrclib.net/api/search?{query}");
 
         if (response.IsSuccessStatusCode)
         {
             string content = await response.Content.ReadAsStringAsync();
-            JsonElement apiResponse = JsonSerializer.Deserialize<JsonElement>(content);
+            var searchResults = JsonSerializer.Deserialize<List<JsonElement>>(content);
 
-            LrcLyricsDto lrcLyricsDto = new LrcLyricsDto(
-                LrcLibId: apiResponse.GetProperty("id").GetInt32(),
-                Name: apiResponse.GetProperty("name").GetString() ?? "",
-                TrackName: apiResponse.GetProperty("trackName").GetString() ?? "",
-                ArtistName: apiResponse.GetProperty("artistName").GetString() ?? "",
-                AlbumName: apiResponse.GetProperty("albumName").GetString() ?? "",
-                Duration: TimeSpan.FromSeconds(apiResponse.GetProperty("duration").GetSingle()),
-                Instrumental: apiResponse.GetProperty("instrumental").GetBoolean(),
-                PlainLyrics: apiResponse.GetProperty("plainLyrics").GetString() ?? "",
-                SyncedLyrics: apiResponse.GetProperty("syncedLyrics").GetString() ?? "",
-                Romanized: IsRomanized(apiResponse.GetProperty("plainLyrics").GetString())
-            );
+            if (searchResults is { Count: > 0 })
+            {
+                // Take the first result as the primary match
+                var bestMatch = MapToDto(searchResults.First());
 
-            return lrcLyricsDto;
+                if (!IsRomanized(bestMatch.PlainLyrics)) // If lyrics in first result are in original lang
+                {
+                    // Look for any other result that has romanized lyrics
+                    var romanizedMatch = searchResults
+                        .Skip(1) // Skip the first since it's already selected
+                        .Select(MapToDto)
+                        .FirstOrDefault(dto => IsRomanized(dto.PlainLyrics));
+
+                    if (romanizedMatch != null)
+                    {
+                        bestMatch = bestMatch with
+                        {
+                            RomanizedPlainLyrics = romanizedMatch.PlainLyrics,
+                            RomanizedSyncedLyrics = romanizedMatch.SyncedLyrics
+                        };
+                    }
+                }
+                else // If already romanized, look for original lang
+                {
+                    string romanizedPlainLyrics = bestMatch.PlainLyrics;
+                    string romanizedSyncedLyrics = bestMatch.SyncedLyrics;
+
+                    // Look for any other result that has original lyrics
+                    var origMatch = searchResults
+                        .Skip(1) // Skip the first since it's already selected
+                        .Select(MapToDto)
+                        .FirstOrDefault(dto => !IsRomanized(dto.PlainLyrics));
+
+                    if (origMatch != null)
+                    {
+                        bestMatch = bestMatch with
+                        {
+                            PlainLyrics = origMatch.PlainLyrics,
+                            SyncedLyrics = origMatch.SyncedLyrics,
+                            RomanizedPlainLyrics = romanizedPlainLyrics,
+                            RomanizedSyncedLyrics = romanizedSyncedLyrics
+                        };
+                    }
+                    else // In this case, song was originally English
+                    {
+                        bestMatch = bestMatch with
+                        {
+                            RomanizedPlainLyrics = romanizedPlainLyrics,
+                            RomanizedSyncedLyrics = romanizedSyncedLyrics
+                        };
+                    }
+                }
+
+                return bestMatch;
+            }
         }
 
         return null;
+    }
+
+    private LrcLyricsDto MapToDto(JsonElement json)
+    {
+        return new LrcLyricsDto(
+            LrcLibId: json.GetProperty("id").GetInt32(),
+            Name: json.GetProperty("name").GetString() ?? "",
+            TrackName: json.GetProperty("trackName").GetString() ?? "",
+            ArtistName: json.GetProperty("artistName").GetString() ?? "",
+            AlbumName: json.GetProperty("albumName").GetString() ?? "",
+            Duration: TimeSpan.FromSeconds(json.GetProperty("duration").GetSingle()),
+            Instrumental: json.GetProperty("instrumental").GetBoolean(),
+            PlainLyrics: json.GetProperty("plainLyrics").GetString() ?? "",
+            SyncedLyrics: json.GetProperty("syncedLyrics").GetString() ?? "",
+            RomanizedPlainLyrics: null,  // Will be checked later
+            RomanizedSyncedLyrics: null
+        );
     }
 }
