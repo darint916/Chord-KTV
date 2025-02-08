@@ -9,10 +9,3 @@ public record SongDto(
     string PlainLyrics,
     GeniusMetaDataDto GeniusMetaData
 );
-
-public record GeniusMetaDataDto(
-    int GeniusId,
-    string? HeaderImageUrl,
-    string? SongImageUrl,
-    LanguageCode Language
-); 
