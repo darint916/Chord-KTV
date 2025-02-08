@@ -9,6 +9,8 @@ using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using ChordKTV.Utils.Extensions;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 [ApiController]
 [Route("api")]
@@ -153,53 +155,50 @@ public class SongController : Controller
     }
 
     [HttpPost("genius/search/batch")]
-    public async Task<IActionResult> GetSongsByArtistTitle([FromBody, Required] List<VideoInfo> videos)
+    public async Task<IActionResult> GetSongsByArtistTitle([FromBody] JsonElement request)
     {
         try
         {
+            if (!request.TryGetProperty("videos", out JsonElement videosElement))
+            {
+                return BadRequest(new { message = "The videos field is required." });
+            }
+
+            List<VideoInfo> videos = videosElement.EnumerateArray()
+                .Select(v => new VideoInfo(
+                    v.GetProperty("title").GetString() ?? string.Empty,
+                    v.GetProperty("artist").GetString() ?? string.Empty,
+                    string.Empty,
+                    TimeSpan.Zero
+                ))
+                .ToList();
+
             List<Song> songs = await _geniusService.GetSongsByArtistTitleAsync(videos);
             if (!songs.Any())
             {
                 return NotFound(new { message = "No songs found on Genius." });
             }
 
-            List<SongDto> dtos = new();
-            foreach (Song song in songs)
-            {
-                // Handle albums first
-                if (song?.Albums != null)
-                {
-                    foreach (Album album in song.Albums)
-                    {
-                        Album? existingAlbum = await _albumRepo.GetAlbumAsync(album.Name, album.Artist);
-                        if (existingAlbum == null)
-                        {
-                            await _albumRepo.AddAsync(album);
-                        }
-                    }
-                }
-
-                // Save the song
-                await _songRepo.AddAsync(song);
-
-                // Map to DTO
-                dtos.Add(new SongDto(
-                    song.Name,
-                    song.PrimaryArtist,
-                    song.FeaturedArtists,
-                    song.Albums.Select(a => a.Name).ToList(),
-                    song.Genre,
-                    song.PlainLyrics,
-                    new GeniusMetaDataDto(
-                        song.GeniusMetaData.GeniusId,
-                        song.GeniusMetaData.HeaderImageUrl,
-                        song.GeniusMetaData.SongImageUrl,
-                        song.GeniusMetaData.Language
-                    )
-                ));
-            }
+            List<SongDto> dtos = songs.Select(song => new SongDto(
+                song.Name,
+                song.PrimaryArtist,
+                song.FeaturedArtists,
+                song.Albums.Select(a => a.Name).ToList(),
+                song.Genre,
+                song.PlainLyrics,
+                new GeniusMetaDataDto(
+                    song.GeniusMetaData.GeniusId,
+                    song.GeniusMetaData.HeaderImageUrl,
+                    song.GeniusMetaData.SongImageUrl,
+                    song.GeniusMetaData.Language
+                )
+            )).ToList();
 
             return Ok(dtos);
+        }
+        catch (JsonException ex)
+        {
+            return BadRequest(new { message = "Invalid JSON format.", error = ex.Message });
         }
         catch (HttpRequestException ex)
         {

@@ -122,7 +122,7 @@ public class GeniusService : IGeniusService
         List<Song> songs = [];
         foreach (VideoInfo video in videos)
         {
-            Song? song = await GetSongByArtistTitleAsync(video.Title, video.Channel);
+            Song? song = await GetSongByArtistTitleAsync(video.Title, video.Artist);
             if (song != null)
             {
                 songs.Add(song);

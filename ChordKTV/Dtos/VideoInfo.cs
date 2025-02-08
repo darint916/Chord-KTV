@@ -5,7 +5,7 @@ using System;
 public record VideoInfo
 (
     string Title,
-    string Channel,
+    string Artist,
     string Url,
     TimeSpan Duration
 );

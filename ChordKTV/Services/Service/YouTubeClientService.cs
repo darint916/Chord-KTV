@@ -58,11 +58,11 @@ public class YouTubeApiClientService : IYouTubeClientService
                 string videoId = item.ContentDetails.VideoId;
                 string title = item.Snippet.Title;
                 string url = $"https://www.youtube.com/watch?v={videoId}";
-                string channelName = item.Snippet.ChannelTitle;
+                string artistName = item.Snippet.ChannelTitle;
 
                 TimeSpan duration = await GetVideoDurationAsync(googleYouTube, videoId);
 
-                videos.Add(new VideoInfo(title, channelName, url, duration));
+                videos.Add(new VideoInfo(title, artistName, url, duration));
             }
 
             playlistItemsRequest.PageToken = playlistItemsResponse.NextPageToken;
