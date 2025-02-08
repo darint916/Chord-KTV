@@ -133,6 +133,18 @@ public class GeniusService : IGeniusService
 
     private async Task<Song> MapGeniusResultToSongAsync(JsonElement result)
     {
+        int geniusId = result.GetProperty("id").GetInt32();
+        
+        // First check if GeniusMetaData already exists
+        var existingMetaData = await _songRepo.GetGeniusMetaDataAsync(geniusId);
+        
+        GeniusMetaData metaData = existingMetaData ?? new GeniusMetaData
+        {
+            GeniusId = geniusId,
+            HeaderImageUrl = result.GetProperty("header_image_url").GetString(),
+            SongImageUrl = result.GetProperty("song_art_image_url").GetString()
+        };
+
         string artistName = result.GetProperty("artist_names").GetString() ?? string.Empty;
         
         // More robust album handling with optional chaining
@@ -151,17 +163,12 @@ public class GeniusService : IGeniusService
             existingAlbum = await _albumRepo.GetAlbumAsync(albumName, artistName);
         }
 
-        // Create song object
+        // Create song object with existing or new metadata
         Song song = new()
         {
             Name = result.GetProperty("title").GetString() ?? string.Empty,
             PrimaryArtist = artistName,
-            GeniusMetaData = new GeniusMetaData
-            {
-                GeniusId = result.GetProperty("id").GetInt32(),
-                HeaderImageUrl = result.GetProperty("header_image_url").GetString(),
-                SongImageUrl = result.GetProperty("song_art_image_url").GetString()
-            }
+            GeniusMetaData = metaData
         };
 
         // Add to existing album or create new one

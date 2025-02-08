@@ -1,16 +1,19 @@
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 namespace ChordKTV.Data.Repo;
 
 
 public class SongRepo : ISongRepo
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<SongRepo> _logger;
 
-    public SongRepo(AppDbContext context)
+    public SongRepo(AppDbContext context, ILogger<SongRepo> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<bool> SaveChangesAsync()
@@ -48,14 +51,21 @@ public class SongRepo : ISongRepo
         string normalizedName = name.Trim().ToLower();
         string normalizedArtist = artist.Trim().ToLower();
         
-        return await _context.Songs
+        _logger.LogInformation("Looking up song in cache. Name: {Name}, Artist: {Artist}", normalizedName, normalizedArtist);
+        
+        var result = await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
             .FirstOrDefaultAsync(s => 
-                s.Name.Trim().ToLower() == normalizedName && 
-                ((s.PrimaryArtist.Trim().ToLower() == normalizedArtist) || 
-                 s.FeaturedArtists.Any(a => a.Trim().ToLower() == normalizedArtist))
+                (s.Name.Trim().ToLower().Replace(" ", "") == normalizedName.Replace(" ", "") || 
+                 s.AlternateNames.Any(n => n.Trim().ToLower().Replace(" ", "") == normalizedName.Replace(" ", ""))) &&
+                (s.PrimaryArtist.Trim().ToLower().StartsWith(normalizedArtist) || 
+                 s.FeaturedArtists.Any(a => a.Trim().ToLower().StartsWith(normalizedArtist)))
             );
+        
+        _logger.LogInformation("Cache lookup result: {Result}", result != null ? "Found" : "Not found");
+        
+        return result;
     }
 
 
@@ -70,6 +80,11 @@ public class SongRepo : ISongRepo
     public async Task<List<Song>> GetAllSongsAsync()
     {
         return await _context.Songs.ToListAsync();
+    }
+
+    public async Task<GeniusMetaData?> GetGeniusMetaDataAsync(int geniusId)
+    {
+        return await _context.GeniusMetaData.FindAsync(geniusId);
     }
 
 }
