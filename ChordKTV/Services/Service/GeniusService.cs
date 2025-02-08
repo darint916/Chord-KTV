@@ -26,8 +26,8 @@ public class GeniusService : IGeniusService
         IAlbumRepo albumRepo,
         ILogger<GeniusService> logger)
     {
-        _accessToken = configuration["GeniusApi:AccessToken"] ?? 
-            throw new ArgumentNullException(nameof(configuration), "Genius API access token is required");
+        _accessToken = configuration["Genius:ApiKey"] ?? 
+            throw new ArgumentNullException(nameof(configuration), "Genius API key is required");
         _httpClient = httpClient;
         _songRepo = songRepo;
         _albumRepo = albumRepo;
