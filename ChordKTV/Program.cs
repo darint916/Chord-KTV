@@ -35,11 +35,11 @@ builder.Services.AddLogging(logging =>
 
 // Add services to the container.
 builder.Services.AddHttpClient<ILrcService, LrcService>();
+builder.Services.AddHttpClient<IGeniusService, GeniusService>();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
 builder.Services.AddScoped<ISongRepo, SongRepo>();
-builder.Services.AddScoped<IGeniusService, GeniusService>();
 builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
 
 builder.Services.AddEndpointsApiExplorer();
