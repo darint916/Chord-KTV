@@ -51,7 +51,7 @@ public class SongRepo : ISongRepo
         string normalizedName = name.Trim().ToLower();
         string normalizedArtist = artist.Trim().ToLower();
         
-        _logger.LogInformation("Looking up song in cache. Name: {Name}, Artist: {Artist}", normalizedName, normalizedArtist);
+        _logger.LogDebug("Looking up song in cache. Name: {Name}, Artist: {Artist}", normalizedName, normalizedArtist);
         
         var result = await _context.Songs
             .Include(s => s.GeniusMetaData)
@@ -63,7 +63,7 @@ public class SongRepo : ISongRepo
                  s.FeaturedArtists.Any(a => a.Trim().ToLower().StartsWith(normalizedArtist)))
             );
         
-        _logger.LogInformation("Cache lookup result: {Result}", result != null ? "Found" : "Not found");
+        _logger.LogDebug("Cache lookup result: {Result}", result != null ? "Found" : "Not found");
         
         return result;
     }

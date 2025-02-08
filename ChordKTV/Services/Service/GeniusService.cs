@@ -46,9 +46,9 @@ public class GeniusService : IGeniusService
 
         // If we have a fully enriched song in cache, return it 
         if (existingSong != null && 
-            existingSong.GeniusMetaData.GeniusId != 0 ) // && !string.IsNullOrEmpty(existingSong.PlainLyrics)
+            existingSong.GeniusMetaData.GeniusId != 0)
         {
-            _logger.LogInformation("Using cached song from database: {Title} by {Artist}", title, artist);
+            _logger.LogDebug("Using cached song from database: {Title} by {Artist}", title, artist);
             return existingSong;
         }
 
@@ -67,7 +67,7 @@ public class GeniusService : IGeniusService
                 return existingSong;
             }
 
-            _logger.LogInformation("Genius API Response: {Response}", jsonResponse);
+            _logger.LogDebug("Genius API Response: {Response}", jsonResponse);
             using JsonDocument doc = JsonDocument.Parse(jsonResponse);
             JsonElement root = doc.RootElement;
             
@@ -80,7 +80,7 @@ public class GeniusService : IGeniusService
             JsonElement hits = root.GetProperty("response").GetProperty("hits");
             if (!hits.EnumerateArray().Any())
             {
-                _logger.LogInformation("No results found for query: {Query}", query);
+                _logger.LogDebug("No results found for query: {Query}", query);
                 return existingSong;
             }
             
