@@ -4,7 +4,6 @@ using System;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Globalization;
 using System.Linq;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
