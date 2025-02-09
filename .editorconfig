@@ -513,3 +513,4 @@ dotnet_diagnostic.IDE0060.severity = suggestion
 dotnet_diagnostic.IDE0065.severity = suggestion
 dotnet_diagnostic.IDE0053.severity = suggestion
 dotnet_diagnostic.CA1856.severity = suggestion #.contains specification
+dotnet_diagnostic.CA1848.severity = suggestion # logging delegation, not useful unless high

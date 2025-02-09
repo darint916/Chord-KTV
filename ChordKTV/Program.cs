@@ -7,6 +7,8 @@ using ChordKTV.Data.Api.SongData;
 using ChordKTV.Data.Repo;
 using ChordKTV.Data.Repo.SongData;
 using AutoMapper;
+using ChordKTV.Utils;
+using ChordKTV.Dtos;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -33,11 +35,17 @@ builder.Services.AddLogging(logging =>
     logging.AddDebug();
 });
 
+builder.Services.AddControllers().
+    AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new SafeEnumConverter<LanguageCode>()); //convert enums to string and defaults to UNK if fails
+    });
+
 // Add services to the container.
 builder.Services.AddHttpClient<ILrcService, LrcService>();
 builder.Services.AddHttpClient<IGeniusService, GeniusService>();
+builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
 
-builder.Services.AddControllers();
 builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
 builder.Services.AddScoped<ISongRepo, SongRepo>();
 builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();

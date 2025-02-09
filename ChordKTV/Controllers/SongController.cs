@@ -24,6 +24,7 @@ public class SongController : Controller
     private readonly IAlbumRepo _albumRepo;
     private readonly ILogger<SongController> _logger;
     private readonly IMapper _mapper;
+    private readonly IChatGptService _chatGptService;
 
     public SongController(
         IMapper mapper,
@@ -32,6 +33,7 @@ public class SongController : Controller
         ISongRepo songRepo, 
         IGeniusService geniusService, 
         IAlbumRepo albumRepo, 
+        IChatGptService chatGptService,
         ILogger<SongController> logger)
     {
         _mapper = mapper;
@@ -40,6 +42,7 @@ public class SongController : Controller
         _lrcService = lrcService;
         _geniusService = geniusService;
         _albumRepo = albumRepo;
+        _chatGptService = chatGptService;
         _logger = logger;
     }
 
@@ -88,6 +91,13 @@ public class SongController : Controller
         }
     }
 
+    [HttpPost("chatgpt/translation")]
+    public async Task<IActionResult> PostChatGptTranslations([FromBody] TranslationRequestDto request)
+    {
+        TranslationResponseDto lyricsDto = await _chatGptService.TranslateLyricsAsync(request.OriginalLyrics, request.LanguageCode, request.Romanize, request.Translate);
+        return Ok(lyricsDto);
+    }
+
     [HttpGet("health")]
     public IActionResult HealthCheck()
     {
@@ -95,7 +105,7 @@ public class SongController : Controller
     }
 
     [DevelopmentOnly]
-    [HttpGet("database/song/get")]
+    [HttpGet("database/song")]
     public async Task<IActionResult> GetSongFromDb([FromQuery, Required] string title, [FromQuery] string? artist, [FromQuery] string? albumName)
     {
         //there is no case for album name but no artist, maybe add in future or not need. This for dev testing
@@ -117,7 +127,7 @@ public class SongController : Controller
     }
 
     [DevelopmentOnly]
-    [HttpPost("database/song/add")]
+    [HttpPost("database/song")]
     public async Task<IActionResult> AddSongToDb([FromBody] Song song)
     {
         await _songRepo.AddAsync(song);

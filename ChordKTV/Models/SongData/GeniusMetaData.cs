@@ -11,5 +11,5 @@ public class GeniusMetaData
     public string? HeaderImageThumbnailUrl { get; set; }
     public string? SongImageUrl { get; set; }
     public string? SongImageThumbnailUrl { get; set; }
-    public LanguageCode Language { get; set; } = LanguageCode.UNDETERMINED;
+    public LanguageCode Language { get; set; } = LanguageCode.UNK;
 }
