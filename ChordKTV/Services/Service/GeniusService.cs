@@ -82,32 +82,49 @@ public class GeniusService : IGeniusService
                 return null;
             }
 
-            if (!searchResponse.Response.Hits.Any())
+            if (searchResponse?.Response?.Hits?.Count <= 0)
             {
                 _logger.LogDebug("No results found for query: {Query}", query);
                 return null;
             }
 
-            var result = searchResponse.Response.Hits.First().Result;
-            Song newSong = await MapGeniusResultToSongAsync(result);
+            var firstHit = searchResponse?.Response?.Hits?.FirstOrDefault();
+            if (firstHit?.Result == null)
+            {
+                _logger.LogDebug("No valid result found in first hit for query: {Query}", query);
+                return null;
+            }
+            var result = firstHit.Result;
+            Song? newSong = await MapGeniusResultToSongAsync(result);
             
+            if (newSong == null)
+            {
+                _logger.LogWarning("Failed to map Genius result to song");
+                return null;
+            }
+
             // Enrich the song with additional details
-            newSong = await EnrichSongDetailsAsync(newSong);
+            var enrichedSong = await EnrichSongDetailsAsync(newSong);
+            if (enrichedSong == null)
+            {
+                _logger.LogWarning("Failed to enrich song details");
+                return null;
+            }
+            newSong = enrichedSong;
 
             // If we got this far, store the fully enriched song
-            if (newSong.GeniusMetaData.GeniusId != 0)
+            if (newSong.GeniusMetaData?.GeniusId != 0)
             {
                 if (existingSong != null)
                 {
-                    // Update existing record
-                    existingSong.GeniusMetaData = newSong.GeniusMetaData;
+                    // We know newSong is not null here
+                    existingSong.GeniusMetaData = newSong.GeniusMetaData!;  // Use null-forgiving operator since we checked
                     existingSong.PlainLyrics = newSong.PlainLyrics;
                     await _songRepo.UpdateAsync(existingSong);
                 }
                 else
                 {
-                    // Add new record
-                    await _songRepo.AddAsync(newSong);
+                    await _songRepo.AddAsync(newSong);  // We know newSong is not null here
                 }
                 await _songRepo.SaveChangesAsync();
             }
@@ -135,7 +152,7 @@ public class GeniusService : IGeniusService
         return songs;
     }
 
-    private async Task<Song> MapGeniusResultToSongAsync(GeniusResult result)
+    private async Task<Song?> MapGeniusResultToSongAsync(GeniusResult result)
     {
         // First check if GeniusMetaData already exists
         var existingMetaData = await _songRepo.GetGeniusMetaDataAsync(result.Id);

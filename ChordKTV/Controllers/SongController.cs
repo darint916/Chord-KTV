@@ -182,7 +182,7 @@ public class SongController : Controller
                 .ToList();
 
             List<Song> songs = await _geniusService.GetSongsByArtistTitleAsync(videos, forceRefresh);
-            if (!songs.Any())
+            if (songs.Count <= 0)
             {
                 return NotFound(new { message = "No songs found on Genius." });
             }
