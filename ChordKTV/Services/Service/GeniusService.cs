@@ -7,6 +7,7 @@ using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using ChordKTV.Dtos;
 using System.Globalization;
+using ChordKTV.Models.GeniusApi;
 
 namespace ChordKTV.Services.Service;
 
@@ -74,23 +75,22 @@ public class GeniusService : IGeniusService
             }
 
             _logger.LogDebug("Genius API Response: {Response}", jsonResponse);
-            using JsonDocument doc = JsonDocument.Parse(jsonResponse);
-            JsonElement root = doc.RootElement;
-            
-            if (root.GetProperty("meta").GetProperty("status").GetInt32() != 200)
+            var searchResponse = JsonSerializer.Deserialize<GeniusSearchResponse>(jsonResponse,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (searchResponse?.Meta.Status != 200)
             {
                 _logger.LogError("Genius API returned non-200 status");
                 return null;
             }
-            
-            JsonElement hits = root.GetProperty("response").GetProperty("hits");
-            if (!hits.EnumerateArray().Any())
+
+            if (!searchResponse.Response.Hits.Any())
             {
                 _logger.LogDebug("No results found for query: {Query}", query);
                 return null;
             }
-            
-            JsonElement result = hits.EnumerateArray().First().GetProperty("result");
+
+            var result = searchResponse.Response.Hits.First().Result;
             Song newSong = await MapGeniusResultToSongAsync(result);
             
             // Enrich the song with additional details
@@ -137,58 +137,42 @@ public class GeniusService : IGeniusService
         return songs;
     }
 
-    private async Task<Song> MapGeniusResultToSongAsync(JsonElement result)
+    private async Task<Song> MapGeniusResultToSongAsync(GeniusResult result)
     {
-        int geniusId = result.GetProperty("id").GetInt32();
-        
         // First check if GeniusMetaData already exists
-        var existingMetaData = await _songRepo.GetGeniusMetaDataAsync(geniusId);
+        var existingMetaData = await _songRepo.GetGeniusMetaDataAsync(result.Id);
         
         GeniusMetaData metaData = existingMetaData ?? new GeniusMetaData
         {
-            GeniusId = geniusId,
-            HeaderImageUrl = result.GetProperty("header_image_url").GetString(),
-            SongImageUrl = result.GetProperty("song_art_image_url").GetString()
+            GeniusId = result.Id,
+            HeaderImageUrl = result.HeaderImageUrl,
+            SongImageUrl = result.SongArtImageUrl
         };
-
-        string artistName = result.GetProperty("primary_artist_names").GetString() ?? string.Empty;
-        
-        // More robust album handling with optional chaining
-        string albumName = string.Empty;
-        if (result.TryGetProperty("album", out JsonElement albumElement) && 
-            albumElement.ValueKind != JsonValueKind.Null)
-        {
-            albumName = albumElement.TryGetProperty("name", out JsonElement nameElement) ? 
-                nameElement.GetString() ?? string.Empty : string.Empty;
-        }
-
-        // Check if album exists
-        Album? existingAlbum = null;
-        if (!string.IsNullOrEmpty(albumName))
-        {
-            existingAlbum = await _albumRepo.GetAlbumAsync(albumName, artistName);
-        }
 
         // Create song object with existing or new metadata
         Song song = new()
         {
-            Name = result.GetProperty("title").GetString() ?? string.Empty,
-            PrimaryArtist = artistName,
+            Name = result.Title,
+            PrimaryArtist = result.PrimaryArtistNames,
             GeniusMetaData = metaData
         };
 
-        // Add to existing album or create new one
-        if (existingAlbum != null)
+        // Handle album if present
+        if (result.Album != null && !string.IsNullOrEmpty(result.Album.Name))
         {
-            song.Albums.Add(existingAlbum);
-        }
-        else if (!string.IsNullOrEmpty(albumName))
-        {
-            song.Albums.Add(new Album
+            Album? existingAlbum = await _albumRepo.GetAlbumAsync(result.Album.Name, result.PrimaryArtistNames);
+            if (existingAlbum != null)
             {
-                Name = albumName,
-                Artist = artistName
-            });
+                song.Albums.Add(existingAlbum);
+            }
+            else
+            {
+                song.Albums.Add(new Album
+                {
+                    Name = result.Album.Name,
+                    Artist = result.PrimaryArtistNames
+                });
+            }
         }
 
         return song;
@@ -209,68 +193,57 @@ public class GeniusService : IGeniusService
             response.EnsureSuccessStatusCode();
 
             string jsonResponse = await response.Content.ReadAsStringAsync();
-            using JsonDocument doc = JsonDocument.Parse(jsonResponse);
-            JsonElement root = doc.RootElement;
+            var songResponse = JsonSerializer.Deserialize<GeniusSongResponse>(jsonResponse,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            if (root.GetProperty("meta").GetProperty("status").GetInt32() != 200)
+            if (songResponse?.Meta.Status != 200)
             {
                 return song;
             }
 
-            JsonElement songDetails = root.GetProperty("response").GetProperty("song");
+            var songDetails = songResponse.Response.Song;
             
-            // Parse language
-            if (songDetails.TryGetProperty("language", out JsonElement langElement) && 
-                !string.IsNullOrEmpty(langElement.GetString()))
+            // Set language if available
+            if (!string.IsNullOrEmpty(songDetails.Language))
             {
-                string langStr = langElement.GetString()!.ToUpper(CultureInfo.InvariantCulture);
+                string langStr = songDetails.Language.ToUpper(CultureInfo.InvariantCulture);
                 if (Enum.TryParse<LanguageCode>(langStr, out LanguageCode language))
                 {
                     song.GeniusMetaData.Language = language;
                 }
             }
 
-            // Parse featured artists
-            if (songDetails.TryGetProperty("featured_artists", out JsonElement featuredArtists))
-            {
-                song.FeaturedArtists = featuredArtists
-                    .EnumerateArray()
-                    .Select(a => a.GetProperty("name").GetString() ?? string.Empty)
-                    .Where(name => !string.IsNullOrEmpty(name))
-                    .ToList();
-            }
+            // Set featured artists
+            song.FeaturedArtists = songDetails.FeaturedArtists
+                .Select(a => a.Name)
+                .Where(name => !string.IsNullOrEmpty(name))
+                .ToList();
 
-            // Parse album details
-            if (songDetails.TryGetProperty("album", out JsonElement albumElement) && 
-                albumElement.ValueKind != JsonValueKind.Null)
+            // Handle album
+            if (songDetails.Album != null && !string.IsNullOrEmpty(songDetails.Album.Name))
             {
-                string albumName = albumElement.GetProperty("name").GetString() ?? string.Empty;
-                if (!string.IsNullOrEmpty(albumName))
+                Album? existingAlbum = await _albumRepo.GetAlbumAsync(songDetails.Album.Name, song.PrimaryArtist);
+                if (existingAlbum == null)
                 {
-                    Album? existingAlbum = await _albumRepo.GetAlbumAsync(albumName, song.PrimaryArtist);
-                    if (existingAlbum == null)
+                    existingAlbum = new Album
                     {
-                        existingAlbum = new Album
-                        {
-                            Name = albumName,
-                            Artist = song.PrimaryArtist,
-                            IsSingle = false // You might want to determine this based on album type if available
-                        };
-                        await _albumRepo.AddAsync(existingAlbum);
-                    }
-                    
-                    if (!song.Albums.Any(a => a.Name == albumName))
-                    {
-                        song.Albums.Add(existingAlbum);
-                    }
+                        Name = songDetails.Album.Name,
+                        Artist = song.PrimaryArtist,
+                        IsSingle = false
+                    };
+                    await _albumRepo.AddAsync(existingAlbum);
+                }
+                
+                if (!song.Albums.Any(a => a.Name == songDetails.Album.Name))
+                {
+                    song.Albums.Add(existingAlbum);
                 }
             }
 
-            // Parse release date
-            if (songDetails.TryGetProperty("release_date", out JsonElement releaseDateElement) && 
-                !string.IsNullOrEmpty(releaseDateElement.GetString()))
+            // Set release date
+            if (!string.IsNullOrEmpty(songDetails.ReleaseDate))
             {
-                if (DateOnly.TryParse(releaseDateElement.GetString(), out DateOnly releaseDate))
+                if (DateOnly.TryParse(songDetails.ReleaseDate, out DateOnly releaseDate))
                 {
                     song.ReleaseDate = releaseDate;
                 }
