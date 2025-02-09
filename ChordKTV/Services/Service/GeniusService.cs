@@ -124,9 +124,8 @@ public class GeniusService : IGeniusService
                 }
                 else
                 {
-                    await _songRepo.AddAsync(newSong);  // We know newSong is not null here
+                    await _songRepo.AddAsync(newSong);
                 }
-                await _songRepo.SaveChangesAsync();
             }
 
             return newSong;
