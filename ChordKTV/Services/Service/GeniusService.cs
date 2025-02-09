@@ -221,7 +221,7 @@ public class GeniusService : IGeniusService
             if (!string.IsNullOrEmpty(songDetails.Language))
             {
                 string langStr = songDetails.Language.ToUpper(CultureInfo.InvariantCulture);
-                if (Enum.TryParse<LanguageCode>(langStr, out LanguageCode language))
+                if (Enum.TryParse(langStr, out LanguageCode language))
                 {
                     song.GeniusMetaData.Language = language;
                 }
