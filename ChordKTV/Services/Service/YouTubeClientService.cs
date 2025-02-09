@@ -66,7 +66,7 @@ public class YouTubeApiClientService : IYouTubeClientService
                 {
                     string title = item.Snippet.Title;
                     string url = $"https://www.youtube.com/watch?v={videoId}";
-                    
+
                     videos.Add(new VideoInfo(
                         title,
                         details.ChannelTitle,  // Use the correct channel name
@@ -83,12 +83,12 @@ public class YouTubeApiClientService : IYouTubeClientService
         return new PlaylistDetailsDto(playlistTitle, videos);
     }
 
-    private record VideoDetails(string ChannelTitle, TimeSpan Duration);
+    private sealed record VideoDetails(string ChannelTitle, TimeSpan Duration);
 
-    private async Task<Dictionary<string, VideoDetails>> GetVideosDetailsAsync(YouTubeService youTubeService, List<string> videoIds)
+    private static async Task<Dictionary<string, VideoDetails>> GetVideosDetailsAsync(YouTubeService youTubeService, List<string> videoIds)
     {
         var result = new Dictionary<string, VideoDetails>();
-        
+
         // YouTube API allows up to 50 video IDs per request
         foreach (var idBatch in videoIds.Chunk(50))
         {
