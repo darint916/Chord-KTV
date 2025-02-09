@@ -152,10 +152,12 @@ public class SongController : Controller
         }
         catch (HttpRequestException ex)
         {
+            _logger.LogError(ex, "Failed to fetch from Genius API for title: {Title}, artist: {Artist}", title, artist);
             return StatusCode(503, new { message = "Failed to fetch from Genius API.", error = ex.Message });
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error occurred while fetching song. Title: {Title}, Artist: {Artist}", title, artist);
             return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
         }
     }
@@ -200,6 +202,37 @@ public class SongController : Controller
         catch (Exception ex)
         {
             return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
+        }
+    }
+
+    [HttpGet("album/{albumName}")]
+    public async Task<IActionResult> GetSongsByAlbum(
+        string albumName,
+        [FromQuery] string? artist)
+    {
+        try 
+        {
+            Album? album;
+            if (artist != null)
+            {
+                album = await _albumRepo.GetAlbumAsync(albumName, artist);
+            }
+            else
+            {
+                album = await _albumRepo.GetAlbumAsync(albumName);  // Use the overload that only takes name
+            }
+
+            if (album == null)
+            {
+                return NotFound(new { message = "Album not found." });
+            }
+            
+            return Ok(_mapper.Map<List<SongDto>>(album.Songs));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching songs for album {AlbumName}", albumName);
+            return StatusCode(500, new { message = "An unexpected error occurred." });
         }
     }
 }
