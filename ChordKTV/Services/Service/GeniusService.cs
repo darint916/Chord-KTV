@@ -37,19 +37,25 @@ public class GeniusService : IGeniusService
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
     }
 
-    public async Task<Song?> GetSongByArtistTitleAsync(string title, string? artist)
+    public async Task<Song?> GetSongByArtistTitleAsync(string title, string? artist, bool forceRefresh = false)
     {
-        // Check cache first
-        Song? existingSong = artist != null
-            ? await _songRepo.GetSongAsync(title, artist)
-            : await _songRepo.GetSongAsync(title);
-
-        // If we have a fully enriched song in cache, return it 
-        if (existingSong != null && 
-            existingSong.GeniusMetaData.GeniusId != 0)
+        // Declare existingSong outside the if block to maintain scope
+        Song? existingSong = null;
+        
+        // Check cache first unless force refresh is requested
+        if (!forceRefresh)
         {
-            _logger.LogDebug("Using cached song from database: {Title} by {Artist}", title, artist);
-            return existingSong;
+            existingSong = artist != null
+                ? await _songRepo.GetSongAsync(title, artist)
+                : await _songRepo.GetSongAsync(title);
+
+            // If we have a fully enriched song in cache, return it 
+            if (existingSong != null && 
+                existingSong.GeniusMetaData.GeniusId != 0)
+            {
+                _logger.LogDebug("Using cached song from database: {Title} by {Artist}", title, artist);
+                return existingSong;
+            }
         }
 
         // Continue with Genius API call
@@ -64,7 +70,7 @@ public class GeniusService : IGeniusService
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Genius API error: {StatusCode} - {Response}", response.StatusCode, jsonResponse);
-                return existingSong;
+                return null;
             }
 
             _logger.LogDebug("Genius API Response: {Response}", jsonResponse);
@@ -74,14 +80,14 @@ public class GeniusService : IGeniusService
             if (root.GetProperty("meta").GetProperty("status").GetInt32() != 200)
             {
                 _logger.LogError("Genius API returned non-200 status");
-                return existingSong;
+                return null;
             }
             
             JsonElement hits = root.GetProperty("response").GetProperty("hits");
             if (!hits.EnumerateArray().Any())
             {
                 _logger.LogDebug("No results found for query: {Query}", query);
-                return existingSong;
+                return null;
             }
             
             JsonElement result = hits.EnumerateArray().First().GetProperty("result");
@@ -113,16 +119,16 @@ public class GeniusService : IGeniusService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching song from Genius API");
-            return existingSong; // Return partial cache if available
+            return null;
         }
     }
 
-    public async Task<List<Song>> GetSongsByArtistTitleAsync(List<VideoInfo> videos)
+    public async Task<List<Song>> GetSongsByArtistTitleAsync(List<VideoInfo> videos, bool forceRefresh = false)
     {
         List<Song> songs = [];
         foreach (VideoInfo video in videos)
         {
-            Song? song = await GetSongByArtistTitleAsync(video.Title, video.Artist);
+            Song? song = await GetSongByArtistTitleAsync(video.Title, video.Artist, forceRefresh);
             if (song != null)
             {
                 songs.Add(song);

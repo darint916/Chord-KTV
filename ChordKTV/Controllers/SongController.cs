@@ -125,11 +125,14 @@ public class SongController : Controller
     }
 
     [HttpGet("genius/search")]
-    public async Task<IActionResult> GetSongByArtistTitle([FromQuery, Required] string title, [FromQuery] string? artist)
+    public async Task<IActionResult> GetSongByArtistTitle(
+        [FromQuery, Required] string title, 
+        [FromQuery] string? artist,
+        [FromQuery] bool forceRefresh = false)
     {
         try
         {
-            Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist);
+            Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist, forceRefresh);
             if (song == null)
             {
                 return NotFound(new { message = "Song not found on Genius." });
@@ -148,7 +151,9 @@ public class SongController : Controller
     }
 
     [HttpPost("genius/search/batch")]
-    public async Task<IActionResult> GetSongsByArtistTitle([FromBody] JsonElement request)
+    public async Task<IActionResult> GetSongsByArtistTitle(
+        [FromBody] JsonElement request,
+        [FromQuery] bool forceRefresh = false)
     {
         try
         {
@@ -166,7 +171,7 @@ public class SongController : Controller
                 ))
                 .ToList();
 
-            List<Song> songs = await _geniusService.GetSongsByArtistTitleAsync(videos);
+            List<Song> songs = await _geniusService.GetSongsByArtistTitleAsync(videos, forceRefresh);
             if (!songs.Any())
             {
                 return NotFound(new { message = "No songs found on Genius." });
