@@ -66,16 +66,14 @@ public class GeniusService : IGeniusService
         try 
         {
             HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
-            string jsonResponse = await response.Content.ReadAsStringAsync();
             
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError("Genius API error: {StatusCode} - {Response}", response.StatusCode, jsonResponse);
+                _logger.LogError("Genius API error: {StatusCode}", response.StatusCode);
                 return null;
             }
 
-            _logger.LogDebug("Genius API Response: {Response}", jsonResponse);
-            var searchResponse = JsonSerializer.Deserialize<GeniusSearchResponse>(jsonResponse,
+            var searchResponse = await response.Content.ReadFromJsonAsync<GeniusSearchResponse>(
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (searchResponse?.Meta.Status != 200)
@@ -192,8 +190,7 @@ public class GeniusService : IGeniusService
             HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
             response.EnsureSuccessStatusCode();
 
-            string jsonResponse = await response.Content.ReadAsStringAsync();
-            var songResponse = JsonSerializer.Deserialize<GeniusSongResponse>(jsonResponse,
+            var songResponse = await response.Content.ReadFromJsonAsync<GeniusSongResponse>(
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (songResponse?.Meta.Status != 200)
