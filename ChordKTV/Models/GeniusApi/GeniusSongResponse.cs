@@ -24,4 +24,4 @@ public class GeniusSongDetails
 public class GeniusArtist
 {
     public string Name { get; set; } = string.Empty;
-} 
+}

@@ -23,4 +23,4 @@ public class SongProfile : Profile
             .ForCtorParam("SongImageUrl", opt => opt.MapFrom(src => src.SongImageUrl))
             .ForCtorParam("Language", opt => opt.MapFrom(src => src.Language));
     }
-} 
+}

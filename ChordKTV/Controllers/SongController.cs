@@ -28,11 +28,11 @@ public class SongController : Controller
 
     public SongController(
         IMapper mapper,
-        IYouTubeClientService youTubeService, 
-        ILrcService lrcService, 
-        ISongRepo songRepo, 
-        IGeniusService geniusService, 
-        IAlbumRepo albumRepo, 
+        IYouTubeClientService youTubeService,
+        ILrcService lrcService,
+        ISongRepo songRepo,
+        IGeniusService geniusService,
+        IAlbumRepo albumRepo,
         IChatGptService chatGptService,
         ILogger<SongController> logger)
     {
@@ -136,7 +136,7 @@ public class SongController : Controller
 
     [HttpGet("genius/search")]
     public async Task<IActionResult> GetSongByArtistTitle(
-        [FromQuery, Required] string title, 
+        [FromQuery, Required] string title,
         [FromQuery] string? artist,
         [FromQuery] bool forceRefresh = false)
     {
@@ -210,7 +210,7 @@ public class SongController : Controller
         string albumName,
         [FromQuery] string? artist)
     {
-        try 
+        try
         {
             Album? album;
             if (artist != null)
@@ -226,7 +226,7 @@ public class SongController : Controller
             {
                 return NotFound(new { message = "Album not found." });
             }
-            
+
             return Ok(_mapper.Map<List<SongDto>>(album.Songs));
         }
         catch (Exception ex)

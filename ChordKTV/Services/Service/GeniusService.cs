@@ -27,13 +27,13 @@ public class GeniusService : IGeniusService
         IAlbumRepo albumRepo,
         ILogger<GeniusService> logger)
     {
-        _accessToken = configuration["Genius:ApiKey"] ?? 
+        _accessToken = configuration["Genius:ApiKey"] ??
             throw new ArgumentNullException(nameof(configuration), "Genius API key is required");
         _httpClient = httpClient;
         _songRepo = songRepo;
         _albumRepo = albumRepo;
         _logger = logger;
-        
+
         _httpClient.BaseAddress = new Uri(BaseUrl);
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
     }
@@ -42,7 +42,7 @@ public class GeniusService : IGeniusService
     {
         // Declare existingSong outside the if block to maintain scope
         Song? existingSong = null;
-        
+
         // Check cache first unless force refresh is requested
         if (!forceRefresh)
         {
@@ -51,7 +51,7 @@ public class GeniusService : IGeniusService
                 : await _songRepo.GetSongAsync(title);
 
             // If we have a fully enriched song in cache, return it 
-            if (existingSong != null && 
+            if (existingSong != null &&
                 existingSong.GeniusMetaData.GeniusId != 0)
             {
                 _logger.LogDebug("Using cached song from database: {Title} by {Artist}", title, artist);
@@ -62,11 +62,11 @@ public class GeniusService : IGeniusService
         // Continue with Genius API call
         string query = artist != null ? $"{title} {artist}" : title;
         string requestUrl = $"/search?q={Uri.EscapeDataString(query)}";
-        
-        try 
+
+        try
         {
             HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Genius API error: {StatusCode}", response.StatusCode);
@@ -96,7 +96,7 @@ public class GeniusService : IGeniusService
             }
             var result = firstHit.Result;
             Song? newSong = await MapGeniusResultToSongAsync(result);
-            
+
             if (newSong == null)
             {
                 _logger.LogWarning("Failed to map Genius result to song");
@@ -156,7 +156,7 @@ public class GeniusService : IGeniusService
     {
         // First check if GeniusMetaData already exists
         var existingMetaData = await _songRepo.GetGeniusMetaDataAsync(result.Id);
-        
+
         GeniusMetaData metaData = existingMetaData ?? new GeniusMetaData
         {
             GeniusId = result.Id,
@@ -201,7 +201,7 @@ public class GeniusService : IGeniusService
         }
 
         string requestUrl = $"/songs/{song.GeniusMetaData.GeniusId}";
-        
+
         try
         {
             HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
@@ -216,7 +216,7 @@ public class GeniusService : IGeniusService
             }
 
             var songDetails = songResponse.Response.Song;
-            
+
             // Set language if available
             if (!string.IsNullOrEmpty(songDetails.Language))
             {
@@ -247,7 +247,7 @@ public class GeniusService : IGeniusService
                     };
                     await _albumRepo.AddAsync(existingAlbum);
                 }
-                
+
                 if (!song.Albums.Any(a => a.Name == songDetails.Album.Name))
                 {
                     song.Albums.Add(existingAlbum);

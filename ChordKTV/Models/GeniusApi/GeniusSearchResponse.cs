@@ -34,4 +34,4 @@ public class GeniusResult
 public class GeniusAlbum
 {
     public string Name { get; set; } = string.Empty;
-} 
+}

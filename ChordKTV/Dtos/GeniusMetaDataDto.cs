@@ -7,4 +7,4 @@ public record GeniusMetaDataDto(
     string? HeaderImageUrl,
     string? SongImageUrl,
     LanguageCode Language
-); 
+);

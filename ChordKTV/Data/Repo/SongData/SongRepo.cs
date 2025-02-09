@@ -39,8 +39,8 @@ public class SongRepo : ISongRepo
         return await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
-            .FirstOrDefaultAsync(s => 
-                s.Name.Trim().ToLower() == normalizedName || 
+            .FirstOrDefaultAsync(s =>
+                s.Name.Trim().ToLower() == normalizedName ||
                 s.AlternateNames.Any(n => n.Trim().ToLower() == normalizedName)
             );
     }
@@ -50,21 +50,21 @@ public class SongRepo : ISongRepo
     {
         string normalizedName = name.Trim().ToLower();
         string normalizedArtist = artist.Trim().ToLower();
-        
+
         _logger.LogDebug("Looking up song in cache. Name: {Name}, Artist: {Artist}", normalizedName, normalizedArtist);
-        
+
         var result = await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
-            .FirstOrDefaultAsync(s => 
-                (s.Name.Trim().ToLower().Replace(" ", "") == normalizedName.Replace(" ", "") || 
+            .FirstOrDefaultAsync(s =>
+                (s.Name.Trim().ToLower().Replace(" ", "") == normalizedName.Replace(" ", "") ||
                  s.AlternateNames.Any(n => n.Trim().ToLower().Replace(" ", "") == normalizedName.Replace(" ", ""))) &&
-                (s.PrimaryArtist.Trim().ToLower().StartsWith(normalizedArtist) || 
+                (s.PrimaryArtist.Trim().ToLower().StartsWith(normalizedArtist) ||
                  s.FeaturedArtists.Any(a => a.Trim().ToLower().StartsWith(normalizedArtist)))
             );
-        
+
         _logger.LogDebug("Cache lookup result: {Result}", result != null ? "Found" : "Not found");
-        
+
         return result;
     }
 

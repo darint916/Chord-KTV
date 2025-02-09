@@ -12,4 +12,4 @@ public enum LanguageCode
     VIE,  // Vietnamese
     THA,  // Thai
     UNK   // Unknown
-} 
+}
