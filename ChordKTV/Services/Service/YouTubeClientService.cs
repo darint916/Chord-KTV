@@ -53,16 +53,27 @@ public class YouTubeApiClientService : IYouTubeClientService
         {
             playlistItemsResponse = await playlistItemsRequest.ExecuteAsync();
 
+            // Get all video IDs from the current page
+            var videoIds = playlistItemsResponse.Items.Select(item => item.ContentDetails.VideoId).ToList();
+
+            // Get video details including duration and correct channel info
+            var videoDetails = await GetVideosDetailsAsync(googleYouTube, videoIds);
+
             foreach (PlaylistItem item in playlistItemsResponse.Items)
             {
                 string videoId = item.ContentDetails.VideoId;
-                string title = item.Snippet.Title;
-                string url = $"https://www.youtube.com/watch?v={videoId}";
-                string channelName = item.Snippet.ChannelTitle;
+                if (videoDetails.TryGetValue(videoId, out var details))
+                {
+                    string title = item.Snippet.Title;
+                    string url = $"https://www.youtube.com/watch?v={videoId}";
 
-                TimeSpan duration = await GetVideoDurationAsync(googleYouTube, videoId);
-
-                videos.Add(new VideoInfo(title, channelName, url, duration));
+                    videos.Add(new VideoInfo(
+                        title,
+                        details.ChannelTitle,  // Use the correct channel name
+                        url,
+                        details.Duration
+                    ));
+                }
             }
 
             playlistItemsRequest.PageToken = playlistItemsResponse.NextPageToken;
@@ -72,28 +83,39 @@ public class YouTubeApiClientService : IYouTubeClientService
         return new PlaylistDetailsDto(playlistTitle, videos);
     }
 
-    private static async Task<TimeSpan> GetVideoDurationAsync(YouTubeService googleYouTube, string videoId)
+    private sealed record VideoDetails(string ChannelTitle, TimeSpan Duration);
+
+    private static async Task<Dictionary<string, VideoDetails>> GetVideosDetailsAsync(YouTubeService youTubeService, List<string> videoIds)
     {
-        VideosResource.ListRequest videoRequest = googleYouTube.Videos.List("contentDetails");
-        videoRequest.Id = videoId;
+        var result = new Dictionary<string, VideoDetails>();
 
-        VideoListResponse videoResponse = await videoRequest.ExecuteAsync();
-
-        if (videoResponse.Items.Count > 0)
+        // YouTube API allows up to 50 video IDs per request
+        foreach (var idBatch in videoIds.Chunk(50))
         {
-            string isoDuration = videoResponse.Items[0].ContentDetails.Duration;
-            try
+            var videoRequest = youTubeService.Videos.List("snippet,contentDetails");
+            videoRequest.Id = string.Join(",", idBatch);
+
+            var videoResponse = await videoRequest.ExecuteAsync();
+
+            foreach (var video in videoResponse.Items)
             {
-                // Convert ISO 8601 duration to TimeSpan
-                var duration = System.Xml.XmlConvert.ToTimeSpan(isoDuration);
-                return duration;
-            }
-            catch
-            {
-                return TimeSpan.Zero;
+                TimeSpan duration = TimeSpan.Zero;
+                try
+                {
+                    duration = System.Xml.XmlConvert.ToTimeSpan(video.ContentDetails.Duration);
+                }
+                catch
+                {
+                    // Keep default TimeSpan.Zero if parsing fails
+                }
+
+                result[video.Id] = new VideoDetails(
+                    video.Snippet.ChannelTitle,
+                    duration
+                );
             }
         }
 
-        return TimeSpan.Zero;
+        return result;
     }
 }
