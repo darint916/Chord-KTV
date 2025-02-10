@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace ChordKTV.Dtos;
 
-//Follows ISO 639 Language Codes
+// Follows ISO 639-1 Language Codes
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum LanguageCode
 {
