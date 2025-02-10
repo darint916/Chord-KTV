@@ -38,7 +38,7 @@ public class SongRepo : ISongRepo
     {
         // Normalize input on the client side (remove spaces)
         string normalizedName = name.Trim().Replace(" ", "");
-        
+
         // Retrieve songs from the database first
         var songs = await _context.Songs
             .Include(s => s.GeniusMetaData)

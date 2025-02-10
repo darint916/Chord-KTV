@@ -17,10 +17,6 @@ public class SongProfile : Profile
             .ForCtorParam("PlainLyrics", opt => opt.MapFrom(src => src.PlainLyrics))
             .ForCtorParam("GeniusMetaData", opt => opt.MapFrom(src => src.GeniusMetaData));
 
-        CreateMap<GeniusMetaData, GeniusMetaDataDto>()
-            .ForCtorParam("GeniusId", opt => opt.MapFrom(src => src.GeniusId))
-            .ForCtorParam("HeaderImageUrl", opt => opt.MapFrom(src => src.HeaderImageUrl))
-            .ForCtorParam("SongImageUrl", opt => opt.MapFrom(src => src.SongImageUrl))
-            .ForCtorParam("Language", opt => opt.MapFrom(src => src.Language));
+        CreateMap<GeniusMetaData, GeniusMetaDataDto>();
     }
 }
