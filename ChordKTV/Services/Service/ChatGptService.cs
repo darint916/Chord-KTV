@@ -62,7 +62,7 @@ public class ChatGptService : IChatGptService
             temperature = 0
         };
 
-        var jsonRequest = JsonSerializer.Serialize(requestBody);
+        string jsonRequest = JsonSerializer.Serialize(requestBody);
         using var requestMessage = new HttpRequestMessage(HttpMethod.Post, ChatGptEndpoint);
         requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
         requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
@@ -72,31 +72,31 @@ public class ChatGptService : IChatGptService
             // benchmark
             var sw = new Stopwatch();
             sw.Start();
-            using var response = await _httpClient.SendAsync(requestMessage);
+            using HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
             sw.Stop();
             _logger.LogInformation("⏱️ ChatGPT API call took: {ElapsedMilliseconds}ms", sw.ElapsedMilliseconds);
 
             if (!response.IsSuccessStatusCode)
             {
                 // You can add more detailed error logging here.
-                var errorContent = await response.Content.ReadAsStringAsync();
+                string errorContent = await response.Content.ReadAsStringAsync();
                 throw new HttpRequestException($"ChatGPT API call failed with status code {response.StatusCode}: {errorContent}");
             }
 
-            var responseContent = await response.Content.ReadAsStringAsync();
+            string responseContent = await response.Content.ReadAsStringAsync();
 
             // Deserialize the response.
             using var document = JsonDocument.Parse(responseContent);
-            var root = document.RootElement;
+            JsonElement root = document.RootElement;
 
             // The ChatGPT API returns choices in an array.
-            var choices = root.GetProperty("choices");
+            JsonElement choices = root.GetProperty("choices");
             if (choices.GetArrayLength() == 0)
             {
                 throw new InvalidOperationException("No choices were returned from the ChatGPT API.");
             }
 
-            var messageContent = choices[0]
+            string? messageContent = choices[0]
                 .GetProperty("message")
                 .GetProperty("content")
                 .GetString();
@@ -142,7 +142,7 @@ public class ChatGptService : IChatGptService
     {
         //TODO: Revise for batch call to save on api calls
         // For batch processing, we can run multiple translation calls in parallel.
-        var translationTasks = lrcLyrics.Select(request => TranslateLyricsAsync(request.OriginalLyrics, request.LanguageCode, request.Romanize, request.Translate));
+        IEnumerable<Task<TranslationResponseDto>> translationTasks = lrcLyrics.Select(request => TranslateLyricsAsync(request.OriginalLyrics, request.LanguageCode, request.Romanize, request.Translate));
 
         try
         {
