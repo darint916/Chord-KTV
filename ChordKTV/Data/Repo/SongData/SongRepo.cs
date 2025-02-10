@@ -40,7 +40,7 @@ public class SongRepo : ISongRepo
         string normalizedName = name.Trim().Replace(" ", "");
 
         // Retrieve songs from the database first
-        var songs = await _context.Songs
+        List<Song> songs = await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
             .ToListAsync();
@@ -62,13 +62,13 @@ public class SongRepo : ISongRepo
         _logger.LogDebug("Looking up song in cache. Name: {Name}, Artist: {Artist}", normalizedName, normalizedArtist);
 
         // Retrieve songs from the database first
-        var songs = await _context.Songs
+        List<Song> songs = await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
             .ToListAsync();
 
         // Use string.Equals(..., StringComparison.OrdinalIgnoreCase) and the StartsWith overload with StringComparison
-        var result = songs.FirstOrDefault(s =>
+        Song? result = songs.FirstOrDefault(s =>
             (string.Equals(s.Name.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
              s.AlternateNames.Any(n =>
                  string.Equals(n.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase))) &&

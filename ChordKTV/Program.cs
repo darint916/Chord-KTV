@@ -67,7 +67,7 @@ app.UseSwaggerUI();
 //}
 
 // Comment out HTTPS redirection for development
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseAuthorization();
 

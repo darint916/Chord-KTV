@@ -182,7 +182,7 @@ public class SongController : Controller
                 return BadRequest(new { message = "The videos field is required." });
             }
 
-            List<VideoInfo> videos = videosElement.EnumerateArray()
+            var videos = videosElement.EnumerateArray()
                 .Select(v => new VideoInfo(
                     v.GetProperty("title").GetString() ?? string.Empty,
                     v.GetProperty("artist").GetString() ?? string.Empty,

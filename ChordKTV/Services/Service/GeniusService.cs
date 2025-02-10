@@ -40,10 +40,10 @@ public class GeniusService : IGeniusService
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
     }
 
-    private bool IsFuzzyMatch(GeniusResult result, string queryTitle, string? queryArtist)
+    private static bool IsFuzzyMatch(GeniusResult result, string queryTitle, string? queryArtist)
     {
         // Only match on title - we trust Genius's artist data
-        int titleScore = FuzzySharp.Fuzz.Ratio(result.Title.ToLower(), queryTitle.ToLower());
+        int titleScore = Fuzz.Ratio(result.Title.ToLower(CultureInfo.CurrentCulture), queryTitle.ToLower(CultureInfo.CurrentCulture));
         return titleScore >= MINIMUM_FUZZY_RATIO;
     }
 
@@ -62,7 +62,7 @@ public class GeniusService : IGeniusService
                 return null;
             }
 
-            var searchResponse = await response.Content.ReadFromJsonAsync<GeniusSearchResponse>(
+            GeniusSearchResponse? searchResponse = await response.Content.ReadFromJsonAsync<GeniusSearchResponse>(
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (searchResponse?.Response?.Hits == null || searchResponse.Meta.Status != 200)
@@ -71,7 +71,7 @@ public class GeniusService : IGeniusService
             }
 
             // Use the provided fuzzy parameters (which can be different for the fallback scenario)
-            var matchingHit = searchResponse.Response.Hits
+            GeniusHit? matchingHit = searchResponse.Response.Hits
                 .FirstOrDefault(h => h.Result != null && IsFuzzyMatch(h.Result, fuzzyTitle, fuzzyArtist));
 
             if (matchingHit?.Result == null)
@@ -122,7 +122,7 @@ public class GeniusService : IGeniusService
 
         // Enrich the song details from Genius so that the result contains the authoritative PrimaryArtist.
         Song enrichedSong = await EnrichSongDetailsAsync(result);
-        
+
         // Here we update the cached record (or add a new record) with the correct data from Genius.
         if (existingSong != null)
         {
@@ -157,7 +157,7 @@ public class GeniusService : IGeniusService
     private async Task<Song?> MapGeniusResultToSongAsync(GeniusResult result)
     {
         // First check if GeniusMetaData already exists
-        var existingMetaData = await _songRepo.GetGeniusMetaDataAsync(result.Id);
+        GeniusMetaData? existingMetaData = await _songRepo.GetGeniusMetaDataAsync(result.Id);
 
         GeniusMetaData metaData = existingMetaData ?? new GeniusMetaData
         {
@@ -209,7 +209,7 @@ public class GeniusService : IGeniusService
             HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
             response.EnsureSuccessStatusCode();
 
-            var songResponse = await response.Content.ReadFromJsonAsync<GeniusSongResponse>(
+            GeniusSongResponse? songResponse = await response.Content.ReadFromJsonAsync<GeniusSongResponse>(
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (songResponse?.Meta.Status != 200)
@@ -217,7 +217,7 @@ public class GeniusService : IGeniusService
                 return song;
             }
 
-            var songDetails = songResponse.Response.Song;
+            GeniusSongDetails songDetails = songResponse.Response.Song;
 
             // Set language if available
             if (!string.IsNullOrEmpty(songDetails.Language))
