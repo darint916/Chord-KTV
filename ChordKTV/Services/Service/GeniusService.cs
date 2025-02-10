@@ -122,7 +122,7 @@ public class GeniusService : IGeniusService
 
         // Enrich the song details from Genius so that the result contains the authoritative PrimaryArtist.
         Song? enrichedSong = await EnrichSongDetailsAsync(result);
-        
+
         // Check if enrichment failed
         if (enrichedSong == null)
         {
