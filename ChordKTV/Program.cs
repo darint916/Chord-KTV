@@ -53,10 +53,7 @@ builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAutoMapper(cfg =>
-{
-    cfg.AddMaps(typeof(Program).Assembly);
-});
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 WebApplication app = builder.Build();
 
