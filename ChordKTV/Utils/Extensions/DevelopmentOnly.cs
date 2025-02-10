@@ -8,7 +8,7 @@ public class DevelopmentOnlyAttribute : Attribute, IResourceFilter
 {
     public void OnResourceExecuting(ResourceExecutingContext context)
     {
-        var env = context.HttpContext.RequestServices.GetService<IWebHostEnvironment>();
+        IWebHostEnvironment? env = context.HttpContext.RequestServices.GetService<IWebHostEnvironment>();
         if (env == null)
         {
             context.Result = new NotFoundResult();

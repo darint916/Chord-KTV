@@ -72,11 +72,19 @@ public class SongController : Controller
     {
         try
         {
-            string? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, duration);
+            LrcLyricsDto? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, duration);
 
             if (lyrics == null)
             {
                 return NotFound(new { message = "Lyrics not found for the specified track." });
+            }
+
+            // Add romanized lyrics to the DTO (if they exist on LRCLIB)
+            LrcLyricsDto? combinedLyrics = await _lrcService.GetLrcRomanizedLyricsAsync(lyrics);
+
+            if (combinedLyrics != null)
+            {
+                return Ok(combinedLyrics);
             }
 
             return Ok(lyrics);
@@ -106,7 +114,7 @@ public class SongController : Controller
 
     [DevelopmentOnly]
     [HttpGet("database/song")]
-    public async Task<IActionResult> GetSongFromDb([FromQuery, Required] string title, [FromQuery] string? artist, [FromQuery] string? albumName)
+    public async Task<IActionResult> GetSongFromDb([FromQuery, Required] string title, [FromQuery, Required] string artist, [FromQuery] string? albumName)
     {
         //there is no case for album name but no artist, maybe add in future or not need. This for dev testing
         Song? song = null;
