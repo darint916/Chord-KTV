@@ -503,8 +503,8 @@ dotnet_style_allow_statement_immediately_after_block_experimental = true:silent
 ##########################################
 
 dotnet_diagnostic.IDE0005.severity = suggestion
-dotnet_diagnostic.IDE0007.severity = none
-dotnet_diagnostic.IDE0008.severity = none
+# dotnet_diagnostic.IDE0007.severity = none
+# dotnet_diagnostic.IDE0008.severity = none
 dotnet_diagnostic.IDE0009.severity = none
 dotnet_diagnostic.IDE0028.severity = suggestion
 dotnet_diagnostic.IDE0021.severity = suggestion

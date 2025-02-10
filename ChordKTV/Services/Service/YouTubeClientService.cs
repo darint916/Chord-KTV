@@ -26,7 +26,7 @@ public class YouTubeApiClientService : IYouTubeClientService
             return null;
         }
 
-        YouTubeService googleYouTube = new YouTubeService(
+        var googleYouTube = new YouTubeService(
             new BaseClientService.Initializer
             {
                 ApiKey = _apiKey,
@@ -47,7 +47,7 @@ public class YouTubeApiClientService : IYouTubeClientService
         playlistItemsRequest.PlaylistId = playlistId;
         playlistItemsRequest.MaxResults = 50;
 
-        List<VideoInfo> videos = new List<VideoInfo>();
+        var videos = new List<VideoInfo>();
         PlaylistItemListResponse playlistItemsResponse;
         do
         {
@@ -57,12 +57,12 @@ public class YouTubeApiClientService : IYouTubeClientService
             var videoIds = playlistItemsResponse.Items.Select(item => item.ContentDetails.VideoId).ToList();
 
             // Get video details including duration and correct channel info
-            var videoDetails = await GetVideosDetailsAsync(googleYouTube, videoIds);
+            Dictionary<string, VideoDetails> videoDetails = await GetVideosDetailsAsync(googleYouTube, videoIds);
 
             foreach (PlaylistItem item in playlistItemsResponse.Items)
             {
                 string videoId = item.ContentDetails.VideoId;
-                if (videoDetails.TryGetValue(videoId, out var details))
+                if (videoDetails.TryGetValue(videoId, out VideoDetails? details))
                 {
                     string title = item.Snippet.Title;
                     string url = $"https://www.youtube.com/watch?v={videoId}";
@@ -90,14 +90,14 @@ public class YouTubeApiClientService : IYouTubeClientService
         var result = new Dictionary<string, VideoDetails>();
 
         // YouTube API allows up to 50 video IDs per request
-        foreach (var idBatch in videoIds.Chunk(50))
+        foreach (string[] idBatch in videoIds.Chunk(50))
         {
-            var videoRequest = youTubeService.Videos.List("snippet,contentDetails");
+            VideosResource.ListRequest videoRequest = youTubeService.Videos.List("snippet,contentDetails");
             videoRequest.Id = string.Join(",", idBatch);
 
-            var videoResponse = await videoRequest.ExecuteAsync();
+            VideoListResponse videoResponse = await videoRequest.ExecuteAsync();
 
-            foreach (var video in videoResponse.Items)
+            foreach (Video? video in videoResponse.Items)
             {
                 TimeSpan duration = TimeSpan.Zero;
                 try
