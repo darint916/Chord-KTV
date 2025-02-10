@@ -121,7 +121,13 @@ public class GeniusService : IGeniusService
         }
 
         // Enrich the song details from Genius so that the result contains the authoritative PrimaryArtist.
-        Song enrichedSong = await EnrichSongDetailsAsync(result);
+        Song? enrichedSong = await EnrichSongDetailsAsync(result);
+        
+        // Check if enrichment failed
+        if (enrichedSong == null)
+        {
+            return null;
+        }
 
         // Here we update the cached record (or add a new record) with the correct data from Genius.
         if (existingSong != null)
@@ -133,11 +139,9 @@ public class GeniusService : IGeniusService
             await _songRepo.UpdateAsync(existingSong);
             return existingSong;
         }
-        else
-        {
-            await _songRepo.AddAsync(enrichedSong);
-            return enrichedSong;
-        }
+
+        await _songRepo.AddAsync(enrichedSong);
+        return enrichedSong;
     }
 
     public async Task<List<Song>> GetSongsByArtistTitleAsync(List<VideoInfo> videos, bool forceRefresh = false)
