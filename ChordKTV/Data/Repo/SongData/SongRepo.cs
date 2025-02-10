@@ -36,35 +36,45 @@ public class SongRepo : ISongRepo
 
     public async Task<Song?> GetSongAsync(string name)
     {
-        string normalizedName = name.Trim().ToLowerInvariant();
-        return await _context.Songs
+        // Normalize input on the client side (remove spaces)
+        string normalizedName = name.Trim().Replace(" ", "");
+        
+        // Retrieve songs from the database first
+        var songs = await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
-            .FirstOrDefaultAsync(s =>
-                string.Equals(s.Name.Trim().ToLowerInvariant(), normalizedName, StringComparison.Ordinal) ||
-                s.AlternateNames.Any(n => string.Equals(n.Trim().ToLowerInvariant(), normalizedName, StringComparison.Ordinal))
-            );
+            .ToListAsync();
+
+        // Use a case-insensitive comparison with StringComparison.OrdinalIgnoreCase
+        return songs.FirstOrDefault(s =>
+            string.Equals(s.Name.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
+            s.AlternateNames.Any(n => string.Equals(n.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase))
+        );
     }
 
     // Will null if artist isnt direct match, as we expect direct artist match (assuming this is from genius data)
     public async Task<Song?> GetSongAsync(string name, string artist)
     {
-        string normalizedName = name.Trim().ToLowerInvariant();
-        string normalizedArtist = artist.Trim().ToLowerInvariant();
+        // Normalize input on the client side (remove spaces; leave case alone)
+        string normalizedName = name.Trim().Replace(" ", "");
+        string normalizedArtist = artist.Trim();
 
         _logger.LogDebug("Looking up song in cache. Name: {Name}, Artist: {Artist}", normalizedName, normalizedArtist);
 
-        var result = await _context.Songs
+        // Retrieve songs from the database first
+        var songs = await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
-            .FirstOrDefaultAsync(s =>
-                (string.Equals(s.Name.Trim().ToLowerInvariant().Replace(" ", ""), 
-                    normalizedName.Replace(" ", ""), StringComparison.Ordinal) ||
-                 s.AlternateNames.Any(n => string.Equals(n.Trim().ToLowerInvariant().Replace(" ", ""), 
-                    normalizedName.Replace(" ", ""), StringComparison.Ordinal))) &&
-                (s.PrimaryArtist.Trim().ToLowerInvariant().StartsWith(normalizedArtist, StringComparison.Ordinal) ||
-                 s.FeaturedArtists.Any(a => a.Trim().ToLowerInvariant().StartsWith(normalizedArtist, StringComparison.Ordinal)))
-            );
+            .ToListAsync();
+
+        // Use string.Equals(..., StringComparison.OrdinalIgnoreCase) and the StartsWith overload with StringComparison
+        var result = songs.FirstOrDefault(s =>
+            (string.Equals(s.Name.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
+             s.AlternateNames.Any(n =>
+                 string.Equals(n.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase))) &&
+            (s.PrimaryArtist.Trim().StartsWith(normalizedArtist, StringComparison.OrdinalIgnoreCase) ||
+             s.FeaturedArtists.Any(a => a.Trim().StartsWith(normalizedArtist, StringComparison.OrdinalIgnoreCase)))
+        );
 
         _logger.LogDebug("Cache lookup result: {Result}", result != null ? "Found" : "Not found");
 
