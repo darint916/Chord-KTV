@@ -26,7 +26,7 @@ public class YouTubeApiClientService : IYouTubeClientService
             return null;
         }
 
-        YouTubeService googleYouTube = new YouTubeService(
+        var googleYouTube = new YouTubeService(
             new BaseClientService.Initializer
             {
                 ApiKey = _apiKey,
@@ -47,7 +47,7 @@ public class YouTubeApiClientService : IYouTubeClientService
         playlistItemsRequest.PlaylistId = playlistId;
         playlistItemsRequest.MaxResults = 50;
 
-        List<VideoInfo> videos = new List<VideoInfo>();
+        var videos = new List<VideoInfo>();
         PlaylistItemListResponse playlistItemsResponse;
         do
         {
@@ -85,7 +85,7 @@ public class YouTubeApiClientService : IYouTubeClientService
             try
             {
                 // Convert ISO 8601 duration to TimeSpan
-                TimeSpan duration = System.Xml.XmlConvert.ToTimeSpan(isoDuration);
+                var duration = System.Xml.XmlConvert.ToTimeSpan(isoDuration);
                 return duration;
             }
             catch
