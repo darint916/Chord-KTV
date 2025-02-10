@@ -7,7 +7,7 @@ using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using ChordKTV.Dtos;
 using System.Globalization;
-using ChordKTV.Models.GeniusApi;
+using ChordKTV.Dtos.GeniusApi;
 
 namespace ChordKTV.Services.Service;
 

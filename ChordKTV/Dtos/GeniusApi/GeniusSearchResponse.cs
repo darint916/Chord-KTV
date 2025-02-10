@@ -1,4 +1,4 @@
-namespace ChordKTV.Models.GeniusApi;
+namespace ChordKTV.Dtos.GeniusApi;
 
 public class GeniusSearchResponse
 {
