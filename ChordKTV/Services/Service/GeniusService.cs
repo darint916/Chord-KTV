@@ -42,21 +42,9 @@ public class GeniusService : IGeniusService
 
     private bool IsFuzzyMatch(GeniusResult result, string queryTitle, string? queryArtist)
     {
-        // Title comparison
+        // Only match on title - we trust Genius's artist data
         int titleScore = FuzzySharp.Fuzz.Ratio(result.Title.ToLower(), queryTitle.ToLower());
-        
-        // If no artist provided, only check title
-        if (string.IsNullOrEmpty(queryArtist))
-        {
-            return titleScore >= MINIMUM_FUZZY_RATIO;
-        }
-
-        // Artist comparison
-        int artistScore = FuzzySharp.Fuzz.Ratio(result.PrimaryArtistNames.ToLower(), queryArtist.ToLower());
-        
-        // Average both scores, requiring both to be reasonably good
-        double averageScore = (titleScore + artistScore) / 2.0;
-        return averageScore >= MINIMUM_FUZZY_RATIO;
+        return titleScore >= MINIMUM_FUZZY_RATIO;
     }
 
     /// <summary>
@@ -102,28 +90,26 @@ public class GeniusService : IGeniusService
 
     public async Task<Song?> GetSongByArtistTitleAsync(string title, string? artist, bool forceRefresh = false)
     {
-        // Check the database first (do not modify this behavior)
+        // Instead of relying solely on the cached record,
+        // we also check that the cached song has a valid (non-empty) PrimaryArtist.
         Song? existingSong = null;
         if (!forceRefresh)
         {
-            existingSong = artist != null
-                ? await _songRepo.GetSongAsync(title, artist)
-                : await _songRepo.GetSongAsync(title);
-
-            if (existingSong != null && existingSong.GeniusMetaData.GeniusId != 0)
+            existingSong = await _songRepo.GetSongAsync(title);
+            if (existingSong != null && existingSong.GeniusMetaData.GeniusId != 0 && !string.IsNullOrWhiteSpace(existingSong.PrimaryArtist))
             {
-                _logger.LogDebug("Using cached song from database: {Title} by {Artist}", title, artist);
+                _logger.LogDebug("Using cached song from database: {Title} by {PrimaryArtist}", title, existingSong.PrimaryArtist);
                 return existingSong;
             }
         }
 
-        // First try: search with title plus artist (if available)
-        string primaryQuery = artist != null ? $"{title} {artist}" : title;
+        // Use the user input to construct the query for Genius.
+        // Even if the artist is incorrect, the combined query might help Genius return the correct song.
+        string primaryQuery = !string.IsNullOrEmpty(artist) ? $"{title} {artist}" : title;
         Song? result = await SearchGenius(primaryQuery, title, artist);
 
-        // If no result was found with the combined query and an artist was provided,
-        // try a fallback search with just the title.
-        if (result == null && artist != null)
+        // Fallback: if no result was found with the combined query and an artist was provided, try title only.
+        if (result == null && !string.IsNullOrEmpty(artist))
         {
             _logger.LogDebug("No results found with artist, trying title only: {Title}", title);
             result = await SearchGenius(title, title, null);
@@ -134,23 +120,24 @@ public class GeniusService : IGeniusService
             return null;
         }
 
-        // Enrich and store the song
-        var enrichedSong = await EnrichSongDetailsAsync(result);
-        if (enrichedSong?.GeniusMetaData?.GeniusId != 0)
+        // Enrich the song details from Genius so that the result contains the authoritative PrimaryArtist.
+        Song enrichedSong = await EnrichSongDetailsAsync(result);
+        
+        // Here we update the cached record (or add a new record) with the correct data from Genius.
+        if (existingSong != null)
         {
-            if (existingSong != null)
-            {
-                existingSong.GeniusMetaData = enrichedSong.GeniusMetaData!;
-                existingSong.PlainLyrics = enrichedSong.PlainLyrics;
-                await _songRepo.UpdateAsync(existingSong);
-            }
-            else
-            {
-                await _songRepo.AddAsync(enrichedSong);
-            }
+            // Update the cached entry with the correct singer name from Genius.
+            existingSong.PrimaryArtist = enrichedSong.PrimaryArtist;
+            existingSong.GeniusMetaData = enrichedSong.GeniusMetaData;
+            existingSong.PlainLyrics = enrichedSong.PlainLyrics;
+            await _songRepo.UpdateAsync(existingSong);
+            return existingSong;
         }
-
-        return enrichedSong;
+        else
+        {
+            await _songRepo.AddAsync(enrichedSong);
+            return enrichedSong;
+        }
     }
 
     public async Task<List<Song>> GetSongsByArtistTitleAsync(List<VideoInfo> videos, bool forceRefresh = false)
@@ -190,7 +177,7 @@ public class GeniusService : IGeniusService
         // Handle album if present
         if (result.Album != null && !string.IsNullOrEmpty(result.Album.Name))
         {
-            Album? existingAlbum = await _albumRepo.GetAlbumAsync(result.Album.Name, result.PrimaryArtistNames);
+            Album? existingAlbum = await _albumRepo.GetAlbumAsync(result.Album.Name, song.PrimaryArtist);
             if (existingAlbum != null)
             {
                 song.Albums.Add(existingAlbum);
@@ -200,7 +187,7 @@ public class GeniusService : IGeniusService
                 song.Albums.Add(new Album
                 {
                     Name = result.Album.Name,
-                    Artist = result.PrimaryArtistNames
+                    Artist = song.PrimaryArtist
                 });
             }
         }
