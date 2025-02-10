@@ -2,6 +2,7 @@ using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 namespace ChordKTV.Data.Repo;
 
 
@@ -35,21 +36,21 @@ public class SongRepo : ISongRepo
 
     public async Task<Song?> GetSongAsync(string name)
     {
-        string normalizedName = name.Trim().ToLower();
+        string normalizedName = name.Trim().ToLowerInvariant();
         return await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
             .FirstOrDefaultAsync(s =>
-                s.Name.Trim().ToLower() == normalizedName ||
-                s.AlternateNames.Any(n => n.Trim().ToLower() == normalizedName)
+                string.Equals(s.Name.Trim().ToLowerInvariant(), normalizedName, StringComparison.Ordinal) ||
+                s.AlternateNames.Any(n => string.Equals(n.Trim().ToLowerInvariant(), normalizedName, StringComparison.Ordinal))
             );
     }
 
     // Will null if artist isnt direct match, as we expect direct artist match (assuming this is from genius data)
     public async Task<Song?> GetSongAsync(string name, string artist)
     {
-        string normalizedName = name.Trim().ToLower();
-        string normalizedArtist = artist.Trim().ToLower();
+        string normalizedName = name.Trim().ToLowerInvariant();
+        string normalizedArtist = artist.Trim().ToLowerInvariant();
 
         _logger.LogDebug("Looking up song in cache. Name: {Name}, Artist: {Artist}", normalizedName, normalizedArtist);
 
@@ -57,10 +58,12 @@ public class SongRepo : ISongRepo
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
             .FirstOrDefaultAsync(s =>
-                (s.Name.Trim().ToLower().Replace(" ", "") == normalizedName.Replace(" ", "") ||
-                 s.AlternateNames.Any(n => n.Trim().ToLower().Replace(" ", "") == normalizedName.Replace(" ", ""))) &&
-                (s.PrimaryArtist.Trim().ToLower().StartsWith(normalizedArtist) ||
-                 s.FeaturedArtists.Any(a => a.Trim().ToLower().StartsWith(normalizedArtist)))
+                (string.Equals(s.Name.Trim().ToLowerInvariant().Replace(" ", ""), 
+                    normalizedName.Replace(" ", ""), StringComparison.Ordinal) ||
+                 s.AlternateNames.Any(n => string.Equals(n.Trim().ToLowerInvariant().Replace(" ", ""), 
+                    normalizedName.Replace(" ", ""), StringComparison.Ordinal))) &&
+                (s.PrimaryArtist.Trim().ToLowerInvariant().StartsWith(normalizedArtist, StringComparison.Ordinal) ||
+                 s.FeaturedArtists.Any(a => a.Trim().ToLowerInvariant().StartsWith(normalizedArtist, StringComparison.Ordinal)))
             );
 
         _logger.LogDebug("Cache lookup result: {Result}", result != null ? "Found" : "Not found");
