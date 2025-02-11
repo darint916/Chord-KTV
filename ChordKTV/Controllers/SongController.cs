@@ -106,22 +106,32 @@ public class SongController : Controller
         return Ok(lyricsDto);
     }
 
-    // public async Task<IActionResult> SearchLyrics([FromBody] SearchRequestDto request)
-    // {
-    //     try
-    //     {
-    //         SearchResponseDto searchResponse = await _lrcService.SearchLyricsAsync(request.Query, request.Page, request.PageSize);
-    //         return Ok(searchResponse);
-    //     }
-    //     catch (HttpRequestException ex)
-    //     {
-    //         return StatusCode(503, new { message = "Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
-    //     }
-    // }
+    [HttpPost("songs/search")]
+    public async Task<IActionResult> SearchLyrics([FromBody] SearchRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Title) && string.IsNullOrWhiteSpace(request.Lyrics))
+        {
+            return BadRequest(new { message = "At least one of the following fields is required: title, lyrics." });
+        }
+        string? lyricsQuery = null;
+        if (!string.IsNullOrWhiteSpace(request.Lyrics))
+        {
+            lyricsQuery = request.Lyrics + " " + request.Title ?? "" + " " + request.Artist ?? "";
+        }
+        try
+        {
+            FullSongDto searchResponse = await _lrcService.SearchLyricsAsync(request.Title, request.Artist, request.Duration, request.Lyrics);
+            return Ok(searchResponse);
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(503, new { message = "Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
+        }
+    }
 
     [HttpGet("health")]
     public IActionResult HealthCheck()
