@@ -1,14 +1,10 @@
-namespace ChordKTV.Services;
-
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
+
+namespace ChordKTV.Services;
 
 public class YouTubeApiClientService : IYouTubeClientService
 {

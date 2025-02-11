@@ -1,6 +1,6 @@
-namespace ChordKTV.Services.Api;
-
 using ChordKTV.Dtos;
+
+namespace ChordKTV.Services.Api;
 
 public interface ILrcService
 {

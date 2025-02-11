@@ -1,6 +1,3 @@
-namespace ChordKTV.Controllers;
-
-using System;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using ChordKTV.Services.Api;
@@ -8,10 +5,10 @@ using ChordKTV.Dtos;
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using ChordKTV.Utils.Extensions;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using AutoMapper;
+
+namespace ChordKTV.Controllers;
 
 [ApiController]
 [Route("api")]
@@ -45,14 +42,6 @@ public class SongController : Controller
         _chatGptService = chatGptService;
         _logger = logger;
     }
-
-    // [HttpGet("genius/{song:string}")]
-
-    // public async Task<IActionResult> GetSongByArtistTitle(string title, string? artist)
-    // {
-    //     //var song = await _geniusRepo.GetSongByArtistTitle(title, artist);
-    //     //return Ok(song);
-    // }
 
     [HttpGet("youtube/playlist/{playlistId}")]
     public async Task<IActionResult> GetYouTubePlaylist(string playlistId)

@@ -1,6 +1,4 @@
 using System.Net.Http.Headers;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using ChordKTV.Services.Api;
 using ChordKTV.Data.Api.SongData;
