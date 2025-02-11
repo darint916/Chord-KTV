@@ -43,7 +43,7 @@ public class SongController : Controller
         _logger = logger;
     }
 
-    [HttpGet("youtube/playlist/{playlistId}")]
+    [HttpGet("youtube/playlists/{playlistId}")]
     public async Task<IActionResult> GetYouTubePlaylist(string playlistId)
     {
         PlaylistDetailsDto? result = await _youTubeService.GetPlaylistDetailsAsync(playlistId);
@@ -55,7 +55,7 @@ public class SongController : Controller
         return Ok(result);
     }
 
-    [HttpGet("lrclib/search")]
+    [HttpGet("lyrics/lrclib/search")]
     public async Task<IActionResult> GetLrcLibLyrics([FromQuery, Required] string title, [FromQuery, Required] string artist,
                                     [FromQuery] string? albumName, [FromQuery] float? duration)
     {
@@ -88,50 +88,15 @@ public class SongController : Controller
         }
     }
 
-    [HttpPost("chatgpt/translation")]
+    [HttpPost("lyrics/lrc/translation")]
     public async Task<IActionResult> PostChatGptTranslations([FromBody] TranslationRequestDto request)
     {
         TranslationResponseDto lyricsDto = await _chatGptService.TranslateLyricsAsync(request.OriginalLyrics, request.LanguageCode, request.Romanize, request.Translate);
         return Ok(lyricsDto);
     }
 
-    [HttpGet("health")]
-    public IActionResult HealthCheck()
-    {
-        return Ok(new { message = "Song API is healthy." });
-    }
 
-    [DevelopmentOnly]
-    [HttpGet("database/song")]
-    public async Task<IActionResult> GetSongFromDb([FromQuery, Required] string title, [FromQuery, Required] string artist, [FromQuery] string? albumName)
-    {
-        //there is no case for album name but no artist, maybe add in future or not need. This for dev testing
-        Song? song = null;
-        if (!string.IsNullOrEmpty(albumName) && !string.IsNullOrEmpty(artist))
-        {
-            song = await _songRepo.GetSongAsync(title, artist, albumName);
-        }
-        else if (!string.IsNullOrEmpty(artist))
-        {
-            song = await _songRepo.GetSongAsync(title, artist);
-        }
-        song ??= await _songRepo.GetSongAsync(title);
-        if (song == null)
-        {
-            return NotFound(new { message = "Song not found in database." });
-        }
-        return Ok(song);
-    }
-
-    [DevelopmentOnly]
-    [HttpPost("database/song")]
-    public async Task<IActionResult> AddSongToDb([FromBody] Song song)
-    {
-        await _songRepo.AddAsync(song);
-        return Ok();
-    }
-
-    [HttpGet("genius/search")]
+    [HttpGet("songs/genius/search")]
     public async Task<IActionResult> GetSongByArtistTitle(
         [FromQuery, Required] string title,
         [FromQuery] string? artist,
@@ -159,7 +124,7 @@ public class SongController : Controller
         }
     }
 
-    [HttpPost("genius/search/batch")]
+    [HttpPost("songs/genius/search/batch")]
     public async Task<IActionResult> GetSongsByArtistTitle(
         [FromBody] JsonElement request,
         [FromQuery] bool forceRefresh = false)
@@ -231,5 +196,41 @@ public class SongController : Controller
             _logger.LogError(ex, "Error fetching songs for album {AlbumName}", albumName);
             return StatusCode(500, new { message = "An unexpected error occurred." });
         }
+    }
+
+    [HttpGet("health")]
+    public IActionResult HealthCheck()
+    {
+        return Ok(new { message = "Song API is healthy." });
+    }
+
+    [DevelopmentOnly]
+    [HttpGet("database/song")]
+    public async Task<IActionResult> GetSongFromDb([FromQuery, Required] string title, [FromQuery, Required] string artist, [FromQuery] string? albumName)
+    {
+        //there is no case for album name but no artist, maybe add in future or not need. This for dev testing
+        Song? song = null;
+        if (!string.IsNullOrEmpty(albumName) && !string.IsNullOrEmpty(artist))
+        {
+            song = await _songRepo.GetSongAsync(title, artist, albumName);
+        }
+        else if (!string.IsNullOrEmpty(artist))
+        {
+            song = await _songRepo.GetSongAsync(title, artist);
+        }
+        song ??= await _songRepo.GetSongAsync(title);
+        if (song == null)
+        {
+            return NotFound(new { message = "Song not found in database." });
+        }
+        return Ok(song);
+    }
+
+    [DevelopmentOnly]
+    [HttpPost("database/song")]
+    public async Task<IActionResult> AddSongToDb([FromBody] Song song)
+    {
+        await _songRepo.AddAsync(song);
+        return Ok();
     }
 }
