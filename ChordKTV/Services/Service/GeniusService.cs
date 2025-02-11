@@ -96,9 +96,9 @@ public class GeniusService : IGeniusService
         if (!forceRefresh)
         {
             existingSong = await _songRepo.GetSongAsync(title);
-            if (existingSong != null && existingSong.GeniusMetaData.GeniusId != 0 && !string.IsNullOrWhiteSpace(existingSong.PrimaryArtist))
+            if (existingSong != null && existingSong.GeniusMetaData.GeniusId != 0 && !string.IsNullOrWhiteSpace(existingSong.Artist))
             {
-                _logger.LogDebug("Using cached song from database: {Title} by {PrimaryArtist}", title, existingSong.PrimaryArtist);
+                _logger.LogDebug("Using cached song from database: {Title} by {PrimaryArtist}", title, existingSong.Artist);
                 return existingSong;
             }
         }
@@ -133,7 +133,7 @@ public class GeniusService : IGeniusService
         if (existingSong != null)
         {
             // Update the cached entry with the correct singer name from Genius.
-            existingSong.PrimaryArtist = enrichedSong.PrimaryArtist;
+            existingSong.Artist = enrichedSong.Artist;
             existingSong.GeniusMetaData = enrichedSong.GeniusMetaData;
             existingSong.PlainLyrics = enrichedSong.PlainLyrics;
             await _songRepo.UpdateAsync(existingSong);
@@ -173,15 +173,15 @@ public class GeniusService : IGeniusService
         // Create song object with existing or new metadata
         Song song = new()
         {
-            Name = result.Title,
-            PrimaryArtist = result.PrimaryArtistNames,
+            Title = result.Title,
+            Artist = result.PrimaryArtistNames,
             GeniusMetaData = metaData
         };
 
         // Handle album if present
         if (result.Album != null && !string.IsNullOrEmpty(result.Album.Name))
         {
-            Album? existingAlbum = await _albumRepo.GetAlbumAsync(result.Album.Name, song.PrimaryArtist);
+            Album? existingAlbum = await _albumRepo.GetAlbumAsync(result.Album.Name, song.Artist);
             if (existingAlbum != null)
             {
                 song.Albums.Add(existingAlbum);
@@ -191,7 +191,7 @@ public class GeniusService : IGeniusService
                 song.Albums.Add(new Album
                 {
                     Name = result.Album.Name,
-                    Artist = song.PrimaryArtist
+                    Artist = song.Artist
                 });
             }
         }
@@ -242,13 +242,13 @@ public class GeniusService : IGeniusService
             // Handle album
             if (songDetails.Album != null && !string.IsNullOrEmpty(songDetails.Album.Name))
             {
-                Album? existingAlbum = await _albumRepo.GetAlbumAsync(songDetails.Album.Name, song.PrimaryArtist);
+                Album? existingAlbum = await _albumRepo.GetAlbumAsync(songDetails.Album.Name, song.Artist);
                 if (existingAlbum == null)
                 {
                     existingAlbum = new Album
                     {
                         Name = songDetails.Album.Name,
-                        Artist = song.PrimaryArtist,
+                        Artist = song.Artist,
                         IsSingle = false
                     };
                     await _albumRepo.AddAsync(existingAlbum);
