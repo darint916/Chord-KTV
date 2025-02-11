@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Json;
 using ChordKTV.Dtos;
 using ChordKTV.Services.Api;
-using Microsoft.Extensions.Logging;
 
 namespace ChordKTV.Services.Service;
 public class ChatGptService : IChatGptService
