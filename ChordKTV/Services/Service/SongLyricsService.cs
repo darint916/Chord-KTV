@@ -40,17 +40,17 @@ public class SongLyricsService
         }
 
         //check if lyrics exist
-        if (string.IsNullOrWhiteSpace(song.SyncLyrics))
+        if (string.IsNullOrWhiteSpace(song.LrcLyrics))
         {
             return null;
         }
 
-        if (string.IsNullOrWhiteSpace(song.SyncLyrics))
-        {
-            LrcLyricsDto lyrics = _lrcService.GetLrcLibLyricsAsync(song.Name, song.PrimaryArtist, song.Albums.First() ??, duration);
-            lyrics.
-            return song;
-        }
+        // if (string.IsNullOrWhiteSpace(song.LrcLyrics))
+        // {
+        //     LrcLyricsDto lyrics = _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, song.Albums.First() ??, duration);
+        //     lyrics.
+        //     return song;
+        // }
         //check if lyrics are romanized
         //lrc service
 
