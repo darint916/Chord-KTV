@@ -7,6 +7,9 @@ using ChordKTV.Models.SongData;
 using ChordKTV.Utils.Extensions;
 using System.Text.Json;
 using AutoMapper;
+using ChordKTV.Dtos.FullSong;
+
+namespace ChordKTV.Controllers;
 
 namespace ChordKTV.Controllers;
 
@@ -22,7 +25,7 @@ public class SongController : Controller
     private readonly ILogger<SongController> _logger;
     private readonly IMapper _mapper;
     private readonly IChatGptService _chatGptService;
-
+    private readonly IFullSongService _fullSongService;
     public SongController(
         IMapper mapper,
         IYouTubeClientService youTubeService,
@@ -31,7 +34,9 @@ public class SongController : Controller
         IGeniusService geniusService,
         IAlbumRepo albumRepo,
         IChatGptService chatGptService,
-        ILogger<SongController> logger)
+        IFullSongService fullSongService,
+        ILogger<SongController> logger
+        )
     {
         _mapper = mapper;
         _songRepo = songRepo;
@@ -40,6 +45,7 @@ public class SongController : Controller
         _geniusService = geniusService;
         _albumRepo = albumRepo;
         _chatGptService = chatGptService;
+        _fullSongService = fullSongService;
         _logger = logger;
     }
 
@@ -96,7 +102,7 @@ public class SongController : Controller
     }
 
     [HttpPost("songs/search")]
-    public async Task<IActionResult> SearchLyrics([FromBody] SearchRequestDto request)
+    public async Task<IActionResult> SearchLyrics([FromBody] FullSongRequestDto request)
     {
         if (string.IsNullOrWhiteSpace(request.Title) && string.IsNullOrWhiteSpace(request.Lyrics))
         {
@@ -109,7 +115,8 @@ public class SongController : Controller
         }
         try
         {
-            FullSongDto searchResponse = await _lrcService.SearchLyricsAsync(request.Title, request.Artist, request.Duration, request.Lyrics);
+            Song? fullSong = await _fullSongService.GetFullSongAsync(request.Title, request.Artist, request.Duration, lyricsQuery, request.YouTubeUrl);
+            
             return Ok(searchResponse);
         }
         catch (HttpRequestException ex)

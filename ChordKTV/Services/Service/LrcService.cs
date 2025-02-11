@@ -109,7 +109,7 @@ public class LrcService : ILrcService
                 else // If already romanized, look for original lang
                 {
                     string? romanizedPlainLyrics = lyricsDto.PlainLyrics;
-                    string? romanizedSyncedLyrics = lyricsDto.SyncedLyrics;
+                    string? romanizedSyncedLyrics = lyricsDto.LrcLyrics;
 
                     // Look for any other result that has original lyrics
                     JsonElement? origMatch = searchResults
@@ -123,7 +123,7 @@ public class LrcService : ILrcService
                     if (origMatch != null && origMatch.Value.ValueKind != JsonValueKind.Undefined)
                     {
                         lyricsDto.PlainLyrics = origMatch.Value.GetProperty("plainLyrics").GetString();
-                        lyricsDto.SyncedLyrics = origMatch.Value.GetProperty("syncedLyrics").GetString();
+                        lyricsDto.LrcLyrics = origMatch.Value.GetProperty("syncedLyrics").GetString();
                         lyricsDto.RomanizedPlainLyrics = romanizedPlainLyrics;
                         lyricsDto.RomanizedSyncedLyrics = romanizedSyncedLyrics;
                     }

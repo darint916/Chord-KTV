@@ -100,4 +100,9 @@ public class SongRepo : ISongRepo
         return await _context.GeniusMetaData.FindAsync(geniusId);
     }
 
+    public async Task UpdateSongAsync(Song song)
+    {
+        _context.Songs.Update(song);
+        await _context.SaveChangesAsync();
+    }
 }

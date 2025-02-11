@@ -14,10 +14,10 @@ public class Song
     public DateOnly? ReleaseDate { get; set; }
     public string? Genre { get; set; } = string.Empty; //Optional for now? filled by community?
     public string LrcLyrics { get; set; } = string.Empty; //from RLC Library
-    public TimeSpan? SongDuration { get; set; }  //in seconds
+    public TimeSpan? Duration { get; set; }  //in seconds
     public string PlainLyrics { get; set; } = string.Empty; //from lyrics genius as backup
     public string RomanizedLyrics { get; set; } = string.Empty; //from LRC Library
-    public string LLMTranslation { get; set; } = string.Empty; //from LLM
+    public string TranslatedLyrics { get; set; } = string.Empty; //from LLM
     public GeniusMetaData GeniusMetaData { get; set; } = new GeniusMetaData();
     public int LrcId { get; set; }
     public int RomLrcId { get; set; }
