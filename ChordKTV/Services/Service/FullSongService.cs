@@ -92,13 +92,16 @@ public class FullSongService : IFullSongService
         }
 
         //Add/Update youtube urls
-        if (string.IsNullOrWhiteSpace(song.YoutubeUrl) && !string.IsNullOrWhiteSpace(youtubeUrl))
+        if (!string.IsNullOrWhiteSpace(youtubeUrl))
         {
-            song.YoutubeUrl = youtubeUrl;
-        }
-        else if (!string.IsNullOrWhiteSpace(youtubeUrl) && !song.AlternateYoutubeUrls.Contains(youtubeUrl))
-        {
-            song.AlternateYoutubeUrls.Add(youtubeUrl);
+            if (string.IsNullOrWhiteSpace(song.YoutubeUrl))
+            {
+                song.YoutubeUrl = youtubeUrl;
+            }
+            else if (!song.AlternateYoutubeUrls.Contains(youtubeUrl))
+            {
+                song.AlternateYoutubeUrls.Add(youtubeUrl);
+            }
         }
 
         //Save to db, only update, assuming genius creates the resource
