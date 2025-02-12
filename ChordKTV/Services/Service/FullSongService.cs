@@ -35,12 +35,8 @@ public class FullSongService : IFullSongService
         //genius service
         //intellisense cant read the above null avoiding logic smh
         ArgumentNullException.ThrowIfNull(title);
-        Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist);
-        if (song == null)
-        {
-            throw new InvalidOperationException("Song not found on Genius");
             //TODO find alternative ways to search if not on genius? search lrc as backup? need to consider creating db entry if so
-        }
+        Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist) ?? throw new InvalidOperationException("Song not found on Genius");
 
         //Gets lyrics from lrc service if not already present
         LrcLyricsDto? lyricsDto = null;
@@ -63,11 +59,14 @@ public class FullSongService : IFullSongService
                 return song;
             }
             song.LrcLyrics = lyricsDto.SyncedLyrics;
+
+            //TODO: Refactor once issue #52 solved
+            lyricsDto = await _lrcService.GetLrcRomanizedLyricsAsync(lyricsDto);
             //TODO: ASSIGN LRC LYRIC ID TO SONG (not assigned in lrc service as of 2/11/25)
         }
 
-        _logger.LogInformation("Got lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, song.Duration);
-        _logger.LogInformation("Lyrics: {Lyrics}", song.LrcLyrics);
+        _logger.LogDebug("Got lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, song.Duration);
+        _logger.LogDebug("Lyrics: {Lyrics}", song.LrcLyrics);
         //check if lyrics are romanized (note that we do not check LRC Lib for romanization if db alr has synced lyrics)
         bool needRomanization = true;
         bool needTranslation = string.IsNullOrWhiteSpace(song.LrcTranslatedLyrics);
@@ -104,7 +103,7 @@ public class FullSongService : IFullSongService
 
         //Save to db, only update, assuming genius creates the resource
         //TODO: Consider abstracting song creation out of genius service or as flag
-        // await _songRepo.UpdateSongAsync(song);
+        await _songRepo.UpdateSongAsync(song);
         return song;
     }
 }

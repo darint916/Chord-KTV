@@ -51,9 +51,7 @@ Respond using this format, keep '---' only:
 ";
 
         string systemPrompt = $@"
-You are a helpful assistant that translates LRC formatted lyrics into an English translation and, if needed, a romanized version (using the English alphabet).
-Please output your answer in two sections separated by a line containing only three hyphens --- In the first section, output the romanized lyrics (if applicable or blank); in the second section, output the English translation (if applicable or blank).If section is not prompted for, just leave blank.
-        ";
+You are a helpful assistant that translates LRC formatted lyrics into an English translation and, if needed, a romanized version (using the English alphabet) while maintaing the same format.";
         var requestBody = new
         {
             model = Model,
