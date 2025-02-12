@@ -35,7 +35,7 @@ public class FullSongService : IFullSongService
         //genius service
         //intellisense cant read the above null avoiding logic smh
         ArgumentNullException.ThrowIfNull(title);
-            //TODO find alternative ways to search if not on genius? search lrc as backup? need to consider creating db entry if so
+        //TODO find alternative ways to search if not on genius? search lrc as backup? need to consider creating db entry if so
         Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist) ?? throw new InvalidOperationException("Song not found on Genius");
 
         //Gets lyrics from lrc service if not already present
