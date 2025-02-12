@@ -121,6 +121,7 @@ public class LrcService : ILrcService
                     {
                         lyricsDto.RomanizedPlainLyrics = romanizedMatch.Value.GetProperty("plainLyrics").GetString();
                         lyricsDto.RomanizedSyncedLyrics = romanizedMatch.Value.GetProperty("syncedLyrics").GetString();
+                        lyricsDto.RomanizedId = romanizedMatch.Value.GetProperty("id").GetInt32();
                     }
                     return lyricsDto;
                 }
@@ -128,6 +129,7 @@ public class LrcService : ILrcService
                 {
                     string? romanizedPlainLyrics = lyricsDto.PlainLyrics;
                     string? romanizedSyncedLyrics = lyricsDto.SyncedLyrics;
+                    int? romanizedId = lyricsDto.Id;
 
                     // Look for any other result that has original lyrics
                     JsonElement? origMatch = searchResults
@@ -150,14 +152,12 @@ public class LrcService : ILrcService
                     {
                         lyricsDto.PlainLyrics = origMatch.Value.GetProperty("plainLyrics").GetString();
                         lyricsDto.SyncedLyrics = origMatch.Value.GetProperty("syncedLyrics").GetString();
-                        lyricsDto.RomanizedPlainLyrics = romanizedPlainLyrics;
-                        lyricsDto.RomanizedSyncedLyrics = romanizedSyncedLyrics;
+                        lyricsDto.Id = origMatch.Value.GetProperty("id").GetInt32();
                     }
-                    else // In this case, song was originally English
-                    {
-                        lyricsDto.RomanizedPlainLyrics = romanizedPlainLyrics;
-                        lyricsDto.RomanizedSyncedLyrics = romanizedSyncedLyrics;
-                    }
+
+                    lyricsDto.RomanizedPlainLyrics = romanizedPlainLyrics;
+                    lyricsDto.RomanizedSyncedLyrics = romanizedSyncedLyrics;
+                    lyricsDto.RomanizedId = romanizedId;
 
                     return lyricsDto;
                 }
