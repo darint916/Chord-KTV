@@ -11,12 +11,14 @@ public class FullSongService : IFullSongService
     private readonly IGeniusService _geniusService;
     private readonly ISongRepo _songRepo;
     private readonly IChatGptService _chatGptService;
-    public FullSongService(ILrcService lrcService, IGeniusService geniusService, ISongRepo songRepo, IChatGptService chatGptService)
+    private readonly ILogger<FullSongService> _logger;
+    public FullSongService(ILrcService lrcService, IGeniusService geniusService, ISongRepo songRepo, IChatGptService chatGptService, ILogger<FullSongService> logger)
     {
         _lrcService = lrcService;
         _geniusService = geniusService;
         _songRepo = songRepo;
         _chatGptService = chatGptService;
+        _logger = logger;
     }
 
     public async Task<Song?> GetFullSongAsync(string? title, string? artist, TimeSpan? duration, string? lyrics, string? youtubeUrl)
@@ -45,41 +47,50 @@ public class FullSongService : IFullSongService
         {
             song.Duration ??= duration;
             float? songDuration = (float?)song.Duration?.TotalSeconds;
-            lyricsDto = await _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, song.Albums.FirstOrDefault()?.Artist, songDuration);
+            // lyricsDto = await _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
+
+            //TODO: Delete once issue #48 solved
+            lyricsDto = await _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, null, null);
+
             if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.LrcLyrics))
             {
+                _logger.LogWarning("Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
+                if (lyricsDto != null)
+                {
+                    _logger.LogWarning("Lyrics: {Lyrics}", lyricsDto.LrcLyrics);
+                }
                 return song;
             }
             song.LrcLyrics = lyricsDto.LrcLyrics;
-            //TODO: ASSIGN LRC LYRICID TO SONG (not assigned in lrc service as of 2/11/25)
+            //TODO: ASSIGN LRC LYRIC ID TO SONG (not assigned in lrc service as of 2/11/25)
         }
 
         //check if lyrics are romanized (note that we do not check LRC Lib for romanization if db alr has synced lyrics)
         bool needRomanization = true;
-        bool needTranslation = string.IsNullOrWhiteSpace(song.TranslatedLyrics);
-        if (string.IsNullOrWhiteSpace(song.RomanizedLyrics) && !string.IsNullOrWhiteSpace(lyricsDto?.RomanizedSyncedLyrics))
+        bool needTranslation = string.IsNullOrWhiteSpace(song.LrcTranslatedLyrics);
+        if (string.IsNullOrWhiteSpace(song.LrcRomanizedLyrics) && !string.IsNullOrWhiteSpace(lyricsDto?.RomanizedSyncedLyrics))
         {
-            song.RomanizedLyrics = lyricsDto.RomanizedSyncedLyrics;
+            song.LrcRomanizedLyrics = lyricsDto.RomanizedSyncedLyrics;
             needRomanization = false;
         }
 
         //Get Romanized and Translated lyrics from GPT if not already present
-        if (string.IsNullOrWhiteSpace(song.TranslatedLyrics) || needRomanization)
+        if (string.IsNullOrWhiteSpace(song.LrcTranslatedLyrics) || needRomanization)
         {
             TranslationResponseDto translationDto = await _chatGptService.TranslateLyricsAsync(
                 song.LrcLyrics, song.GeniusMetaData.Language, needRomanization, needTranslation);
             if (needRomanization && !string.IsNullOrWhiteSpace(translationDto.RomanizedLyrics))
             {
-                song.RomanizedLyrics = translationDto.RomanizedLyrics;
+                song.LrcRomanizedLyrics = translationDto.RomanizedLyrics;
             }
             if (needTranslation && !string.IsNullOrWhiteSpace(translationDto.TranslatedLyrics))
             {
-                song.TranslatedLyrics = translationDto.TranslatedLyrics;
+                song.LrcTranslatedLyrics = translationDto.TranslatedLyrics;
             }
         }
 
         //Add/Update youtube urls
-        if(string.IsNullOrWhiteSpace(song.YoutubeUrl) && !string.IsNullOrWhiteSpace(youtubeUrl))
+        if (string.IsNullOrWhiteSpace(song.YoutubeUrl) && !string.IsNullOrWhiteSpace(youtubeUrl))
         {
             song.YoutubeUrl = youtubeUrl;
         }

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 public class Album
 {
+    //TODO: Make name + artist required
     [Key]
     public Guid Id { get; set; } = Guid.NewGuid();
     public bool IsSingle { get; set; }
