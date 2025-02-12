@@ -1,11 +1,11 @@
-namespace ChordKTV.Services.Api;
-
 using ChordKTV.Dtos;
 using ChordKTV.Models.SongData;
 
+namespace ChordKTV.Services.Api;
+
 public interface IGeniusService
 {
-    Task<Song?> GetSongByArtistTitleAsync(string title, string? artist, bool forceRefresh = false);
-    Task<List<Song>> GetSongsByArtistTitleAsync(List<VideoInfo> videos, bool forceRefresh = false);
-    Task<Song?> EnrichSongDetailsAsync(Song song);
+    public Task<Song?> GetSongByArtistTitleAsync(string title, string? artist, bool forceRefresh = false);
+    public Task<List<Song>> GetSongsByArtistTitleAsync(List<VideoInfo> videos, bool forceRefresh = false);
+    public Task<Song?> EnrichSongDetailsAsync(Song song);
 }

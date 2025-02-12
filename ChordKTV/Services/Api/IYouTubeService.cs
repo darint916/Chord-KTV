@@ -1,7 +1,6 @@
-namespace ChordKTV.Services.Api;
-
-using System.Threading.Tasks;
 using ChordKTV.Dtos;
+
+namespace ChordKTV.Services.Api;
 
 public interface IYouTubeClientService
 {

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-namespace ChordKTV.Utils;
 
+namespace ChordKTV.Utils;
 
 public class SafeEnumConverter<T> : JsonConverter<T> where T : struct, Enum
 {

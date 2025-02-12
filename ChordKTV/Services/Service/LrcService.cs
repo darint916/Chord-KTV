@@ -1,14 +1,10 @@
-namespace ChordKTV.Services.Service;
-
-using System;
 using System.Globalization;
-using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using System.Linq;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
+
+namespace ChordKTV.Services.Service;
 
 public class LrcService : ILrcService
 {
@@ -23,7 +19,7 @@ public class LrcService : ILrcService
     {
         if (string.IsNullOrWhiteSpace(lyrics))
         {
-            return false; // Assume empty input is in original lang 
+            return false; // Assume empty input is in original lang
         }
 
         // Return true only if all characters are Latin
