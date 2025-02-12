@@ -85,7 +85,7 @@ public class SongController : Controller
     }
 
     [HttpGet("lyrics/lrclib/fuzzy_search")]
-    public async Task<IActionResult> GetLrcLibLyrics([FromQuery] string title, [FromQuery] string qString)
+    public async Task<IActionResult> GetLrcLibLyrics([FromQuery] string? title, [FromQuery] string? qString)
     {
         try
         {

@@ -63,7 +63,7 @@ public class LrcService : ILrcService
         {
             query += $"&q={Uri.EscapeDataString(qString)}";
         }
-        
+
         HttpResponseMessage response = await _httpClient.GetAsync($"https://lrclib.net/api/search?{query}");
         if (response.IsSuccessStatusCode)
         {
@@ -77,8 +77,14 @@ public class LrcService : ILrcService
                 {
                     string plainLyrics = ele.GetProperty("plainLyrics").GetString() ?? "";
                     string syncedLyrics = ele.GetProperty("syncedLyrics").GetString() ?? "";
-                    float durationMatch = ele.GetProperty("duration").GetSingle();
-                    return plainLyrics != null && syncedLyrics != null && durationMatch == duration;
+                    float duration_ = ele.GetProperty("duration").GetSingle();
+                    bool durationMatch = true;
+                    // If the duration field was given, check if entry has same duration (defaults to true if no duration given)
+                    if (duration.HasValue && duration_ != duration)
+                    {
+                        durationMatch = false;
+                    }
+                    return plainLyrics != null && syncedLyrics != null && durationMatch;
                 });
 
                 if (lyricsDtoMatch == null)
@@ -101,16 +107,22 @@ public class LrcService : ILrcService
                         {
                             string plainLyrics = ele.GetProperty("plainLyrics").GetString() ?? "";
                             string syncedLyrics = ele.GetProperty("syncedLyrics").GetString() ?? "";
-                            float durationMatch = ele.GetProperty("duration").GetSingle();
-                            return plainLyrics != null && IsRomanized(plainLyrics) && syncedLyrics != null && durationMatch == duration;
+                            float duration_ = ele.GetProperty("duration").GetSingle();
+                            bool durationMatch = true;
+                            // If the duration field was given, check if entry has same duration (defaults to true if no duration given)
+                            if (duration.HasValue && duration_ != duration)
+                            {
+                                durationMatch = false;
+                            }
+                            return plainLyrics != null && IsRomanized(plainLyrics) && syncedLyrics != null && durationMatch;
                         });
 
                     if (romanizedMatch != null && romanizedMatch.Value.ValueKind != JsonValueKind.Undefined)
                     {
                         lyricsDto.RomanizedPlainLyrics = romanizedMatch.Value.GetProperty("plainLyrics").GetString();
                         lyricsDto.RomanizedSyncedLyrics = romanizedMatch.Value.GetProperty("syncedLyrics").GetString();
-                        return lyricsDto;
                     }
+                    return lyricsDto;
                 }
                 else // If already romanized, look for original lang
                 {
@@ -123,8 +135,14 @@ public class LrcService : ILrcService
                         {
                             string plainLyrics = ele.GetProperty("plainLyrics").GetString() ?? "";
                             string syncedLyrics = ele.GetProperty("syncedLyrics").GetString() ?? "";
-                            float durationMatch = ele.GetProperty("duration").GetSingle();
-                            return plainLyrics != null && !IsRomanized(plainLyrics) && syncedLyrics != null && durationMatch == duration;
+                            float duration_ = ele.GetProperty("duration").GetSingle();
+                            bool durationMatch = true;
+                            // If the duration field was given, check if entry has same duration (defaults to true if no duration given)
+                            if (duration.HasValue && duration_ != duration)
+                            {
+                                durationMatch = false;
+                            }
+                            return plainLyrics != null && !IsRomanized(plainLyrics) && syncedLyrics != null && durationMatch;
                         });
 
 
