@@ -54,6 +54,16 @@ dotnet tool install --global dotnet-ef
 
 This should allow you to build the project successfully using ```dotnet run```.
 
+
+## Database model changes
+If changes are made to any of the models, a migration is needed. Use PascalCase
+```Powershell
+dotnet ef migrations add <migration name>
+dotnet ef database update
+```
+
+
+
 ## License 📜📝⚖️
 This project is licensed under the [**MIT License**](LICENSE). 🎼🎵🎧
 

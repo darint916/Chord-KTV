@@ -116,8 +116,7 @@ public class SongController : Controller
         try
         {
             Song? fullSong = await _fullSongService.GetFullSongAsync(request.Title, request.Artist, request.Duration, lyricsQuery, request.YouTubeUrl);
-            
-            return Ok(searchResponse);
+            return Ok(_mapper.Map<FullSongResponseDto>(fullSong));
         }
         catch (HttpRequestException ex)
         {
