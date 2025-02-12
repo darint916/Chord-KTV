@@ -55,25 +55,47 @@ public class SongController : Controller
         return Ok(result);
     }
 
-    [HttpGet("lyrics/lrclib/search")]
+    [HttpGet("lyrics/lrclib/exact_search")]
     public async Task<IActionResult> GetLrcLibLyrics([FromQuery, Required] string title, [FromQuery, Required] string artist,
                                     [FromQuery] string? albumName, [FromQuery] float? duration)
     {
         try
         {
-            LrcLyricsDto? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, duration);
+            LrcLyricsDto? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, null, duration);
 
             if (lyrics == null)
             {
                 return NotFound(new { message = "Lyrics not found for the specified track." });
             }
 
-            // Add romanized lyrics to the DTO (if they exist on LRCLIB)
-            LrcLyricsDto? combinedLyrics = await _lrcService.GetLrcRomanizedLyricsAsync(lyrics);
+            return Ok(lyrics);
+        }
+        catch (HttpRequestException ex) // Handles HTTP request errors
+        {
+            return StatusCode(503, new { message = "Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
+        }
+        catch (Exception ex) // Handles unexpected errors
+        {
+            return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
+        }
+    }
 
-            if (combinedLyrics != null)
+    [HttpGet("lyrics/lrclib/fuzzy_search")]
+    public async Task<IActionResult> GetLrcLibLyrics([FromQuery] string title, [FromQuery] string qString)
+    {
+        try
+        {
+            // Since there is no way to check if at least one param is given
+            if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(qString))
             {
-                return Ok(combinedLyrics);
+                return BadRequest("At least one of the parameters 'title' or 'qString' must be provided.");
+            }
+
+            LrcLyricsDto? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, null, null, qString, null);
+
+            if (lyrics == null)
+            {
+                return NotFound(new { message = "Lyrics not found for the specified track." });
             }
 
             return Ok(lyrics);

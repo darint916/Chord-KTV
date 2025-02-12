@@ -40,47 +40,30 @@ public class LrcService : ILrcService
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public async Task<LrcLyricsDto?> GetLrcLibLyricsAsync(string title, string artist, string? albumName, float? duration)
+    public async Task<LrcLyricsDto?> GetLrcLibLyricsAsync(string? title, string? artist, string? albumName, string? qString, float? duration)
     {
-        string query = $"track_name={Uri.EscapeDataString(title)}";
-        query += $"&artist_name={Uri.EscapeDataString(artist)}";
+        string query = "";
+
+        if (!string.IsNullOrEmpty(title))
+        {
+            query += $"&track_name={Uri.EscapeDataString(title)}";
+        }
+
+        if (!string.IsNullOrEmpty(artist))
+        {
+            query += $"&artist_name={Uri.EscapeDataString(artist)}";
+        }
 
         if (!string.IsNullOrEmpty(albumName))
         {
             query += $"&album_name={Uri.EscapeDataString(albumName)}";
         }
 
-        if (duration.HasValue)
+        if (!string.IsNullOrEmpty(qString))
         {
-            query += $"&duration={duration.Value.ToString(CultureInfo.InvariantCulture)}";
+            query += $"&q={Uri.EscapeDataString(qString)}";
         }
-
-        HttpResponseMessage response = await _httpClient.GetAsync($"https://lrclib.net/api/get?{query}");
-
-        if (response.IsSuccessStatusCode)
-        {
-            string content = await response.Content.ReadAsStringAsync();
-            LrcLyricsDto? lrcLyricsDto = JsonSerializer.Deserialize<LrcLyricsDto>(content, _jsonSerializerOptions);
-            return lrcLyricsDto;
-        }
-
-        return null;
-    }
-
-    public async Task<LrcLyricsDto?> GetLrcRomanizedLyricsAsync(LrcLyricsDto lyricsDto)
-    {
-        string query = "";
-
-        if (!string.IsNullOrEmpty(lyricsDto.TrackName))
-        {
-            query += $"track_name={Uri.EscapeDataString(lyricsDto.TrackName)}";
-        }
-
-        if (!string.IsNullOrEmpty(lyricsDto.ArtistName))
-        {
-            query += $"&artist_name={Uri.EscapeDataString(lyricsDto.ArtistName)}";
-        }
-
+        
         HttpResponseMessage response = await _httpClient.GetAsync($"https://lrclib.net/api/search?{query}");
         if (response.IsSuccessStatusCode)
         {
@@ -89,6 +72,27 @@ public class LrcService : ILrcService
 
             if (searchResults is { Count: > 0 })
             {
+                // Get the first result with time synced lyrics
+                JsonElement? lyricsDtoMatch = searchResults.FirstOrDefault(ele =>
+                {
+                    string plainLyrics = ele.GetProperty("plainLyrics").GetString() ?? "";
+                    string syncedLyrics = ele.GetProperty("syncedLyrics").GetString() ?? "";
+                    float durationMatch = ele.GetProperty("duration").GetSingle();
+                    return plainLyrics != null && syncedLyrics != null && durationMatch == duration;
+                });
+
+                if (lyricsDtoMatch == null)
+                {
+                    return null;
+                }
+                
+                LrcLyricsDto? lyricsDto = JsonSerializer.Deserialize<LrcLyricsDto>(lyricsDtoMatch.Value.ToString(), _jsonSerializerOptions);
+
+                if (lyricsDto == null) // Shouldn't happen if lyricsDtoMatch wasn't null, throwing this check in for linter
+                {
+                    return null;
+                }
+
                 if (!IsRomanized(lyricsDto.PlainLyrics)) // If lyrics provided are in original lang
                 {
                     // Look for any result that has romanized lyrics
@@ -96,7 +100,9 @@ public class LrcService : ILrcService
                         .FirstOrDefault(ele =>
                         {
                             string plainLyrics = ele.GetProperty("plainLyrics").GetString() ?? "";
-                            return plainLyrics != null && IsRomanized(plainLyrics);
+                            string syncedLyrics = ele.GetProperty("syncedLyrics").GetString() ?? "";
+                            float durationMatch = ele.GetProperty("duration").GetSingle();
+                            return plainLyrics != null && IsRomanized(plainLyrics) && syncedLyrics != null && durationMatch == duration;
                         });
 
                     if (romanizedMatch != null && romanizedMatch.Value.ValueKind != JsonValueKind.Undefined)
@@ -116,7 +122,9 @@ public class LrcService : ILrcService
                         .FirstOrDefault(ele =>
                         {
                             string plainLyrics = ele.GetProperty("plainLyrics").GetString() ?? "";
-                            return plainLyrics != null && !IsRomanized(plainLyrics);
+                            string syncedLyrics = ele.GetProperty("syncedLyrics").GetString() ?? "";
+                            float durationMatch = ele.GetProperty("duration").GetSingle();
+                            return plainLyrics != null && !IsRomanized(plainLyrics) && syncedLyrics != null && durationMatch == duration;
                         });
 
 
