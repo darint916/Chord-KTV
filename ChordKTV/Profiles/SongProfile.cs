@@ -9,8 +9,8 @@ public class SongProfile : Profile
     public SongProfile()
     {
         CreateMap<Song, SongDto>()
-            .ForCtorParam("Name", opt => opt.MapFrom(src => src.Name))
-            .ForCtorParam("PrimaryArtist", opt => opt.MapFrom(src => src.PrimaryArtist))
+            .ForCtorParam("Name", opt => opt.MapFrom(src => src.Title))
+            .ForCtorParam("PrimaryArtist", opt => opt.MapFrom(src => src.Artist))
             .ForCtorParam("FeaturedArtists", opt => opt.MapFrom(src => src.FeaturedArtists))
             .ForCtorParam("AlbumNames", opt => opt.MapFrom(src => src.Albums.Select(a => a.Name).ToList()))
             .ForCtorParam("Genre", opt => opt.MapFrom(src => src.Genre))
