@@ -91,7 +91,6 @@ public class LrcService : ILrcService
                 {
                     return null;
                 }
-                
                 LrcLyricsDto? lyricsDto = JsonSerializer.Deserialize<LrcLyricsDto>(lyricsDtoMatch.Value.ToString(), _jsonSerializerOptions);
 
                 if (lyricsDto == null) // Shouldn't happen if lyricsDtoMatch wasn't null, throwing this check in for linter
