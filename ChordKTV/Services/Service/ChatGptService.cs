@@ -40,8 +40,7 @@ public class ChatGptService : IChatGptService
 Input Lyrics:
 {originalLyrics}
 
-The lyrics input contains timestamps LRC Format and a language hint subscript in ISO 639: {languageCode}. If it is in English, the romanization and translation should be exactly the same.
-Do not change any timestamps or the formatting. Do not add any other titles other than the lyrics from original format
+The lyrics input contains timestamps LRC Format. Do not change any timestamps or the formatting.
 {(romanize && translate ? "Romanize the lyrics, english alphabet (if not in english already), while preserving LRC format exactly, then translate them into English." :
         romanize ? "Romanize the lyrics, english alphabet, while preserving LRC format exactly, no translation needed" :
         "Translate the lyrics into English while preserving the LRC format. No romanization needed.")}
@@ -63,7 +62,8 @@ Please output your answer in two sections separated by a line containing only th
                     new { role = "system", content = systemPrompt },
                     new { role = "user", content = prompt }
             },
-            temperature = 0.2
+            temperature = 0.4,
+            top_p = 0.9
         };
 
         string jsonRequest = JsonSerializer.Serialize(requestBody);
