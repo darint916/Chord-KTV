@@ -37,28 +37,33 @@ public class ChatGptService : IChatGptService
             throw new ArgumentException("At least one of romanize or translate must be true.");
         }
         string prompt = $@"
-            The lyrics input contains timestamps LRC Format and a language hint subscript in ISO 639: {languageCode}.
-            Do not change any timestamps or the formatting. Do not add any other titles other than the lyrics from original format
-            {(romanize && translate ? "Romanize the lyrics, Latin script, while preserving LRC format exactly, then translate them into English." :
-                    romanize ? "Romanize the lyrics, Latin script, while preserving LRC format exactly, no translation needed" :
-                    "Translate the lyrics into English while preserving the LRC format. No romanization needed.")}
-            Respond using this format, keep '---':
-            {(romanize ? "Romanized Lyrics Go Here (preserve the LRC Format)" : "")}
-            ---
-            {(translate ? "Translated English Meaning Lyrics Here (preserve the LRC Format)" : "")}
+Input Lyrics:
+{originalLyrics}
 
-            Input:
-            {originalLyrics}";
+The lyrics input contains timestamps LRC Format and a language hint subscript in ISO 639: {languageCode}. If it is in English, the romanization and translation should be exactly the same.
+Do not change any timestamps or the formatting. Do not add any other titles other than the lyrics from original format
+{(romanize && translate ? "Romanize the lyrics, english alphabet (if not in english already), while preserving LRC format exactly, then translate them into English." :
+        romanize ? "Romanize the lyrics, english alphabet, while preserving LRC format exactly, no translation needed" :
+        "Translate the lyrics into English while preserving the LRC format. No romanization needed.")}
+Respond using this format, keep '---' only:
+{(romanize ? "Romanized Lyrics Here" : "")}
+---
+{(translate ? "Translated English Meaning Lyrics Here (preserve the LRC Format)" : "")}
+";
 
+        string systemPrompt = $@"
+You are a helpful assistant that translates LRC formatted lyrics into an English translation and, if needed, a romanized version (using the English alphabet).
+Please output your answer in two sections separated by a line containing only three hyphens --- In the first section, output the romanized lyrics (if applicable or blank); in the second section, output the English translation (if applicable or blank).If section is not prompted for, just leave blank.
+        ";
         var requestBody = new
         {
             model = Model,
             messages = new object[]
             {
-                    new { role = "system", content = "You are a helpful assistant that translates LRC formatted lyrics into english and/or romanized version." },
+                    new { role = "system", content = systemPrompt },
                     new { role = "user", content = prompt }
             },
-            temperature = 0
+            temperature = 0.2
         };
 
         string jsonRequest = JsonSerializer.Serialize(requestBody);
@@ -92,6 +97,7 @@ public class ChatGptService : IChatGptService
             JsonElement choices = root.GetProperty("choices");
             if (choices.GetArrayLength() == 0)
             {
+                _logger.LogError("No choices were returned from the ChatGPT API. responseContent: {ResponseContent}", responseContent);
                 throw new InvalidOperationException("No choices were returned from the ChatGPT API.");
             }
 
@@ -102,6 +108,7 @@ public class ChatGptService : IChatGptService
 
             if (string.IsNullOrWhiteSpace(messageContent))
             {
+                _logger.LogError("The ChatGPT API returned an empty response. responseContent: {ResponseContent}", responseContent);
                 throw new InvalidOperationException("The ChatGPT API returned an empty response.");
             }
 
@@ -113,7 +120,7 @@ public class ChatGptService : IChatGptService
 
             if ((romanize && romanizedLyrics == null) || (translate && translatedLyrics == null))
             {
-                _logger.LogCritical("messageContent: {MessageContent}", messageContent);
+                _logger.LogError("messageContent: {MessageContent}", messageContent);
                 throw new InvalidOperationException("The ChatGPT API response did not contain the expected translations.");
             }
             return new TranslationResponseDto
@@ -127,12 +134,8 @@ public class ChatGptService : IChatGptService
         catch (HttpRequestException httpEx)
         {
             // Log the error if logging is available.
+            _logger.LogError(httpEx, "HTTP request error while calling the ChatGPT API.");
             throw new HttpRequestException("HTTP request error while calling the ChatGPT API.", httpEx);
-        }
-        catch (Exception ex)
-        {
-            // Log or rethrow as needed.
-            throw new InvalidOperationException("An error occurred while processing the ChatGPT API response.", ex);
         }
     }
 

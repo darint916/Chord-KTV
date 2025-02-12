@@ -10,7 +10,7 @@ public class LrcLyricsDto
     public float Duration { get; set; }
     public bool Instrumental { get; set; }
     public string? PlainLyrics { get; set; }
-    public string? LrcLyrics { get; set; }
+    public string? SyncedLyrics { get; set; }
     public string? RomanizedPlainLyrics { get; set; }
     public string? RomanizedSyncedLyrics { get; set; }
 }
