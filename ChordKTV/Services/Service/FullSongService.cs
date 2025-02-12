@@ -96,7 +96,7 @@ public class FullSongService : IFullSongService
         {
             song.YoutubeUrl = youtubeUrl;
         }
-        else if (!string.IsNullOrWhiteSpace(youtubeUrl) && !song.AlternateYoutubeUrls.Contains(song.YoutubeUrl))
+        else if (!string.IsNullOrWhiteSpace(youtubeUrl) && !song.AlternateYoutubeUrls.Contains(youtubeUrl))
         {
             song.AlternateYoutubeUrls.Add(youtubeUrl);
         }
