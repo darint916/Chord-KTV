@@ -11,8 +11,6 @@ using ChordKTV.Dtos.FullSong;
 
 namespace ChordKTV.Controllers;
 
-namespace ChordKTV.Controllers;
-
 [ApiController]
 [Route("api")]
 public class SongController : Controller
