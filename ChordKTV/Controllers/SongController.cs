@@ -59,43 +59,33 @@ public class SongController : Controller
         return Ok(result);
     }
 
-    [HttpGet("lyrics/lrclib/exact_search")]
-    public async Task<IActionResult> GetLrcLibLyrics([FromQuery, Required] string title, [FromQuery, Required] string artist,
-                                    [FromQuery] string? albumName, [FromQuery] float? duration)
+    [HttpGet("lyrics/lrclib/search")]
+    public async Task<IActionResult> GetLrcLibLyrics([FromQuery, Required] string searchType, [FromQuery] string? title,
+                                    [FromQuery] string? artist, [FromQuery] string? albumName,
+                                    [FromQuery] float? duration, [FromQuery] string? qString)
     {
         try
         {
-            LrcLyricsDto? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, null, duration);
+            string[] validSearchTypes = ["exact", "fuzzy"];
 
-            if (lyrics == null)
+            if (!validSearchTypes.Contains(searchType))
             {
-                return NotFound(new { message = "Lyrics not found for the specified track." });
+                return BadRequest(new { message = "searchType must be 'fuzzy' or 'exact'" });
             }
 
-            return Ok(lyrics);
-        }
-        catch (HttpRequestException ex) // Handles HTTP request errors
-        {
-            return StatusCode(503, new { message = "Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
-        }
-        catch (Exception ex) // Handles unexpected errors
-        {
-            return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
-        }
-    }
-
-    [HttpGet("lyrics/lrclib/fuzzy_search")]
-    public async Task<IActionResult> GetLrcLibLyrics([FromQuery] string? title, [FromQuery] string? qString)
-    {
-        try
-        {
-            // Since there is no way to check if at least one param is given
-            if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(qString))
+            if (searchType == "exact" && (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(artist)))
             {
-                return BadRequest("At least one of the parameters 'title' or 'qString' must be provided.");
+                return BadRequest(new { message = "Both title and artist are required for searchType=exact" });
             }
 
-            LrcLyricsDto? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, null, null, qString, null);
+            if (searchType == "fuzzy" && string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(qString))
+            {
+                return BadRequest(new { message = "At least one of 'title' or 'qString' must be provided for searchType=fuzzy" });
+            }
+
+            LrcLyricsDto? lyrics = searchType == "exact"
+                ? await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, null, duration)
+                : await _lrcService.GetLrcLibLyricsAsync(title, null, null, qString, null);
 
             if (lyrics == null)
             {
