@@ -68,99 +68,64 @@ public class LrcService : ILrcService
         if (response.IsSuccessStatusCode)
         {
             string content = await response.Content.ReadAsStringAsync();
-            List<JsonElement>? searchResults = JsonSerializer.Deserialize<List<JsonElement>>(content);
+            List<LrcLyricsDto>? searchResults = JsonSerializer.Deserialize<List<LrcLyricsDto>>(content, _jsonSerializerOptions);
 
-            if (searchResults is { Count: > 0 })
+            if (searchResults is not { Count: > 0 })
             {
-                // Get the first result with time synced lyrics
-                JsonElement? lyricsDtoMatch = searchResults.FirstOrDefault(ele =>
+                return null;
+            }
+
+            // Get the first result with time-synced lyrics
+            LrcLyricsDto? lyricsDtoMatch = searchResults.FirstOrDefault(ele =>
+                !string.IsNullOrEmpty(ele.PlainLyrics) &&
+                !string.IsNullOrEmpty(ele.SyncedLyrics) &&
+                (!duration.HasValue || ele.Duration == duration));
+
+            if (lyricsDtoMatch == null)
+            {
+                return null;
+            }
+
+            if (!IsRomanized(lyricsDtoMatch.PlainLyrics)) // If lyrics are in original language
+            {
+                LrcLyricsDto? romanizedMatch = searchResults.FirstOrDefault(ele =>
+                    !string.IsNullOrEmpty(ele.PlainLyrics) &&
+                    !string.IsNullOrEmpty(ele.SyncedLyrics) &&
+                    IsRomanized(ele.PlainLyrics) &&
+                    (!duration.HasValue || ele.Duration == duration));
+
+                if (romanizedMatch != null)
                 {
-                    string plainLyrics = ele.GetProperty("plainLyrics").GetString() ?? "";
-                    string syncedLyrics = ele.GetProperty("syncedLyrics").GetString() ?? "";
-                    float duration_ = ele.GetProperty("duration").GetSingle();
-                    bool durationMatch = true;
-                    // If the duration field was given, check if entry has same duration (defaults to true if no duration given)
-                    if (duration.HasValue && duration_ != duration)
-                    {
-                        durationMatch = false;
-                    }
-                    return plainLyrics != null && syncedLyrics != null && durationMatch;
-                });
-
-                if (lyricsDtoMatch == null)
-                {
-                    return null;
-                }
-                LrcLyricsDto? lyricsDto = JsonSerializer.Deserialize<LrcLyricsDto>(lyricsDtoMatch.Value.ToString(), _jsonSerializerOptions);
-
-                if (lyricsDto == null) // Shouldn't happen if lyricsDtoMatch wasn't null, throwing this check in for linter
-                {
-                    return null;
-                }
-
-                if (!IsRomanized(lyricsDto.PlainLyrics)) // If lyrics provided are in original lang
-                {
-                    // Look for any result that has romanized lyrics
-                    JsonElement? romanizedMatch = searchResults
-                        .FirstOrDefault(ele =>
-                        {
-                            string plainLyrics = ele.GetProperty("plainLyrics").GetString() ?? "";
-                            string syncedLyrics = ele.GetProperty("syncedLyrics").GetString() ?? "";
-                            float duration_ = ele.GetProperty("duration").GetSingle();
-                            bool durationMatch = true;
-                            // If the duration field was given, check if entry has same duration (defaults to true if no duration given)
-                            if (duration.HasValue && duration_ != duration)
-                            {
-                                durationMatch = false;
-                            }
-                            return plainLyrics != null && IsRomanized(plainLyrics) && syncedLyrics != null && durationMatch;
-                        });
-
-                    if (romanizedMatch != null && romanizedMatch.Value.ValueKind != JsonValueKind.Undefined)
-                    {
-                        lyricsDto.RomanizedPlainLyrics = romanizedMatch.Value.GetProperty("plainLyrics").GetString();
-                        lyricsDto.RomanizedSyncedLyrics = romanizedMatch.Value.GetProperty("syncedLyrics").GetString();
-                        lyricsDto.RomanizedId = romanizedMatch.Value.GetProperty("id").GetInt32();
-                    }
-                    return lyricsDto;
-                }
-                else // If already romanized, look for original lang
-                {
-                    string? romanizedPlainLyrics = lyricsDto.PlainLyrics;
-                    string? romanizedSyncedLyrics = lyricsDto.SyncedLyrics;
-                    int? romanizedId = lyricsDto.Id;
-
-                    // Look for any other result that has original lyrics
-                    JsonElement? origMatch = searchResults
-                        .FirstOrDefault(ele =>
-                        {
-                            string plainLyrics = ele.GetProperty("plainLyrics").GetString() ?? "";
-                            string syncedLyrics = ele.GetProperty("syncedLyrics").GetString() ?? "";
-                            float duration_ = ele.GetProperty("duration").GetSingle();
-                            bool durationMatch = true;
-                            // If the duration field was given, check if entry has same duration (defaults to true if no duration given)
-                            if (duration.HasValue && duration_ != duration)
-                            {
-                                durationMatch = false;
-                            }
-                            return plainLyrics != null && !IsRomanized(plainLyrics) && syncedLyrics != null && durationMatch;
-                        });
-
-
-                    if (origMatch != null && origMatch.Value.ValueKind != JsonValueKind.Undefined)
-                    {
-                        lyricsDto.PlainLyrics = origMatch.Value.GetProperty("plainLyrics").GetString();
-                        lyricsDto.SyncedLyrics = origMatch.Value.GetProperty("syncedLyrics").GetString();
-                        lyricsDto.Id = origMatch.Value.GetProperty("id").GetInt32();
-                    }
-
-                    lyricsDto.RomanizedPlainLyrics = romanizedPlainLyrics;
-                    lyricsDto.RomanizedSyncedLyrics = romanizedSyncedLyrics;
-                    lyricsDto.RomanizedId = romanizedId;
-
-                    return lyricsDto;
+                    lyricsDtoMatch.RomanizedPlainLyrics = romanizedMatch.PlainLyrics;
+                    lyricsDtoMatch.RomanizedSyncedLyrics = romanizedMatch.SyncedLyrics;
+                    lyricsDtoMatch.RomanizedId = romanizedMatch.Id;
                 }
             }
+            else // If already romanized, look for original lyrics
+            {
+                string? romanizedPlainLyrics = lyricsDtoMatch.PlainLyrics;
+                string? romanizedSyncedLyrics = lyricsDtoMatch.SyncedLyrics;
+                int? romanizedId = lyricsDtoMatch.Id;
+
+                LrcLyricsDto? origMatch = searchResults.FirstOrDefault(ele =>
+                    !string.IsNullOrEmpty(ele.PlainLyrics) &&
+                    !string.IsNullOrEmpty(ele.SyncedLyrics) &&
+                    !IsRomanized(ele.PlainLyrics) &&
+                    (!duration.HasValue || ele.Duration == duration));
+
+                if (origMatch != null)
+                {
+                    lyricsDtoMatch.PlainLyrics = origMatch.PlainLyrics;
+                    lyricsDtoMatch.SyncedLyrics = origMatch.SyncedLyrics;
+                    lyricsDtoMatch.Id = origMatch.Id;
+                }
+
+                lyricsDtoMatch.RomanizedPlainLyrics = romanizedPlainLyrics;
+                lyricsDtoMatch.RomanizedSyncedLyrics = romanizedSyncedLyrics;
+                lyricsDtoMatch.RomanizedId = romanizedId;
+            }
+
+            return lyricsDtoMatch;
         }
 
         return null;
