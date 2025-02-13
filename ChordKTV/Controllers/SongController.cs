@@ -78,14 +78,14 @@ public class SongController : Controller
                 return BadRequest(new { message = "Both title and artist are required for searchType=exact" });
             }
 
-            if (searchType == "fuzzy" && string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(qString))
+            if (searchType == "fuzzy" && string.IsNullOrWhiteSpace(qString))
             {
-                return BadRequest(new { message = "At least one of 'title' or 'qString' must be provided for searchType=fuzzy" });
+                return BadRequest(new { message = "'qString' is required for searchType=fuzzy" });
             }
 
             LrcLyricsDto? lyrics = searchType == "exact"
                 ? await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, null, duration)
-                : await _lrcService.GetLrcLibLyricsAsync(title, null, null, qString, null);
+                : await _lrcService.GetLrcLibLyricsAsync(null, null, null, qString, null);
 
             if (lyrics == null)
             {
