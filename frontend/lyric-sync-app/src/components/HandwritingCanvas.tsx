@@ -58,7 +58,7 @@ const HandwritingCanvas: React.FC = () => {
   };
 
   return (
-    <Card sx={{ maxWidth: 400, margin: "auto", padding: 2, textAlign: "center", boxShadow: 3 }}>
+    <Card sx={{ maxWidth: 500, margin: "auto", padding: 2, textAlign: "center", boxShadow: 3 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
           Handwriting Recognition
@@ -78,8 +78,8 @@ const HandwritingCanvas: React.FC = () => {
         >
           <canvas
             ref={canvasRef}
-            width={400}
-            height={200}
+            width={500}
+            height={300}
             style={{ cursor: "crosshair", backgroundColor: "white" }}
             onPointerDown={startDrawing}
             onPointerMove={draw}
