@@ -1,13 +1,14 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Box, Button, Card, CardContent, Typography, Stack } from "@mui/material";
 
 const HandwritingCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const gridCanvasRef = useRef<HTMLCanvasElement | null>(null); // Grid canvas
   const [isDrawing, setIsDrawing] = useState(false);
 
   // Initialize canvas settings
-  React.useEffect(() => {
+  useEffect(() => {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
@@ -20,7 +21,40 @@ const HandwritingCanvas: React.FC = () => {
         ctxRef.current = ctx;
       }
     }
+
+    if (gridCanvasRef.current) {
+      const gridCanvas = gridCanvasRef.current;
+      const ctx = gridCanvas.getContext("2d");
+      if (ctx) {
+        // Draw gridlines on the grid canvas
+        drawGridlines(ctx, gridCanvas.width, gridCanvas.height);
+      }
+    }
   }, []);
+
+  // Draw gridlines function
+  const drawGridlines = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    ctx.clearRect(0, 0, width, height); // Clear previous gridlines
+    ctx.strokeStyle = "#e0e0e0"; // Light grey gridlines
+    ctx.lineWidth = 0.5;
+    const gridSize = 50; // Size of each grid square
+
+    // Draw vertical gridlines
+    for (let x = gridSize; x < width; x += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+
+    // Draw horizontal gridlines
+    for (let y = gridSize; y < height; y += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+  };
 
   // Start drawing
   const startDrawing = (e: React.PointerEvent) => {
@@ -54,9 +88,13 @@ const HandwritingCanvas: React.FC = () => {
 
   // Export image
   const exportImage = () => {
-    // TODO: Add call to backend to save the image/evaluation endpoint
-    // if (!canvasRef.current) return;
-    // const imageData = canvasRef.current.toDataURL("image/png");
+    if (!canvasRef.current) return;
+
+    // Create a new image data URL without the gridlines
+    const imageData = canvasRef.current.toDataURL("image/png");
+
+    // TODO: Send the imageData to the backend or handle it as needed, delete this log call after
+    console.log(imageData);
   };
 
   return (
@@ -76,8 +114,23 @@ const HandwritingCanvas: React.FC = () => {
             background: "#f9f9f9",
             overflow: "hidden",
             touchAction: "none",
+            position: "relative",
           }}
         >
+          {/* Grid canvas */}
+          <canvas
+            ref={gridCanvasRef}
+            width={500}
+            height={300}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              pointerEvents: "none", // Disable interaction with the grid canvas
+            }}
+          />
+
+          {/* Drawing canvas */}
           <canvas
             ref={canvasRef}
             width={500}
