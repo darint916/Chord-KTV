@@ -55,6 +55,8 @@ const HandwritingCanvas: React.FC = () => {
   // Export image
   const exportImage = () => {
     // TODO: Add call to backend to save the image/evaluation endpoint
+    // if (!canvasRef.current) return;
+    // const imageData = canvasRef.current.toDataURL("image/png");
   };
 
   return (
