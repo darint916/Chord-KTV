@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Typography, Box, Grid, AppBar, Toolbar, Button } from '@mui/material';
+import { Container, Typography, Box } from '@mui/material';
 import YouTubePlayer from '../components/YouTubePlayer';
 import LyricDisplay from '../components/LyricDisplay';
 import Controls from '../components/Controls';
