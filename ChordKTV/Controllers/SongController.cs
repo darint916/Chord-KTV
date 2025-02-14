@@ -60,24 +60,36 @@ public class SongController : Controller
     }
 
     [HttpGet("lyrics/lrclib/search")]
-    public async Task<IActionResult> GetLrcLibLyrics([FromQuery, Required] string title, [FromQuery, Required] string artist,
-                                    [FromQuery] string? albumName, [FromQuery] float? duration)
+    public async Task<IActionResult> GetLrcLibLyrics([FromQuery, Required] string searchType, [FromQuery] string? title,
+                                    [FromQuery] string? artist, [FromQuery] string? albumName,
+                                    [FromQuery] float? duration, [FromQuery] string? qString)
     {
         try
         {
-            LrcLyricsDto? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, duration);
+            string[] validSearchTypes = ["exact", "fuzzy"];
+
+            if (!validSearchTypes.Contains(searchType))
+            {
+                return BadRequest(new { message = "searchType must be 'fuzzy' or 'exact'" });
+            }
+
+            if (searchType == "exact" && (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(artist)))
+            {
+                return BadRequest(new { message = "Both title and artist are required for searchType=exact" });
+            }
+
+            if (searchType == "fuzzy" && string.IsNullOrWhiteSpace(qString))
+            {
+                return BadRequest(new { message = "'qString' is required for searchType=fuzzy" });
+            }
+
+            LrcLyricsDto? lyrics = searchType == "exact"
+                ? await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, null, duration)
+                : await _lrcService.GetLrcLibLyricsAsync(null, null, null, qString, null);
 
             if (lyrics == null)
             {
                 return NotFound(new { message = "Lyrics not found for the specified track." });
-            }
-
-            // Add romanized lyrics to the DTO (if they exist on LRCLIB)
-            LrcLyricsDto? combinedLyrics = await _lrcService.GetLrcRomanizedLyricsAsync(lyrics);
-
-            if (combinedLyrics != null)
-            {
-                return Ok(combinedLyrics);
             }
 
             return Ok(lyrics);

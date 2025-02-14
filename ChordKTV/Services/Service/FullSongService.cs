@@ -44,10 +44,9 @@ public class FullSongService : IFullSongService
         {
             song.Duration ??= duration;
             float? songDuration = (float?)song.Duration?.TotalSeconds;
-            // lyricsDto = await _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
 
             //TODO: Delete once issue #48 solved
-            lyricsDto = await _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, null, null);
+            lyricsDto = await _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, null, null, null);
 
             if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics))
             {
@@ -61,7 +60,6 @@ public class FullSongService : IFullSongService
             song.LrcLyrics = lyricsDto.SyncedLyrics;
 
             //TODO: Refactor once issue #52 solved
-            lyricsDto = await _lrcService.GetLrcRomanizedLyricsAsync(lyricsDto);
             //TODO: ASSIGN LRC LYRIC ID TO SONG (not assigned in lrc service as of 2/11/25)
         }
 
