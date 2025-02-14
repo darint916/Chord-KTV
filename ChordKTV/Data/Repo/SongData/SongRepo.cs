@@ -47,8 +47,8 @@ public class SongRepo : ISongRepo
 
         // Use a case-insensitive comparison with StringComparison.OrdinalIgnoreCase
         return songs.FirstOrDefault(s =>
-            string.Equals(s.Name.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
-            s.AlternateNames.Any(n => string.Equals(n.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase))
+            string.Equals(s.Title.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
+            s.AlternateTitles.Any(n => string.Equals(n.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase))
         );
     }
 
@@ -69,10 +69,10 @@ public class SongRepo : ISongRepo
 
         // Use string.Equals(..., StringComparison.OrdinalIgnoreCase) and the StartsWith overload with StringComparison
         Song? result = songs.FirstOrDefault(s =>
-            (string.Equals(s.Name.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
-             s.AlternateNames.Any(n =>
+            (string.Equals(s.Title.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
+             s.AlternateTitles.Any(n =>
                  string.Equals(n.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase))) &&
-            (s.PrimaryArtist.Trim().StartsWith(normalizedArtist, StringComparison.OrdinalIgnoreCase) ||
+            (s.Artist.Trim().StartsWith(normalizedArtist, StringComparison.OrdinalIgnoreCase) ||
              s.FeaturedArtists.Any(a => a.Trim().StartsWith(normalizedArtist, StringComparison.OrdinalIgnoreCase)))
         );
 
@@ -85,8 +85,8 @@ public class SongRepo : ISongRepo
     public async Task<Song?> GetSongAsync(string name, string artist, string albumName)
     {
         return await _context.Songs.FirstOrDefaultAsync(s =>
-            (s.Name == name || s.AlternateNames.Contains(name)) &&
-            ((s.PrimaryArtist == artist) || s.FeaturedArtists.Contains(artist)) &&
+            (s.Title == name || s.AlternateTitles.Contains(name)) &&
+            ((s.Artist == artist) || s.FeaturedArtists.Contains(artist)) &&
             s.Albums.Any(album => album.Name == albumName));
     }
 
@@ -100,4 +100,9 @@ public class SongRepo : ISongRepo
         return await _context.GeniusMetaData.FindAsync(geniusId);
     }
 
+    public async Task UpdateSongAsync(Song song)
+    {
+        _context.Songs.Update(song);
+        await _context.SaveChangesAsync();
+    }
 }

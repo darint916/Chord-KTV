@@ -1,6 +1,3 @@
-namespace ChordKTV.Controllers;
-
-using System;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using ChordKTV.Services.Api;
@@ -8,10 +5,11 @@ using ChordKTV.Dtos;
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using ChordKTV.Utils.Extensions;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using AutoMapper;
+using ChordKTV.Dtos.FullSong;
+
+namespace ChordKTV.Controllers;
 
 [ApiController]
 [Route("api")]
@@ -25,7 +23,7 @@ public class SongController : Controller
     private readonly ILogger<SongController> _logger;
     private readonly IMapper _mapper;
     private readonly IChatGptService _chatGptService;
-
+    private readonly IFullSongService _fullSongService;
     public SongController(
         IMapper mapper,
         IYouTubeClientService youTubeService,
@@ -34,7 +32,9 @@ public class SongController : Controller
         IGeniusService geniusService,
         IAlbumRepo albumRepo,
         IChatGptService chatGptService,
-        ILogger<SongController> logger)
+        IFullSongService fullSongService,
+        ILogger<SongController> logger
+        )
     {
         _mapper = mapper;
         _songRepo = songRepo;
@@ -43,18 +43,11 @@ public class SongController : Controller
         _geniusService = geniusService;
         _albumRepo = albumRepo;
         _chatGptService = chatGptService;
+        _fullSongService = fullSongService;
         _logger = logger;
     }
 
-    // [HttpGet("genius/{song:string}")]
-
-    // public async Task<IActionResult> GetSongByArtistTitle(string title, string? artist)
-    // {
-    //     //var song = await _geniusRepo.GetSongByArtistTitle(title, artist);
-    //     //return Ok(song);
-    // }
-
-    [HttpGet("youtube/playlist/{playlistId}")]
+    [HttpGet("youtube/playlists/{playlistId}")]
     public async Task<IActionResult> GetYouTubePlaylist(string playlistId)
     {
         PlaylistDetailsDto? result = await _youTubeService.GetPlaylistDetailsAsync(playlistId);
@@ -66,25 +59,37 @@ public class SongController : Controller
         return Ok(result);
     }
 
-    [HttpGet("lrclib/search")]
-    public async Task<IActionResult> GetLrcLibLyrics([FromQuery, Required] string title, [FromQuery, Required] string artist,
-                                    [FromQuery] string? albumName, [FromQuery] float? duration)
+    [HttpGet("lyrics/lrclib/search")]
+    public async Task<IActionResult> GetLrcLibLyrics([FromQuery, Required] string searchType, [FromQuery] string? title,
+                                    [FromQuery] string? artist, [FromQuery] string? albumName,
+                                    [FromQuery] float? duration, [FromQuery] string? qString)
     {
         try
         {
-            LrcLyricsDto? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, duration);
+            string[] validSearchTypes = ["exact", "fuzzy"];
+
+            if (!validSearchTypes.Contains(searchType))
+            {
+                return BadRequest(new { message = "searchType must be 'fuzzy' or 'exact'" });
+            }
+
+            if (searchType == "exact" && (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(artist)))
+            {
+                return BadRequest(new { message = "Both title and artist are required for searchType=exact" });
+            }
+
+            if (searchType == "fuzzy" && string.IsNullOrWhiteSpace(qString))
+            {
+                return BadRequest(new { message = "'qString' is required for searchType=fuzzy" });
+            }
+
+            LrcLyricsDto? lyrics = searchType == "exact"
+                ? await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, null, duration)
+                : await _lrcService.GetLrcLibLyricsAsync(null, null, null, qString, null);
 
             if (lyrics == null)
             {
                 return NotFound(new { message = "Lyrics not found for the specified track." });
-            }
-
-            // Add romanized lyrics to the DTO (if they exist on LRCLIB)
-            LrcLyricsDto? combinedLyrics = await _lrcService.GetLrcRomanizedLyricsAsync(lyrics);
-
-            if (combinedLyrics != null)
-            {
-                return Ok(combinedLyrics);
             }
 
             return Ok(lyrics);
@@ -99,50 +104,42 @@ public class SongController : Controller
         }
     }
 
-    [HttpPost("chatgpt/translation")]
+    [HttpPost("lyrics/lrc/translation")]
     public async Task<IActionResult> PostChatGptTranslations([FromBody] TranslationRequestDto request)
     {
         TranslationResponseDto lyricsDto = await _chatGptService.TranslateLyricsAsync(request.OriginalLyrics, request.LanguageCode, request.Romanize, request.Translate);
         return Ok(lyricsDto);
     }
 
-    [HttpGet("health")]
-    public IActionResult HealthCheck()
+    [HttpPost("songs/search")]
+    public async Task<IActionResult> SearchLyrics([FromBody] FullSongRequestDto request)
     {
-        return Ok(new { message = "Song API is healthy." });
+        if (string.IsNullOrWhiteSpace(request.Title) && string.IsNullOrWhiteSpace(request.Lyrics))
+        {
+            return BadRequest(new { message = "At least one of the following fields is required: title, lyrics." });
+        }
+        string? lyricsQuery = null;
+        if (!string.IsNullOrWhiteSpace(request.Lyrics))
+        {
+            lyricsQuery = request.Lyrics + " " + request.Title ?? "" + " " + request.Artist ?? "";
+        }
+        try
+        {
+            Song? fullSong = await _fullSongService.GetFullSongAsync(request.Title, request.Artist, request.Duration, lyricsQuery, request.YouTubeUrl);
+            return Ok(_mapper.Map<FullSongResponseDto>(fullSong));
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(503, new { message = "Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
+        }
     }
 
-    [DevelopmentOnly]
-    [HttpGet("database/song")]
-    public async Task<IActionResult> GetSongFromDb([FromQuery, Required] string title, [FromQuery, Required] string artist, [FromQuery] string? albumName)
-    {
-        //there is no case for album name but no artist, maybe add in future or not need. This for dev testing
-        Song? song = null;
-        if (!string.IsNullOrEmpty(albumName) && !string.IsNullOrEmpty(artist))
-        {
-            song = await _songRepo.GetSongAsync(title, artist, albumName);
-        }
-        else if (!string.IsNullOrEmpty(artist))
-        {
-            song = await _songRepo.GetSongAsync(title, artist);
-        }
-        song ??= await _songRepo.GetSongAsync(title);
-        if (song == null)
-        {
-            return NotFound(new { message = "Song not found in database." });
-        }
-        return Ok(song);
-    }
 
-    [DevelopmentOnly]
-    [HttpPost("database/song")]
-    public async Task<IActionResult> AddSongToDb([FromBody] Song song)
-    {
-        await _songRepo.AddAsync(song);
-        return Ok();
-    }
-
-    [HttpGet("genius/search")]
+    [HttpGet("songs/genius/search")]
     public async Task<IActionResult> GetSongByArtistTitle(
         [FromQuery, Required] string title,
         [FromQuery] string? artist,
@@ -170,7 +167,7 @@ public class SongController : Controller
         }
     }
 
-    [HttpPost("genius/search/batch")]
+    [HttpPost("songs/genius/search/batch")]
     public async Task<IActionResult> GetSongsByArtistTitle(
         [FromBody] JsonElement request,
         [FromQuery] bool forceRefresh = false)
@@ -242,5 +239,41 @@ public class SongController : Controller
             _logger.LogError(ex, "Error fetching songs for album {AlbumName}", albumName);
             return StatusCode(500, new { message = "An unexpected error occurred." });
         }
+    }
+
+    [HttpGet("health")]
+    public IActionResult HealthCheck()
+    {
+        return Ok(new { message = "Song API is healthy." });
+    }
+
+    [DevelopmentOnly]
+    [HttpGet("database/song")]
+    public async Task<IActionResult> GetSongFromDb([FromQuery, Required] string title, [FromQuery, Required] string artist, [FromQuery] string? albumName)
+    {
+        //there is no case for album name but no artist, maybe add in future or not need. This for dev testing
+        Song? song = null;
+        if (!string.IsNullOrEmpty(albumName) && !string.IsNullOrEmpty(artist))
+        {
+            song = await _songRepo.GetSongAsync(title, artist, albumName);
+        }
+        else if (!string.IsNullOrEmpty(artist))
+        {
+            song = await _songRepo.GetSongAsync(title, artist);
+        }
+        song ??= await _songRepo.GetSongAsync(title);
+        if (song == null)
+        {
+            return NotFound(new { message = "Song not found in database." });
+        }
+        return Ok(song);
+    }
+
+    [DevelopmentOnly]
+    [HttpPost("database/song")]
+    public async Task<IActionResult> AddSongToDb([FromBody] Song song)
+    {
+        await _songRepo.AddAsync(song);
+        return Ok();
     }
 }

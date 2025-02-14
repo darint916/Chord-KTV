@@ -6,7 +6,6 @@ using ChordKTV.Services.Api;
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Data.Repo;
 using ChordKTV.Data.Repo.SongData;
-using AutoMapper;
 using ChordKTV.Utils;
 using ChordKTV.Dtos;
 
@@ -49,6 +48,7 @@ builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
 builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
 builder.Services.AddScoped<ISongRepo, SongRepo>();
 builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
+builder.Services.AddScoped<IFullSongService, FullSongService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
