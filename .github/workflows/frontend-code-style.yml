@@ -21,11 +21,15 @@ jobs:
           cache-dependency-path: 'frontend/lyric-sync-app/package-lock.json'
 
       - name: Install Dependencies
-        run: |
-          cd frontend/lyric-sync-app
-          npm ci
+        run: npm ci
+        working-directory: frontend/lyric-sync-app
+
+      - name: Typescript Check
+        run: npx tsc --noEmit
+        working-directory: frontend/lyric-sync-app
 
       - name: Run ESLint
-        run: |
-          cd frontend/lyric-sync-app
-          npm run lint
+        run: npm run lint -- --max-warnings=0
+        working-directory: frontend/lyric-sync-app
+
+

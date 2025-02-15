@@ -24,11 +24,12 @@ jobs:
           cache-dependency-path: 'frontend/lyric-sync-app/package-lock.json'
 
       - name: Install dependencies
-        run: |
-          cd frontend/lyric-sync-app
-          npm ci
+        run: npm ci
+        working-directory: frontend/lyric-sync-app
+
+      - name: Set CI Environment Variable (Fail on Warnings)
+        run: echo "CI=true" >> $GITHUB_ENV
 
       - name: Run build
-        run: |
-          cd frontend/lyric-sync-app
-          npm run build
+        run: npm run build
+        working-directory: frontend/lyric-sync-app
