@@ -15,7 +15,8 @@ const AppBarComponent: React.FC = () => {
       id: decoded.sub,
       name: decoded.name,
       email: decoded.email,
-      picture: decoded.picture
+      picture: decoded.picture,
+      idToken: credentialResponse.credential
     });
   };
 

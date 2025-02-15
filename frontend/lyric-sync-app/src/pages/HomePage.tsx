@@ -3,27 +3,33 @@ import { Box, Typography, TextField, IconButton, Alert } from '@mui/material';
 import { Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
   const [songName, setSongName] = useState('');
   const [artistName, setArtistName] = useState('');
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (user) {
-      // Log search for logged-in users
-      console.log('User ID:', user.id);
-      console.log('Searching:', { songName, artistName });
-      
-      // Here we would make an API call to our backend
-      // to store the search in user's history
-      // Example:
-      // axios.post('/api/search-history', {
-      //   userId: user.id,
-      //   songName,
-      //   artistName,
-      //   timestamp: new Date()
-      // });
+      try {
+        // Skeleton code to send the ID token in the Authorization header
+        // Uncomment this to see how the Auth Bearer looks like in the request header of your browser's Network tab.
+        // await axios.post('random', 
+        //   {
+        //     songName,
+        //     artistName,
+        //     timestamp: new Date()
+        //   },
+        //   {
+        //     headers: {
+        //       'Authorization': `Bearer ${user.idToken}`
+        //     }
+        //   }
+        // );
+      } catch (error) {
+        console.error('Failed to save search history:', error);
+      }
     }
   };
 
