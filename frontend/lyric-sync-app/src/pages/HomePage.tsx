@@ -15,18 +15,18 @@ const HomePage: React.FC = () => {
       try {
         // Skeleton code to send the ID token in the Authorization header
         // Uncomment this to see how the Auth Bearer looks like in the request header of your browser's Network tab.
-        // await axios.post('random', 
-        //   {
-        //     songName,
-        //     artistName,
-        //     timestamp: new Date()
-        //   },
-        //   {
-        //     headers: {
-        //       'Authorization': `Bearer ${user.idToken}`
-        //     }
-        //   }
-        // );
+        await axios.post('http://localhost:5259/api/random', 
+          {
+            songName,
+            artistName,
+            timestamp: new Date()
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${user.idToken}`
+            }
+          }
+        );
       } catch (error) {
         console.error('Failed to save search history:', error);
       }
