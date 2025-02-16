@@ -28,7 +28,7 @@ const HomePage: React.FC = () => {
           width: '80%',
           maxWidth: '600px',
           borderRadius: 2,
-        //   backgroundColor: 'white', // Set background to white
+          //   backgroundColor: 'white', // Set background to white
           padding: 2,
         }}
       >
