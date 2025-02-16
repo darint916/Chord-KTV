@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, Typography, TextField, IconButton, Alert } from '@mui/material';
 import { Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/authTypes';
 import axios from 'axios';
 
 const HomePage: React.FC = () => {

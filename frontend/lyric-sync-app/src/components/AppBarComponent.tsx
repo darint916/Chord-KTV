@@ -2,7 +2,7 @@ import React from 'react';
 import { AppBar, Toolbar, Typography, Avatar, Menu, MenuItem } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/authTypes';
 import { jwtDecode } from 'jwt-decode';
 
 interface GooglePayload {
