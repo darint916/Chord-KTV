@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Avatar, Menu, MenuItem } from '@mui/material';
+import { AppBar, Toolbar, Typography, Avatar, Menu, MenuItem } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
