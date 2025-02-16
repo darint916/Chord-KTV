@@ -6,16 +6,17 @@ using Google.Apis.Auth;
 public class UserController : ControllerBase
 {
     private readonly string _googleClientId;
-    
+
     public UserController(IConfiguration configuration)
     {
         _googleClientId = configuration["Authentication:Google:ClientId"];
     }
-    
+
     [HttpPost("random")]
     public async Task<IActionResult> AddSearchHistory([FromHeader] string authorization)
     {
-        try {
+        try
+        {
             // 1. Extract token from Authorization header
             string idToken = authorization.Replace("Bearer ", "");
 
@@ -24,13 +25,13 @@ public class UserController : ControllerBase
             {
                 Audience = new[] { _googleClientId }
             };
-            
-            var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, validationSettings);
-            
+
+            GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(idToken, validationSettings);
+
             // 3. Now we can trust the user ID (payload.Subject)
             // Process the request...
             Console.WriteLine(payload.Subject);
-            
+
             return Ok();
         }
         catch (InvalidJwtException)
@@ -39,4 +40,4 @@ public class UserController : ControllerBase
             return Unauthorized();
         }
     }
-} 
+}
