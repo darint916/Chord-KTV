@@ -41,7 +41,7 @@ const HomePage: React.FC = () => {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        backgroundColor: '#8a2be2', 
+        backgroundColor: '#8a2be2',
         color: 'white',
       }}
     >
@@ -63,6 +63,7 @@ const HomePage: React.FC = () => {
           width: '80%',
           maxWidth: '600px',
           borderRadius: 2,
+          //   backgroundColor: 'white', // Set background to white
           padding: 2,
         }}
       >
@@ -80,14 +81,14 @@ const HomePage: React.FC = () => {
           onChange={(e) => setArtistName(e.target.value)}
           sx={{ flexGrow: 1, backgroundColor: 'white', borderRadius: 1 }}
         />
-        <IconButton 
-          component={Link} 
-          to="/play-song" 
-          sx={{ p: '10px' }} 
+        <IconButton
+          component={Link}
+          to="/play-song"
+          sx={{ p: '10px' }}
           aria-label="search"
           onClick={handleSearch}
         >
-          <SearchIcon sx={{ color: 'white' }} /> 
+          <SearchIcon sx={{ color: 'white' }} />
         </IconButton>
       </Box>
 

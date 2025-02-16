@@ -1,0 +1,35 @@
+name: Frontend Formatting
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22 # Change if needed
+          cache: 'npm'
+          cache-dependency-path: 'frontend/lyric-sync-app/package-lock.json'
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: frontend/lyric-sync-app
+
+      - name: Typescript Check
+        run: npx tsc --noEmit
+        working-directory: frontend/lyric-sync-app
+
+      - name: Run ESLint
+        run: npm run lint -- --max-warnings=0
+        working-directory: frontend/lyric-sync-app
+
+

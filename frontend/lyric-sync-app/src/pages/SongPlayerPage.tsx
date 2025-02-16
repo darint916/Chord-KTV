@@ -5,13 +5,23 @@ import LyricDisplay from '../components/LyricDisplay';
 import Controls from '../components/Controls';
 import axios from 'axios';
 
+// Define the YouTubePlayer interface
+interface YouTubePlayer {
+  seekTo: (_seconds: number, _allowSeekAhead: boolean) => void;
+  playVideo: () => void;
+  pauseVideo: () => void;
+  getCurrentTime: () => number;
+  getDuration: () => number;
+  setVolume: (_volume: number) => void;
+}
+
 const SongPlayerPage: React.FC = () => {
   const [lyrics, setLyrics] = useState<{ time: number; text: string }[]>([]);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [duration, setDuration] = useState<number>(100);
   const videoId = 'ChQaa0eqZak';
-  const playerRef = useRef<any>(null);
+  const playerRef = useRef<YouTubePlayer | null>(null);
 
   useEffect(() => {
     // Fetch LRC file and parse
@@ -26,27 +36,34 @@ const SongPlayerPage: React.FC = () => {
         const parsedLyrics = parseLRC(response.data.syncedLyrics);
         setLyrics(parsedLyrics);
       } catch (err) {
-        console.error('Error fetching lyrics:', err);
+        console.error('Error fetching lyrics:', err); // eslint-disable-line no-console
       }
     };
     fetchLyrics();
   }, []);
 
   const parseLRC = (lrc: string) => {
-    return lrc.split('\n').map((line) => {
-      const match = line.match(/\[(\d+):(\d+\.\d+)](.+)/);
-      if (!match) return null;
+    return lrc
+      .split('\n')
+      .map((line) => {
+        const match = line.match(/\[(\d+):(\d+\.\d+)](.+)/);
+        if (!match) {
+          return null;
+        }
 
-      const time = parseInt(match[1]) * 60 + parseFloat(match[2]);
-      return { time, text: match[3] };
-    }).filter(Boolean) as { time: number; text: string }[];
+        const time = parseInt(match[1]) * 60 + parseFloat(match[2]);
+        return { time, text: match[3] };
+      })
+      .filter(Boolean) as { time: number; text: string }[];
   };
 
-  const handlePlayerReady = (playerInstance: any) => {
+  const handlePlayerReady = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
 
     // Get duration when player is ready
-    playerInstance.getDuration && setDuration(playerInstance.getDuration());
+    if (playerInstance.getDuration) {
+      setDuration(playerInstance.getDuration());
+    }
 
     const intervalId = setInterval(() => {
       if (playerRef.current) {
@@ -69,9 +86,15 @@ const SongPlayerPage: React.FC = () => {
     <div>
       {/* Main Content Container */}
       <Container maxWidth="lg" sx={{ marginTop: 5 }}>
-        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" textAlign="center">
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+        >
           <Typography variant="h3" color="white" gutterBottom>
-            Midnight Cruisin' by Kingo Hamada
+            Midnight Cruisin&#39; by Kingo Hamada
           </Typography>
 
           <YouTubePlayer videoId={videoId} onReady={handlePlayerReady} />

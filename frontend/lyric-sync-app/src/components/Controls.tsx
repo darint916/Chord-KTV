@@ -2,12 +2,19 @@ import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
 
+interface YouTubePlayer {
+  seekTo: (_seconds: number, _allowSeekAhead: boolean) => void;
+  playVideo: () => void;
+  pauseVideo: () => void;
+  setVolume: (_volume: number) => void;
+}
+
 interface ControlsProps {
-  playerRef: React.RefObject<any>;
+  playerRef: React.RefObject<YouTubePlayer>;
   currentTime: number;
   duration: number;
-  onSeek: (seekTime: number) => void;
-  onPlayPause: (isPlaying: boolean) => void;
+  onSeek: (_seekTime: number) => void;
+  onPlayPause: (_isPlaying: boolean) => void;
   isPlaying: boolean;
 }
 
@@ -33,9 +40,9 @@ const Controls: React.FC<ControlsProps> = ({
 
   const handlePlayPause = () => {
     if (isPlaying) {
-      playerRef.current.pauseVideo();
+      playerRef.current?.pauseVideo();
     } else {
-      playerRef.current.playVideo();
+      playerRef.current?.playVideo();
     }
     onPlayPause(!isPlaying);
   };

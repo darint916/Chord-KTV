@@ -1,5 +1,5 @@
 ## 📝 Directory Explanation
-![Build Status](https://github.com/darint916/Chord-KTV/actions/workflows/dotnet-build-run-check.yml/badge.svg) ![Style Police Status](https://github.com/darint916/Chord-KTV/actions/workflows/enforce-code-style.yml/badge.svg)
+![Build Status](https://github.com/darint916/Chord-KTV/actions/workflows/dotnet-build-run-check.yml/badge.svg) ![Style Police Status](https://github.com/darint916/Chord-KTV/actions/workflows/enforce-code-style.yml/badge.svg)![Build Status](https://github.com/darint916/Chord-KTV/actions/workflows/react-build-check.yml/badge.svg) ![Style Police Status](https://github.com/darint916/Chord-KTV/actions/workflows/frontend-code-style.yml/badge.svg)
 
 
 - **Controllers/** - Contains API controllers that handle incoming HTTP requests.

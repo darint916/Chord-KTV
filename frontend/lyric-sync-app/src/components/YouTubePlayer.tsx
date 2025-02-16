@@ -1,36 +1,31 @@
 import React, { useState } from 'react';
-import YouTube from 'react-youtube';
+import YouTube, { YouTubePlayer as YouTubePlayerInstance } from 'react-youtube';
 
 interface YouTubePlayerProps {
   videoId: string;
-  onReady: (playerInstance: any) => void;
+  onReady: (_playerInstance: YouTubePlayerInstance) => void;
 }
 
 const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady }) => {
-  const [, setPlayer] = useState<any>(null);
+  const setPlayer = useState<YouTubePlayerInstance | null>(null)[1]; // Extract only the setter
 
   const opts = {
     height: '0', // Hide the video itself (audio only)
     width: '0',
     playerVars: {
-    //   autoplay: 1, // Autoplay the video
       controls: 0, // Hide the video controls
     },
   };
 
-  const handleReady = (event: any) => {
+  const handleReady = (event: { target: YouTubePlayerInstance }) => {
     const playerInstance = event.target;
     setPlayer(playerInstance);
     onReady(playerInstance);
   };
 
-   return (
+  return (
     <div>
-      <YouTube
-        videoId={videoId}
-        opts={opts}
-        onReady={handleReady}
-      />
+      <YouTube videoId={videoId} opts={opts} onReady={handleReady} />
     </div>
   );
 };

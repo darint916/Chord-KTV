@@ -1,4 +1,20 @@
 # React + TypeScript + Vite
+![Build Status](https://github.com/darint916/Chord-KTV/actions/workflows/react-build-check.yml/badge.svg) ![Style Police Status](https://github.com/darint916/Chord-KTV/actions/workflows/frontend-code-style.yml/badge.svg)
+
+To launch frontend:
+
+`npm install`
+
+`npm run build`
+
+To pass PR + syntax checks:
+Run these without error:
+`npm run build`
+`npx tsc --noEmit`
+`npm run lint -- --max-warnings=0`
+
+
+
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
