@@ -1,4 +1,4 @@
-name: Enforce Code Style
+name: .Net Formatting
 on: [pull_request]
 
 jobs:
@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      
+
       - name: Install .NET
         uses: actions/setup-dotnet@v3
         with:

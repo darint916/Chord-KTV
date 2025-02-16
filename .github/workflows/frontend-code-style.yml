@@ -1,4 +1,4 @@
-name: Lint Frontend Code Base
+name: Frontend Formatting
 
 on:
   push:
