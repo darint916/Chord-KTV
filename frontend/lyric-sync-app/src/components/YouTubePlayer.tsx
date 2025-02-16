@@ -7,7 +7,7 @@ interface YouTubePlayerProps {
 }
 
 const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady }) => {
-  const [player, setPlayer] = useState<any>(null);
+  const [, setPlayer] = useState<any>(null);
 
   const opts = {
     height: '0', // Hide the video itself (audio only)
