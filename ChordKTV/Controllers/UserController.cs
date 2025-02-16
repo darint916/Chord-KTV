@@ -11,7 +11,7 @@ public class UserController : ControllerBase
 
     public UserController(IConfiguration configuration)
     {
-        _googleClientId = configuration["Authentication:Google:ClientId"] ?? 
+        _googleClientId = configuration["Authentication:Google:ClientId"] ??
             throw new ArgumentNullException(nameof(configuration), "Google Client ID is not configured");
     }
 
@@ -29,7 +29,7 @@ public class UserController : ControllerBase
                 Audience = new[] { _googleClientId }
             };
 
-            var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, validationSettings);
+            GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(idToken, validationSettings);
 
             // 3. Now we can trust the user ID (payload.Subject)
             // Process the request...
