@@ -1,20 +1,22 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 
-interface User {
+// Define User type in the same file for now
+export interface User {
   id: string;
   name: string;
   email: string;
-  picture?: string;
+  picture: string;
   idToken: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  setUser: (user: User | null) => void;
+  setUser: (_user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Prefix unused 'user' with underscore
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     // Try to get user data from localStorage on initial load

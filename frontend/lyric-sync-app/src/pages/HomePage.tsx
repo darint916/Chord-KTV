@@ -9,6 +9,7 @@ const HomePage: React.FC = () => {
   const { user } = useAuth();
   const [songName, setSongName] = useState('');
   const [artistName, setArtistName] = useState('');
+  const [error, setError] = useState('');
 
   const handleSearch = async () => {
     if (user) {
@@ -27,8 +28,9 @@ const HomePage: React.FC = () => {
             }
           }
         );
-      } catch (error) {
-        console.error('Failed to save search history:', error);
+        setError(''); // Clear any existing error
+      } catch {
+        setError('Failed to save search history. Please try again.');
       }
     }
   };
@@ -54,6 +56,8 @@ const HomePage: React.FC = () => {
           Sign in to save your search history and favorites!
         </Alert>
       )}
+
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <Box
         sx={{
