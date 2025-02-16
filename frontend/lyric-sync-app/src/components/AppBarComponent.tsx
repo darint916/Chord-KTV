@@ -1,22 +1,29 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Avatar, Menu, MenuItem } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
 import { jwtDecode } from 'jwt-decode';
+
+interface GooglePayload {
+  sub: string;
+  name: string;
+  email: string;
+  picture: string;
+}
 
 const AppBarComponent: React.FC = () => {
   const { user, setUser } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
-  const handleLogin = (credentialResponse: any) => {
-    const decoded: any = jwtDecode(credentialResponse.credential);
+  const handleLogin = (credentialResponse: CredentialResponse) => {
+    const decoded: GooglePayload = jwtDecode(credentialResponse.credential ?? '');
     setUser({
       id: decoded.sub,
       name: decoded.name,
       email: decoded.email,
       picture: decoded.picture,
-      idToken: credentialResponse.credential
+      idToken: credentialResponse.credential ?? ''
     });
   };
 
@@ -32,6 +39,11 @@ const AppBarComponent: React.FC = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleLoginError = () => {
+    // Handle login error silently or show a user-friendly message
+    setUser(null);
   };
 
   return (
@@ -63,7 +75,7 @@ const AppBarComponent: React.FC = () => {
         ) : (
           <GoogleLogin
             onSuccess={handleLogin}
-            onError={() => console.log('Login Failed')}
+            onError={handleLoginError}
           />
         )}
       </Toolbar>
