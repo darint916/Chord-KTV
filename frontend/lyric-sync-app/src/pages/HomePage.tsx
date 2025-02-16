@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Button, TextField, IconButton } from '@mui/material';
+import { Box, Typography, TextField, IconButton } from '@mui/material';
 import { Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -12,7 +12,7 @@ const HomePage: React.FC = () => {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        backgroundColor: '#8a2be2', 
+        backgroundColor: '#8a2be2',
         color: 'white',
       }}
     >
@@ -27,29 +27,29 @@ const HomePage: React.FC = () => {
           mb: 4,
           width: '80%',
           maxWidth: '600px',
-          borderRadius: 2, 
-        //   backgroundColor: 'white', // Set background to white
+          borderRadius: 2,
+          //   backgroundColor: 'white', // Set background to white
           padding: 2,
         }}
       >
         <TextField
           label="Song Name"
           variant="outlined"
-          sx={{ mr: 2, flexGrow: 1, backgroundColor: 'white', borderRadius: 1  }} 
-          
+          sx={{ mr: 2, flexGrow: 1, backgroundColor: 'white', borderRadius: 1  }}
+
         />
-        <TextField 
-          label="Artist Name" 
-          variant="outlined" 
-          sx={{ flexGrow: 1, backgroundColor: 'white', borderRadius: 1  }} 
+        <TextField
+          label="Artist Name"
+          variant="outlined"
+          sx={{ flexGrow: 1, backgroundColor: 'white', borderRadius: 1  }}
         />
-        <IconButton 
-          component={Link} 
-          to="/play-song" 
-          sx={{ p: '10px' }} 
+        <IconButton
+          component={Link}
+          to="/play-song"
+          sx={{ p: '10px' }}
           aria-label="search"
         >
-          <SearchIcon sx={{ color: 'white' }} /> 
+          <SearchIcon sx={{ color: 'white' }} />
         </IconButton>
       </Box>
     </Box>
