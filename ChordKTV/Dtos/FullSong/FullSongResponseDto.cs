@@ -1,5 +1,7 @@
 namespace ChordKTV.Dtos.FullSong;
 
+using ChordKTV.Dtos.GeniusApi;
+
 public record FullSongResponseDto
 (
     Guid Id,

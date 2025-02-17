@@ -1,4 +1,5 @@
 using ChordKTV.Dtos;
+using ChordKTV.Dtos.TranslationGptApi;
 
 namespace ChordKTV.Services.Api;
 
