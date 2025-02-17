@@ -1,6 +1,6 @@
-namespace ChordKTV.Dtos.FullSong;
-
 using ChordKTV.Dtos.GeniusApi;
+
+namespace ChordKTV.Dtos.FullSong;
 
 public record FullSongResponseDto
 (
