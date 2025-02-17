@@ -8,8 +8,22 @@ using ChordKTV.Data.Repo;
 using ChordKTV.Data.Repo.SongData;
 using ChordKTV.Utils;
 using ChordKTV.Dtos;
+using Serilog;
+using System.Globalization;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+//Serilog config
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.FromLogContext()
+    .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+    .WriteTo.File("logs/log-.txt",
+        rollingInterval: RollingInterval.Day,
+        formatProvider: CultureInfo.InvariantCulture)
+    .CreateLogger();
+
+builder.Logging.AddSerilog();
 
 //Register DB
 Console.WriteLine($"Connecting to: {builder.Configuration.GetConnectionString("PostgreSql")}");
