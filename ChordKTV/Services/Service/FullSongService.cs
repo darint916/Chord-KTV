@@ -1,5 +1,6 @@
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Dtos;
+using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Models.SongData;
 using ChordKTV.Services.Api;
 

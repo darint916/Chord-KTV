@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using ChordKTV.Dtos;
+using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Services.Api;
 
 namespace ChordKTV.Services.Service;
