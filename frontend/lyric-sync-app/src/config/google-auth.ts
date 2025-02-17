@@ -1,1 +1,5 @@
-export const GOOGLE_CLIENT_ID = '626673404798-lc7pm62to3kkgp641d68bj691c9tk2u6.apps.googleusercontent.com'; 
+export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+if (!GOOGLE_CLIENT_ID) {
+  throw new Error('VITE_GOOGLE_CLIENT_ID environment variable is not set');
+}
