@@ -80,6 +80,10 @@ Note: need to be careful with the "fuzzy" search mode. Example bug case:
 
 The API returned the romanized lyrics for the Spanish version of the song. Since it only looks for the first entry in LRCLIB with time-synced lyrics, it has no way of validating whether those lyrics are actually the romanized version of the original song.
 
+## Google Cloud for Handwriting Recognition
+
+Make sure that you have gcloud CLI installed. Run ```gcloud auth application-default login``` before running the backend.
+
 ## License 📜📝⚖️
 This project is licensed under the [**MIT License**](LICENSE). 🎼🎵🎧
 
