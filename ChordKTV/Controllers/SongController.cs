@@ -163,13 +163,13 @@ public class SongController : Controller
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Failed to fetch from Genius API for title: {Title}, artist: {Artist}, lyrics: {Lyrics}", 
+            _logger.LogError(ex, "Failed to fetch from Genius API for title: {Title}, artist: {Artist}, lyrics: {Lyrics}",
                 title, artist, lyrics);
             return StatusCode(503, new { message = "Failed to fetch from Genius API.", error = ex.Message });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while fetching song. Title: {Title}, Artist: {Artist}, Lyrics: {Lyrics}", 
+            _logger.LogError(ex, "Unexpected error occurred while fetching song. Title: {Title}, Artist: {Artist}, Lyrics: {Lyrics}",
                 title, artist, lyrics);
             return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
         }
