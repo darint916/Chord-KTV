@@ -49,9 +49,9 @@ public class SongController : Controller
     }
 
     [HttpGet("youtube/playlists/{playlistId}")]
-    public async Task<IActionResult> GetYouTubePlaylist(string playlistId)
+    public async Task<IActionResult> GetYouTubePlaylist(string playlistId, [FromQuery] bool shuffle = false)
     {
-        PlaylistDetailsDto? result = await _youTubeService.GetPlaylistDetailsAsync(playlistId);
+        PlaylistDetailsDto? result = await _youTubeService.GetPlaylistDetailsAsync(playlistId, shuffle);
         if (result == null)
         {
             return StatusCode(500, new { message = "Server error: YouTube API key is missing." });
