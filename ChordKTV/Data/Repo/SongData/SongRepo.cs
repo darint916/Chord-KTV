@@ -1,8 +1,6 @@
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System.Globalization;
 namespace ChordKTV.Data.Repo;
 
 

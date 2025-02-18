@@ -1,4 +1,4 @@
-namespace ChordKTV.Dtos;
+namespace ChordKTV.Dtos.TranslationGptApi;
 
 public class TranslationResponseDto
 {

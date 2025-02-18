@@ -1,6 +1,4 @@
-using ChordKTV.Dtos;
-
-namespace ChordKTV.Dtos;
+namespace ChordKTV.Dtos.GeniusApi;
 
 public record GeniusMetaDataDto(
     int GeniusId,

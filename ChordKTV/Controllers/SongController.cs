@@ -8,6 +8,7 @@ using ChordKTV.Utils.Extensions;
 using System.Text.Json;
 using AutoMapper;
 using ChordKTV.Dtos.FullSong;
+using ChordKTV.Dtos.TranslationGptApi;
 
 namespace ChordKTV.Controllers;
 
