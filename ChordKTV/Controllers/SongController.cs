@@ -142,13 +142,19 @@ public class SongController : Controller
 
     [HttpGet("songs/genius/search")]
     public async Task<IActionResult> GetSongByArtistTitle(
-        [FromQuery, Required] string title,
+        [FromQuery] string? title,
         [FromQuery] string? artist,
+        [FromQuery] string? lyrics,
         [FromQuery] bool forceRefresh = false)
     {
         try
         {
-            Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist, forceRefresh);
+            if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(lyrics))
+            {
+                return BadRequest(new { message = "At least one of the following is required: title, lyrics" });
+            }
+
+            Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist, lyrics, forceRefresh);
             if (song == null)
             {
                 return NotFound(new { message = "Song not found on Genius." });
@@ -158,12 +164,14 @@ public class SongController : Controller
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Failed to fetch from Genius API for title: {Title}, artist: {Artist}", title, artist);
+            _logger.LogError(ex, "Failed to fetch from Genius API for title: {Title}, artist: {Artist}, lyrics: {Lyrics}",
+                title, artist, lyrics);
             return StatusCode(503, new { message = "Failed to fetch from Genius API.", error = ex.Message });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while fetching song. Title: {Title}, Artist: {Artist}", title, artist);
+            _logger.LogError(ex, "Unexpected error occurred while fetching song. Title: {Title}, Artist: {Artist}, Lyrics: {Lyrics}",
+                title, artist, lyrics);
             return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
         }
     }
