@@ -3,7 +3,7 @@ using System.Globalization;
 using Google.Cloud.Vision.V1;
 using ChordKTV.Dtos;
 using ChordKTV.Services.Api;
-using ChordKTV.Utils;
+using FuzzySharp;
 
 namespace ChordKTV.Services.Service;
 
@@ -57,7 +57,7 @@ public partial class HandwritingService : IHandwritingService
         string normalizedExpected = NormalizeText(image.ExpectedMatch);
 
         // Compute similarity percentage
-        double matchPercentage = CompareUtils.CalculateStringSimilarity(normalizedRecognized, normalizedExpected);
+        double matchPercentage = Fuzz.Ratio(normalizedRecognized, normalizedExpected);
         _logger.LogDebug("Match percentage: {MatchPercentage}%", matchPercentage);
 
         return new HandwritingCanvasResponseDto(recognizedText, matchPercentage);
