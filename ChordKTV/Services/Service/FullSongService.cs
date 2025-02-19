@@ -34,8 +34,6 @@ public class FullSongService : IFullSongService
         }
 
         //genius service
-        //intellisense cant read the above null avoiding logic smh
-        ArgumentNullException.ThrowIfNull(title);
         //TODO find alternative ways to search if not on genius? search lrc as backup? need to consider creating db entry if so
         Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist, null) ?? throw new InvalidOperationException("Song not found on Genius");
 
@@ -46,17 +44,19 @@ public class FullSongService : IFullSongService
             song.Duration ??= duration;
             float? songDuration = (float?)song.Duration?.TotalSeconds;
 
-            //TODO: Delete once issue #48 solved
             lyricsDto = await _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, null, null, null);
 
             if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics))
             {
+
                 _logger.LogWarning("Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
                 if (lyricsDto != null)
                 {
                     _logger.LogWarning("Lyrics: {Lyrics}", lyricsDto.SyncedLyrics);
                 }
-                return song;
+
+                //Try again with only title, put in as query string
+                lyricsDto = await _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, null, song.Title, songDuration);
             }
             song.LrcLyrics = lyricsDto.SyncedLyrics;
 
