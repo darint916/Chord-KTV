@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Avatar, Menu, MenuItem } from '@mui/material';
+import { AppBar, Toolbar, Typography, Avatar, Menu, MenuItem, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../contexts/authTypes';
@@ -54,6 +54,9 @@ const AppBarComponent: React.FC = () => {
             Chord KTV
           </Link>
         </Typography>
+        <Button component={Link} to="/canvas" color="inherit">
+          Canvas
+        </Button>
         
         {user ? (
           <>
