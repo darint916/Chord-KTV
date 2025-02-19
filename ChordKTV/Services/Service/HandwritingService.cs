@@ -40,13 +40,13 @@ public class HandwritingService : IHandwritingService
 
         // Set Language Hint
         var imageContext = new ImageContext();
-        if (!string.IsNullOrWhiteSpace(image.Language.ToString()))
+        if (!string.IsNullOrWhiteSpace(image.Language.ToString()) && Enum.IsDefined(typeof(LanguageCode), image.Language.ToString()))
         {
             imageContext.LanguageHints.Add(image.Language.ToString());
         }
         else
         {
-            _logger.LogWarning("No language specified. Defaulting to no language hint.");
+            _logger.LogWarning("Invalid/No language specified. Defaulting to no language hint.");
         }
 
         _logger.LogDebug("Detecting text from image with language {Language}", image.Language.ToString());
