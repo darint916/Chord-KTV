@@ -63,6 +63,7 @@ builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
 builder.Services.AddScoped<ISongRepo, SongRepo>();
 builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
 builder.Services.AddScoped<IFullSongService, FullSongService>();
+builder.Services.AddScoped<IHandwritingService, HandwritingService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
