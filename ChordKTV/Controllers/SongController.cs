@@ -60,7 +60,7 @@ public class SongController : Controller
         return Ok(result);
     }
 
-    [HttpGet("lyrics/lrclib/search")]
+    [HttpGet("lyrics/lrc/search")]
     public async Task<IActionResult> GetLrcLibLyrics([FromQuery] string? title,
                                     [FromQuery] string? artist, [FromQuery] string? albumName,
                                     [FromQuery] float? duration)

@@ -51,11 +51,7 @@ public class LrcService : ILrcService
         LrcLyricsDto? lyricsDtoMatch = null;
         if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(artist))
         {
-            lyricsDtoMatch = await GetLrcLibLyricsExactAsync(title, artist, albumName, duration); //can await later
-            if (lyricsDtoMatch is not null)
-            {
-                return lyricsDtoMatch; //most accurate to duration maybe so we get good sync
-            }
+            lyricsDtoMatch = await GetLrcLibLyricsExactAsync(title, artist, albumName, duration);
         }
 
         List<LrcLyricsDto>? searchResults = await GetLrcLibLyricsListAsync(title, artist, albumName);
@@ -68,11 +64,11 @@ public class LrcService : ILrcService
         //TODO: remove null check if #70 issue resolved
         searchResults = searchResults
             .OrderByDescending(ele => CompareUtils
-            .CompareWeightedFuzzyScore(title, ele.TrackName ?? "", duration, ele.Duration))
+            .CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration))
             .ToList();
 
         // Get the first result with time-synced lyrics
-        if (!string.IsNullOrWhiteSpace(lyricsDtoMatch?.SyncedLyrics))
+        if (string.IsNullOrWhiteSpace(lyricsDtoMatch?.SyncedLyrics))
         {
             lyricsDtoMatch = searchResults.FirstOrDefault(ele =>
                 !string.IsNullOrEmpty(ele.PlainLyrics) &&
@@ -84,12 +80,13 @@ public class LrcService : ILrcService
         }
 
         // we go more strict on time sync if we have a match
-        if (!LanguageUtils.IsRomanizedText(lyricsDtoMatch.PlainLyrics)) // If lyrics are in original language
+        if (!LanguageUtils.IsRomanizedText(lyricsDtoMatch.PlainLyrics)) // If lyrics are in non en language
         {
             LrcLyricsDto? romanizedMatch = searchResults.FirstOrDefault(ele =>
                 !string.IsNullOrEmpty(ele.PlainLyrics) &&
                 !string.IsNullOrEmpty(ele.SyncedLyrics) &&
                 LanguageUtils.IsRomanizedText(ele.PlainLyrics) &&
+                Fuzz.Ratio(ele.ArtistName, lyricsDtoMatch.ArtistName) > 80 && //make sure artist is same
                 CompareUtils.IsCloseToF(ele.Duration, duration, 2));
             if (romanizedMatch != null)
             {
@@ -97,6 +94,7 @@ public class LrcService : ILrcService
                 lyricsDtoMatch.RomanizedSyncedLyrics = romanizedMatch.SyncedLyrics;
                 lyricsDtoMatch.RomanizedId = romanizedMatch.Id;
             }
+
         }
         else // If already romanized, look for original lyrics
         {
@@ -108,6 +106,7 @@ public class LrcService : ILrcService
                 !string.IsNullOrEmpty(ele.PlainLyrics) &&
                 !string.IsNullOrEmpty(ele.SyncedLyrics) &&
                 !LanguageUtils.IsRomanizedText(ele.PlainLyrics) &&
+                Fuzz.Ratio(ele.ArtistName, lyricsDtoMatch.ArtistName) > 80 && //make sure artist is same
                 CompareUtils.IsCloseToF(ele.Duration, duration, 2));
 
             if (origMatch != null)
@@ -203,7 +202,7 @@ public class LrcService : ILrcService
         //after testing, it seems their search prioritizes the query string over title and artist (if artist title corr, query string can kill it)
         // im p sure they anything in their qstring just searches all fields, we get from genius so might as well be specific
         // Note that we return on find results, i believe their search algorithm doesn't stray off too far from the query
-        List<LrcLyricsDto>? results = null;
+        List<LrcLyricsDto>? results;
         if (!string.IsNullOrEmpty(artist) && !string.IsNullOrEmpty(albumName) && !forceKeywordSearch)
         {
             results = await LrcLibSearchEndpointResponse(queryParams);
