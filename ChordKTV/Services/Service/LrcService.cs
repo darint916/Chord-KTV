@@ -52,6 +52,10 @@ public class LrcService : ILrcService
         if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(artist))
         {
             lyricsDtoMatch = await GetLrcLibLyricsExactAsync(title, artist, albumName, duration);
+            if (lyricsDtoMatch is not null)
+            {
+                _logger.LogInformation("Found exact match for title: {Title}, artist: {Artist}, album: {AlbumName}", title, artist, albumName);
+            }
         }
 
         List<LrcLyricsDto>? searchResults = await GetLrcLibLyricsListAsync(title, artist, albumName);
@@ -94,14 +98,12 @@ public class LrcService : ILrcService
                 lyricsDtoMatch.RomanizedSyncedLyrics = romanizedMatch.SyncedLyrics;
                 lyricsDtoMatch.RomanizedId = romanizedMatch.Id;
             }
-
         }
         else // If already romanized, look for original lyrics
         {
-            string? romanizedPlainLyrics = lyricsDtoMatch.PlainLyrics;
-            string? romanizedSyncedLyrics = lyricsDtoMatch.SyncedLyrics;
-            int? romanizedId = lyricsDtoMatch.Id;
-
+            lyricsDtoMatch.RomanizedPlainLyrics = lyricsDtoMatch.PlainLyrics;
+            lyricsDtoMatch.RomanizedSyncedLyrics = lyricsDtoMatch.SyncedLyrics;
+            lyricsDtoMatch.RomanizedId = lyricsDtoMatch.Id;
             LrcLyricsDto? origMatch = searchResults.FirstOrDefault(ele =>
                 !string.IsNullOrEmpty(ele.PlainLyrics) &&
                 !string.IsNullOrEmpty(ele.SyncedLyrics) &&
@@ -115,14 +117,8 @@ public class LrcService : ILrcService
                 lyricsDtoMatch.SyncedLyrics = origMatch.SyncedLyrics;
                 lyricsDtoMatch.Id = origMatch.Id;
             }
-
-            lyricsDtoMatch.RomanizedPlainLyrics = romanizedPlainLyrics;
-            lyricsDtoMatch.RomanizedSyncedLyrics = romanizedSyncedLyrics;
-            lyricsDtoMatch.RomanizedId = romanizedId;
         }
-
         return lyricsDtoMatch;
-
     }
 
     //Most restrictive query, exact match of title and artist
@@ -137,7 +133,7 @@ public class LrcService : ILrcService
         queryParams["artist_name"] = artist;
         string? durationString = duration?.ToString(CultureInfo.InvariantCulture) ?? null;
 
-        LrcLyricsDto? result = null;
+        LrcLyricsDto? result;
         //TODO: benchmark and consider pool api call?
         if (!string.IsNullOrWhiteSpace(albumName) && !string.IsNullOrWhiteSpace(durationString))
         {
@@ -267,18 +263,23 @@ public class LrcService : ILrcService
         HttpResponseMessage response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
         string content = await response.Content.ReadAsStringAsync();
-        _logger.LogDebug("LrcLib API call took: {ElapsedMilliseconds}ms", stopwatch.ElapsedMilliseconds);
+        stopwatch.Stop();
+        _logger.LogInformation("LrcLib API call took: {ElapsedMilliseconds}ms", stopwatch.ElapsedMilliseconds);
         return JsonSerializer.Deserialize<LrcLyricsDto>(content, _jsonSerializerOptions);
     }
 
     //api endpoint for LRCLib search https://lrclib.net/docs
     public async Task<List<LrcLyricsDto>?> LrcLibSearchEndpointResponse(NameValueCollection queryParams)
     {
+        Stopwatch stopwatch = new(); //remove when done
+        stopwatch.Start();
         string queryString = queryParams.ToString() ?? string.Empty;
         HttpResponseMessage response = await _httpClient.GetAsync($"https://lrclib.net/api/search?{queryString}");
         response.EnsureSuccessStatusCode();
         string content = await response.Content.ReadAsStringAsync();
         List<LrcLyricsDto>? searchResults = JsonSerializer.Deserialize<List<LrcLyricsDto>?>(content, _jsonSerializerOptions);
+        stopwatch.Stop();
+        _logger.LogInformation("LrcLib API call took: {ElapsedMilliseconds}ms", stopwatch.ElapsedMilliseconds);
         return (searchResults is { Count: > 0 }) ? searchResults : null;
     }
 }
