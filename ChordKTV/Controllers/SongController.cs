@@ -61,33 +61,13 @@ public class SongController : Controller
     }
 
     [HttpGet("lyrics/lrclib/search")]
-    public async Task<IActionResult> GetLrcLibLyrics([FromQuery, Required] string searchType, [FromQuery] string? title,
+    public async Task<IActionResult> GetLrcLibLyrics([FromQuery] string? title,
                                     [FromQuery] string? artist, [FromQuery] string? albumName,
-                                    [FromQuery] float? duration, [FromQuery] string? qString)
+                                    [FromQuery] float? duration)
     {
         try
         {
-            string[] validSearchTypes = ["exact", "fuzzy"];
-
-            if (!validSearchTypes.Contains(searchType))
-            {
-                return BadRequest(new { message = "searchType must be 'fuzzy' or 'exact'" });
-            }
-
-            if (searchType == "exact" && (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(artist)))
-            {
-                return BadRequest(new { message = "Both title and artist are required for searchType=exact" });
-            }
-
-            if (searchType == "fuzzy" && string.IsNullOrWhiteSpace(qString))
-            {
-                return BadRequest(new { message = "'qString' is required for searchType=fuzzy" });
-            }
-
-            LrcLyricsDto? lyrics = searchType == "exact"
-                ? await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, null, duration)
-                : await _lrcService.GetLrcLibLyricsAsync(null, null, null, qString, null);
-
+            LrcLyricsDto? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, duration);
             if (lyrics == null)
             {
                 return NotFound(new { message = "Lyrics not found for the specified track." });
@@ -98,6 +78,10 @@ public class SongController : Controller
         catch (HttpRequestException ex) // Handles HTTP request errors
         {
             return StatusCode(503, new { message = "Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
+        }
+        catch (ArgumentException ex) // Handles invalid arguments
+        {
+            return BadRequest(new { message = ex.Message });
         }
         catch (Exception ex) // Handles unexpected errors
         {
