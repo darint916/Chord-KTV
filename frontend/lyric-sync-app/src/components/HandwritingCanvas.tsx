@@ -1,5 +1,5 @@
 // import React, { useRef, useState, useEffect } from 'react';
-// import { Box, Button, Card, CardContent, Typography, Stack } from '@mui/material';
+// import { Box, Button, Card, CardContent, Typography, Stack, TextField } from '@mui/material';
 // import { HandwritingApi, Configuration } from '../api';
 
 // // Initialize API client
@@ -18,6 +18,7 @@
 //   const [feedbackMessage, setFeedbackMessage] = useState(""); // Feedback message
 //   const [recognizedText, setRecognizedText] = useState(""); // Recognized text
 //   const [matchPercentage, setMatchPercentage] = useState<number | null>(null); // Match percentage
+//   const [expectedMatch, setExpectedMatch] = useState<string>(""); // Input for expected match text
 
 //   // Initialize canvas settings
 //   useEffect(() => {
@@ -106,6 +107,7 @@
 //     setFeedbackMessage(""); // Clear feedback
 //     setRecognizedText(""); // Clear recognized text
 //     setMatchPercentage(null); // Clear match percentage
+//     setExpectedMatch(""); // Clear expected match input
 //   };
 
 //   // Export image and get recognition result
@@ -141,11 +143,9 @@
 //         handwritingCanvasRequestDto: {
 //           image: imageData.split(",")[1],
 //           language: "JA",
-//           expectedMatch: "こん", // Change based on your needs
+//           expectedMatch: expectedMatch, // Use the input as expected match
 //         },
 //       });
-
-//       console.log("OCR Response:", response);
 
 //       // Handle feedback based on OCR result
 //       const match = response.matchPercentage || 0;
@@ -156,7 +156,7 @@
 //       if (match === 100) {
 //         setFeedbackMessage("Good job!");
 //       } else {
-//         setFeedbackMessage(`Try again! Match: ${match}%`);
+//         setFeedbackMessage(`Try again!`);
 //       }
 //     } catch (error) {
 //       console.error("Error in OCR API call:", error);
@@ -170,6 +170,16 @@
 //         <Typography variant="h6" gutterBottom>
 //           Handwriting Recognition
 //         </Typography>
+
+//         {/* Expected Text Input */}
+//         <TextField
+//           label="Expected Text"
+//           variant="outlined"
+//           fullWidth
+//           value={expectedMatch}
+//           onChange={(e) => setExpectedMatch(e.target.value)}
+//           sx={{ mb: 2 }}
+//         />
 
 //         <Box
 //           sx={{
@@ -251,8 +261,8 @@
 
 // export default HandwritingCanvas;
 import React, { useRef, useState, useEffect } from 'react';
-import { Box, Button, Card, CardContent, Typography, Stack, TextField } from '@mui/material';
-import { HandwritingApi, Configuration } from '../api';
+import { Box, Button, Card, CardContent, Typography, Stack, TextField, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
+import { HandwritingApi, Configuration, LanguageCode } from '../api';
 
 // Initialize API client
 const handwritingApi = new HandwritingApi(
@@ -264,20 +274,19 @@ const handwritingApi = new HandwritingApi(
 const HandwritingCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
-  const gridCanvasRef = useRef<HTMLCanvasElement | null>(null); // Grid canvas
+  const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [isEraser, setIsEraser] = useState(false); // Track eraser mode
-  const [feedbackMessage, setFeedbackMessage] = useState(""); // Feedback message
-  const [recognizedText, setRecognizedText] = useState(""); // Recognized text
-  const [matchPercentage, setMatchPercentage] = useState<number | null>(null); // Match percentage
-  const [expectedMatch, setExpectedMatch] = useState<string>(""); // Input for expected match text
+  const [isEraser, setIsEraser] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [recognizedText, setRecognizedText] = useState("");
+  const [matchPercentage, setMatchPercentage] = useState<number | null>(null);
+  const [expectedText, setExpectedText] = useState<string>("");
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>(LanguageCode.En);  // Default language is English
 
-  // Initialize canvas settings
   useEffect(() => {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-
       if (ctx) {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -291,20 +300,16 @@ const HandwritingCanvas: React.FC = () => {
       const gridCanvas = gridCanvasRef.current;
       const ctx = gridCanvas.getContext('2d');
       if (ctx) {
-        // Draw gridlines on the grid canvas
         drawGridlines(ctx, gridCanvas.width, gridCanvas.height);
       }
     }
   }, []);
 
-  // Draw gridlines function
   const drawGridlines = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    ctx.clearRect(0, 0, width, height); // Clear previous gridlines
-    ctx.strokeStyle = '#e0e0e0'; // Light grey gridlines
+    ctx.clearRect(0, 0, width, height);
+    ctx.strokeStyle = '#e0e0e0';
     ctx.lineWidth = 0.5;
-    const gridSize = 50; // Size of each grid square
-
-    // Draw vertical gridlines
+    const gridSize = 50;
     for (let x = gridSize; x < width; x += gridSize) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
@@ -312,7 +317,6 @@ const HandwritingCanvas: React.FC = () => {
       ctx.stroke();
     }
 
-    // Draw horizontal gridlines
     for (let y = gridSize; y < height; y += gridSize) {
       ctx.beginPath();
       ctx.moveTo(0, y);
@@ -321,85 +325,65 @@ const HandwritingCanvas: React.FC = () => {
     }
   };
 
-  // Start drawing
   const startDrawing = (e: React.PointerEvent) => {
-    if (!ctxRef.current) {return;}
+    if (!ctxRef.current) return;
     const { offsetX, offsetY } = e.nativeEvent;
     ctxRef.current.beginPath();
     ctxRef.current.moveTo(offsetX, offsetY);
     setIsDrawing(true);
   };
 
-  // Draw or erase on canvas
   const draw = (e: React.PointerEvent) => {
-    if (!isDrawing || !ctxRef.current) {return;}
+    if (!isDrawing || !ctxRef.current) return;
     const { offsetX, offsetY } = e.nativeEvent;
-
     if (isEraser) {
-      // Eraser logic
-      ctxRef.current.clearRect(offsetX - 10, offsetY - 10, 20, 20); // Clear a small area
+      ctxRef.current.clearRect(offsetX - 10, offsetY - 10, 20, 20);
     } else {
-      // Drawing logic
       ctxRef.current.lineTo(offsetX, offsetY);
       ctxRef.current.stroke();
     }
   };
 
-  // Stop drawing or erasing
   const stopDrawing = () => {
-    if (!ctxRef.current) {return;}
+    if (!ctxRef.current) return;
     ctxRef.current.closePath();
     setIsDrawing(false);
   };
 
-  // Clear canvas
   const clearCanvas = () => {
-    if (!canvasRef.current || !ctxRef.current) {return;}
+    if (!canvasRef.current || !ctxRef.current) return;
     ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    setFeedbackMessage(""); // Clear feedback
-    setRecognizedText(""); // Clear recognized text
-    setMatchPercentage(null); // Clear match percentage
-    setExpectedMatch(""); // Clear expected match input
+    setFeedbackMessage("");
+    setRecognizedText("");
+    setMatchPercentage(null);
   };
 
-  // Export image and get recognition result
   const exportImage = async () => {
     if (!canvasRef.current) return;
-
-    // Get the existing canvas and its context
     const originalCanvas = canvasRef.current;
-
-    // Create a new offscreen canvas
     const offscreenCanvas = document.createElement("canvas");
     const ctx = offscreenCanvas.getContext("2d");
-
-    // Set the same dimensions as the original
     offscreenCanvas.width = originalCanvas.width;
     offscreenCanvas.height = originalCanvas.height;
-
     if (ctx) {
-      // Fill the background with white
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-
-      // Draw the original canvas content on top of the white background
       ctx.drawImage(originalCanvas, 0, 0);
     }
 
-    // Create a new image data URL without the gridlines
     const imageData = offscreenCanvas.toDataURL("image/png");
 
     try {
-      // Make API call
       const response = await handwritingApi.apiHandwritingOcrPost({
         handwritingCanvasRequestDto: {
           image: imageData.split(",")[1],
-          language: "JA",
-          expectedMatch: expectedMatch, // Use the input as expected match
+          language: selectedLanguage, // Send selected language
+          expectedMatch: expectedText, // Send expected text
         },
       });
 
-      // Handle feedback based on OCR result
+      console.log("OCR Response:", response);
+
       const match = response.matchPercentage || 0;
       const recognizedText = response.recognizedText || '';
       setRecognizedText(recognizedText);
@@ -423,15 +407,28 @@ const HandwritingCanvas: React.FC = () => {
           Handwriting Recognition
         </Typography>
 
-        {/* Expected Text Input */}
-        <TextField
-          label="Expected Text"
-          variant="outlined"
-          fullWidth
-          value={expectedMatch}
-          onChange={(e) => setExpectedMatch(e.target.value)}
-          sx={{ mb: 2 }}
-        />
+        <Stack direction="row" spacing={2} justifyContent="center" mt={2} mb={2}>
+          <TextField
+            label="Expected Text"
+            variant="outlined"
+            value={expectedText}
+            onChange={(e) => setExpectedText(e.target.value)}
+          />
+          <FormControl variant="outlined" sx={{ minWidth: 120 }}>
+            <InputLabel>Language</InputLabel>
+            <Select
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value as LanguageCode)}
+              label="Language"
+            >
+              {Object.keys(LanguageCode).map((key) => (
+                <MenuItem key={key} value={LanguageCode[key as keyof typeof LanguageCode]}>
+                  {LanguageCode[key as keyof typeof LanguageCode]}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
 
         <Box
           sx={{
@@ -446,7 +443,6 @@ const HandwritingCanvas: React.FC = () => {
             position: 'relative',
           }}
         >
-          {/* Grid canvas */}
           <canvas
             ref={gridCanvasRef}
             width={500}
@@ -455,11 +451,9 @@ const HandwritingCanvas: React.FC = () => {
               position: 'absolute',
               top: 0,
               left: 0,
-              pointerEvents: 'none', // Disable interaction with the grid canvas
+              pointerEvents: 'none',
             }}
           />
-
-          {/* Drawing canvas */}
           <canvas
             ref={canvasRef}
             width={500}
@@ -488,19 +482,16 @@ const HandwritingCanvas: React.FC = () => {
           </Button>
         </Stack>
 
-        {/* Feedback Message */}
         <Typography variant="h6" mt={2}>
           {feedbackMessage}
         </Typography>
 
-        {/* Recognized Text */}
         {recognizedText && (
           <Typography variant="body1" mt={1}>
             Recognized Text: {recognizedText}
           </Typography>
         )}
 
-        {/* Match Percentage */}
         {matchPercentage !== null && (
           <Typography variant="body2" mt={1}>
             Match: {matchPercentage}%
