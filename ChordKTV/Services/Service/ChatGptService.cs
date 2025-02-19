@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using ChordKTV.Dtos;
 using ChordKTV.Dtos.TranslationGptApi;
+using ChordKTV.Dtos.Quiz;
 using ChordKTV.Services.Api;
 
 namespace ChordKTV.Services.Service;
@@ -17,7 +18,7 @@ public class ChatGptService : IChatGptService
     //Context window: 128,000 tokens, max tokens: 16,384 tokens , about 4 chars per token avg ~ 32000 chars, reference: Eminem love the way you lie : 4.4k chars
     //KR + other lang use more tokens, but as ref, https://platform.openai.com/tokenizer to calc, 2793 char -> 1564 tokens (sick enough to die)
     // price as of testing seems like ~$0.01 after 26k tokens lol
-    private const string Model = "gpt-4o-mini"; //last updated 2024-07-18 , knowledge cutoff 10/2023
+    private const string Model = "o3-mini"; //last updated 2024-07-18 , knowledge cutoff 10/2023
 
     public ChatGptService(HttpClient httpClient, IConfiguration configuration, ILogger<ChatGptService> logger)
     {
@@ -153,6 +154,104 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         {
             // Handle or log batch errors appropriately.
             throw new InvalidOperationException("One or more translations failed during batch processing.", ex);
+        }
+    }
+
+    public async Task<QuizResponseDto> GenerateRomanizationQuizAsync(string lyrics, int difficulty, int numQuestions, int geniusId)
+    {
+        // Construct a prompt with detailed instructions
+        string prompt = $@"
+You are a helpful assistant that generates multiple choice quizzes from song lyrics for romanization practice.
+The full lyrics are provided below:
+{lyrics}
+
+Your task:
+- Identify and select {numQuestions} key phrases from the lyrics that are significant for romanization.
+- For each key phrase, create a multiple-choice question with exactly 4 answer options (only one is correct).
+- The correct option should be the accurate romanization of the key phrase.
+- The other three options should be plausible but incorrect romanizations.
+- The difficulty of the quiz is set to {difficulty} on a scale from 1 (easiest) to 10 (hardest); adjust the obscurity of the phrases accordingly.
+- Respond with a JSON object exactly in the following format:
+{{
+    ""quizId"": ""<a unique GUID>"",
+    ""geniusId"": {geniusId},
+    ""difficulty"": {difficulty},
+    ""timestamp"": ""<current ISO 8601 datetime>"",
+    ""questions"": [
+        {{
+            ""questionNumber"": 1,
+            ""lyricPhrase"": ""<extracted song lyric phrase>"",
+            ""options"": [""option1"", ""option2"", ""option3"", ""option4""],
+            ""correctOptionIndex"": <index of correct option starting at 0>
+        }},
+        ... up to {numQuestions} questions
+    ]
+}}
+Ensure that the JSON is the only output and does not include any additional text or explanation.
+";
+        string systemPrompt = "You are an assistant specialized in generating romanization quizzes from song lyrics.";
+
+        var requestBody = new
+        {
+            model = Model,
+            messages = new object[]
+            {
+                new { role = "system", content = systemPrompt },
+                new { role = "user", content = prompt }
+            },
+            // temperature = 0.4,
+            // top_p = 0.9
+        };
+
+        string jsonRequest = JsonSerializer.Serialize(requestBody);
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, ChatGptEndpoint);
+        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+        requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+        try
+        {
+            var sw = new Stopwatch();
+            sw.Start();
+            using HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            sw.Stop();
+            _logger.LogInformation("⏱️ ChatGPT Quiz API call took: {ElapsedMilliseconds}ms", sw.ElapsedMilliseconds);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"ChatGPT API call failed with status code {response.StatusCode}: {errorContent}");
+            }
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            using var document = JsonDocument.Parse(responseContent);
+            JsonElement root = document.RootElement;
+            JsonElement choices = root.GetProperty("choices");
+            if (choices.GetArrayLength() == 0)
+            {
+                _logger.LogError("No choices were returned from the ChatGPT API for quiz generation.");
+                throw new InvalidOperationException("No choices were returned from the ChatGPT API.");
+            }
+            string? messageContent = choices[0]
+                .GetProperty("message")
+                .GetProperty("content")
+                .GetString();
+            if (string.IsNullOrWhiteSpace(messageContent))
+            {
+                _logger.LogError("The ChatGPT API returned an empty response for quiz generation.");
+                throw new InvalidOperationException("The ChatGPT API returned an empty response.");
+            }
+            var quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(messageContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (quizResponse == null)
+            {
+                _logger.LogError("Failed to deserialize quiz response. Raw response: {MessageContent}", messageContent);
+                throw new InvalidOperationException("Invalid quiz response format from ChatGPT.");
+            }
+            return quizResponse;
+        }
+        catch (HttpRequestException httpEx)
+        {
+            _logger.LogError(httpEx, "HTTP request error while calling the ChatGPT API for quiz generation.");
+            throw new HttpRequestException("HTTP request error while calling the ChatGPT API for quiz generation.", httpEx);
         }
     }
 }
