@@ -3,7 +3,8 @@ using System.Globalization;
 
 namespace ChordKTV.Utils;
 
-public partial class KeywordExtractor
+//partial cuz of stinky regex https://stackoverflow.com/a/78951626
+public partial class KeywordExtractorUtils
 {
     private static readonly HashSet<string> _stopWords = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -26,7 +27,7 @@ public partial class KeywordExtractor
             return null;
         }
 
-        string cleanedText = combinedInput.ToLower(CultureInfo.InvariantCulture);
+        string cleanedText = combinedInput.ToLowerInvariant();
 
         // Remove special characters like () [] {} & punctuation then eat up the double whitespaces so we get nice array
         cleanedText = SpecialCharsRegex().Replace(cleanedText, " ");

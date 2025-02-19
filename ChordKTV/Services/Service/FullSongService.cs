@@ -22,6 +22,7 @@ public class FullSongService : IFullSongService
         _logger = logger;
     }
 
+    //just realized we dont take album lmao
     public async Task<Song?> GetFullSongAsync(string? title, string? artist, TimeSpan? duration, string? lyrics, string? youtubeUrl)
     {
         if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(lyrics))
@@ -47,7 +48,7 @@ public class FullSongService : IFullSongService
             float? songDuration = (float?)song.Duration?.TotalSeconds;
 
             //TODO: Delete once issue #48 solved
-            lyricsDto = await _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, null, null, null);
+            lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(song.Title, song.Artist, null, null);
 
             if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics))
             {
