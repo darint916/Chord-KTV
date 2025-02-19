@@ -54,7 +54,7 @@ public class LrcService : ILrcService
             lyricsDtoMatch = await GetLrcLibLyricsExactAsync(title, artist, albumName, duration);
             if (lyricsDtoMatch is not null)
             {
-                _logger.LogInformation("Found exact match for title: {Title}, artist: {Artist}, album: {AlbumName}", title, artist, albumName);
+                _logger.LogDebug("Found exact match for title: {Title}, artist: {Artist}, album: {AlbumName}", title, artist, albumName);
             }
         }
 
@@ -254,14 +254,16 @@ public class LrcService : ILrcService
             _logger.LogWarning("No results found for title: {Title}, artist: {Artist}, album: {AlbumName}", title, artist, albumName);
             _logger.LogWarning("Keywords: {Keywords}", keywords);
         }
+        else
+        {
+            _logger.LogDebug("USED KEYWORDS Found {Count} results for title: {Title}, artist: {Artist}, album: {AlbumName}", allResults.Count, title, artist, albumName);
+        }
         return allResults;
     }
 
     //api endpoint for LRCLib exact Get match https://lrclib.net/docs
     public async Task<LrcLyricsDto?> LrcLibGetEndpointResponse(NameValueCollection queryParams)
     {
-        Stopwatch stopwatch = new(); //remove when done
-        stopwatch.Start();
         string queryString = queryParams.ToString() ?? string.Empty; //empty string (intellisense is dumb)
         string url = $"https://lrclib.net/api/get?{queryString}";
 
@@ -272,16 +274,12 @@ public class LrcService : ILrcService
         }
         response.EnsureSuccessStatusCode();
         string content = await response.Content.ReadAsStringAsync();
-        stopwatch.Stop();
-        _logger.LogInformation("LrcLib API call took: {ElapsedMilliseconds}ms", stopwatch.ElapsedMilliseconds);
         return JsonSerializer.Deserialize<LrcLyricsDto>(content, _jsonSerializerOptions);
     }
 
     //api endpoint for LRCLib search https://lrclib.net/docs
     public async Task<List<LrcLyricsDto>?> LrcLibSearchEndpointResponse(NameValueCollection queryParams)
     {
-        Stopwatch stopwatch = new(); //remove when done
-        stopwatch.Start();
         string queryString = queryParams.ToString() ?? string.Empty;
         HttpResponseMessage response = await _httpClient.GetAsync($"https://lrclib.net/api/search?{queryString}");
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound) //dont want it throw if not found, continue execution
@@ -291,8 +289,6 @@ public class LrcService : ILrcService
         response.EnsureSuccessStatusCode();
         string content = await response.Content.ReadAsStringAsync();
         List<LrcLyricsDto>? searchResults = JsonSerializer.Deserialize<List<LrcLyricsDto>?>(content, _jsonSerializerOptions);
-        stopwatch.Stop();
-        _logger.LogInformation("LrcLib API call took: {ElapsedMilliseconds}ms", stopwatch.ElapsedMilliseconds);
         return (searchResults is { Count: > 0 }) ? searchResults : null;
     }
 }
