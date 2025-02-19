@@ -1,7 +1,6 @@
-using Google.Cloud.Vision.V1;
 using Microsoft.AspNetCore.Mvc;
-using System.Text;
 using ChordKTV.Dtos;
+using ChordKTV.Services.Api;
 
 namespace ChordKTV.Controllers;
 
@@ -10,10 +9,13 @@ namespace ChordKTV.Controllers;
 public class HandwritingController : Controller
 {
     private readonly ILogger<HandwritingController> _logger;
+    private readonly IHandwritingService _handwritingService;
 
-    public HandwritingController(IConfiguration configuration, ILogger<HandwritingController> logger)
+    public HandwritingController(IHandwritingService handwritingService, ILogger<HandwritingController> logger)
     {
         _logger = logger;
+        _handwritingService = handwritingService;
+
     }
 
     [HttpPost]
@@ -24,32 +26,13 @@ public class HandwritingController : Controller
     {
         try
         {
-            // Convert Base64 to Image
-            byte[] imageBytes = Convert.FromBase64String(image.Image);
-            var decodedImage = Image.FromBytes(imageBytes);
-
-            // Initialize Google Cloud Vision Client
-            var client = ImageAnnotatorClient.Create();
-
-            // Set Language Hint
-            var imageContext = new ImageContext();
-            imageContext.LanguageHints.Add(image.Language.ToString()); // Specify language
-
-            _logger.LogDebug("Detecting text from image with language {Language}", image.Language.ToString());
-            IReadOnlyList<EntityAnnotation> response = await client.DetectTextAsync(decodedImage, imageContext);
-
-            // Extract recognized text
-            var recognizedText = new StringBuilder();
-            foreach (EntityAnnotation? annotation in response)
-            {
-                recognizedText.AppendLine(annotation.Description);
-            }
-
-            return Ok(new { text = recognizedText.ToString().Trim() });
+            bool isMatch = await _handwritingService.RecognizeTextAsync(image);
+            return Ok(new { match = isMatch });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = ex.Message });
+            _logger.LogError(ex, "Failed to recognize handwriting.");
+            return StatusCode(500, new { error = "An error occurred while processing the image." });
         }
     }
 }
