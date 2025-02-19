@@ -1,6 +1,6 @@
 namespace ChordKTV.Dtos;
 
-public record HandwritingCanvasDto(
+public record HandwritingCanvasRequestDto(
     string Image,
     LanguageCode Language,
     string ExpectedMatch

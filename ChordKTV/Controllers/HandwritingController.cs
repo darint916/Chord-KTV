@@ -19,19 +19,19 @@ public class HandwritingController : Controller
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(string), 200)]
+    [ProducesResponseType(typeof(HandwritingCanvasResponseDto), 200)]
     [ProducesResponseType(typeof(string), 400)]
     [ProducesResponseType(typeof(string), 500)]
-    public async Task<IActionResult> Recognize([FromBody] HandwritingCanvasDto image)
+    public async Task<IActionResult> Recognize([FromBody] HandwritingCanvasRequestDto image)
     {
         try
         {
-            bool? isMatch = await _handwritingService.RecognizeTextAsync(image);
-            if (isMatch == null)
+            HandwritingCanvasResponseDto? match = await _handwritingService.RecognizeTextAsync(image);
+            if (match == null)
             {
                 return StatusCode(400, new { error = "Image input is null/invalid base64." });
             }
-            return Ok(new { match = isMatch });
+            return Ok(match);
         }
         catch (Exception ex)
         {
