@@ -120,8 +120,6 @@ const HandwritingCanvas: React.FC = () => {
         },
       });
 
-      console.log('OCR Response:', response);
-
       const match = response.matchPercentage || 0;
       const recognizedText = response.recognizedText || '';
       setRecognizedText(recognizedText);
@@ -132,8 +130,7 @@ const HandwritingCanvas: React.FC = () => {
       } else {
         setFeedbackMessage(`Try again! Match: ${match}%`);
       }
-    } catch (error) {
-      console.error('Error in OCR API call:', error);
+    } catch {
       setFeedbackMessage('Error in recognition. Please try again.');
     }
   };
