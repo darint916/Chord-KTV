@@ -1,11 +1,23 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Box, Button, Card, CardContent, Typography, Stack } from '@mui/material';
+import { HandwritingApi, Configuration } from '../api';
+
+// Initialize API client
+const handwritingApi = new HandwritingApi(
+  new Configuration({
+    basePath: import.meta.env.VITE_API_URL || "http://localhost:5259",
+  })
+);
 
 const HandwritingCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const gridCanvasRef = useRef<HTMLCanvasElement | null>(null); // Grid canvas
   const [isDrawing, setIsDrawing] = useState(false);
+  const [isEraser, setIsEraser] = useState(false); // Track eraser mode
+  const [feedbackMessage, setFeedbackMessage] = useState(""); // Feedback message
+  const [recognizedText, setRecognizedText] = useState(""); // Recognized text
+  const [matchPercentage, setMatchPercentage] = useState<number | null>(null); // Match percentage
 
   // Initialize canvas settings
   useEffect(() => {
@@ -65,15 +77,22 @@ const HandwritingCanvas: React.FC = () => {
     setIsDrawing(true);
   };
 
-  // Draw on canvas
+  // Draw or erase on canvas
   const draw = (e: React.PointerEvent) => {
     if (!isDrawing || !ctxRef.current) {return;}
     const { offsetX, offsetY } = e.nativeEvent;
-    ctxRef.current.lineTo(offsetX, offsetY);
-    ctxRef.current.stroke();
+
+    if (isEraser) {
+      // Eraser logic
+      ctxRef.current.clearRect(offsetX - 10, offsetY - 10, 20, 20); // Clear a small area
+    } else {
+      // Drawing logic
+      ctxRef.current.lineTo(offsetX, offsetY);
+      ctxRef.current.stroke();
+    }
   };
 
-  // Stop drawing
+  // Stop drawing or erasing
   const stopDrawing = () => {
     if (!ctxRef.current) {return;}
     ctxRef.current.closePath();
@@ -84,17 +103,65 @@ const HandwritingCanvas: React.FC = () => {
   const clearCanvas = () => {
     if (!canvasRef.current || !ctxRef.current) {return;}
     ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    setFeedbackMessage(""); // Clear feedback
+    setRecognizedText(""); // Clear recognized text
+    setMatchPercentage(null); // Clear match percentage
   };
 
-  // Export image
-  const exportImage = () => {
-    // if (!canvasRef.current) {return;}
+  // Export image and get recognition result
+  const exportImage = async () => {
+    if (!canvasRef.current) return;
 
-    // // Create a new image data URL without the gridlines
-    // const imageData = canvasRef.current.toDataURL('image/png');
+    // Get the existing canvas and its context
+    const originalCanvas = canvasRef.current;
 
-    // TODO: Send the imageData to the backend or handle it as needed, delete this log call after
-    // console.log(imageData);
+    // Create a new offscreen canvas
+    const offscreenCanvas = document.createElement("canvas");
+    const ctx = offscreenCanvas.getContext("2d");
+
+    // Set the same dimensions as the original
+    offscreenCanvas.width = originalCanvas.width;
+    offscreenCanvas.height = originalCanvas.height;
+
+    if (ctx) {
+      // Fill the background with white
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+
+      // Draw the original canvas content on top of the white background
+      ctx.drawImage(originalCanvas, 0, 0);
+    }
+
+    // Create a new image data URL without the gridlines
+    const imageData = offscreenCanvas.toDataURL("image/png");
+
+    try {
+      // Make API call
+      const response = await handwritingApi.apiHandwritingOcrPost({
+        handwritingCanvasRequestDto: {
+          image: imageData.split(",")[1],
+          language: "JA",
+          expectedMatch: "こん", // Change based on your needs
+        },
+      });
+
+      console.log("OCR Response:", response);
+
+      // Handle feedback based on OCR result
+      const match = response.matchPercentage || 0;
+      const recognizedText = response.recognizedText || '';
+      setRecognizedText(recognizedText);
+      setMatchPercentage(match);
+
+      if (match === 100) {
+        setFeedbackMessage("Good job!");
+      } else {
+        setFeedbackMessage(`Try again! Match: ${match}%`);
+      }
+    } catch (error) {
+      console.error("Error in OCR API call:", error);
+      setFeedbackMessage("Error in recognition. Please try again.");
+    }
   };
 
   return (
@@ -150,7 +217,33 @@ const HandwritingCanvas: React.FC = () => {
           <Button variant="outlined" color="secondary" onClick={clearCanvas}>
             Clear
           </Button>
+          <Button
+            variant={isEraser ? "contained" : "outlined"}
+            color="secondary"
+            onClick={() => setIsEraser(prev => !prev)}
+          >
+            {isEraser ? "Drawing" : "Erase"}
+          </Button>
         </Stack>
+
+        {/* Feedback Message */}
+        <Typography variant="h6" mt={2}>
+          {feedbackMessage}
+        </Typography>
+
+        {/* Recognized Text */}
+        {recognizedText && (
+          <Typography variant="body1" mt={1}>
+            Recognized Text: {recognizedText}
+          </Typography>
+        )}
+
+        {/* Match Percentage */}
+        {matchPercentage !== null && (
+          <Typography variant="body2" mt={1}>
+            Match: {matchPercentage}%
+          </Typography>
+        )}
       </CardContent>
     </Card>
   );
