@@ -3,6 +3,7 @@ using System.Globalization;
 using Google.Cloud.Vision.V1;
 using ChordKTV.Dtos;
 using ChordKTV.Services.Api;
+using ChordKTV.Utils;
 
 namespace ChordKTV.Services.Service;
 
@@ -56,7 +57,7 @@ public partial class HandwritingService : IHandwritingService
         string normalizedExpected = NormalizeText(image.ExpectedMatch);
 
         // Compute similarity percentage
-        double matchPercentage = CalculateSimilarityPercentage(normalizedRecognized, normalizedExpected);
+        double matchPercentage = CompareUtils.CalculateStringSimilarity(normalizedRecognized, normalizedExpected);
         _logger.LogDebug("Match percentage: {MatchPercentage}%", matchPercentage);
 
         return new HandwritingCanvasResponseDto(recognizedText, matchPercentage);
@@ -68,45 +69,5 @@ public partial class HandwritingService : IHandwritingService
     private static string NormalizeText(string input)
     {
         return WhitespaceRegex().Replace(input, "").ToLower(CultureInfo.InvariantCulture); // Use InvariantCulture for consistency
-    }
-
-    private static int LevenshteinDistance(string source, string target)
-    {
-        int sourceLength = source.Length;
-        int targetLength = target.Length;
-        int[,] dp = new int[sourceLength + 1, targetLength + 1];
-
-        for (int i = 0; i <= sourceLength; i++)
-        {
-            dp[i, 0] = i;
-        }
-        for (int j = 0; j <= targetLength; j++)
-        {
-            dp[0, j] = j;
-        }
-
-        for (int i = 1; i <= sourceLength; i++)
-        {
-            for (int j = 1; j <= targetLength; j++)
-            {
-                int cost = (source[i - 1] == target[j - 1]) ? 0 : 1;
-                dp[i, j] = Math.Min(
-                    Math.Min(dp[i - 1, j] + 1, dp[i, j - 1] + 1),
-                    dp[i - 1, j - 1] + cost);
-            }
-        }
-        return dp[sourceLength, targetLength];
-    }
-
-    private static double CalculateSimilarityPercentage(string recognizedText, string expectedText)
-    {
-        int maxLength = Math.Max(recognizedText.Length, expectedText.Length);
-        if (maxLength == 0)
-        {
-            return 100.0;
-        }
-
-        int distance = LevenshteinDistance(recognizedText, expectedText);
-        return Math.Max(0, 100.0 * (1.0 - ((double)distance / maxLength)));
     }
 }
