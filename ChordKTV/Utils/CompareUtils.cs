@@ -14,7 +14,7 @@ public static class CompareUtils
     }
 
     //gets fuzzy matched score for song title and duration, order dont matter
-    public static int CompareWeightedFuzzyScore(string queryTitle, string candidateTitle, string? artist, string? candidateArtist, float? queryDuration, float candidateDuration, float durationDifferenceWeight = .16f)
+    public static int CompareWeightedFuzzyScore(string queryTitle, string candidateTitle, string? artist, string? candidateArtist, float? queryDuration, float candidateDuration, float durationDifferenceWeight = .8f)
     {
         int fuzzyScore = Math.Max(
             Fuzz.TokenSortRatio(queryTitle.ToLowerInvariant(), candidateTitle?.ToLowerInvariant()),

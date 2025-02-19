@@ -80,6 +80,11 @@ public class LrcService : ILrcService
         }
         if (lyricsDtoMatch == null)
         {
+            //if we fail to find even a single match, just grab first entry if it exists
+            if (searchResults.Count > 0)
+            {
+                return searchResults[0];
+            }
             return null;
         }
 
@@ -261,6 +266,10 @@ public class LrcService : ILrcService
         string url = $"https://lrclib.net/api/get?{queryString}";
 
         HttpResponseMessage response = await _httpClient.GetAsync(url);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound) //dont want it throw if not found, continue execution
+        {
+            return null;
+        }
         response.EnsureSuccessStatusCode();
         string content = await response.Content.ReadAsStringAsync();
         stopwatch.Stop();
@@ -275,6 +284,10 @@ public class LrcService : ILrcService
         stopwatch.Start();
         string queryString = queryParams.ToString() ?? string.Empty;
         HttpResponseMessage response = await _httpClient.GetAsync($"https://lrclib.net/api/search?{queryString}");
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound) //dont want it throw if not found, continue execution
+        {
+            return null;
+        }
         response.EnsureSuccessStatusCode();
         string content = await response.Content.ReadAsStringAsync();
         List<LrcLyricsDto>? searchResults = JsonSerializer.Deserialize<List<LrcLyricsDto>?>(content, _jsonSerializerOptions);
