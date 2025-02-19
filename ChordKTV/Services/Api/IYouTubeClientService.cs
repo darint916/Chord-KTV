@@ -4,5 +4,5 @@ namespace ChordKTV.Services.Api;
 
 public interface IYouTubeClientService
 {
-    public Task<PlaylistDetailsDto?> GetPlaylistDetailsAsync(string playlistId);
+    public Task<PlaylistDetailsDto?> GetPlaylistDetailsAsync(string playlistId, bool shuffle);
 }

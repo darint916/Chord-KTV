@@ -38,8 +38,14 @@ public class GeniusService : IGeniusService
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
     }
 
-    private static bool IsFuzzyMatch(GeniusResult result, string queryTitle, string? queryArtist)
+    private static bool IsFuzzyMatch(GeniusResult result, string? queryTitle, string? queryArtist)
     {
+        // If no title provided (lyrics-only search), skip fuzzy title matching
+        if (string.IsNullOrWhiteSpace(queryTitle))
+        {
+            return true; // Accept all results when searching by lyrics only
+        }
+
         // Only match on title - we trust Genius's artist data
         int titleScore = Fuzz.Ratio(result.Title.ToLower(CultureInfo.CurrentCulture), queryTitle.ToLower(CultureInfo.CurrentCulture));
         return titleScore >= MINIMUM_FUZZY_RATIO;
@@ -48,7 +54,7 @@ public class GeniusService : IGeniusService
     /// <summary>
     /// Helper to query Genius using the given search query and compare results with the provided fuzzy criteria
     /// </summary>
-    private async Task<Song?> SearchGenius(string searchQuery, string fuzzyTitle, string? fuzzyArtist)
+    private async Task<Song?> SearchGenius(string searchQuery, string? fuzzyTitle, string? fuzzyArtist)
     {
         string requestUrl = $"/search?q={Uri.EscapeDataString(searchQuery)}";
         try
@@ -86,12 +92,11 @@ public class GeniusService : IGeniusService
         }
     }
 
-    public async Task<Song?> GetSongByArtistTitleAsync(string title, string? artist, bool forceRefresh = false)
+    public async Task<Song?> GetSongByArtistTitleAsync(string? title, string? artist, string? lyrics, bool forceRefresh = false)
     {
-        // Instead of relying solely on the cached record,
-        // we also check that the cached song has a valid (non-empty) PrimaryArtist.
+        // Check cache first if we have a title
         Song? existingSong = null;
-        if (!forceRefresh)
+        if (!forceRefresh && !string.IsNullOrWhiteSpace(title))
         {
             existingSong = await _songRepo.GetSongAsync(title);
             if (existingSong != null && existingSong.GeniusMetaData.GeniusId != 0 && !string.IsNullOrWhiteSpace(existingSong.Artist))
@@ -101,16 +106,34 @@ public class GeniusService : IGeniusService
             }
         }
 
-        // Use the user input to construct the query for Genius.
-        // Even if the artist is incorrect, the combined query might help Genius return the correct song.
-        string primaryQuery = !string.IsNullOrEmpty(artist) ? $"{title} {artist}" : title;
-        Song? result = await SearchGenius(primaryQuery, title, artist);
+        Song? result = null;
 
-        // Fallback: if no result was found with the combined query and an artist was provided, try title only.
-        if (result == null && !string.IsNullOrEmpty(artist))
+        // If we have a title, try title-based search first
+        if (!string.IsNullOrWhiteSpace(title))
         {
-            _logger.LogDebug("No results found with artist, trying title only: {Title}", title);
-            result = await SearchGenius(title, title, null);
+            string primaryQuery = !string.IsNullOrEmpty(artist) ? $"{title} {artist}" : title;
+            result = await SearchGenius(primaryQuery, title, artist);
+
+            // Fallback: if no result was found with the combined query and an artist was provided, try title only
+            if (result == null && !string.IsNullOrEmpty(artist))
+            {
+                _logger.LogDebug("No results found with artist, trying title only: {Title}", title);
+                result = await SearchGenius(title, title, null);
+            }
+        }
+
+        // If no result found with title or if only lyrics provided, try lyrics-based search
+        if (result == null && !string.IsNullOrWhiteSpace(lyrics))
+        {
+            string lyricsQuery = !string.IsNullOrEmpty(artist) ? $"{lyrics} {artist}" : lyrics;
+            result = await SearchGenius(lyricsQuery, null, artist);
+
+            // Fallback: try lyrics only if artist was included and no results
+            if (result == null && !string.IsNullOrEmpty(artist))
+            {
+                _logger.LogDebug("No results found with lyrics and artist, trying lyrics only");
+                result = await SearchGenius(lyrics, null, null);
+            }
         }
 
         if (result == null)
@@ -118,7 +141,7 @@ public class GeniusService : IGeniusService
             return null;
         }
 
-        // Enrich the song details from Genius so that the result contains the authoritative PrimaryArtist.
+        // Enrich the song details from Genius
         Song? enrichedSong = await EnrichSongDetailsAsync(result);
 
         // Check if enrichment failed
@@ -127,10 +150,9 @@ public class GeniusService : IGeniusService
             return null;
         }
 
-        // Here we update the cached record (or add a new record) with the correct data from Genius.
+        // Update existing or add new record
         if (existingSong != null)
         {
-            // Update the cached entry with the correct singer name from Genius.
             existingSong.Artist = enrichedSong.Artist;
             existingSong.GeniusMetaData = enrichedSong.GeniusMetaData;
             existingSong.PlainLyrics = enrichedSong.PlainLyrics;
@@ -147,7 +169,7 @@ public class GeniusService : IGeniusService
         List<Song> songs = [];
         foreach (VideoInfo video in videos)
         {
-            Song? song = await GetSongByArtistTitleAsync(video.Title, video.Artist, forceRefresh);
+            Song? song = await GetSongByArtistTitleAsync(video.Title, video.Artist, null, forceRefresh);
             if (song != null)
             {
                 songs.Add(song);
