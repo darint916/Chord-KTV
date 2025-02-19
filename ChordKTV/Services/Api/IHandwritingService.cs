@@ -4,5 +4,5 @@ namespace ChordKTV.Services.Api;
 
 public interface IHandwritingService
 {
-    public Task<bool> RecognizeTextAsync(HandwritingCanvasDto image);
+    public Task<bool?> RecognizeTextAsync(HandwritingCanvasDto image);
 }

@@ -26,7 +26,11 @@ public class HandwritingController : Controller
     {
         try
         {
-            bool isMatch = await _handwritingService.RecognizeTextAsync(image);
+            bool? isMatch = await _handwritingService.RecognizeTextAsync(image);
+            if (isMatch == null)
+            {
+                return StatusCode(400, new { error = "Image input is null/invalid base64." });
+            }
             return Ok(new { match = isMatch });
         }
         catch (Exception ex)
