@@ -42,14 +42,7 @@ public partial class HandwritingService : IHandwritingService
 
         // Set Language Hint
         var imageContext = new ImageContext();
-        if (!string.IsNullOrWhiteSpace(image.Language.ToString()) && Enum.IsDefined(typeof(LanguageCode), image.Language.ToString()))
-        {
-            imageContext.LanguageHints.Add(image.Language.ToString());
-        }
-        else
-        {
-            _logger.LogWarning("Invalid/No language specified. Defaulting to no language hint.");
-        }
+        imageContext.LanguageHints.Add(image.Language.ToString());
 
         _logger.LogDebug("Detecting text from image with language {Language}", image.Language.ToString());
         IReadOnlyList<EntityAnnotation> response = await client.DetectTextAsync(decodedImage, imageContext);
