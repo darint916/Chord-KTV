@@ -67,7 +67,7 @@ public class SongController : Controller
     {
         try
         {
-            LrcLyricsDto? lyrics = await _lrcService.GetLrcLibLyricsAsync(title, artist, albumName, duration);
+            LrcLyricsDto? lyrics = await _lrcService.GetAllLrcLibLyricsAsync(title, artist, albumName, duration);
             if (lyrics == null)
             {
                 return NotFound(new { message = "Lyrics not found for the specified track." });
