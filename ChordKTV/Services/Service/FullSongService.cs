@@ -47,7 +47,6 @@ public class FullSongService : IFullSongService
             song.Duration ??= duration;
             float? songDuration = (float?)song.Duration?.TotalSeconds;
 
-            //TODO: Delete once issue #48 solved
             lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(song.Title, song.Artist, null, null);
 
             if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics))
