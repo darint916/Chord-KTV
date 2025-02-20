@@ -10,7 +10,7 @@ public partial class KeywordExtractorUtils
     {
         "official", "video", "music", "remastered", "live", "ft.", "feat.", "remix",
         "version", "extended", "edit", "audio", "lyric", "cover", "performance",
-        "mix", "explicit", "radio", "instrumental"
+        "mix", "explicit", "radio", "instrumental", "tv"
     };
 
     [GeneratedRegex(@"[^\w\s]")]
