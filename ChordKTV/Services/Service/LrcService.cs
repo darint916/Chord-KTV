@@ -2,11 +2,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
-using FuzzySharp;
 using System.Web;
 using System.Globalization;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using ChordKTV.Utils;
 
 namespace ChordKTV.Services.Service;
@@ -207,12 +205,18 @@ public class LrcService : ILrcService
         // we can use fuzzy search to find the best match
         //turns out LRCLib uses strip type too? (G)I-DLE -> G I Dle works
         List<Task<List<LrcLyricsDto>?>> queryTasks = new(); //batch the calls in parallel, we force strip search for more results
-        string? keywords = KeywordExtractorUtils.ExtractSongKeywords(title, artist); //for now i think this is enough
-        if (!string.IsNullOrWhiteSpace(keywords))
+        string? titleKeywords = KeywordExtractorUtils.ExtractSongKeywords(title); //for now i think this is enough
+        string? artistKeywords = KeywordExtractorUtils.ExtractSongKeywords(artist);
+        if (!string.IsNullOrWhiteSpace(titleKeywords)) //we query with both title, title+artist as artist may sometimes be bad match
         {
             NameValueCollection keywordParams = HttpUtility.ParseQueryString(string.Empty);
-            keywordParams["q"] = keywords;
+            keywordParams["q"] = titleKeywords;
             queryTasks.Add(LrcLibSearchEndpointResponse(keywordParams));
+            if (!string.IsNullOrWhiteSpace(artistKeywords))
+            {
+                keywordParams["q"] = titleKeywords + " " + artistKeywords;
+                queryTasks.Add(LrcLibSearchEndpointResponse(keywordParams));
+            }
         }
         if (!string.IsNullOrEmpty(artist) && !string.IsNullOrEmpty(albumName))
         {
@@ -226,7 +230,7 @@ public class LrcService : ILrcService
         //raw title query
         queryParams.Remove("artist_name");
         queryParams.Remove("album_name");
-        queryTasks.Add(LrcLibSearchEndpointResponse(new NameValueCollection(queryParams)));
+        queryTasks.Add(LrcLibSearchEndpointResponse(new NameValueCollection(queryParams))); //diff that keywords above, is more exact
 
         // Run all tasks in parallel and await them
         List<LrcLyricsDto> results = (await Task.WhenAll(queryTasks))
