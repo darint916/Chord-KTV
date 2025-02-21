@@ -88,15 +88,15 @@ public class LrcService : ILrcService
             return null;
         }
 
-        // we go more strict on time sync if we have a match
+        // we go more strict on time sync if we have a match, note we prioritize LRC
         if (!LanguageUtils.IsRomanizedText(lyricsDtoMatch.PlainLyrics)) // If lyrics are in non en language
         {
             LrcLyricsDto? romanizedMatch = searchResults.FirstOrDefault(ele =>
-                !string.IsNullOrEmpty(ele.PlainLyrics) &&
                 !string.IsNullOrEmpty(ele.SyncedLyrics) &&
                 LanguageUtils.IsRomanizedText(ele.PlainLyrics) &&
-                Fuzz.Ratio(ele.ArtistName, lyricsDtoMatch.ArtistName) > 80 && //make sure artist is same
+                CompareUtils.CompareArtistFuzzyScore(artist, ele.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80 && //make sure artist is same
                 CompareUtils.IsCloseToF(ele.Duration, duration, 2));
+
             if (romanizedMatch != null)
             {
                 lyricsDtoMatch.RomanizedPlainLyrics = romanizedMatch.PlainLyrics;
@@ -110,10 +110,9 @@ public class LrcService : ILrcService
             lyricsDtoMatch.RomanizedSyncedLyrics = lyricsDtoMatch.SyncedLyrics;
             lyricsDtoMatch.RomanizedId = lyricsDtoMatch.Id;
             LrcLyricsDto? origMatch = searchResults.FirstOrDefault(ele =>
-                !string.IsNullOrEmpty(ele.PlainLyrics) &&
                 !string.IsNullOrEmpty(ele.SyncedLyrics) &&
                 !LanguageUtils.IsRomanizedText(ele.PlainLyrics) &&
-                Fuzz.Ratio(ele.ArtistName, lyricsDtoMatch.ArtistName) > 80 && //make sure artist is same
+                CompareUtils.CompareArtistFuzzyScore(artist, ele.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80 && //make sure artist is same
                 CompareUtils.IsCloseToF(ele.Duration, duration, 2));
 
             if (origMatch != null)
@@ -179,7 +178,7 @@ public class LrcService : ILrcService
     }
 
     //Searches for lyrics based on title, artist, and album name and other random fuzzy methods, add more if needed
-    public async Task<List<LrcLyricsDto>?> GetLrcLibLyricsListAsync(string? title, string? artist, string? albumName, bool forceKeywordSearch = false)
+    public async Task<List<LrcLyricsDto>?> GetLrcLibLyricsListAsync(string? title, string? artist, string? albumName)
     {
         NameValueCollection queryParams = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrEmpty(title))
@@ -199,66 +198,43 @@ public class LrcService : ILrcService
         {
             queryParams["album_name"] = albumName;
         }
-        //They mentioned this was slower, so maybe batch call
         //after testing, it seems their search prioritizes the query string over title and artist (if artist title corr, query string can kill it)
         // im p sure they anything in their qstring just searches all fields, we get from genius so might as well be specific
         // Note that we return on find results, i believe their search algorithm doesn't stray off too far from the query
-        List<LrcLyricsDto>? results;
-        if (!string.IsNullOrEmpty(artist) && !string.IsNullOrEmpty(albumName) && !forceKeywordSearch)
-        {
-            results = await LrcLibSearchEndpointResponse(queryParams);
-            if (results is not null)
-            {
-                return results;
-            }
-        }
-        if (!string.IsNullOrEmpty(artist) && !forceKeywordSearch) //artist + title query (no album)
-        {
-            queryParams.Remove("album_name");
-            results = await LrcLibSearchEndpointResponse(queryParams);
-            if (results is not null)
-            {
-                return results;
-            }
-        }
-        //album no artist is wild so we dont cover
+        //Initialize keywords search to append to results later
 
-        //raw title query
-        queryParams.Remove("artist_name");
-        queryParams.Remove("album_name");
-        if (!forceKeywordSearch)
-        {
-            results = await LrcLibSearchEndpointResponse(queryParams);
-            if (results is not null)
-            {
-                return results;
-            }
-        }
         // time for a strip search, need to fine tune based off youtube results/ other names
         // we can use fuzzy search to find the best match
         //turns out LRCLib uses strip type too? (G)I-DLE -> G I Dle works
+        List<Task<List<LrcLyricsDto>?>> queryTasks = new(); //batch the calls in parallel, we force strip search for more results
         string? keywords = KeywordExtractorUtils.ExtractSongKeywords(title, artist); //for now i think this is enough
-        if (string.IsNullOrWhiteSpace(keywords))
+        if (!string.IsNullOrWhiteSpace(keywords))
         {
-            return null; //wtf is this song
+            NameValueCollection keywordParams = HttpUtility.ParseQueryString(string.Empty);
+            keywordParams["q"] = keywords;
+            queryTasks.Add(LrcLibSearchEndpointResponse(keywordParams));
         }
-        //we might need a regular query call with just title + artist? not sure though (prob not needed), so i'll leave it out
+        if (!string.IsNullOrEmpty(artist) && !string.IsNullOrEmpty(albumName))
+        {
+            queryTasks.Add(LrcLibSearchEndpointResponse(new NameValueCollection(queryParams))); //copy so we don't get race conditions in parallel
+        }
+        if (!string.IsNullOrEmpty(artist)) //artist + title query (no album)
+        {
+            queryParams.Remove("album_name");
+            queryTasks.Add(LrcLibSearchEndpointResponse(new NameValueCollection(queryParams)));
+        }
+        //raw title query
+        queryParams.Remove("artist_name");
+        queryParams.Remove("album_name");
+        queryTasks.Add(LrcLibSearchEndpointResponse(new NameValueCollection(queryParams)));
 
-        // as of 2/19/2025, LRC Lib doesnt care about title + artist if we give qString
-        // Fuzzy search for the best match
-        queryParams["q"] = keywords;
-        List<LrcLyricsDto>? allResults = await LrcLibSearchEndpointResponse(queryParams);
-        if (allResults is null)
-        {
-            // Would want to personally see what we miss
-            _logger.LogWarning("No results found for title: {Title}, artist: {Artist}, album: {AlbumName}", title, artist, albumName);
-            _logger.LogWarning("Keywords: {Keywords}", keywords);
-        }
-        else
-        {
-            _logger.LogDebug("USED KEYWORDS Found {Count} results for title: {Title}, artist: {Artist}, album: {AlbumName}", allResults.Count, title, artist, albumName);
-        }
-        return allResults;
+        // Run all tasks in parallel and await them
+        List<LrcLyricsDto> results = (await Task.WhenAll(queryTasks))
+            .Where(list => list is not null)  // Remove null results
+            .SelectMany(list => list!)        // Flatten into a single list
+            .ToList();
+
+        return results; //note we might get dupes, but i think sample size small enough to not worry (given 20 results per call, max 80)
     }
 
     //api endpoint for LRCLib exact Get match https://lrclib.net/docs
