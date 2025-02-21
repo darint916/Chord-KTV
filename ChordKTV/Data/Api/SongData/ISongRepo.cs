@@ -1,4 +1,5 @@
 using ChordKTV.Models.SongData;
+using System.Threading.Tasks;
 
 namespace ChordKTV.Data.Api.SongData;
 
@@ -13,4 +14,5 @@ public interface ISongRepo
     public Task<List<Song>> GetAllSongsAsync();
     public Task<GeniusMetaData?> GetGeniusMetaDataAsync(int geniusId);
     public Task UpdateSongAsync(Song song);
+    public Task<Song?> GetSongByGeniusIdAsync(int geniusId);
 }

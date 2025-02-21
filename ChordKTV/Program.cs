@@ -10,6 +10,8 @@ using ChordKTV.Utils;
 using ChordKTV.Dtos;
 using Serilog;
 using System.Globalization;
+using ChordKTV.Data.Api.QuizData;
+using ChordKTV.Data.Repo.QuizData;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -64,6 +66,10 @@ builder.Services.AddScoped<ISongRepo, SongRepo>();
 builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
 builder.Services.AddScoped<IFullSongService, FullSongService>();
 builder.Services.AddScoped<IHandwritingService, HandwritingService>();
+
+// Register new QuizService and QuizRepo
+builder.Services.AddScoped<IQuizService, QuizService>();
+builder.Services.AddScoped<IQuizRepo, QuizRepo>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

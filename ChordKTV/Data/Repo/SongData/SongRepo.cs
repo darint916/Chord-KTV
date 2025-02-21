@@ -103,4 +103,11 @@ public class SongRepo : ISongRepo
         _context.Songs.Update(song);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<Song?> GetSongByGeniusIdAsync(int geniusId)
+    {
+        return await _context.Songs
+            .Include(s => s.GeniusMetaData)
+            .FirstOrDefaultAsync(s => s.GeniusMetaData.GeniusId == geniusId);
+    }
 }
