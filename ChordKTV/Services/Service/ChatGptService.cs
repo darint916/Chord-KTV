@@ -167,8 +167,8 @@ The full lyrics are provided below:
 
 Your task:
 - Identify and select {numQuestions} key phrases from the lyrics that are significant for romanization.
-- For each key phrase, create a multiple-choice question with exactly 4 answer options (only one is correct).
-- The correct option should be the accurate romanization of the key phrase.
+- For each key phrase, create a multiple-choice question with exactly 4 answer options (only one is correct, the first option is the correct romanization).
+- IMPORTANT: The first option (index 0) MUST ALWAYS be the correct romanization.
 - The other three options should be plausible but incorrect romanizations.
 - The difficulty of the quiz is set to {difficulty} on a scale from 1 (easiest) to 10 (hardest); adjust the obscurity of the phrases accordingly.
 - Respond with a JSON object exactly in the following format:
@@ -181,14 +181,14 @@ Your task:
         {{
             ""questionNumber"": 1,
             ""lyricPhrase"": ""<extracted song lyric phrase>"",
-            ""options"": [""option1"", ""option2"", ""option3"", ""option4""],
-            ""correctOptionIndex"": <index of correct option starting at 0>
+            ""options"": [""<correct romanization>"", ""wrong1"", ""wrong2"", ""wrong3""],
+            ""correctOptionIndex"": 0
         }},
         ... up to {numQuestions} questions
     ]
 }}
 Ensure that the JSON is the only output and does not include any additional text or explanation.
-";
+Note: The correctOptionIndex should ALWAYS be 0 as the correct answer must be the first option.";
         string systemPrompt = "You are an assistant specialized in generating romanization quizzes from song lyrics.";
 
         var requestBody = new
