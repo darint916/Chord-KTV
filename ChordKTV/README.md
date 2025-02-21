@@ -67,7 +67,8 @@ dotnet ef database update
 #### ```GET /api/lyrics/lrc/search```
 
 Returns time-synced lyrics from LRCLIB. Attempts to retrieve both original and romanized lyrics if they exist.
-We use both of LRCLIB's endpoints (https://lrclib.net/docs), performing an exact match (if at least title and artist exists), and then also a fuzzier search function. Both of these search from most strict parameters to least strict. If no results, it does a key word extraction and then attempts to query search. Post processing involves sorting by fuzzy matching the title and artist and duration. 
+We use both of LRCLIB's endpoints (https://lrclib.net/docs), performing an exact match (if at least title and artist exists), and then also a fuzzier search function. Exact searches from most strict parameters to least strict. For the batch search, it sends api requests in parallel from most strict to least (20 entries max each call), along with key word extraction. Post processing involves sorting by fuzzy matching the title and artist and duration. 
+When finding romanized lyrics, it does a more strict artist filter search, to match full words with the artist to try to get a very accurate match on the artist names.
 
 Swagger spec:
 ![image](https://github.com/user-attachments/assets/758b8ed1-d081-4afd-a0e3-fd3e203197dd)
