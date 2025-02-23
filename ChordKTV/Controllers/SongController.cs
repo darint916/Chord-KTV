@@ -110,7 +110,11 @@ public class SongController : Controller
         }
         try
         {
-            Song? fullSong = await _fullSongService.GetFullSongAsync(request.Title, request.Artist, request.Duration, lyricsQuery, request.YouTubeUrl);
+            Song? fullSong = await _fullSongService.GetFullSongAsync(request.Title, request.Artist, request.Album, request.Duration, lyricsQuery, request.YouTubeUrl);
+            if (fullSong == null)
+            {
+                return NotFound(new { message = "Song not found. null return" });
+            }
             return Ok(_mapper.Map<FullSongResponseDto>(fullSong));
         }
         catch (HttpRequestException ex)
@@ -266,7 +270,7 @@ public class SongController : Controller
     [HttpPost("database/song")]
     public async Task<IActionResult> AddSongToDb([FromBody] Song song)
     {
-        await _songRepo.AddAsync(song);
+        await _songRepo.AddSongAsync(song);
         return Ok();
     }
 }

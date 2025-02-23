@@ -10,7 +10,10 @@ public partial class KeywordExtractorUtils
     {
         "official", "video", "music", "remastered", "live", "ft.", "feat.", "remix",
         "version", "extended", "edit", "audio", "lyric", "cover", "performance",
-        "mix", "explicit", "radio", "instrumental", "tv"
+        "mix", "explicit", "radio", "instrumental", "tv", "lyrics", "on vocal", "vocal", "off vocal", "karaoke", "ktv",
+        "op", "opening", "ending", "english", "japanese", "full", "hd", "hq", "4k", "8k", "1080p", "720p", "480p", "360p",
+        "jpn", "romaji", "eng", "engsub", "eng sub", "eng dub", "engdub", "sub", "dub", "subbed", "dubbed", "subtitles",
+        "amv", "indonesia", "subtitle", "by"
     };
 
     [GeneratedRegex(@"[^\w\s]")]

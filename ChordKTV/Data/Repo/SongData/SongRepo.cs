@@ -20,13 +20,13 @@ public class SongRepo : ISongRepo
         return await _context.SaveChangesAsync() > 0;
     }
 
-    public async Task AddAsync(Song song)
+    public async Task AddSongAsync(Song song)
     {
         _context.Songs.Add(song);
         await _context.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(Song song)
+    public async Task UpdateSongAsync(Song song)
     {
         _context.Songs.Update(song);
         await _context.SaveChangesAsync();
@@ -79,7 +79,6 @@ public class SongRepo : ISongRepo
         return result;
     }
 
-
     public async Task<Song?> GetSongAsync(string name, string artist, string albumName)
     {
         return await _context.Songs.FirstOrDefaultAsync(s =>
@@ -96,11 +95,5 @@ public class SongRepo : ISongRepo
     public async Task<GeniusMetaData?> GetGeniusMetaDataAsync(int geniusId)
     {
         return await _context.GeniusMetaData.FindAsync(geniusId);
-    }
-
-    public async Task UpdateSongAsync(Song song)
-    {
-        _context.Songs.Update(song);
-        await _context.SaveChangesAsync();
     }
 }
