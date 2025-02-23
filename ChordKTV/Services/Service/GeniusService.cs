@@ -156,11 +156,11 @@ public class GeniusService : IGeniusService
             existingSong.Artist = enrichedSong.Artist;
             existingSong.GeniusMetaData = enrichedSong.GeniusMetaData;
             existingSong.PlainLyrics = enrichedSong.PlainLyrics;
-            await _songRepo.UpdateAsync(existingSong);
+            await _songRepo.UpdateSongAsync(existingSong);
             return existingSong;
         }
 
-        await _songRepo.AddAsync(enrichedSong);
+        await _songRepo.AddSongAsync(enrichedSong);
         return enrichedSong;
     }
 

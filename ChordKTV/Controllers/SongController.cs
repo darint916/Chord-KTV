@@ -270,7 +270,7 @@ public class SongController : Controller
     [HttpPost("database/song")]
     public async Task<IActionResult> AddSongToDb([FromBody] Song song)
     {
-        await _songRepo.AddAsync(song);
+        await _songRepo.AddSongAsync(song);
         return Ok();
     }
 }

@@ -3,6 +3,7 @@ using ChordKTV.Dtos;
 using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Models.SongData;
 using ChordKTV.Services.Api;
+using ChordKTV.Utils;
 
 namespace ChordKTV.Services.Service;
 
@@ -60,6 +61,7 @@ public class FullSongService : IFullSongService
         }
 
         //not found in genius
+        bool songCreate = false;
         if (song is null || string.IsNullOrWhiteSpace(song.LrcLyrics))
         {
             lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(title, artist, null, (float?)duration?.TotalSeconds);
@@ -91,6 +93,7 @@ public class FullSongService : IFullSongService
                         GeniusId = 0,
                     }
                 };
+                songCreate = true;
             }
         }
 
@@ -134,13 +137,14 @@ public class FullSongService : IFullSongService
         //Add residual information (kinda messy)
         if (lyricsDto != null)
         {
-            if (lyricsDto.TrackName is not null && !song.AlternateTitles.Contains(lyricsDto.TrackName) && !string.IsNullOrWhiteSpace(lyricsDto.TrackName))
+            if (lyricsDto.TrackName is not null && !song.AlternateTitles.Contains(lyricsDto.TrackName.ToLowerInvariant()) && !string.IsNullOrWhiteSpace(lyricsDto.TrackName))
             {
-                song.AlternateTitles.Add(lyricsDto.TrackName);
+                song.AlternateTitles.Add(lyricsDto.TrackName.ToLowerInvariant());
             }
-            if (lyricsDto.ArtistName is not null && !song.FeaturedArtists.Contains(lyricsDto.ArtistName) && !string.IsNullOrWhiteSpace(lyricsDto.ArtistName))
+            if (lyricsDto.ArtistName is not null && !song.FeaturedArtists.Contains(lyricsDto.ArtistName.ToLowerInvariant()) && !string.IsNullOrWhiteSpace(lyricsDto.ArtistName))
             {
-                song.FeaturedArtists.Add(lyricsDto.ArtistName);
+
+                song.FeaturedArtists.Add(lyricsDto.ArtistName.ToLowerInvariant());
             }
             if (lyricsDto.Id != 0 && song.LrcId != lyricsDto.Id)
             {
@@ -161,12 +165,22 @@ public class FullSongService : IFullSongService
         }
         if (artist is not null && !song.FeaturedArtists.Contains(artist) && !string.IsNullOrWhiteSpace(artist))
         {
-            song.FeaturedArtists.Add(artist);
+            if (CompareUtils.CompareArtistFuzzyScore(song.Artist, artist) > 75) //filters out youtube personal channels
+            {
+                song.FeaturedArtists.Add(artist);
+            }
         }
 
         //Save to db, only update, assuming genius creates the resource
         //TODO: Consider abstracting song creation out of genius service or as flag
-        await _songRepo.UpdateSongAsync(song);
+        if (songCreate)
+        {
+            await _songRepo.AddSongAsync(song);
+        }
+        else
+        {
+            await _songRepo.UpdateSongAsync(song);
+        }
         return song;
     }
 }
