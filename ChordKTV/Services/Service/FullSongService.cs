@@ -23,7 +23,7 @@ public class FullSongService : IFullSongService
     }
 
     //just realized we dont take album lmao
-    public async Task<Song?> GetFullSongAsync(string? title, string? artist, TimeSpan? duration, string? lyrics, string? youtubeUrl)
+    public async Task<Song?> GetFullSongAsync(string? title, string? artist, string? album, TimeSpan? duration, string? lyrics, string? youtubeUrl)
     {
         if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(lyrics))
         {
@@ -35,7 +35,6 @@ public class FullSongService : IFullSongService
         }
 
         //genius service
-        //TODO find alternative ways to search if not on genius? search lrc as backup? need to consider creating db entry if so
         Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist, lyrics);
         if (song is null)
         {
