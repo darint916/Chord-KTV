@@ -5,7 +5,7 @@ namespace ChordKTV.Data.Api.QuizData
 {
     public interface IQuizRepo
     {
-        Task<Quiz?> GetLatestQuizAsync(int geniusId);
+        Task<Quiz?> GetLatestQuizAsync(int geniusId, int difficulty);
         Task AddAsync(Quiz quiz);
     }
 } 

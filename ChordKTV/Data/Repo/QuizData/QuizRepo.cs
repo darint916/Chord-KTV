@@ -17,10 +17,10 @@ namespace ChordKTV.Data.Repo.QuizData
             _logger = logger;
         }
 
-        public async Task<Quiz?> GetLatestQuizAsync(int geniusId)
+        public async Task<Quiz?> GetLatestQuizAsync(int geniusId, int difficulty)
         {
             return await _context.Quizzes
-                .Where(q => q.GeniusId == geniusId)
+                .Where(q => q.GeniusId == geniusId && q.Difficulty == difficulty)
                 .OrderByDescending(q => q.Timestamp)
                 .FirstOrDefaultAsync();
         }

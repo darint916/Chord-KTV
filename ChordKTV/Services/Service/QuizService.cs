@@ -26,21 +26,22 @@ namespace ChordKTV.Services.Service
 
         public async Task<QuizResponseDto> GenerateQuizAsync(int geniusId, bool useCachedQuiz, int difficulty, int numQuestions)
         {
-            // Clamp difficulty between 1 and 10
-            if (difficulty < 1)
-                difficulty = 1;
-            if (difficulty > 10)
-                difficulty = 10;
+            // Clamp difficulty between 1 and 5
+            difficulty = Math.Clamp(difficulty, 1, 5);
+            
+            // Clamp number of questions between 1 and 20
+            numQuestions = Math.Clamp(numQuestions, 1, 20);
 
             // Try to use a cached quiz if requested
             if (useCachedQuiz)
             {
-                var cachedQuiz = await _quizRepo.GetLatestQuizAsync(geniusId);
+                var cachedQuiz = await _quizRepo.GetLatestQuizAsync(geniusId, difficulty);
                 if (cachedQuiz != null)
                 {
                     try
                     {
-                        var quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(cachedQuiz.QuizJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        var quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(cachedQuiz.QuizJson, 
+                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                         if (quizResponse != null)
                         {
                             return quizResponse;
@@ -67,18 +68,28 @@ namespace ChordKTV.Services.Service
             // Generate a quiz by calling the ChatGPT service with the song lyrics
             var quizResponseDto = await _chatGptService.GenerateRomanizationQuizAsync(song.LrcLyrics, difficulty, numQuestions, geniusId);
 
+            // Override LLM-generated values with our own
+            var timestamp = DateTime.UtcNow;
+            var quizId = Guid.NewGuid();
+            var quizResponseWithOverrides = quizResponseDto with 
+            { 
+                Timestamp = timestamp,
+                QuizId = quizId
+            };
+
             // Cache the quiz in the database
             var quizEntity = new Quiz
             {
+                Id = quizId,  // Use the same Guid for the entity
                 GeniusId = geniusId,
                 Difficulty = difficulty,
                 NumQuestions = numQuestions,
-                QuizJson = JsonSerializer.Serialize(quizResponseDto),
-                Timestamp = DateTime.UtcNow
+                QuizJson = JsonSerializer.Serialize(quizResponseWithOverrides),
+                Timestamp = timestamp
             };
             await _quizRepo.AddAsync(quizEntity);
 
-            return quizResponseDto;
+            return quizResponseWithOverrides;
         }
     }
 } 

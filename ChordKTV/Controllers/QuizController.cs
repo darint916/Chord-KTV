@@ -21,11 +21,25 @@ namespace ChordKTV.Controllers
         public async Task<IActionResult> GetRomanizationQuiz(
             [FromQuery] int geniusId,
             [FromQuery] bool useCachedQuiz = false,
-            [FromQuery] int difficulty = 5,
+            [FromQuery] int difficulty = 3,
             [FromQuery] int numQuestions = 5)
         {
             try
             {
+                if (difficulty < 1 || difficulty > 5)
+                {
+                    return BadRequest(new { message = "Difficulty must be between 1 and 5" });
+                }
+
+                if (numQuestions < 1)
+                {
+                    return BadRequest(new { message = "Number of questions must be at least 1" });
+                }
+                if (numQuestions > 20)
+                {
+                    return BadRequest(new { message = "Number of questions cannot exceed 20" });
+                }
+
                 var quiz = await _quizService.GenerateQuizAsync(geniusId, useCachedQuiz, difficulty, numQuestions);
                 return Ok(quiz);
             }

@@ -18,7 +18,8 @@ public class ChatGptService : IChatGptService
     //Context window: 128,000 tokens, max tokens: 16,384 tokens , about 4 chars per token avg ~ 32000 chars, reference: Eminem love the way you lie : 4.4k chars
     //KR + other lang use more tokens, but as ref, https://platform.openai.com/tokenizer to calc, 2793 char -> 1564 tokens (sick enough to die)
     // price as of testing seems like ~$0.01 after 26k tokens lol
-    private const string Model = "o3-mini"; //last updated 2024-07-18 , knowledge cutoff 10/2023
+    private const string Model = "gpt-4o-mini"; //last updated 2024-07-18 , knowledge cutoff 10/2023
+    private const string ThinkingModel = "o3-mini";
 
     public ChatGptService(HttpClient httpClient, IConfiguration configuration, ILogger<ChatGptService> logger)
     {
@@ -160,6 +161,16 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
     public async Task<QuizResponseDto> GenerateRomanizationQuizAsync(string lyrics, int difficulty, int numQuestions, int geniusId)
     {
         // Construct a prompt with detailed instructions
+        string difficultyInstruction = difficulty switch
+        {
+            1 => "### The incorrect answers must be literally entirely different sentences than the correct answer, but taken from the same original song. The wrong answers should be the same length as the original song lyric phrase.",
+            2 => "### The incorrect answers must use entirely different words than the correct answer, but still the same length as the original song lyric phrase.",
+            3 => "### The incorrect answers must be must contain very exaggerated, unique, and different words, but that look similar to the correct answer. The wrong answers should be OBVIOUSLY different and incorrect.",
+            4 => "### The incorrect answers must be similar to the correct answer, but not exactly the same.",
+            5 => "### The incorrect answers must be very close to the correct answer, almost exactly the same.",
+            _ => throw new ArgumentOutOfRangeException(nameof(difficulty), "Difficulty must be between 1 and 5")
+        };
+
         string prompt = $@"
 You are a helpful assistant that generates multiple choice quizzes from song lyrics for romanization practice.
 The full lyrics are provided below:
@@ -169,8 +180,9 @@ Your task:
 - Identify and select {numQuestions} key phrases from the lyrics that are significant for romanization.
 - For each key phrase, create a multiple-choice question with exactly 4 answer options (only one is correct, the first option is the correct romanization).
 - IMPORTANT: The first option (index 0) MUST ALWAYS be the correct romanization.
-- The other three options should be plausible but incorrect romanizations.
-- The difficulty of the quiz is set to {difficulty} on a scale from 1 (easiest) to 10 (hardest); adjust the obscurity of the phrases accordingly.
+- The difficulty of the quiz is set to {difficulty} on a scale from 1 (easiest) to 5 (hardest).
+- {difficultyInstruction}
+- All the options must be written using the latin alphabet.
 - Respond with a JSON object exactly in the following format:
 {{
     ""quizId"": ""<a unique GUID>"",
@@ -193,13 +205,13 @@ Note: The correctOptionIndex should ALWAYS be 0 as the correct answer must be th
 
         var requestBody = new
         {
-            model = Model,
+            model = Model,  // Use the quiz-specific model here
             messages = new object[]
             {
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = prompt }
             },
-            // temperature = 0.4,
+            temperature = 1.0,
             // top_p = 0.9
         };
 
