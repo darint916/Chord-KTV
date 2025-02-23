@@ -36,38 +36,64 @@ public class FullSongService : IFullSongService
 
         //genius service
         //TODO find alternative ways to search if not on genius? search lrc as backup? need to consider creating db entry if so
-        Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist, null) ?? throw new InvalidOperationException("Song not found on Genius");
+        Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist, lyrics);
+        if (song is null)
+        {
+            _logger.LogWarning("Song not found on Genius");
+        }
 
         //Gets lyrics from lrc service if not already present
         LrcLyricsDto? lyricsDto = null;
-        if (string.IsNullOrWhiteSpace(song.LrcLyrics))
+        if (song is not null && string.IsNullOrWhiteSpace(song.LrcLyrics))
         {
             song.Duration ??= duration;
             float? songDuration = (float?)song.Duration?.TotalSeconds;
-
-            lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(song.Title, song.Artist, null, null);
-
+            lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(song.Title, song.Artist, null, songDuration);
             if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics))
             {
-
-
                 _logger.LogWarning("Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
-                if (lyricsDto != null)
-                {
-                    _logger.LogWarning("Lyrics: {Lyrics}", lyricsDto.SyncedLyrics);
-                }
-
-                //Try again with only title, put in as query string
-                lyricsDto = await _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, null, song.Title, songDuration);
             }
-            song.LrcLyrics = lyricsDto.SyncedLyrics;
-
-            //TODO: Refactor once issue #52 solved
-            //TODO: ASSIGN LRC LYRIC ID TO SONG (not assigned in lrc service as of 2/11/25)
+            else
+            {
+                song.LrcLyrics = lyricsDto.SyncedLyrics;
+            }
         }
 
-        _logger.LogDebug("Got lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, song.Duration);
-        _logger.LogDebug("Lyrics: {Lyrics}", song.LrcLyrics);
+        //not found in genius
+        if (song is null || string.IsNullOrWhiteSpace(song.LrcLyrics))
+        {
+            lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(title, artist, null, (float?)duration?.TotalSeconds);
+            if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics)) //not found anywhere
+            {
+                _logger.LogWarning("2nd attempt Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}", title, artist, duration);
+                return song;
+            }
+
+            if (song is not null) // we update if we found in genius, but had to query with user params in lrc
+            {
+                song.LrcLyrics = lyricsDto.SyncedLyrics;
+            }
+            else //create if we dont find in genius at all
+            {
+                song = new Song
+                {
+                    Title = lyricsDto.TrackName ?? title ?? "Unknown",
+                    Artist = lyricsDto.ArtistName ?? artist ?? "Unknown",
+                    Duration = duration,
+                    LrcLyrics = lyricsDto.SyncedLyrics,
+                    PlainLyrics = lyricsDto.PlainLyrics,
+                    LrcId = lyricsDto.Id,
+                    RomLrcId = lyricsDto.RomanizedId,
+                    LrcRomanizedLyrics = lyricsDto.RomanizedSyncedLyrics,
+                    GeniusMetaData = new GeniusMetaData
+                    {
+                        Language = LanguageCode.UNK,
+                        GeniusId = 0,
+                    }
+                };
+            }
+        }
+
         //check if lyrics are romanized (note that we do not check LRC Lib for romanization if db alr has synced lyrics)
         bool needRomanization = true;
         bool needTranslation = string.IsNullOrWhiteSpace(song.LrcTranslatedLyrics);

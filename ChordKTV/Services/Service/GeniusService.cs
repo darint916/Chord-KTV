@@ -108,7 +108,7 @@ public class GeniusService : IGeniusService
 
         Song? result = null;
 
-        // If we have a title, try title-based search first
+        // If we have a title, try title-based + artist search first
         if (!string.IsNullOrWhiteSpace(title))
         {
             string primaryQuery = !string.IsNullOrEmpty(artist) ? $"{title} {artist}" : title;
