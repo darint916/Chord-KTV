@@ -54,6 +54,7 @@ public class FullSongService : IFullSongService
             }
             else
             {
+                song.LrcId = lyricsDto.Id;
                 song.LrcLyrics = lyricsDto.SyncedLyrics;
             }
         }
@@ -128,6 +129,39 @@ public class FullSongService : IFullSongService
             {
                 song.AlternateYoutubeUrls.Add(youtubeUrl);
             }
+        }
+
+        //Add residual information (kinda messy)
+        if (lyricsDto != null)
+        {
+            if (lyricsDto.TrackName is not null && !song.AlternateTitles.Contains(lyricsDto.TrackName) && !string.IsNullOrWhiteSpace(lyricsDto.TrackName))
+            {
+                song.AlternateTitles.Add(lyricsDto.TrackName);
+            }
+            if (lyricsDto.ArtistName is not null && !song.FeaturedArtists.Contains(lyricsDto.ArtistName) && !string.IsNullOrWhiteSpace(lyricsDto.ArtistName))
+            {
+                song.FeaturedArtists.Add(lyricsDto.ArtistName);
+            }
+            if (lyricsDto.Id != 0 && song.LrcId != lyricsDto.Id)
+            {
+                song.LrcId = lyricsDto.Id; //assume new lyrics found??
+            }
+            if (lyricsDto.RomanizedId != 0 && song.RomLrcId != lyricsDto.RomanizedId)
+            {
+                song.RomLrcId ??= lyricsDto.RomanizedId; //assume new lyrics found??
+            }
+            if (lyricsDto.PlainLyrics is not null && string.IsNullOrWhiteSpace(song.PlainLyrics))
+            {
+                song.PlainLyrics = lyricsDto.PlainLyrics;
+            }
+        }
+        if (title is not null && !song.AlternateTitles.Contains(title) && !string.IsNullOrWhiteSpace(title))
+        {
+            song.AlternateTitles.Add(title);
+        }
+        if (artist is not null && !song.FeaturedArtists.Contains(artist) && !string.IsNullOrWhiteSpace(artist))
+        {
+            song.FeaturedArtists.Add(artist);
         }
 
         //Save to db, only update, assuming genius creates the resource
