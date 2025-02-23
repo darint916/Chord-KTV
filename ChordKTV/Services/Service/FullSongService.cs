@@ -50,6 +50,7 @@ public class FullSongService : IFullSongService
             if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics))
             {
 
+
                 _logger.LogWarning("Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
                 if (lyricsDto != null)
                 {
