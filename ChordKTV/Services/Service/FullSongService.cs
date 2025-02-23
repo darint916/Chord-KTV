@@ -87,7 +87,7 @@ public class FullSongService : IFullSongService
                     LrcId = lyricsDto.Id,
                     RomLrcId = lyricsDto.RomanizedId,
                     LrcRomanizedLyrics = lyricsDto.RomanizedSyncedLyrics,
-                    GeniusMetaData = new GeniusMetaData {}
+                    GeniusMetaData = new GeniusMetaData { }
                 };
                 songCreate = true;
             }
