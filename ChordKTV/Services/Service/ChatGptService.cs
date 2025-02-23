@@ -19,7 +19,12 @@ public class ChatGptService : IChatGptService
     //KR + other lang use more tokens, but as ref, https://platform.openai.com/tokenizer to calc, 2793 char -> 1564 tokens (sick enough to die)
     // price as of testing seems like ~$0.01 after 26k tokens lol
     private const string Model = "gpt-4o-mini"; //last updated 2024-07-18 , knowledge cutoff 10/2023
-    private const string ThinkingModel = "o3-mini";
+
+    // Add static readonly field for options
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     public ChatGptService(HttpClient httpClient, IConfiguration configuration, ILogger<ChatGptService> logger)
     {
@@ -252,7 +257,7 @@ Note: The correctOptionIndex should ALWAYS be 0 as the correct answer must be th
                 _logger.LogError("The ChatGPT API returned an empty response for quiz generation.");
                 throw new InvalidOperationException("The ChatGPT API returned an empty response.");
             }
-            var quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(messageContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            QuizResponseDto? quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(messageContent, _jsonOptions);
             if (quizResponse == null)
             {
                 _logger.LogError("Failed to deserialize quiz response. Raw response: {MessageContent}", messageContent);

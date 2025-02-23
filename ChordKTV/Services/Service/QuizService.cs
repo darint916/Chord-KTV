@@ -16,6 +16,12 @@ namespace ChordKTV.Services.Service
         private readonly IQuizRepo _quizRepo;
         private readonly ILogger<QuizService> _logger;
 
+        // Add static readonly field for options
+        private static readonly JsonSerializerOptions _jsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         public QuizService(ISongRepo songRepo, IChatGptService chatGptService, IQuizRepo quizRepo, ILogger<QuizService> logger)
         {
             _songRepo = songRepo;
@@ -28,20 +34,22 @@ namespace ChordKTV.Services.Service
         {
             // Clamp difficulty between 1 and 5
             difficulty = Math.Clamp(difficulty, 1, 5);
-            
+
             // Clamp number of questions between 1 and 20
             numQuestions = Math.Clamp(numQuestions, 1, 20);
 
             // Try to use a cached quiz if requested
             if (useCachedQuiz)
             {
-                var cachedQuiz = await _quizRepo.GetLatestQuizAsync(geniusId, difficulty);
+                Quiz? cachedQuiz = await _quizRepo.GetLatestQuizAsync(geniusId, difficulty);
                 if (cachedQuiz != null)
                 {
                     try
                     {
-                        var quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(cachedQuiz.QuizJson, 
-                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        // Update the deserialization to use cached options
+                        QuizResponseDto? quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(
+                            cachedQuiz.QuizJson,
+                            _jsonOptions);
                         if (quizResponse != null)
                         {
                             return quizResponse;
@@ -55,24 +63,20 @@ namespace ChordKTV.Services.Service
             }
 
             // Retrieve the song by geniusId and verify its lyrics
-            var song = await _songRepo.GetSongByGeniusIdAsync(geniusId);
-            if (song == null)
-            {
-                throw new InvalidOperationException($"Song with geniusID {geniusId} not found in database.");
-            }
+            Models.SongData.Song? song = await _songRepo.GetSongByGeniusIdAsync(geniusId) ?? throw new InvalidOperationException($"Song with geniusID {geniusId} not found in database.");
             if (string.IsNullOrWhiteSpace(song.LrcLyrics))
             {
                 throw new InvalidOperationException("Song lyrics not available.");
             }
 
             // Generate a quiz by calling the ChatGPT service with the song lyrics
-            var quizResponseDto = await _chatGptService.GenerateRomanizationQuizAsync(song.LrcLyrics, difficulty, numQuestions, geniusId);
+            QuizResponseDto quizResponseDto = await _chatGptService.GenerateRomanizationQuizAsync(song.LrcLyrics, difficulty, numQuestions, geniusId);
 
             // Override LLM-generated values with our own
-            var timestamp = DateTime.UtcNow;
+            DateTime timestamp = DateTime.UtcNow;
             var quizId = Guid.NewGuid();
-            var quizResponseWithOverrides = quizResponseDto with 
-            { 
+            QuizResponseDto quizResponseWithOverrides = quizResponseDto with
+            {
                 Timestamp = timestamp,
                 QuizId = quizId
             };
@@ -92,4 +96,4 @@ namespace ChordKTV.Services.Service
             return quizResponseWithOverrides;
         }
     }
-} 
+}

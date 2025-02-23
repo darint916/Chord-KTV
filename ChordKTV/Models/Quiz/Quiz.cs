@@ -11,4 +11,4 @@ namespace ChordKTV.Models.Quiz
         public int Difficulty { get; set; }
         public int NumQuestions { get; set; }
     }
-} 
+}

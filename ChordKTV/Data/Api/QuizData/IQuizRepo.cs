@@ -8,4 +8,4 @@ namespace ChordKTV.Data.Api.QuizData
         Task<Quiz?> GetLatestQuizAsync(int geniusId, int difficulty);
         Task AddAsync(Quiz quiz);
     }
-} 
+}

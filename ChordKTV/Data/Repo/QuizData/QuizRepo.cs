@@ -9,12 +9,10 @@ namespace ChordKTV.Data.Repo.QuizData
     public class QuizRepo : IQuizRepo
     {
         private readonly AppDbContext _context;
-        private readonly ILogger<QuizRepo> _logger;
 
-        public QuizRepo(AppDbContext context, ILogger<QuizRepo> logger)
+        public QuizRepo(AppDbContext context)
         {
             _context = context;
-            _logger = logger;
         }
 
         public async Task<Quiz?> GetLatestQuizAsync(int geniusId, int difficulty)
@@ -31,4 +29,4 @@ namespace ChordKTV.Data.Repo.QuizData
             await _context.SaveChangesAsync();
         }
     }
-} 
+}

@@ -17,4 +17,4 @@ namespace ChordKTV.Dtos.Quiz
         DateTime Timestamp,
         List<QuizQuestionDto> Questions
     );
-} 
+}

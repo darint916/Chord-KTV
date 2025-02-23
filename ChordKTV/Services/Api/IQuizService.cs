@@ -7,4 +7,4 @@ namespace ChordKTV.Services.Api
     {
         Task<QuizResponseDto> GenerateQuizAsync(int geniusId, bool useCachedQuiz, int difficulty, int numQuestions);
     }
-} 
+}

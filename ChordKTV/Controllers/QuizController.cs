@@ -26,7 +26,7 @@ namespace ChordKTV.Controllers
         {
             try
             {
-                if (difficulty < 1 || difficulty > 5)
+                if (difficulty is < 1 or > 5)
                 {
                     return BadRequest(new { message = "Difficulty must be between 1 and 5" });
                 }
@@ -40,7 +40,7 @@ namespace ChordKTV.Controllers
                     return BadRequest(new { message = "Number of questions cannot exceed 20" });
                 }
 
-                var quiz = await _quizService.GenerateQuizAsync(geniusId, useCachedQuiz, difficulty, numQuestions);
+                QuizResponseDto quiz = await _quizService.GenerateQuizAsync(geniusId, useCachedQuiz, difficulty, numQuestions);
                 return Ok(quiz);
             }
             catch (Exception ex)
@@ -50,4 +50,4 @@ namespace ChordKTV.Controllers
             }
         }
     }
-} 
+}
