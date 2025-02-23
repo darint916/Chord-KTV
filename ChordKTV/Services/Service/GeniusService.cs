@@ -108,7 +108,7 @@ public class GeniusService : IGeniusService
 
         Song? result = null;
 
-        // If we have a title, try title-based search first
+        // If we have a title, try title-based + artist search first
         if (!string.IsNullOrWhiteSpace(title))
         {
             string primaryQuery = !string.IsNullOrEmpty(artist) ? $"{title} {artist}" : title;
@@ -156,11 +156,11 @@ public class GeniusService : IGeniusService
             existingSong.Artist = enrichedSong.Artist;
             existingSong.GeniusMetaData = enrichedSong.GeniusMetaData;
             existingSong.PlainLyrics = enrichedSong.PlainLyrics;
-            await _songRepo.UpdateAsync(existingSong);
+            await _songRepo.UpdateSongAsync(existingSong);
             return existingSong;
         }
 
-        await _songRepo.AddAsync(enrichedSong);
+        await _songRepo.AddSongAsync(enrichedSong);
         return enrichedSong;
     }
 

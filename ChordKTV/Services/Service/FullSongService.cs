@@ -3,6 +3,7 @@ using ChordKTV.Dtos;
 using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Models.SongData;
 using ChordKTV.Services.Api;
+using ChordKTV.Utils;
 
 namespace ChordKTV.Services.Service;
 
@@ -22,7 +23,8 @@ public class FullSongService : IFullSongService
         _logger = logger;
     }
 
-    public async Task<Song?> GetFullSongAsync(string? title, string? artist, TimeSpan? duration, string? lyrics, string? youtubeUrl)
+    //just realized we dont take album lmao
+    public async Task<Song?> GetFullSongAsync(string? title, string? artist, string? album, TimeSpan? duration, string? lyrics, string? youtubeUrl)
     {
         if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(lyrics))
         {
@@ -34,38 +36,63 @@ public class FullSongService : IFullSongService
         }
 
         //genius service
-        //intellisense cant read the above null avoiding logic smh
-        ArgumentNullException.ThrowIfNull(title);
-        //TODO find alternative ways to search if not on genius? search lrc as backup? need to consider creating db entry if so
-        Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist, null) ?? throw new InvalidOperationException("Song not found on Genius");
+        Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist, lyrics);
+        if (song is null)
+        {
+            _logger.LogWarning("Song not found on Genius");
+        }
 
         //Gets lyrics from lrc service if not already present
         LrcLyricsDto? lyricsDto = null;
-        if (string.IsNullOrWhiteSpace(song.LrcLyrics))
+        if (song is not null && string.IsNullOrWhiteSpace(song.LrcLyrics))
         {
             song.Duration ??= duration;
             float? songDuration = (float?)song.Duration?.TotalSeconds;
-
-            //TODO: Delete once issue #48 solved
-            lyricsDto = await _lrcService.GetLrcLibLyricsAsync(song.Title, song.Artist, null, null, null);
-
+            lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(song.Title, song.Artist, null, songDuration);
             if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics))
             {
                 _logger.LogWarning("Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
-                if (lyricsDto != null)
-                {
-                    _logger.LogWarning("Lyrics: {Lyrics}", lyricsDto.SyncedLyrics);
-                }
-                return song;
             }
-            song.LrcLyrics = lyricsDto.SyncedLyrics;
-
-            //TODO: Refactor once issue #52 solved
-            //TODO: ASSIGN LRC LYRIC ID TO SONG (not assigned in lrc service as of 2/11/25)
+            else
+            {
+                song.LrcId = lyricsDto.Id;
+                song.LrcLyrics = lyricsDto.SyncedLyrics;
+            }
         }
 
-        _logger.LogDebug("Got lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, song.Duration);
-        _logger.LogDebug("Lyrics: {Lyrics}", song.LrcLyrics);
+        //not found in genius
+        bool songCreate = false;
+        if (song is null || string.IsNullOrWhiteSpace(song.LrcLyrics))
+        {
+            lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(title, artist, null, (float?)duration?.TotalSeconds);
+            if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics)) //not found anywhere
+            {
+                _logger.LogWarning("2nd attempt Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}", title, artist, duration);
+                return song;
+            }
+
+            if (song is not null) // we update if we found in genius, but had to query with user params in lrc
+            {
+                song.LrcLyrics = lyricsDto.SyncedLyrics;
+            }
+            else //create if we dont find in genius at all
+            {
+                song = new Song
+                {
+                    Title = lyricsDto.TrackName ?? title ?? "Unknown",
+                    Artist = lyricsDto.ArtistName ?? artist ?? "Unknown",
+                    Duration = duration,
+                    LrcLyrics = lyricsDto.SyncedLyrics,
+                    PlainLyrics = lyricsDto.PlainLyrics,
+                    LrcId = lyricsDto.Id,
+                    RomLrcId = lyricsDto.RomanizedId,
+                    LrcRomanizedLyrics = lyricsDto.RomanizedSyncedLyrics,
+                    GeniusMetaData = new GeniusMetaData { }
+                };
+                songCreate = true;
+            }
+        }
+
         //check if lyrics are romanized (note that we do not check LRC Lib for romanization if db alr has synced lyrics)
         bool needRomanization = true;
         bool needTranslation = string.IsNullOrWhiteSpace(song.LrcTranslatedLyrics);
@@ -103,9 +130,53 @@ public class FullSongService : IFullSongService
             }
         }
 
+        //Add residual information (kinda messy)
+        if (lyricsDto != null)
+        {
+            if (lyricsDto.TrackName is not null && !song.AlternateTitles.Contains(lyricsDto.TrackName.ToLowerInvariant()) && !string.IsNullOrWhiteSpace(lyricsDto.TrackName))
+            {
+                song.AlternateTitles.Add(lyricsDto.TrackName.ToLowerInvariant());
+            }
+            if (lyricsDto.ArtistName is not null && !song.FeaturedArtists.Contains(lyricsDto.ArtistName.ToLowerInvariant()) && !string.IsNullOrWhiteSpace(lyricsDto.ArtistName))
+            {
+
+                song.FeaturedArtists.Add(lyricsDto.ArtistName.ToLowerInvariant());
+            }
+            if (lyricsDto.Id != 0 && song.LrcId != lyricsDto.Id)
+            {
+                song.LrcId = lyricsDto.Id; //assume new lyrics found??
+            }
+            if (lyricsDto.RomanizedId != 0 && song.RomLrcId != lyricsDto.RomanizedId)
+            {
+                song.RomLrcId ??= lyricsDto.RomanizedId; //assume new lyrics found??
+            }
+            if (lyricsDto.PlainLyrics is not null && string.IsNullOrWhiteSpace(song.PlainLyrics))
+            {
+                song.PlainLyrics = lyricsDto.PlainLyrics;
+            }
+        }
+        if (title is not null && !song.AlternateTitles.Contains(title) && !string.IsNullOrWhiteSpace(title))
+        {
+            song.AlternateTitles.Add(title);
+        }
+        if (artist is not null && !song.FeaturedArtists.Contains(artist) && !string.IsNullOrWhiteSpace(artist))
+        {
+            if (CompareUtils.CompareArtistFuzzyScore(song.Artist, artist) > 75) //filters out youtube personal channels
+            {
+                song.FeaturedArtists.Add(artist);
+            }
+        }
+
         //Save to db, only update, assuming genius creates the resource
         //TODO: Consider abstracting song creation out of genius service or as flag
-        await _songRepo.UpdateSongAsync(song);
+        if (songCreate)
+        {
+            await _songRepo.AddSongAsync(song);
+        }
+        else
+        {
+            await _songRepo.UpdateSongAsync(song);
+        }
         return song;
     }
 }
