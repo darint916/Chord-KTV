@@ -18,7 +18,7 @@ public class GeniusService : IGeniusService
     private readonly ILogger<GeniusService> _logger;
     private readonly string _accessToken;
     private const string BaseUrl = "https://api.genius.com";
-    private const int MINIMUM_FUZZY_RATIO = 80; // Adjust this threshold as needed
+    private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public GeniusService(
         IConfiguration configuration,
@@ -74,19 +74,6 @@ public class GeniusService : IGeniusService
         };
     }
 
-    private static bool IsFuzzyMatch(GeniusResult result, string? queryTitle, string? queryArtist)
-    {
-        // If no title provided (lyrics-only search), skip fuzzy title matching
-        if (string.IsNullOrWhiteSpace(queryTitle))
-        {
-            return true; // Accept all results when searching by lyrics only
-        }
-
-        // Only match on title - we trust Genius's artist data
-        int titleScore = Fuzz.Ratio(result.Title.ToLower(CultureInfo.CurrentCulture), queryTitle.ToLower(CultureInfo.CurrentCulture));
-        return titleScore >= MINIMUM_FUZZY_RATIO;
-    }
-
     /// <summary>
     /// Helper to query Genius using the given search query and compare results with the provided fuzzy criteria
     /// </summary>
@@ -111,7 +98,7 @@ public class GeniusService : IGeniusService
             _logger.LogDebug("Raw API Response: {Response}", responseContent);
 
             GeniusSearchResponse? searchResponse = JsonSerializer.Deserialize<GeniusSearchResponse>(
-                responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                responseContent, _jsonOptions);
 
             if (searchResponse?.Response?.Hits == null || searchResponse.Meta.Status != 200)
             {
@@ -129,13 +116,13 @@ public class GeniusService : IGeniusService
                     hit.Result.Title, hit.Result.PrimaryArtistNames);
             }
 
-            const int MIN_TITLE_SCORE = 50;  // Only basic title threshold to filter out completely unrelated matches
+            const int minTitleScore = 50;  // Renamed to follow C# naming conventions
 
-            // Simply get all matches with a reasonable title score, sorted by total score
+            // Update the score check
             var matches = searchResponse.Response.Hits
                 .Where(h => h.Result != null)
                 .Select(h => ScoreMatch(h.Result, fuzzyTitle ?? "", fuzzyArtist))
-                .Where(m => m.TitleScore >= MIN_TITLE_SCORE)
+                .Where(m => m.TitleScore >= minTitleScore)
                 .OrderByDescending(m => m.TotalScore)
                 .ToList();
 
@@ -153,7 +140,7 @@ public class GeniusService : IGeniusService
             SearchMatch? bestMatch = matches.FirstOrDefault();
             if (bestMatch?.Result == null)
             {
-                _logger.LogWarning("No matches found with minimum title score of {MinScore}", MIN_TITLE_SCORE);
+                _logger.LogWarning("No matches found with minimum title score of {MinScore}", minTitleScore);
                 return null;
             }
 
