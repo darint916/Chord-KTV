@@ -4,20 +4,26 @@ using Google.Apis.YouTube.v3.Data;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
 using ChordKTV.Utils;
+using System.Diagnostics;
 
 namespace ChordKTV.Services.Service;
 
 public class YouTubeApiClientService : IYouTubeClientService
 {
     private readonly string? _apiKey;
+    private readonly ILogger<YouTubeApiClientService> _logger;
 
-    public YouTubeApiClientService(IConfiguration configuration)
+    public YouTubeApiClientService(IConfiguration configuration, ILogger<YouTubeApiClientService> logger)
     {
         _apiKey = configuration["YouTube:ApiKey"];
+        _logger = logger;
     }
 
     public async Task<PlaylistDetailsDto?> GetPlaylistDetailsAsync(string playlistId, bool shuffle)
     {
+        var sw = new Stopwatch();
+        sw.Start();
+
         if (string.IsNullOrEmpty(_apiKey))
         {
             return null;
@@ -45,42 +51,50 @@ public class YouTubeApiClientService : IYouTubeClientService
         playlistItemsRequest.MaxResults = 50;
 
         var videos = new List<VideoInfo>();
-        PlaylistItemListResponse playlistItemsResponse;
+        var allVideoIds = new List<string>();
+        var playlistItems = new List<PlaylistItem>();
+
+        // First gather all playlist items
         do
         {
-            playlistItemsResponse = await playlistItemsRequest.ExecuteAsync();
-
-            // Get all video IDs from the current page
-            var videoIds = playlistItemsResponse.Items.Select(item => item.ContentDetails.VideoId).ToList();
-
-            // Get video details including duration and correct channel info
-            Dictionary<string, VideoDetails> videoDetails = await GetVideosDetailsAsync(googleYouTube, videoIds);
-
-            foreach (PlaylistItem item in playlistItemsResponse.Items)
-            {
-                string videoId = item.ContentDetails.VideoId;
-                if (videoDetails.TryGetValue(videoId, out VideoDetails? details))
-                {
-                    string title = item.Snippet.Title;
-                    string url = $"https://www.youtube.com/watch?v={videoId}";
-
-                    videos.Add(new VideoInfo(
-                        title,
-                        details.ChannelTitle,  // Use the correct channel name
-                        url,
-                        details.Duration
-                    ));
-                }
-            }
-
+            PlaylistItemListResponse playlistItemsResponse = await playlistItemsRequest.ExecuteAsync();
+            playlistItems.AddRange(playlistItemsResponse.Items);
+            allVideoIds.AddRange(playlistItemsResponse.Items.Select(item => item.ContentDetails.VideoId));
             playlistItemsRequest.PageToken = playlistItemsResponse.NextPageToken;
         }
         while (!string.IsNullOrEmpty(playlistItemsRequest.PageToken));
+
+        // Batch video details requests in parallel
+        var videoDetailsTasks = allVideoIds
+            .Chunk(50)
+            .Select(idBatch => GetVideosDetailsAsync(googleYouTube, idBatch.ToList()));
+
+        var videoDetailsResults = await Task.WhenAll(videoDetailsTasks);
+        var allVideoDetails = videoDetailsResults.SelectMany(dict => dict).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+        // Map playlist items to VideoInfo objects
+        foreach (var item in playlistItems)
+        {
+            string videoId = item.ContentDetails.VideoId;
+            if (allVideoDetails.TryGetValue(videoId, out VideoDetails? details))
+            {
+                videos.Add(new VideoInfo(
+                    item.Snippet.Title,
+                    details.ChannelTitle,
+                    $"https://www.youtube.com/watch?v={videoId}",
+                    details.Duration
+                ));
+            }
+        }
 
         if (shuffle)
         {
             Shuffle.FisherYatesShuffle(videos);
         }
+
+        sw.Stop();
+        _logger.LogDebug("⏱️ GetPlaylistDetailsAsync took: {ElapsedMilliseconds}ms for {VideoCount} videos", 
+            sw.ElapsedMilliseconds, videos.Count);
 
         return new PlaylistDetailsDto(playlistTitle, videos);
     }
