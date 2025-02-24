@@ -17,7 +17,7 @@ public class UserController : ControllerBase
     private readonly IUserRepo _userRepo;
 
     public UserController(
-        IConfiguration configuration, 
+        IConfiguration configuration,
         ILogger<UserController> logger,
         IUserRepo userRepo)
     {
@@ -45,7 +45,7 @@ public class UserController : ControllerBase
 
             // Check if user exists
             User? user = await _userRepo.GetUserByEmailAsync(payload.Email);
-            _logger.LogDebug("Database lookup for user {Email} returned: {UserFound}", 
+            _logger.LogDebug("Database lookup for user {Email} returned: {UserFound}",
                 payload.Email, user != null ? "Found" : "Not Found");
 
             if (user == null)
@@ -58,7 +58,7 @@ public class UserController : ControllerBase
                 };
                 await _userRepo.CreateUserAsync(user);
                 bool saved = await _userRepo.SaveChangesAsync();
-                _logger.LogDebug("Created new user: ID: {Id}, Email: {Email}, Save successful: {Saved}", 
+                _logger.LogDebug("Created new user: ID: {Id}, Email: {Email}, Save successful: {Saved}",
                     user.Id, payload.Email, saved);
             }
 
