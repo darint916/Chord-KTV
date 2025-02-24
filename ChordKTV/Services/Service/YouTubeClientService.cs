@@ -65,15 +65,15 @@ public class YouTubeApiClientService : IYouTubeClientService
         while (!string.IsNullOrEmpty(playlistItemsRequest.PageToken));
 
         // Batch video details requests in parallel
-        var videoDetailsTasks = allVideoIds
+        IEnumerable<Task<Dictionary<string, VideoDetails>>> videoDetailsTasks = allVideoIds
             .Chunk(50)
             .Select(idBatch => GetVideosDetailsAsync(googleYouTube, idBatch.ToList()));
 
-        var videoDetailsResults = await Task.WhenAll(videoDetailsTasks);
+        Dictionary<string, VideoDetails>[] videoDetailsResults = await Task.WhenAll(videoDetailsTasks);
         var allVideoDetails = videoDetailsResults.SelectMany(dict => dict).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
         // Map playlist items to VideoInfo objects
-        foreach (var item in playlistItems)
+        foreach (PlaylistItem item in playlistItems)
         {
             string videoId = item.ContentDetails.VideoId;
             if (allVideoDetails.TryGetValue(videoId, out VideoDetails? details))
@@ -93,7 +93,7 @@ public class YouTubeApiClientService : IYouTubeClientService
         }
 
         sw.Stop();
-        _logger.LogDebug("⏱️ GetPlaylistDetailsAsync took: {ElapsedMilliseconds}ms for {VideoCount} videos", 
+        _logger.LogDebug("⏱️ GetPlaylistDetailsAsync took: {ElapsedMilliseconds}ms for {VideoCount} videos",
             sw.ElapsedMilliseconds, videos.Count);
 
         return new PlaylistDetailsDto(playlistTitle, videos);
