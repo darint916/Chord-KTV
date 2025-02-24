@@ -96,4 +96,11 @@ public class SongRepo : ISongRepo
     {
         return await _context.GeniusMetaData.FindAsync(geniusId);
     }
+
+    public async Task<Song?> GetSongByGeniusIdAsync(int geniusId)
+    {
+        return await _context.Songs
+            .Include(s => s.GeniusMetaData)
+            .FirstOrDefaultAsync(s => s.GeniusMetaData.GeniusId == geniusId);
+    }
 }
