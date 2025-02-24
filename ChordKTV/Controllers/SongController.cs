@@ -281,7 +281,7 @@ public class SongController : ControllerBase
         try
         {
             // First get the song by genius ID
-            var song = await _songRepo.GetSongByGeniusIdAsync(geniusId);
+            Song? song = await _songRepo.GetSongByGeniusIdAsync(geniusId);
             if (song == null)
             {
                 return NotFound(new { message = $"No song found with Genius ID: {geniusId}" });
@@ -290,7 +290,7 @@ public class SongController : ControllerBase
             // Enrich the song details
             song = await _geniusService.EnrichSongDetailsAsync(song);
             await _songRepo.UpdateSongAsync(song);
-            
+
             return Ok(_mapper.Map<SongDto>(song));
         }
         catch (HttpRequestException ex)

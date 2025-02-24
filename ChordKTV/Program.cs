@@ -70,7 +70,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 app.UseCors();
 
