@@ -74,3 +74,5 @@ After installing the OpenAPI Generator Docker image, run this command in the fro
 ```docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli generate -i /local/<path-to-swagger-json> -g typescript-fetch -o /local/src/api```
 
 This generates API stubs in ```src/api```. You can call these stubs to call the backend API. Refer to ```src/components/HandwritingCanvas.tsx``` for an example on how to do so.
+
+NOTE: The GitHub CI build workflow is commented out (in PR #73) for now to avoid unused var warnings arising from the generated code. Eventually once frontend is complete and all vars are in use, it will be uncommented.
