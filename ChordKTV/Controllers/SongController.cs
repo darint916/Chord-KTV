@@ -288,10 +288,14 @@ public class SongController : ControllerBase
             }
 
             // Enrich the song details
-            song = await _geniusService.EnrichSongDetailsAsync(song);
-            await _songRepo.UpdateSongAsync(song);
-
-            return Ok(_mapper.Map<SongDto>(song));
+            Song? enrichedSong = await _geniusService.EnrichSongDetailsAsync(song);
+            if (enrichedSong != null)
+            {
+                await _songRepo.UpdateSongAsync(enrichedSong);
+                return Ok(_mapper.Map<SongDto>(enrichedSong));
+            }
+            
+            return StatusCode(500, new { message = "Failed to enrich song data" });
         }
         catch (HttpRequestException ex)
         {

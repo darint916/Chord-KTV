@@ -7,12 +7,10 @@ namespace ChordKTV.Data.Repo.SongData;
 public class GeniusMetaDataRepo : IGeniusMetaDataRepo
 {
     private readonly AppDbContext _context;
-    private readonly ILogger<GeniusMetaDataRepo> _logger;
 
-    public GeniusMetaDataRepo(AppDbContext context, ILogger<GeniusMetaDataRepo> logger)
+    public GeniusMetaDataRepo(AppDbContext context)
     {
         _context = context;
-        _logger = logger;
     }
 
     public async Task<GeniusMetaData?> GetGeniusMetaDataAsync(int geniusId)
