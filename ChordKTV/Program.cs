@@ -9,6 +9,8 @@ using ChordKTV.Utils;
 using ChordKTV.Dtos;
 using Serilog;
 using System.Globalization;
+using ChordKTV.Data.Api.UserData;
+using ChordKTV.Data.Repo.UserData;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +65,7 @@ builder.Services.AddScoped<ISongRepo, SongRepo>();
 builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
 builder.Services.AddScoped<IFullSongService, FullSongService>();
 builder.Services.AddScoped<IHandwritingService, HandwritingService>();
+builder.Services.AddScoped<IUserRepo, UserRepo>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

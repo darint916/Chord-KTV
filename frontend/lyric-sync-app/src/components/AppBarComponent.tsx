@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../contexts/authTypes';
 import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
 
 interface GooglePayload {
   sub: string;
@@ -16,15 +17,27 @@ const AppBarComponent: React.FC = () => {
   const { user, setUser } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
-  const handleLogin = (credentialResponse: CredentialResponse) => {
+  const handleLogin = async (credentialResponse: CredentialResponse) => {
     const decoded: GooglePayload = jwtDecode(credentialResponse.credential ?? '');
-    setUser({
-      id: decoded.sub,
-      name: decoded.name,
-      email: decoded.email,
-      picture: decoded.picture,
-      idToken: credentialResponse.credential ?? ''
-    });
+    
+    try {
+        const response = await axios.post('http://localhost:5259/api/auth/google', null, {
+            headers: {
+                'Authorization': `Bearer ${credentialResponse.credential}`
+            }
+        });
+
+        setUser({
+            id: decoded.sub,
+            name: decoded.name,
+            email: decoded.email,
+            picture: decoded.picture,
+            idToken: credentialResponse.credential ?? ''
+        });
+    } catch (error) {
+        console.error('Failed to authenticate with backend:', error);
+        handleLoginError();
+    }
   };
 
   const handleLogout = () => {
