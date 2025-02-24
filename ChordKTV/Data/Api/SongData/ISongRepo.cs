@@ -11,5 +11,5 @@ public interface ISongRepo
     public Task<Song?> GetSongAsync(string name, string artist);
     public Task<Song?> GetSongAsync(string name, string artist, string albumName);
     public Task<List<Song>> GetAllSongsAsync();
-    public Task<GeniusMetaData?> GetGeniusMetaDataAsync(int geniusId);
+    public Task<Song?> GetSongByGeniusIdAsync(int geniusId);
 }

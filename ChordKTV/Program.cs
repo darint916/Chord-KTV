@@ -63,13 +63,14 @@ builder.Services.AddScoped<ISongRepo, SongRepo>();
 builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
 builder.Services.AddScoped<IFullSongService, FullSongService>();
 builder.Services.AddScoped<IHandwritingService, HandwritingService>();
+builder.Services.AddScoped<IGeniusMetaDataRepo, GeniusMetaDataRepo>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
-WebApplication app = builder.Build();
+var app = builder.Build();
 
 app.UseCors();
 

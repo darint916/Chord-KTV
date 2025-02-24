@@ -13,8 +13,8 @@ using ChordKTV.Dtos.TranslationGptApi;
 namespace ChordKTV.Controllers;
 
 [ApiController]
-[Route("api")]
-public class SongController : Controller
+[Route("api/songs")]
+public class SongController : ControllerBase
 {
     private readonly ISongRepo _songRepo;
     private readonly IYouTubeClientService _youTubeService;
@@ -272,5 +272,36 @@ public class SongController : Controller
     {
         await _songRepo.AddSongAsync(song);
         return Ok();
+    }
+
+    [HttpPost("genius/{geniusId}/enrich")]
+    public async Task<IActionResult> EnrichSong(int geniusId)
+    {
+        _logger.LogInformation("EnrichSong endpoint hit with geniusId: {GeniusId}", geniusId);
+        try
+        {
+            // First get the song by genius ID
+            var song = await _songRepo.GetSongByGeniusIdAsync(geniusId);
+            if (song == null)
+            {
+                return NotFound(new { message = $"No song found with Genius ID: {geniusId}" });
+            }
+
+            // Enrich the song details
+            song = await _geniusService.EnrichSongDetailsAsync(song);
+            await _songRepo.UpdateSongAsync(song);
+            
+            return Ok(_mapper.Map<SongDto>(song));
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to enrich song from Genius API for ID: {GeniusId}", geniusId);
+            return StatusCode(503, new { message = "Failed to fetch from Genius API.", error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while enriching song. GeniusId: {GeniusId}", geniusId);
+            return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
+        }
     }
 }
