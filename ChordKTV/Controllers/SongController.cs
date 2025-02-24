@@ -294,7 +294,7 @@ public class SongController : ControllerBase
                 await _songRepo.UpdateSongAsync(enrichedSong);
                 return Ok(_mapper.Map<SongDto>(enrichedSong));
             }
-            
+
             return StatusCode(500, new { message = "Failed to enrich song data" });
         }
         catch (HttpRequestException ex)
