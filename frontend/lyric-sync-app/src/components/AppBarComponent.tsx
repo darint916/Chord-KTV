@@ -21,22 +21,21 @@ const AppBarComponent: React.FC = () => {
     const decoded: GooglePayload = jwtDecode(credentialResponse.credential ?? '');
     
     try {
-        const response = await axios.post('http://localhost:5259/api/auth/google', null, {
-            headers: {
-                'Authorization': `Bearer ${credentialResponse.credential}`
-            }
-        });
+      await axios.post('http://localhost:5259/api/auth/google', null, {
+        headers: {
+          'Authorization': `Bearer ${credentialResponse.credential}`
+        }
+      });
 
-        setUser({
-            id: decoded.sub,
-            name: decoded.name,
-            email: decoded.email,
-            picture: decoded.picture,
-            idToken: credentialResponse.credential ?? ''
-        });
-    } catch (error) {
-        console.error('Failed to authenticate with backend:', error);
-        handleLoginError();
+      setUser({
+        id: decoded.sub,
+        name: decoded.name,
+        email: decoded.email,
+        picture: decoded.picture,
+        idToken: credentialResponse.credential ?? ''
+      });
+    } catch {
+      handleLoginError();
     }
   };
 
