@@ -38,7 +38,7 @@ public class GeniusService : IGeniusService
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
     }
 
-    private class SearchMatch
+    private sealed class SearchMatch
     {
         public GeniusResult Result { get; set; } = null!;
         public int TitleScore { get; set; }
@@ -51,11 +51,11 @@ public class GeniusService : IGeniusService
         // Calculate title score
         string normalizedResultTitle = result.Title.ToLower(CultureInfo.CurrentCulture);
         string normalizedQueryTitle = queryTitle.ToLower(CultureInfo.CurrentCulture);
-        
+
         int exactTitleScore = Fuzz.Ratio(normalizedResultTitle, normalizedQueryTitle);
         bool containsTitle = normalizedResultTitle.Contains(normalizedQueryTitle, StringComparison.OrdinalIgnoreCase);
         int titleScore = containsTitle ? Math.Max(exactTitleScore, 85) : exactTitleScore;
-        
+
         // Calculate artist score only if provided (used for ranking, not filtering)
         int artistScore = 0;
         if (!string.IsNullOrWhiteSpace(queryArtist))
@@ -92,7 +92,7 @@ public class GeniusService : IGeniusService
     /// </summary>
     private async Task<Song?> SearchGenius(string searchQuery, string? fuzzyTitle, string? fuzzyArtist)
     {
-        _logger.LogInformation("Starting Genius search with query: '{Query}', title: '{Title}', artist: '{Artist}'", 
+        _logger.LogInformation("Starting Genius search with query: '{Query}', title: '{Title}', artist: '{Artist}'",
             searchQuery, fuzzyTitle, fuzzyArtist);
 
         string requestUrl = $"/search?q={Uri.EscapeDataString(searchQuery)}";
@@ -100,7 +100,7 @@ public class GeniusService : IGeniusService
         {
             _logger.LogDebug("Sending request to: {Url}", requestUrl);
             HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Genius API error: {StatusCode}", response.StatusCode);
@@ -115,7 +115,7 @@ public class GeniusService : IGeniusService
 
             if (searchResponse?.Response?.Hits == null || searchResponse.Meta.Status != 200)
             {
-                _logger.LogWarning("Invalid response structure or status. Meta Status: {Status}", 
+                _logger.LogWarning("Invalid response structure or status. Meta Status: {Status}",
                     searchResponse?.Meta.Status);
                 return null;
             }
@@ -123,9 +123,9 @@ public class GeniusService : IGeniusService
             _logger.LogInformation("Retrieved {Count} hits from Genius", searchResponse.Response.Hits.Count);
 
             // Log all results before scoring
-            foreach (var hit in searchResponse.Response.Hits)
+            foreach (GeniusHit hit in searchResponse.Response.Hits)
             {
-                _logger.LogDebug("Found result - Title: '{Title}', Artist: '{Artist}'", 
+                _logger.LogDebug("Found result - Title: '{Title}', Artist: '{Artist}'",
                     hit.Result.Title, hit.Result.PrimaryArtistNames);
             }
 
@@ -140,9 +140,9 @@ public class GeniusService : IGeniusService
                 .ToList();
 
             _logger.LogInformation("Found {Count} potential matches", matches.Count);
-            
+
             // Log top matches for debugging
-            foreach (var match in matches.Take(3))
+            foreach (SearchMatch? match in matches.Take(3))
             {
                 _logger.LogInformation(
                     "Match - Title: '{Title}', Artist: '{Artist}', Scores: Title={TitleScore}, Artist={ArtistScore}, Total={TotalScore}",
