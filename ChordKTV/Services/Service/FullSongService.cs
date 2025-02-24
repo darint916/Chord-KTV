@@ -77,7 +77,7 @@ public class FullSongService : IFullSongService
                 // Add new alternates from LRC search
                 if (lyricsDto.AlternateTitles?.Count > 0)
                 {
-                    foreach (var altTitle in lyricsDto.AlternateTitles)
+                    foreach (string altTitle in lyricsDto.AlternateTitles)
                     {
                         if (!song.AlternateTitles.Contains(altTitle.ToLowerInvariant()))
                         {
@@ -87,7 +87,7 @@ public class FullSongService : IFullSongService
                 }
                 if (lyricsDto.AlternateArtists?.Count > 0)
                 {
-                    foreach (var altArtist in lyricsDto.AlternateArtists)
+                    foreach (string altArtist in lyricsDto.AlternateArtists)
                     {
                         if (!song.FeaturedArtists.Contains(altArtist.ToLowerInvariant()))
                         {
