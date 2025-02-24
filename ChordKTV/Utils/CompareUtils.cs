@@ -19,14 +19,18 @@ public static partial class CompareUtils
     }
 
     //gets fuzzy matched score for song title and duration, order dont matter
-    public static int CompareWeightedFuzzyScore(string queryTitle, string candidateTitle, string? artist, string? candidateArtist, float? queryDuration, float candidateDuration, float durationDifferenceWeight = 0.8f, float artistDifferenceWeight = 0.7f)
+    public static int CompareWeightedFuzzyScore(string queryTitle, string candidateTitle, string? artist, string? candidateArtist, float? queryDuration, float? candidateDuration, float durationDifferenceWeight = 0.8f, float artistDifferenceWeight = 0.7f)
     {
         int fuzzyScore = Math.Max(
             Fuzz.TokenSortRatio(queryTitle.ToLowerInvariant(), candidateTitle?.ToLowerInvariant()),
             Fuzz.TokenSetRatio(queryTitle.ToLowerInvariant(), candidateTitle?.ToLowerInvariant())
         );
 
-        float durationDifference = MathF.Abs((queryDuration ?? candidateDuration) - candidateDuration);
+        float durationDifference = 0;
+        if (queryDuration.HasValue && candidateDuration.HasValue)
+        {
+            durationDifference = MathF.Abs(queryDuration.Value - candidateDuration.Value);
+        }
 
         int artistDifference = 0;
         if (!string.IsNullOrWhiteSpace(artist) && !string.IsNullOrWhiteSpace(candidateArtist))
