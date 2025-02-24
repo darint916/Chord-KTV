@@ -74,6 +74,27 @@ public class FullSongService : IFullSongService
             if (song is not null) // we update if we found in genius, but had to query with user params in lrc
             {
                 song.LrcLyrics = lyricsDto.SyncedLyrics;
+                // Add new alternates from LRC search
+                if (lyricsDto.AlternateTitles?.Count > 0)
+                {
+                    foreach (var altTitle in lyricsDto.AlternateTitles)
+                    {
+                        if (!song.AlternateTitles.Contains(altTitle.ToLowerInvariant()))
+                        {
+                            song.AlternateTitles.Add(altTitle.ToLowerInvariant());
+                        }
+                    }
+                }
+                if (lyricsDto.AlternateArtists?.Count > 0)
+                {
+                    foreach (var altArtist in lyricsDto.AlternateArtists)
+                    {
+                        if (!song.FeaturedArtists.Contains(altArtist.ToLowerInvariant()))
+                        {
+                            song.FeaturedArtists.Add(altArtist.ToLowerInvariant());
+                        }
+                    }
+                }
             }
             else //create if we dont find in genius at all
             {
@@ -87,6 +108,8 @@ public class FullSongService : IFullSongService
                     LrcId = lyricsDto.Id,
                     RomLrcId = lyricsDto.RomanizedId,
                     LrcRomanizedLyrics = lyricsDto.RomanizedSyncedLyrics,
+                    AlternateTitles = lyricsDto.AlternateTitles.Select(t => t.ToLowerInvariant()).ToList(),
+                    FeaturedArtists = lyricsDto.AlternateArtists.Select(a => a.ToLowerInvariant()).ToList(),
                     GeniusMetaData = new GeniusMetaData { }
                 };
                 songCreate = true;
