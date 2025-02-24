@@ -38,6 +38,42 @@ public class GeniusService : IGeniusService
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
     }
 
+    private class SearchMatch
+    {
+        public GeniusResult Result { get; set; } = null!;
+        public int TitleScore { get; set; }
+        public int ArtistScore { get; set; }
+        public int TotalScore => TitleScore + ArtistScore;
+    }
+
+    private static SearchMatch ScoreMatch(GeniusResult result, string queryTitle, string? queryArtist)
+    {
+        // Calculate title score
+        string normalizedResultTitle = result.Title.ToLower(CultureInfo.CurrentCulture);
+        string normalizedQueryTitle = queryTitle.ToLower(CultureInfo.CurrentCulture);
+        
+        int exactTitleScore = Fuzz.Ratio(normalizedResultTitle, normalizedQueryTitle);
+        bool containsTitle = normalizedResultTitle.Contains(normalizedQueryTitle, StringComparison.OrdinalIgnoreCase);
+        int titleScore = containsTitle ? Math.Max(exactTitleScore, 85) : exactTitleScore;
+        
+        // Calculate artist score only if provided (used for ranking, not filtering)
+        int artistScore = 0;
+        if (!string.IsNullOrWhiteSpace(queryArtist))
+        {
+            artistScore = Fuzz.Ratio(
+                result.PrimaryArtistNames.ToLower(CultureInfo.CurrentCulture),
+                queryArtist.ToLower(CultureInfo.CurrentCulture)
+            );
+        }
+
+        return new SearchMatch
+        {
+            Result = result,
+            TitleScore = titleScore,
+            ArtistScore = artistScore
+        };
+    }
+
     private static bool IsFuzzyMatch(GeniusResult result, string? queryTitle, string? queryArtist)
     {
         // If no title provided (lyrics-only search), skip fuzzy title matching
@@ -56,34 +92,72 @@ public class GeniusService : IGeniusService
     /// </summary>
     private async Task<Song?> SearchGenius(string searchQuery, string? fuzzyTitle, string? fuzzyArtist)
     {
+        _logger.LogInformation("Starting Genius search with query: '{Query}', title: '{Title}', artist: '{Artist}'", 
+            searchQuery, fuzzyTitle, fuzzyArtist);
+
         string requestUrl = $"/search?q={Uri.EscapeDataString(searchQuery)}";
         try
         {
+            _logger.LogDebug("Sending request to: {Url}", requestUrl);
             HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
+            
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Genius API error: {StatusCode}", response.StatusCode);
                 return null;
             }
 
-            GeniusSearchResponse? searchResponse = await response.Content.ReadFromJsonAsync<GeniusSearchResponse>(
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            string responseContent = await response.Content.ReadAsStringAsync();
+            _logger.LogDebug("Raw API Response: {Response}", responseContent);
+
+            GeniusSearchResponse? searchResponse = JsonSerializer.Deserialize<GeniusSearchResponse>(
+                responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (searchResponse?.Response?.Hits == null || searchResponse.Meta.Status != 200)
             {
+                _logger.LogWarning("Invalid response structure or status. Meta Status: {Status}", 
+                    searchResponse?.Meta.Status);
                 return null;
             }
 
-            // Use the provided fuzzy parameters (which can be different for the fallback scenario)
-            GeniusHit? matchingHit = searchResponse.Response.Hits
-                .FirstOrDefault(h => h.Result != null && IsFuzzyMatch(h.Result, fuzzyTitle, fuzzyArtist));
+            _logger.LogInformation("Retrieved {Count} hits from Genius", searchResponse.Response.Hits.Count);
 
-            if (matchingHit?.Result == null)
+            // Log all results before scoring
+            foreach (var hit in searchResponse.Response.Hits)
             {
+                _logger.LogDebug("Found result - Title: '{Title}', Artist: '{Artist}'", 
+                    hit.Result.Title, hit.Result.PrimaryArtistNames);
+            }
+
+            const int MIN_TITLE_SCORE = 50;  // Only basic title threshold to filter out completely unrelated matches
+
+            // Simply get all matches with a reasonable title score, sorted by total score
+            var matches = searchResponse.Response.Hits
+                .Where(h => h.Result != null)
+                .Select(h => ScoreMatch(h.Result, fuzzyTitle ?? "", fuzzyArtist))
+                .Where(m => m.TitleScore >= MIN_TITLE_SCORE)
+                .OrderByDescending(m => m.TotalScore)
+                .ToList();
+
+            _logger.LogInformation("Found {Count} potential matches", matches.Count);
+            
+            // Log top matches for debugging
+            foreach (var match in matches.Take(3))
+            {
+                _logger.LogInformation(
+                    "Match - Title: '{Title}', Artist: '{Artist}', Scores: Title={TitleScore}, Artist={ArtistScore}, Total={TotalScore}",
+                    match.Result.Title, match.Result.PrimaryArtistNames, match.TitleScore, match.ArtistScore, match.TotalScore
+                );
+            }
+
+            SearchMatch? bestMatch = matches.FirstOrDefault();
+            if (bestMatch?.Result == null)
+            {
+                _logger.LogWarning("No matches found with minimum title score of {MinScore}", MIN_TITLE_SCORE);
                 return null;
             }
 
-            return await MapGeniusResultToSongAsync(matchingHit.Result);
+            return await MapGeniusResultToSongAsync(bestMatch.Result);
         }
         catch (Exception ex)
         {
@@ -94,74 +168,57 @@ public class GeniusService : IGeniusService
 
     public async Task<Song?> GetSongByArtistTitleAsync(string? title, string? artist, string? lyrics, bool forceRefresh = false)
     {
-        // Check cache first if we have a title
-        Song? existingSong = null;
-        if (!forceRefresh && !string.IsNullOrWhiteSpace(title))
+        _logger.LogInformation("Starting song search - Title: '{Title}', Artist: '{Artist}', ForceRefresh: {ForceRefresh}",
+            title, artist, forceRefresh);
+
+        if (!forceRefresh)
         {
-            existingSong = await _songRepo.GetSongAsync(title);
-            if (existingSong != null && existingSong.GeniusMetaData.GeniusId != 0 && !string.IsNullOrWhiteSpace(existingSong.Artist))
+            Song? cachedSong = await _songRepo.GetSongAsync(title ?? "", artist ?? "");
+            if (cachedSong != null)
             {
-                _logger.LogDebug("Using cached song from database: {Title} by {PrimaryArtist}", title, existingSong.Artist);
-                return existingSong;
+                _logger.LogInformation("Found song in cache");
+                return cachedSong;
             }
         }
 
         Song? result = null;
 
-        // If we have a title, try title-based + artist search first
         if (!string.IsNullOrWhiteSpace(title))
         {
-            string primaryQuery = !string.IsNullOrEmpty(artist) ? $"{title} {artist}" : title;
-            result = await SearchGenius(primaryQuery, title, artist);
-
-            // Fallback: if no result was found with the combined query and an artist was provided, try title only
-            if (result == null && !string.IsNullOrEmpty(artist))
+            // Try combined search without quotes first
+            if (!string.IsNullOrEmpty(artist))
             {
-                _logger.LogDebug("No results found with artist, trying title only: {Title}", title);
-                result = await SearchGenius(title, title, null);
+                string combinedQuery = $"{title} {artist}";
+                _logger.LogInformation("Attempting combined search with query: '{Query}'", combinedQuery);
+                result = await SearchGenius(combinedQuery, title, artist);
+            }
+
+            // Fallback to title only if no result
+            if (result == null)
+            {
+                _logger.LogInformation("Attempting title-only search with query: '{Query}'", title);
+                result = await SearchGenius(title, title, artist);
             }
         }
 
-        // If no result found with title or if only lyrics provided, try lyrics-based search
         if (result == null && !string.IsNullOrWhiteSpace(lyrics))
         {
-            string lyricsQuery = !string.IsNullOrEmpty(artist) ? $"{lyrics} {artist}" : lyrics;
-            result = await SearchGenius(lyricsQuery, null, artist);
-
-            // Fallback: try lyrics only if artist was included and no results
-            if (result == null && !string.IsNullOrEmpty(artist))
-            {
-                _logger.LogDebug("No results found with lyrics and artist, trying lyrics only");
-                result = await SearchGenius(lyrics, null, null);
-            }
+            _logger.LogInformation("Attempting lyrics search");
+            result = await SearchGenius(lyrics, title, artist);
         }
 
-        if (result == null)
+        if (result != null)
         {
-            return null;
+            _logger.LogInformation("Found matching song. Adding to cache.");
+            await _songRepo.AddSongAsync(result);
+            await _songRepo.SaveChangesAsync();
         }
-
-        // Enrich the song details from Genius
-        Song? enrichedSong = await EnrichSongDetailsAsync(result);
-
-        // Check if enrichment failed
-        if (enrichedSong == null)
+        else
         {
-            return null;
+            _logger.LogWarning("No matching song found after all search attempts");
         }
 
-        // Update existing or add new record
-        if (existingSong != null)
-        {
-            existingSong.Artist = enrichedSong.Artist;
-            existingSong.GeniusMetaData = enrichedSong.GeniusMetaData;
-            existingSong.PlainLyrics = enrichedSong.PlainLyrics;
-            await _songRepo.UpdateSongAsync(existingSong);
-            return existingSong;
-        }
-
-        await _songRepo.AddSongAsync(enrichedSong);
-        return enrichedSong;
+        return result;
     }
 
     public async Task<List<Song>> GetSongsByArtistTitleAsync(List<VideoInfo> videos, bool forceRefresh = false)
