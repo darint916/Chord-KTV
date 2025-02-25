@@ -21,24 +21,26 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, currentTime }) => {
   return (
     <Box
       sx={{
+        position: 'absolute', 
+        bottom: 0,
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        borderRadius: 2,
-        padding: 2,
-        maxWidth: '80%',
-        marginTop: 3,
-        height: 100,  // Fixed height
+        backgroundColor: 'rgba(0, 0, 0, 0.9)', 
+        zIndex: -1,
       }}
     >
       <Typography
-        variant="h4"
+        variant="h3"
         component="div"
         sx={{
           color: '#fff',
           textAlign: 'center',
-          fontSize: { xs: '18px', sm: '24px', lg: '32px' },
+          fontSize: { xs: '24px', sm: '36px', lg: '48px' }, // Larger text
           fontWeight: 'bold',
           lineHeight: 1.4,
           textTransform: 'uppercase',
@@ -51,4 +53,3 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, currentTime }) => {
 };
 
 export default LyricDisplay;
-

@@ -100,20 +100,25 @@ const Controls: React.FC<ControlsProps> = ({
   );
 };
 
-const styles = {
+const styles: { [key: string]: React.CSSProperties } = {
   controlsContainer: {
-    width: '100%',
+    position: 'fixed', // Sticks to the bottom
+    bottom: 0,
+    left: 0,
+    width: '100vw', // Full width
     display: 'flex',
     justifyContent: 'center',
-    padding: '20px 0',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Dark background with slight transparency
+    padding: '10px 0',
+    zIndex: 10, // Ensures it's above other elements
   },
   controlsWrapper: {
     display: 'flex',
     alignItems: 'center',
-    padding: '15px',
+    padding: '10px',
     backgroundColor: '#000',
     borderRadius: '8px',
-    width: '70%',
+    width: '80%', // Adjust width to fit content
     justifyContent: 'space-between',
   },
   playPauseIcon: {
@@ -121,7 +126,7 @@ const styles = {
     padding: '10px',
   },
   icon: {
-    fontSize: '24px', // Set icon size
+    fontSize: '24px',
     color: 'white',
   },
   seekBar: {
