@@ -13,7 +13,7 @@ import {
   FormControl,
 } from '@mui/material';
 import { HandwritingApi, Configuration, LanguageCode } from '../api';
-import '../styles/components/HandwritingCanvas.scss'; // Import SASS file for styles
+import '../styles/components/HandwritingCanvas.scss';
 
 // Initialize API client
 const handwritingApi = new HandwritingApi(

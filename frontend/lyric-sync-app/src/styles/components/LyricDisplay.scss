@@ -1,0 +1,31 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.lyric-display-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0);
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 80%;
+  margin-top: 24px;
+  height: 100px; // Fixed height
+}
+
+.lyric-text {
+  color: #fff;
+  text-align: center;
+  font-weight: bold;
+  line-height: 1.4;
+  text-transform: uppercase;
+
+  // Responsive font sizes
+  font-size: 18px;
+  @media (min-width: 600px) {
+    font-size: 24px;
+  }
+  @media (min-width: 1200px) {
+    font-size: 32px;
+  }
+}
