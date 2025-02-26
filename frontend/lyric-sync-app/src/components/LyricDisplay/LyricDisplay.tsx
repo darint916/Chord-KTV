@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import '../styles/components/LyricDisplay.scss';
+import './LyricDisplay.scss';
 interface Lyric {
   time: number;
   text: string;

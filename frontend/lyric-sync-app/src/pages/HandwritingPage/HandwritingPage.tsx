@@ -1,7 +1,7 @@
 import React from 'react';
-import HandwritingCanvas from '../components/HandwritingCanvas';
+import HandwritingCanvas from '../../components/HandwritingCanvas/HandwritingCanvas';
 import { Container, Box } from '@mui/material';
-import '../styles/pages/HandwritingPage.scss';
+import './HandwritingPage.scss';
 
 const HandwritingPage: React.FC = () => {
   return (

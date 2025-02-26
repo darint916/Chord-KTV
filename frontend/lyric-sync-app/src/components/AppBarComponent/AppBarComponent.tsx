@@ -2,9 +2,9 @@ import React from 'react';
 import { AppBar, Toolbar, Typography, Avatar, Menu, MenuItem, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
-import { useAuth } from '../contexts/authTypes';
+import { useAuth } from '../../contexts/authTypes';
 import { jwtDecode } from 'jwt-decode';
-import '../styles/components/AppBarComponent.scss';
+import './AppBarComponent.scss';
 
 interface GooglePayload {
   sub: string;

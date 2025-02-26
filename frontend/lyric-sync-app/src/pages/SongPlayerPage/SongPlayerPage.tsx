@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Typography, Box } from '@mui/material';
-import YouTubePlayer from '../components/YouTubePlayer';
-import LyricDisplay from '../components/LyricDisplay';
-import Controls from '../components/Controls';
+import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
+import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
+import Controls from '../../components/Controls/Controls';
 import axios from 'axios';
-import '../styles/pages/SongPlayerPage.scss';
+import './SongPlayerPage.scss';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {

@@ -8,8 +8,8 @@ import {
   Box,
 } from '@mui/material';
 import { DataGrid, GridToolbarContainer } from '@mui/x-data-grid';
-import { SongApi, Configuration } from '../api';
-import '../styles/components/YouTubePlaylistViewer.scss';
+import { SongApi, Configuration } from '../../api';
+import './YouTubePlaylistViewer.scss';
 
 // Define the type for a song
 interface Song {

@@ -12,8 +12,8 @@ import {
   InputLabel,
   FormControl,
 } from '@mui/material';
-import { HandwritingApi, Configuration, LanguageCode } from '../api';
-import '../styles/components/HandwritingCanvas.scss';
+import { HandwritingApi, Configuration, LanguageCode } from '../../api';
+import './HandwritingCanvas.scss';
 
 // Initialize API client
 const handwritingApi = new HandwritingApi(

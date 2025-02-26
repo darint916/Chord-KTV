@@ -11,10 +11,10 @@ import {
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
-import { useAuth } from '../contexts/authTypes';
+import { useAuth } from '../../contexts/authTypes';
 import axios from 'axios';
-import YouTubePlaylistViewer from '../components/YouTubePlaylistViewer';
-import '../styles/pages/HomePage.scss';
+import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
+import './HomePage.scss';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
