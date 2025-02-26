@@ -5,8 +5,9 @@ import {
   Typography,
   CircularProgress,
   Paper,
+  Box,
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridToolbarContainer } from '@mui/x-data-grid';
 import { SongApi, Configuration } from '../api';
 
 // Define the type for a song
@@ -72,6 +73,15 @@ const YouTubePlaylistViewer = () => {
     { field: 'duration', headerName: 'Duration', flex: 1 },
   ];
 
+  // Custom toolbar component with playlist title
+  const CustomToolbar = () => (
+    <GridToolbarContainer>
+      <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', pl: 2 }}>
+        <Typography variant="h6">{playlistTitle}</Typography>
+      </Box>
+    </GridToolbarContainer>
+  );
+
   return (
     <>
       <TextField
@@ -80,7 +90,8 @@ const YouTubePlaylistViewer = () => {
         variant="filled"
         value={playlistUrl}
         onChange={(e) => setPlaylistUrl(e.target.value)}
-        sx={{ backgroundColor: 'white', 
+        sx={{ 
+          backgroundColor: 'white', 
           borderRadius: 1, 
           mb: 2,
           '& .MuiFilledInput-root': {
@@ -93,11 +104,6 @@ const YouTubePlaylistViewer = () => {
       </Button>
       {loading && <CircularProgress sx={{ mt: 2 }} />}
       {error && <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>}
-      {playlistTitle && (
-        <Typography variant="h6" sx={{ mt: 2 }}>
-          {playlistTitle}
-        </Typography>
-      )}
       {songs.length > 0 && ( // Conditionally render the DataGrid
         <Paper sx={{ mt: 2, height: 400, width: '100%' }}>
           <DataGrid
@@ -109,6 +115,9 @@ const YouTubePlaylistViewer = () => {
               },
             }}
             pageSizeOptions={[5, 10, 20]} // Rows per page options
+            slots={{
+              toolbar: CustomToolbar, // Use the custom toolbar
+            }}
           />
         </Paper>
       )}
