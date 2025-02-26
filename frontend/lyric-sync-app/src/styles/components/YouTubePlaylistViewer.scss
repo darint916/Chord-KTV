@@ -1,0 +1,37 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.youtube-playlist-viewer {
+  .playlist-url-input {
+    background-color: white;
+    border-radius: 8px;
+    margin-bottom: 16px;
+
+    .MuiFilledInput-root {
+      background-color: white;
+    }
+  }
+
+  .loading-spinner {
+    margin-top: 16px;
+  }
+
+  .error-message {
+    margin-top: 16px;
+    color: $error-color;
+  }
+
+  .data-grid-container {
+    margin-top: 16px;
+    height: 400px;
+    width: 100%;
+  }
+
+  .toolbar-title {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 16px;
+  }
+}
