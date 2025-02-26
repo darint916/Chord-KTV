@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState } from 'react';
 import {
   TextField,
   Button,
   Typography,
   CircularProgress,
   Paper,
-} from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-import { SongApi, Configuration } from "../api";
+} from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import { SongApi, Configuration } from '../api';
 
 // Define the type for a song
 interface Song {
@@ -21,16 +21,16 @@ interface Song {
 // Initialize API client
 const songApi = new SongApi(
   new Configuration({
-    basePath: import.meta.env.VITE_API_URL || "http://localhost:5259",
+    basePath: import.meta.env.VITE_API_URL || 'http://localhost:5259',
   })
 );
 
 const YouTubePlaylistViewer = () => {
-  const [playlistUrl, setPlaylistUrl] = useState("");
+  const [playlistUrl, setPlaylistUrl] = useState('');
   const [songs, setSongs] = useState<Song[]>([]); // Explicitly define the type of `songs`
-  const [playlistTitle, setPlaylistTitle] = useState("");
+  const [playlistTitle, setPlaylistTitle] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const extractPlaylistId = (url: string) => {
     const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
@@ -38,14 +38,14 @@ const YouTubePlaylistViewer = () => {
   };
 
   const fetchPlaylistSongs = async () => {
-    setError("");
+    setError('');
     setSongs([]);
-    setPlaylistTitle("");
+    setPlaylistTitle('');
     setLoading(true);
 
     const playlistId = extractPlaylistId(playlistUrl);
     if (!playlistId) {
-      setError("Invalid playlist URL");
+      setError('Invalid playlist URL');
       setLoading(false);
       return;
     }
@@ -57,19 +57,19 @@ const YouTubePlaylistViewer = () => {
 
       // Handle case where `response.videos` is null or undefined
       const videos = response.videos || [];
-      setPlaylistTitle(response.playlistTitle || "Untitled Playlist");
+      setPlaylistTitle(response.playlistTitle || 'Untitled Playlist');
       setSongs(videos.map((song, index) => ({ ...song, id: index })));
-    } catch (err) {
-      setError("Failed to fetch playlist. Please try again.");
+    } catch {
+      setError('Failed to fetch playlist. Please try again.');
     }
     setLoading(false);
   };
 
   // Define columns for the DataGrid
   const columns = [
-    { field: "title", headerName: "Title", flex: 2 },
-    { field: "artist", headerName: "Artist", flex: 1 },
-    { field: "duration", headerName: "Duration", flex: 1 },
+    { field: 'title', headerName: 'Title', flex: 2 },
+    { field: 'artist', headerName: 'Artist', flex: 1 },
+    { field: 'duration', headerName: 'Duration', flex: 1 },
   ];
 
   return (
@@ -83,8 +83,8 @@ const YouTubePlaylistViewer = () => {
         sx={{ backgroundColor: 'white', 
           borderRadius: 1, 
           mb: 2,
-          "& .MuiFilledInput-root": {
-            backgroundColor: "white",
+          '& .MuiFilledInput-root': {
+            backgroundColor: 'white',
           }, 
         }}
       />
@@ -99,7 +99,7 @@ const YouTubePlaylistViewer = () => {
         </Typography>
       )}
       {songs.length > 0 && ( // Conditionally render the DataGrid
-        <Paper sx={{ mt: 2, height: 400, width: "100%" }}>
+        <Paper sx={{ mt: 2, height: 400, width: '100%' }}>
           <DataGrid
             rows={songs}
             columns={columns}

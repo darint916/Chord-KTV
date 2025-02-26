@@ -97,8 +97,8 @@ const HomePage: React.FC = () => {
               fullWidth
               sx={{ backgroundColor: 'white', 
                 borderRadius: 1, 
-                "& .MuiFilledInput-root": {
-                  backgroundColor: "white",
+                '& .MuiFilledInput-root': {
+                  backgroundColor: 'white',
                 }, 
               }}
             />
@@ -110,8 +110,8 @@ const HomePage: React.FC = () => {
               fullWidth
               sx={{ backgroundColor: 'white', 
                 borderRadius: 1, 
-                "& .MuiFilledInput-root": {
-                  backgroundColor: "white",
+                '& .MuiFilledInput-root': {
+                  backgroundColor: 'white',
                 }, 
               }}
             />
