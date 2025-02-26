@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../contexts/authTypes';
 import { jwtDecode } from 'jwt-decode';
-import '../styles/components/AppBarComponent.scss'; // Import SASS file
+import '../styles/components/AppBarComponent.scss';
 
 interface GooglePayload {
   sub: string;
