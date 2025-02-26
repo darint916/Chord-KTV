@@ -83,7 +83,7 @@ const HandwritingCanvas: React.FC = () => {
 
   // Handle drawing start
   const startDrawing = (e: React.PointerEvent) => {
-    if (!ctxRef.current) return;
+    if (!ctxRef.current) {return;}
     const { offsetX, offsetY } = e.nativeEvent;
     ctxRef.current.beginPath();
     ctxRef.current.moveTo(offsetX, offsetY);
@@ -92,7 +92,7 @@ const HandwritingCanvas: React.FC = () => {
 
   // Handle drawing
   const draw = (e: React.PointerEvent) => {
-    if (!isDrawing || !ctxRef.current) return;
+    if (!isDrawing || !ctxRef.current) {return;}
     const { offsetX, offsetY } = e.nativeEvent;
 
     if (isEraser) {
@@ -105,14 +105,14 @@ const HandwritingCanvas: React.FC = () => {
 
   // Handle drawing stop
   const stopDrawing = () => {
-    if (!ctxRef.current) return;
+    if (!ctxRef.current) {return;}
     ctxRef.current.closePath();
     setIsDrawing(false);
   };
 
   // Clear the canvas
   const clearCanvas = () => {
-    if (!canvasRef.current || !ctxRef.current) return;
+    if (!canvasRef.current || !ctxRef.current) {return;}
     ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     setFeedbackMessage('');
     setRecognizedText('');
@@ -121,7 +121,7 @@ const HandwritingCanvas: React.FC = () => {
 
   // Export the canvas image and send it for recognition
   const exportImage = async () => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current) {return;}
 
     const offscreenCanvas = document.createElement('canvas');
     const ctx = offscreenCanvas.getContext('2d');

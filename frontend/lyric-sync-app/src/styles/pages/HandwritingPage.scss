@@ -1,0 +1,11 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.handwriting-page-container {
+  .handwriting-canvas-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; // Full viewport height
+  }
+}

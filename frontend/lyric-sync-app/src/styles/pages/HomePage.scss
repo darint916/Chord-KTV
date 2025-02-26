@@ -1,0 +1,86 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+@use 'sass:color';
+
+.home-page {
+  min-height: 100vh;
+  background-color: $primary-color;
+  color: white;
+  padding: 32px;
+
+  .welcome-message {
+    margin-bottom: 32px;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  .info-alert {
+    margin-bottom: 32px;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: black;
+  }
+
+  .error-alert {
+    margin-bottom: 32px;
+  }
+
+  .search-section,
+  .playlist-section {
+    padding: 24px;
+    margin-bottom: 32px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+
+    .section-title {
+      margin-bottom: 16px;
+      color: $primary-color;
+    }
+
+    .section-subtitle {
+      margin-bottom: 24px;
+      color: $text-secondary;
+    }
+
+    .search-input {
+      background-color: white;
+      border-radius: 8px;
+
+      .MuiFilledInput-root {
+        background-color: white;
+      }
+    }
+
+    .search-button {
+      background-color: $primary-color;
+      color: white;
+
+      &:hover {
+        background-color: color.scale($primary-color, $lightness: -10%);
+      }
+    }
+  }
+
+  .or-divider {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 32px 0;
+
+    .or-paper {
+      padding: 8px 16px;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 20px;
+
+      .or-text {
+        color: $primary-color;
+        font-weight: bold;
+      }
+    }
+  }
+
+  .logged-in-message {
+    margin-top: 32px;
+    text-align: center;
+    opacity: 0.8;
+  }
+}
