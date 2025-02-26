@@ -91,19 +91,29 @@ const HomePage: React.FC = () => {
           <Stack direction="row" spacing={2} alignItems="center">
             <TextField
               label="Song Name"
-              variant="outlined"
+              variant="filled"
               value={songName}
               onChange={(e) => setSongName(e.target.value)}
               fullWidth
-              sx={{ backgroundColor: 'white', borderRadius: 1 }}
+              sx={{ backgroundColor: 'white', 
+                borderRadius: 1, 
+                "& .MuiFilledInput-root": {
+                  backgroundColor: "white",
+                }, 
+              }}
             />
             <TextField
               label="Artist Name"
-              variant="outlined"
+              variant="filled"
               value={artistName}
               onChange={(e) => setArtistName(e.target.value)}
               fullWidth
-              sx={{ backgroundColor: 'white', borderRadius: 1 }}
+              sx={{ backgroundColor: 'white', 
+                borderRadius: 1, 
+                "& .MuiFilledInput-root": {
+                  backgroundColor: "white",
+                }, 
+              }}
             />
             <IconButton
               component={Link}

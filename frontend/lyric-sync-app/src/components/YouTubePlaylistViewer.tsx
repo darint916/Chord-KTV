@@ -80,7 +80,13 @@ const YouTubePlaylistViewer = () => {
         variant="filled"
         value={playlistUrl}
         onChange={(e) => setPlaylistUrl(e.target.value)}
-        sx={{ backgroundColor: "white", mb: 2 }}
+        sx={{ backgroundColor: 'white', 
+          borderRadius: 1, 
+          mb: 2,
+          "& .MuiFilledInput-root": {
+            backgroundColor: "white",
+          }, 
+        }}
       />
       <Button variant="contained" color="primary" onClick={fetchPlaylistSongs}>
         Load Playlist
