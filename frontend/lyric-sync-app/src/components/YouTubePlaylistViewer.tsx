@@ -3,7 +3,6 @@ import {
   TextField,
   Button,
   Typography,
-  Container,
   CircularProgress,
   Paper,
 } from "@mui/material";
@@ -74,17 +73,14 @@ const YouTubePlaylistViewer = () => {
   ];
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Typography variant="h5" gutterBottom>
-        YouTube Playlist Viewer
-      </Typography>
+    <>
       <TextField
         fullWidth
         label="Enter YouTube Playlist URL"
         variant="filled"
         value={playlistUrl}
         onChange={(e) => setPlaylistUrl(e.target.value)}
-        sx={{ backgroundColor: 'white', mb: 2 }}
+        sx={{ backgroundColor: "white", mb: 2 }}
       />
       <Button variant="contained" color="primary" onClick={fetchPlaylistSongs}>
         Load Playlist
@@ -110,7 +106,7 @@ const YouTubePlaylistViewer = () => {
           />
         </Paper>
       )}
-    </Container>
+    </>
   );
 };
 
