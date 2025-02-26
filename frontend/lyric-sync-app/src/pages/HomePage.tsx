@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../contexts/authTypes';
 import axios from 'axios';
+import YouTubePlaylistViewer from '../components/YouTubePlaylistViewer';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
@@ -14,8 +15,6 @@ const HomePage: React.FC = () => {
   const handleSearch = async () => {
     if (user) {
       try {
-        // Skeleton code to send the ID token in the Authorization header
-        // Uncomment this to see how the Auth Bearer looks like in the request header of your browser's Network tab.
         await axios.post('http://localhost:5259/api/random', 
           {
             songName,
@@ -28,7 +27,7 @@ const HomePage: React.FC = () => {
             }
           }
         );
-        setError(''); // Clear any existing error
+        setError('');
       } catch {
         setError('Failed to save search history. Please try again.');
       }
@@ -67,20 +66,19 @@ const HomePage: React.FC = () => {
           width: '80%',
           maxWidth: '600px',
           borderRadius: 2,
-          //   backgroundColor: 'white', // Set background to white
           padding: 2,
         }}
       >
         <TextField
           label="Song Name"
-          variant="outlined"
+          variant="filled"
           value={songName}
           onChange={(e) => setSongName(e.target.value)}
           sx={{ mr: 2, flexGrow: 1, backgroundColor: 'white', borderRadius: 1 }}
         />
         <TextField 
           label="Artist Name" 
-          variant="outlined"
+          variant="filled"
           value={artistName}
           onChange={(e) => setArtistName(e.target.value)}
           sx={{ flexGrow: 1, backgroundColor: 'white', borderRadius: 1 }}
@@ -101,6 +99,8 @@ const HomePage: React.FC = () => {
           Logged in as: {user.email}
         </Typography>
       )}
+      
+      <YouTubePlaylistViewer />
     </Box>
   );
 };
