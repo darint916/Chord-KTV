@@ -118,25 +118,37 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistDetailsDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistDetailsDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistDetailsDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/api/lyrics/lrclib/search": {
+    "/api/lyrics/lrc/search": {
       "get": {
         "tags": [
           "Song"
         ],
         "parameters": [
-          {
-            "name": "searchType",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "name": "title",
             "in": "query",
@@ -164,13 +176,6 @@
             "schema": {
               "type": "number",
               "format": "float"
-            }
-          },
-          {
-            "name": "qString",
-            "in": "query",
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -482,6 +487,10 @@
             "type": "string",
             "nullable": true
           },
+          "album": {
+            "type": "string",
+            "nullable": true
+          },
           "duration": {
             "type": "string",
             "format": "date-span",
@@ -608,6 +617,23 @@
         ],
         "type": "string"
       },
+      "PlaylistDetailsDto": {
+        "type": "object",
+        "properties": {
+          "playlistTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "videos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VideoInfo"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "Song": {
         "required": [
           "title"
@@ -719,6 +745,28 @@
           },
           "translate": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VideoInfo": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "artist": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "duration": {
+            "type": "string",
+            "format": "date-span"
           }
         },
         "additionalProperties": false

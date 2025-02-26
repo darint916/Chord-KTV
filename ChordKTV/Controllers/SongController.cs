@@ -49,6 +49,8 @@ public class SongController : Controller
     }
 
     [HttpGet("youtube/playlists/{playlistId}")]
+    [ProducesResponseType(typeof(PlaylistDetailsDto), 200)]
+    [ProducesResponseType(500)]
     public async Task<IActionResult> GetYouTubePlaylist(string playlistId, [FromQuery] bool shuffle = false)
     {
         PlaylistDetailsDto? result = await _youTubeService.GetPlaylistDetailsAsync(playlistId, shuffle);

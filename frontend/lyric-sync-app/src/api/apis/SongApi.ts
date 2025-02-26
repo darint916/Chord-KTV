@@ -16,12 +16,15 @@
 import * as runtime from '../runtime';
 import type {
   FullSongRequestDto,
+  PlaylistDetailsDto,
   Song,
   TranslationRequestDto,
 } from '../models/index';
 import {
     FullSongRequestDtoFromJSON,
     FullSongRequestDtoToJSON,
+    PlaylistDetailsDtoFromJSON,
+    PlaylistDetailsDtoToJSON,
     SongFromJSON,
     SongToJSON,
     TranslationRequestDtoFromJSON,
@@ -43,17 +46,15 @@ export interface ApiDatabaseSongPostRequest {
     song?: Song;
 }
 
-export interface ApiLyricsLrcTranslationPostRequest {
-    translationRequestDto?: TranslationRequestDto;
-}
-
-export interface ApiLyricsLrclibSearchGetRequest {
-    searchType: string;
+export interface ApiLyricsLrcSearchGetRequest {
     title?: string;
     artist?: string;
     albumName?: string;
     duration?: number;
-    qString?: string;
+}
+
+export interface ApiLyricsLrcTranslationPostRequest {
+    translationRequestDto?: TranslationRequestDto;
 }
 
 export interface ApiSongsGeniusSearchBatchPostRequest {
@@ -216,6 +217,45 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
+    async apiLyricsLrcSearchGetRaw(requestParameters: ApiLyricsLrcSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['title'] != null) {
+            queryParameters['title'] = requestParameters['title'];
+        }
+
+        if (requestParameters['artist'] != null) {
+            queryParameters['artist'] = requestParameters['artist'];
+        }
+
+        if (requestParameters['albumName'] != null) {
+            queryParameters['albumName'] = requestParameters['albumName'];
+        }
+
+        if (requestParameters['duration'] != null) {
+            queryParameters['duration'] = requestParameters['duration'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/lyrics/lrc/search`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async apiLyricsLrcSearchGet(requestParameters: ApiLyricsLrcSearchGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiLyricsLrcSearchGetRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
     async apiLyricsLrcTranslationPostRaw(requestParameters: ApiLyricsLrcTranslationPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
@@ -238,60 +278,6 @@ export class SongApi extends runtime.BaseAPI {
      */
     async apiLyricsLrcTranslationPost(requestParameters: ApiLyricsLrcTranslationPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiLyricsLrcTranslationPostRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiLyricsLrclibSearchGetRaw(requestParameters: ApiLyricsLrclibSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['searchType'] == null) {
-            throw new runtime.RequiredError(
-                'searchType',
-                'Required parameter "searchType" was null or undefined when calling apiLyricsLrclibSearchGet().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['searchType'] != null) {
-            queryParameters['searchType'] = requestParameters['searchType'];
-        }
-
-        if (requestParameters['title'] != null) {
-            queryParameters['title'] = requestParameters['title'];
-        }
-
-        if (requestParameters['artist'] != null) {
-            queryParameters['artist'] = requestParameters['artist'];
-        }
-
-        if (requestParameters['albumName'] != null) {
-            queryParameters['albumName'] = requestParameters['albumName'];
-        }
-
-        if (requestParameters['duration'] != null) {
-            queryParameters['duration'] = requestParameters['duration'];
-        }
-
-        if (requestParameters['qString'] != null) {
-            queryParameters['qString'] = requestParameters['qString'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/api/lyrics/lrclib/search`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiLyricsLrclibSearchGet(requestParameters: ApiLyricsLrclibSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiLyricsLrclibSearchGetRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -391,7 +377,7 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiYoutubePlaylistsPlaylistIdGetRaw(requestParameters: ApiYoutubePlaylistsPlaylistIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiYoutubePlaylistsPlaylistIdGetRaw(requestParameters: ApiYoutubePlaylistsPlaylistIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PlaylistDetailsDto>> {
         if (requestParameters['playlistId'] == null) {
             throw new runtime.RequiredError(
                 'playlistId',
@@ -414,13 +400,14 @@ export class SongApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => PlaylistDetailsDtoFromJSON(jsonValue));
     }
 
     /**
      */
-    async apiYoutubePlaylistsPlaylistIdGet(requestParameters: ApiYoutubePlaylistsPlaylistIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiYoutubePlaylistsPlaylistIdGetRaw(requestParameters, initOverrides);
+    async apiYoutubePlaylistsPlaylistIdGet(requestParameters: ApiYoutubePlaylistsPlaylistIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PlaylistDetailsDto> {
+        const response = await this.apiYoutubePlaylistsPlaylistIdGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
 }

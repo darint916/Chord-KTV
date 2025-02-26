@@ -36,6 +36,12 @@ export interface FullSongRequestDto {
      * @type {string}
      * @memberof FullSongRequestDto
      */
+    album?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof FullSongRequestDto
+     */
     duration?: string | null;
     /**
      * 
@@ -70,6 +76,7 @@ export function FullSongRequestDtoFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'title': json['title'] == null ? undefined : json['title'],
         'artist': json['artist'] == null ? undefined : json['artist'],
+        'album': json['album'] == null ? undefined : json['album'],
         'duration': json['duration'] == null ? undefined : json['duration'],
         'lyrics': json['lyrics'] == null ? undefined : json['lyrics'],
         'youTubeUrl': json['youTubeUrl'] == null ? undefined : json['youTubeUrl'],
@@ -89,6 +96,7 @@ export function FullSongRequestDtoToJSONTyped(value?: FullSongRequestDto | null,
         
         'title': value['title'],
         'artist': value['artist'],
+        'album': value['album'],
         'duration': value['duration'],
         'lyrics': value['lyrics'],
         'youTubeUrl': value['youTubeUrl'],
