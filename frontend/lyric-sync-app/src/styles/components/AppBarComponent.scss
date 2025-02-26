@@ -1,0 +1,22 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.app-bar {
+  background-color: $primary-color !important;
+  box-shadow: none;
+
+  .toolbar {
+    @include flex-center;
+    justify-content: space-between;
+
+    .title {
+      flex-grow: 1;
+      text-decoration: none;
+      color: white;
+    }
+
+    .avatar {
+      cursor: pointer;
+    }
+  }
+}
