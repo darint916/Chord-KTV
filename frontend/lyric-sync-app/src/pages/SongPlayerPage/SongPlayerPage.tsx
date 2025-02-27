@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Typography, Box } from '@mui/material';
-import YouTubePlayer from '../components/YouTubePlayer';
-import LyricDisplay from '../components/LyricDisplay';
-import Controls from '../components/Controls';
+import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
+import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
+import Controls from '../../components/Controls/Controls';
 import axios from 'axios';
+import './SongPlayerPage.scss';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -24,7 +25,6 @@ const SongPlayerPage: React.FC = () => {
   const playerRef = useRef<YouTubePlayer | null>(null);
 
   useEffect(() => {
-    // Fetch LRC file and parse
     const fetchLyrics = async () => {
       try {
         const response = await axios.get('https://lrclib.net/api/get', {
@@ -47,10 +47,7 @@ const SongPlayerPage: React.FC = () => {
       .split('\n')
       .map((line) => {
         const match = line.match(/\[(\d+):(\d+\.\d+)](.+)/);
-        if (!match) {
-          return null;
-        }
-
+        if (!match) {return null;}
         const time = parseInt(match[1]) * 60 + parseFloat(match[2]);
         return { time, text: match[3] };
       })
@@ -59,44 +56,25 @@ const SongPlayerPage: React.FC = () => {
 
   const handlePlayerReady = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
-
-    // Get duration when player is ready
-    if (playerInstance.getDuration) {
-      setDuration(playerInstance.getDuration());
-    }
+    if (playerInstance.getDuration) {setDuration(playerInstance.getDuration());}
 
     const intervalId = setInterval(() => {
-      if (playerRef.current) {
-        setCurrentTime(playerRef.current.getCurrentTime());
-      }
-    }, 500); // Sync every 500ms
+      if (playerRef.current) {setCurrentTime(playerRef.current.getCurrentTime());}
+    }, 500);
 
     return () => clearInterval(intervalId);
   };
 
-  const handlePlayPause = (playState: boolean) => {
-    setIsPlaying(playState);
-  };
-
-  const handleSeek = (seekTime: number) => {
-    setCurrentTime(seekTime);
-  };
+  const handlePlayPause = (playState: boolean) => setIsPlaying(playState);
+  const handleSeek = (seekTime: number) => setCurrentTime(seekTime);
 
   return (
-    <div>
-      {/* Main Content Container */}
-      <Container maxWidth="lg" sx={{ marginTop: 5 }}>
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          textAlign="center"
-        >
-          <Typography variant="h3" color="white" gutterBottom>
+    <div className="song-player-page">
+      <Container maxWidth="lg" className="song-player-container">
+        <Box className="song-player-content">
+          <Typography variant="h3" className="song-title">
             Midnight Cruisin&#39; by Kingo Hamada
           </Typography>
-
           <YouTubePlayer videoId={videoId} onReady={handlePlayerReady} />
           <LyricDisplay lyrics={lyrics} currentTime={currentTime} />
           <Controls

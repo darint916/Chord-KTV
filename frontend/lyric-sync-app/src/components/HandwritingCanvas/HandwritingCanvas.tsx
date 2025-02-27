@@ -1,6 +1,19 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Box, Button, Card, CardContent, Typography, Stack, TextField, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
-import { HandwritingApi, Configuration, LanguageCode } from '../api';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Stack,
+  TextField,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+} from '@mui/material';
+import { HandwritingApi, Configuration, LanguageCode } from '../../api';
+import './HandwritingCanvas.scss';
 
 // Initialize API client
 const handwritingApi = new HandwritingApi(
@@ -19,35 +32,40 @@ const HandwritingCanvas: React.FC = () => {
   const [recognizedText, setRecognizedText] = useState('');
   const [matchPercentage, setMatchPercentage] = useState<number | null>(null);
   const [expectedText, setExpectedText] = useState<string>('');
-  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>(LanguageCode.En);  // Default language is English
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>(LanguageCode.En); // Default language is English
 
+  // Initialize canvas and grid
   useEffect(() => {
-    if (canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#000';
-        ctxRef.current = ctx;
+    const initializeCanvas = () => {
+      if (canvasRef.current) {
+        const ctx = canvasRef.current.getContext('2d');
+        if (ctx) {
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = '#000';
+          ctxRef.current = ctx;
+        }
       }
-    }
 
-    if (gridCanvasRef.current) {
-      const gridCanvas = gridCanvasRef.current;
-      const ctx = gridCanvas.getContext('2d');
-      if (ctx) {
-        drawGridlines(ctx, gridCanvas.width, gridCanvas.height);
+      if (gridCanvasRef.current) {
+        const ctx = gridCanvasRef.current.getContext('2d');
+        if (ctx) {
+          drawGridlines(ctx, gridCanvasRef.current.width, gridCanvasRef.current.height);
+        }
       }
-    }
+    };
+
+    initializeCanvas();
   }, []);
 
+  // Draw gridlines on the canvas
   const drawGridlines = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     ctx.clearRect(0, 0, width, height);
     ctx.strokeStyle = '#e0e0e0';
     ctx.lineWidth = 0.5;
     const gridSize = 50;
+
     for (let x = gridSize; x < width; x += gridSize) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
@@ -63,6 +81,7 @@ const HandwritingCanvas: React.FC = () => {
     }
   };
 
+  // Handle drawing start
   const startDrawing = (e: React.PointerEvent) => {
     if (!ctxRef.current) {return;}
     const { offsetX, offsetY } = e.nativeEvent;
@@ -71,9 +90,11 @@ const HandwritingCanvas: React.FC = () => {
     setIsDrawing(true);
   };
 
+  // Handle drawing
   const draw = (e: React.PointerEvent) => {
     if (!isDrawing || !ctxRef.current) {return;}
     const { offsetX, offsetY } = e.nativeEvent;
+
     if (isEraser) {
       ctxRef.current.clearRect(offsetX - 10, offsetY - 10, 20, 20);
     } else {
@@ -82,12 +103,14 @@ const HandwritingCanvas: React.FC = () => {
     }
   };
 
+  // Handle drawing stop
   const stopDrawing = () => {
     if (!ctxRef.current) {return;}
     ctxRef.current.closePath();
     setIsDrawing(false);
   };
 
+  // Clear the canvas
   const clearCanvas = () => {
     if (!canvasRef.current || !ctxRef.current) {return;}
     ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
@@ -96,17 +119,19 @@ const HandwritingCanvas: React.FC = () => {
     setMatchPercentage(null);
   };
 
+  // Export the canvas image and send it for recognition
   const exportImage = async () => {
     if (!canvasRef.current) {return;}
-    const originalCanvas = canvasRef.current;
+
     const offscreenCanvas = document.createElement('canvas');
     const ctx = offscreenCanvas.getContext('2d');
-    offscreenCanvas.width = originalCanvas.width;
-    offscreenCanvas.height = originalCanvas.height;
+    offscreenCanvas.width = canvasRef.current.width;
+    offscreenCanvas.height = canvasRef.current.height;
+
     if (ctx) {
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-      ctx.drawImage(originalCanvas, 0, 0);
+      ctx.drawImage(canvasRef.current, 0, 0);
     }
 
     const imageData = offscreenCanvas.toDataURL('image/png');
@@ -115,8 +140,8 @@ const HandwritingCanvas: React.FC = () => {
       const response = await handwritingApi.apiHandwritingOcrPost({
         handwritingCanvasRequestDto: {
           image: imageData.split(',')[1],
-          language: selectedLanguage, // Send selected language
-          expectedMatch: expectedText, // Send expected text
+          language: selectedLanguage,
+          expectedMatch: expectedText,
         },
       });
 
@@ -136,7 +161,7 @@ const HandwritingCanvas: React.FC = () => {
   };
 
   return (
-    <Card sx={{ maxWidth: 500, margin: 'auto', padding: 2, textAlign: 'center', boxShadow: 3 }}>
+    <Card className="handwriting-canvas-card">
       <CardContent>
         <Typography variant="h6" gutterBottom>
           Handwriting Recognition
@@ -165,35 +190,18 @@ const HandwritingCanvas: React.FC = () => {
           </FormControl>
         </Stack>
 
-        <Box
-          sx={{
-            border: '2px solid #1976d2',
-            borderRadius: '8px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            background: '#f9f9f9',
-            overflow: 'hidden',
-            touchAction: 'none',
-            position: 'relative',
-          }}
-        >
+        <Box className="canvas-container">
           <canvas
             ref={gridCanvasRef}
             width={500}
             height={300}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              pointerEvents: 'none',
-            }}
+            className="grid-canvas"
           />
           <canvas
             ref={canvasRef}
             width={500}
             height={300}
-            style={{ cursor: 'crosshair', backgroundColor: 'white' }}
+            className="drawing-canvas"
             onPointerDown={startDrawing}
             onPointerMove={draw}
             onPointerUp={stopDrawing}
@@ -211,7 +219,7 @@ const HandwritingCanvas: React.FC = () => {
           <Button
             variant={isEraser ? 'contained' : 'outlined'}
             color="secondary"
-            onClick={() => setIsEraser(prev => !prev)}
+            onClick={() => setIsEraser((prev) => !prev)}
           >
             {isEraser ? 'Drawing' : 'Erase'}
           </Button>

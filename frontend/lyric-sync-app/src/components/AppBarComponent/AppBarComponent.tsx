@@ -2,8 +2,9 @@ import React from 'react';
 import { AppBar, Toolbar, Typography, Avatar, Menu, MenuItem, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
-import { useAuth } from '../contexts/authTypes';
+import { useAuth } from '../../contexts/authTypes';
 import { jwtDecode } from 'jwt-decode';
+import './AppBarComponent.scss';
 
 interface GooglePayload {
   sub: string;
@@ -47,24 +48,23 @@ const AppBarComponent: React.FC = () => {
   };
 
   return (
-    <AppBar position="static" elevation={0} style={{ backgroundColor: '#8a2be2' }}>
-      <Toolbar>
-        <Typography variant="h6" style={{ flexGrow: 1 }}>
-          <Link to="/" style={{ textDecoration: 'none', color: 'white' }}>
+    <AppBar position="static" elevation={0} className="app-bar">
+      <Toolbar className="toolbar">
+        <Typography variant="h6" className="title">
+          <Link to="/" className="title">
             Chord KTV
           </Link>
         </Typography>
         <Button component={Link} to="/canvas" color="inherit">
           Canvas
         </Button>
-        
         {user ? (
           <>
             <Avatar
               src={user.picture}
               alt={user.name}
               onClick={handleMenuClick}
-              style={{ cursor: 'pointer' }}
+              className="avatar"
             />
             <Menu
               anchorEl={anchorEl}

@@ -8,7 +8,8 @@ import {
   Box,
 } from '@mui/material';
 import { DataGrid, GridToolbarContainer } from '@mui/x-data-grid';
-import { SongApi, Configuration } from '../api';
+import { SongApi, Configuration } from '../../api';
+import './YouTubePlaylistViewer.scss';
 
 // Define the type for a song
 interface Song {
@@ -28,7 +29,7 @@ const songApi = new SongApi(
 
 const YouTubePlaylistViewer = () => {
   const [playlistUrl, setPlaylistUrl] = useState('');
-  const [songs, setSongs] = useState<Song[]>([]); // Explicitly define the type of `songs`
+  const [songs, setSongs] = useState<Song[]>([]);
   const [playlistTitle, setPlaylistTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -76,52 +77,45 @@ const YouTubePlaylistViewer = () => {
   // Custom toolbar component with playlist title
   const CustomToolbar = () => (
     <GridToolbarContainer>
-      <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', pl: 2 }}>
+      <Box className="toolbar-title">
         <Typography variant="h6">{playlistTitle}</Typography>
       </Box>
     </GridToolbarContainer>
   );
 
   return (
-    <>
+    <div className="youtube-playlist-viewer">
       <TextField
         fullWidth
         label="Enter YouTube Playlist URL"
         variant="filled"
         value={playlistUrl}
         onChange={(e) => setPlaylistUrl(e.target.value)}
-        sx={{ 
-          backgroundColor: 'white', 
-          borderRadius: 1, 
-          mb: 2,
-          '& .MuiFilledInput-root': {
-            backgroundColor: 'white',
-          }, 
-        }}
+        className="playlist-url-input"
       />
       <Button variant="contained" color="primary" onClick={fetchPlaylistSongs}>
         Load Playlist
       </Button>
-      {loading && <CircularProgress sx={{ mt: 2 }} />}
-      {error && <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>}
-      {songs.length > 0 && ( // Conditionally render the DataGrid
-        <Paper sx={{ mt: 2, height: 400, width: '100%' }}>
+      {loading && <CircularProgress className="loading-spinner" />}
+      {error && <Typography className="error-message">{error}</Typography>}
+      {songs.length > 0 && (
+        <Paper className="data-grid-container">
           <DataGrid
             rows={songs}
             columns={columns}
             initialState={{
               pagination: {
-                paginationModel: { pageSize: 5, page: 0 }, // Set initial page size
+                paginationModel: { pageSize: 5, page: 0 },
               },
             }}
-            pageSizeOptions={[5, 10, 20]} // Rows per page options
+            pageSizeOptions={[5, 10, 20]}
             slots={{
-              toolbar: CustomToolbar, // Use the custom toolbar
+              toolbar: CustomToolbar,
             }}
           />
         </Paper>
       )}
-    </>
+    </div>
   );
 };
 

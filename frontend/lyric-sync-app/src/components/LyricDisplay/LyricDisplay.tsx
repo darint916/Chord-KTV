@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-
+import './LyricDisplay.scss';
 interface Lyric {
   time: number;
   text: string;
@@ -19,31 +19,8 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, currentTime }) => {
   });
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        borderRadius: 2,
-        padding: 2,
-        maxWidth: '80%',
-        marginTop: 3,
-        height: 100,  // Fixed height
-      }}
-    >
-      <Typography
-        variant="h4"
-        component="div"
-        sx={{
-          color: '#fff',
-          textAlign: 'center',
-          fontSize: { xs: '18px', sm: '24px', lg: '32px' },
-          fontWeight: 'bold',
-          lineHeight: 1.4,
-          textTransform: 'uppercase',
-        }}
-      >
+    <Box className="lyric-display-container">
+      <Typography variant="h4" component="div" className="lyric-text">
         {currentLyric ? currentLyric.text : '♫ ♫'}
       </Typography>
     </Box>
@@ -51,4 +28,3 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, currentTime }) => {
 };
 
 export default LyricDisplay;
-

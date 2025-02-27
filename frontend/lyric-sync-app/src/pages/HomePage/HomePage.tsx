@@ -11,9 +11,10 @@ import {
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
-import { useAuth } from '../contexts/authTypes';
+import { useAuth } from '../../contexts/authTypes';
 import axios from 'axios';
-import YouTubePlaylistViewer from '../components/YouTubePlaylistViewer';
+import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
+import './HomePage.scss';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
@@ -44,48 +45,30 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        backgroundColor: '#8a2be2',
-        color: 'white',
-        padding: 4,
-      }}
-    >
+    <Box className="home-page">
       <Container maxWidth="md">
-        <Typography variant="h2" sx={{ mb: 4, textAlign: 'center', fontWeight: 'bold' }}>
+        <Typography variant="h2" className="welcome-message">
           Welcome {user ? user.name : 'to Chord KTV'}!
         </Typography>
 
         {!user && (
-          <Alert
-            severity="info"
-            sx={{ mb: 4, backgroundColor: 'rgba(255,255,255,0.9)', color: 'black' }}
-          >
+          <Alert severity="info" className="info-alert">
             Sign in to save your search history and favorites!
           </Alert>
         )}
 
         {error && (
-          <Alert severity="error" sx={{ mb: 4 }}>
+          <Alert severity="error" className="error-alert">
             {error}
           </Alert>
         )}
 
         {/* Search Section */}
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 3,
-            mb: 4,
-            backgroundColor: 'rgba(255,255,255,0.9)',
-            borderRadius: 2,
-          }}
-        >
-          <Typography variant="h5" sx={{ mb: 2, color: '#8a2be2' }}>
+        <Paper elevation={3} className="search-section">
+          <Typography variant="h5" className="section-title">
             Search for a Song
           </Typography>
-          <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
+          <Typography variant="body1" className="section-subtitle">
             Enter a song name and artist to get started.
           </Typography>
           <Stack direction="row" spacing={2} alignItems="center">
@@ -95,12 +78,7 @@ const HomePage: React.FC = () => {
               value={songName}
               onChange={(e) => setSongName(e.target.value)}
               fullWidth
-              sx={{ backgroundColor: 'white', 
-                borderRadius: 1, 
-                '& .MuiFilledInput-root': {
-                  backgroundColor: 'white',
-                }, 
-              }}
+              className="search-input"
             />
             <TextField
               label="Artist Name"
@@ -108,19 +86,14 @@ const HomePage: React.FC = () => {
               value={artistName}
               onChange={(e) => setArtistName(e.target.value)}
               fullWidth
-              sx={{ backgroundColor: 'white', 
-                borderRadius: 1, 
-                '& .MuiFilledInput-root': {
-                  backgroundColor: 'white',
-                }, 
-              }}
+              className="search-input"
             />
             <IconButton
               component={Link}
               to="/play-song"
               aria-label="search"
               onClick={handleSearch}
-              sx={{ backgroundColor: '#8a2be2', color: 'white', '&:hover': { backgroundColor: '#7b1fa2' } }}
+              className="search-button"
             >
               <SearchIcon />
             </IconButton>
@@ -128,48 +101,27 @@ const HomePage: React.FC = () => {
         </Paper>
 
         {/* OR Divider */}
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            my: 4,
-          }}
-        >
-          <Paper
-            elevation={3}
-            sx={{
-              padding: '8px 16px',
-              backgroundColor: 'rgba(255,255,255,0.9)',
-              borderRadius: 20,
-            }}
-          >
-            <Typography variant="body1" sx={{ color: '#8a2be2', fontWeight: 'bold' }}>
+        <Box className="or-divider">
+          <Paper elevation={3} className="or-paper">
+            <Typography variant="body1" className="or-text">
               OR
             </Typography>
           </Paper>
         </Box>
 
         {/* YouTube Playlist Section */}
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 3,
-            backgroundColor: 'rgba(255,255,255,0.9)',
-            borderRadius: 2,
-          }}
-        >
-          <Typography variant="h5" sx={{ mb: 2, color: '#8a2be2' }}>
+        <Paper elevation={3} className="playlist-section">
+          <Typography variant="h5" className="section-title">
             Load a YouTube Playlist
           </Typography>
-          <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
+          <Typography variant="body1" className="section-subtitle">
             Select songs to play from your playlist.
           </Typography>
           <YouTubePlaylistViewer />
         </Paper>
 
         {user && (
-          <Typography variant="body1" sx={{ mt: 4, textAlign: 'center', opacity: 0.8 }}>
+          <Typography variant="body1" className="logged-in-message">
             Logged in as: {user.email}
           </Typography>
         )}
