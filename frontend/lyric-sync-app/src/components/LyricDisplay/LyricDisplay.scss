@@ -2,19 +2,17 @@
 @use '../../mixins' as *;
 
 .lyric-display-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   background-color: rgba(0, 0, 0, 0);
   border-radius: 8px;
   padding: 16px;
   max-width: 80%;
-  margin-top: 24px;
-  height: 100px; // Fixed height
-  overflow-y: auto;
+  // margin-top: 100px;
+  height: 200px; // Fixed height
+  scroll-behavior: smooth;
 }
 
 .lyric-text {
+
   color: #ffffff8c;
   text-align: center;
   font-weight: bold;
@@ -45,4 +43,5 @@
 
   /* firefox */
   scrollbar-width: none;
+  height: 100%;
 }

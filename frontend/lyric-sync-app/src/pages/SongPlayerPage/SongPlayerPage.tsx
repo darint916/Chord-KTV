@@ -76,12 +76,12 @@ const SongPlayerPage: React.FC = () => {
         <Grid container spacing={4} className="song-player-content">
           {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
           <Grid size={12}>
-            <Stack spacing={2} className="stack">
+            <Stack spacing={3} className="stack">
               <Typography variant="h3" className="song-title">
                 Midnight Cruisin&#39; by Kingo Hamada
               </Typography>
               <YouTubePlayer videoId={videoId} onReady={handlePlayerReady} />
-              <LyricDisplay lyrics={lyrics} rawLrcLyrics={rawLrcLyrics} currentTime={currentTime} />
+              <LyricDisplay lyrics={lyrics} rawLrcLyrics={rawLrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/>
               <Controls
                 playerRef={playerRef}
                 currentTime={currentTime}
