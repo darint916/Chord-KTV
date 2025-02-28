@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Typography, Box } from '@mui/material';
+import { Container, Stack, Typography } from '@mui/material';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import Controls from '../../components/Controls/Controls';
 import axios from 'axios';
 import './SongPlayerPage.scss';
+import Grid from '@mui/material/Grid2';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -18,6 +19,7 @@ interface YouTubePlayer {
 
 const SongPlayerPage: React.FC = () => {
   const [lyrics, setLyrics] = useState<{ time: number; text: string }[]>([]);
+  const [rawLrcLyrics, setRawLrcLyrics] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [duration, setDuration] = useState<number>(100);
@@ -33,6 +35,7 @@ const SongPlayerPage: React.FC = () => {
             artist_name: 'Kingo Hamada',
           },
         });
+        setRawLrcLyrics(response.data.syncedLyrics);
         const parsedLyrics = parseLRC(response.data.syncedLyrics);
         setLyrics(parsedLyrics);
       } catch (err) {
@@ -47,7 +50,7 @@ const SongPlayerPage: React.FC = () => {
       .split('\n')
       .map((line) => {
         const match = line.match(/\[(\d+):(\d+\.\d+)](.+)/);
-        if (!match) {return null;}
+        if (!match) { return null; }
         const time = parseInt(match[1]) * 60 + parseFloat(match[2]);
         return { time, text: match[3] };
       })
@@ -56,13 +59,12 @@ const SongPlayerPage: React.FC = () => {
 
   const handlePlayerReady = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
-    if (playerInstance.getDuration) {setDuration(playerInstance.getDuration());}
+    if (playerInstance.getDuration) { setDuration(playerInstance.getDuration()); }
 
-    const intervalId = setInterval(() => {
-      if (playerRef.current) {setCurrentTime(playerRef.current.getCurrentTime());}
+
+    setInterval(() => {
+      if (playerRef.current) { setCurrentTime(playerRef.current.getCurrentTime()); }
     }, 500);
-
-    return () => clearInterval(intervalId);
   };
 
   const handlePlayPause = (playState: boolean) => setIsPlaying(playState);
@@ -71,21 +73,26 @@ const SongPlayerPage: React.FC = () => {
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
-        <Box className="song-player-content">
-          <Typography variant="h3" className="song-title">
-            Midnight Cruisin&#39; by Kingo Hamada
-          </Typography>
-          <YouTubePlayer videoId={videoId} onReady={handlePlayerReady} />
-          <LyricDisplay lyrics={lyrics} currentTime={currentTime} />
-          <Controls
-            playerRef={playerRef}
-            currentTime={currentTime}
-            duration={duration}
-            onSeek={handleSeek}
-            onPlayPause={handlePlayPause}
-            isPlaying={isPlaying}
-          />
-        </Box>
+        <Grid container spacing={4} className="song-player-content">
+          {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
+          <Grid size={12}>
+            <Stack spacing={2} className="stack">
+              <Typography variant="h3" className="song-title">
+                Midnight Cruisin&#39; by Kingo Hamada
+              </Typography>
+              <YouTubePlayer videoId={videoId} onReady={handlePlayerReady} />
+              <LyricDisplay lyrics={lyrics} rawLrcLyrics={rawLrcLyrics} currentTime={currentTime} />
+              <Controls
+                playerRef={playerRef}
+                currentTime={currentTime}
+                duration={duration}
+                onSeek={handleSeek}
+                onPlayPause={handlePlayPause}
+                isPlaying={isPlaying}
+              />
+            </Stack>
+          </Grid>
+        </Grid>
       </Container>
     </div>
   );
