@@ -1,14 +1,7 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { Lrc, LrcLine, useRecoverAutoScrollImmediately } from 'react-lrc';
 import './LyricDisplay.scss';
-// import { height } from '@fortawesome/free-solid-svg-icons/fa0';
-interface Lyric {
-  time: number;
-  text: string;
-}
-
 interface LyricDisplayProps {
-  lyrics: Lyric[];
   rawLrcLyrics: string;
   currentTime: number;
   isPlaying: boolean;

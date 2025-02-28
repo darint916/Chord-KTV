@@ -18,7 +18,6 @@ interface YouTubePlayer {
 }
 
 const SongPlayerPage: React.FC = () => {
-  const [lyrics, setLyrics] = useState<{ time: number; text: string }[]>([]);
   const [rawLrcLyrics, setRawLrcLyrics] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -36,26 +35,12 @@ const SongPlayerPage: React.FC = () => {
           },
         });
         setRawLrcLyrics(response.data.syncedLyrics);
-        const parsedLyrics = parseLRC(response.data.syncedLyrics);
-        setLyrics(parsedLyrics);
       } catch (err) {
         console.error('Error fetching lyrics:', err); // eslint-disable-line no-console
       }
     };
     fetchLyrics();
   }, []);
-
-  const parseLRC = (lrc: string) => {
-    return lrc
-      .split('\n')
-      .map((line) => {
-        const match = line.match(/\[(\d+):(\d+\.\d+)](.+)/);
-        if (!match) { return null; }
-        const time = parseInt(match[1]) * 60 + parseFloat(match[2]);
-        return { time, text: match[3] };
-      })
-      .filter(Boolean) as { time: number; text: string }[];
-  };
 
   const handlePlayerReady = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
@@ -81,7 +66,7 @@ const SongPlayerPage: React.FC = () => {
                 Midnight Cruisin&#39; by Kingo Hamada
               </Typography>
               <YouTubePlayer videoId={videoId} onReady={handlePlayerReady} />
-              <LyricDisplay lyrics={lyrics} rawLrcLyrics={rawLrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/>
+              <LyricDisplay rawLrcLyrics={rawLrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/>
               <Controls
                 playerRef={playerRef}
                 currentTime={currentTime}
