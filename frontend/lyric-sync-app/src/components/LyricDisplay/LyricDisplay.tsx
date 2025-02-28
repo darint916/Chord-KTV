@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useCallback } from 'react';
-import { Box, Typography } from '@mui/material';
 import { Lrc, LrcLine, useRecoverAutoScrollImmediately } from 'react-lrc';
 import './LyricDisplay.scss';
 // import { height } from '@fortawesome/free-solid-svg-icons/fa0';
@@ -15,7 +14,7 @@ interface LyricDisplayProps {
   isPlaying: boolean;
 }
 
-const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, rawLrcLyrics, currentTime, isPlaying }) => { // we use https://github.com/mebtte/react-lrc, uses ms for time though
+const LyricDisplay: React.FC<LyricDisplayProps> = ({ rawLrcLyrics, currentTime, isPlaying }) => { // we use https://github.com/mebtte/react-lrc, uses ms for time though
 
   const { signal, recoverAutoScrollImmediately} = useRecoverAutoScrollImmediately();
   const wasPlayingRef = useRef(isPlaying);
@@ -35,7 +34,7 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, rawLrcLyrics, curre
   );
 
   return ( //autoscroll turned on alr, consider reading docs if we want to reformat line styling and distances
-    <Box className="lyric-display-container">
+    <div className="lyric-display-container">
       <Lrc
         lrc={rawLrcLyrics}
         currentMillisecond={currentTime * 1000}
@@ -45,7 +44,7 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, rawLrcLyrics, curre
         recoverAutoScrollInterval={3000} //3 second for recovery auto
         className="lrc"
       />
-    </Box>
+    </div>
   );
 };
 
