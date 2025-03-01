@@ -32,11 +32,11 @@ namespace ChordKTV.Services.Service
 
         private bool HasDuplicateOptions(QuizResponseDto quiz)
         {
-            foreach (var question in quiz.Questions)
+            foreach (QuizQuestionDto question in quiz.Questions)
             {
                 // Create a HashSet to check for duplicates efficiently
-                var uniqueOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var option in question.Options)
+                HashSet<string> uniqueOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (string option in question.Options)
                 {
                     if (!uniqueOptions.Add(option))
                     {
@@ -118,7 +118,7 @@ namespace ChordKTV.Services.Service
 
             // Override LLM-generated values with our own
             DateTime timestamp = DateTime.UtcNow;
-            var quizId = Guid.NewGuid();
+            Guid quizId = Guid.NewGuid();
             QuizResponseDto quizResponseWithOverrides = quizResponseDto with
             {
                 Timestamp = timestamp,
@@ -126,7 +126,7 @@ namespace ChordKTV.Services.Service
             };
 
             // Cache the quiz in the database
-            var quizEntity = new Quiz
+            Quiz quizEntity = new Quiz
             {
                 Id = quizId,  // Use the same Guid for the entity
                 SongId = songId,

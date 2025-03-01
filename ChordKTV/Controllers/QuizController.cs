@@ -40,13 +40,29 @@ namespace ChordKTV.Controllers
                     return BadRequest(new { message = "Number of questions cannot exceed 20" });
                 }
 
-                QuizResponseDto quiz = await _quizService.GenerateQuizAsync(songId, useCachedQuiz, difficulty, numQuestions);
-                return Ok(quiz);
+                if (songId == Guid.Empty)
+                {
+                    return BadRequest(new { message = "Song ID is required" });
+                }
+
+                try
+                {
+                    QuizResponseDto quiz = await _quizService.GenerateQuizAsync(songId, useCachedQuiz, difficulty, numQuestions);
+                    return Ok(quiz);
+                }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("not found"))
+                {
+                    return NotFound(new { message = ex.Message });
+                }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("lyrics not available"))
+                {
+                    return BadRequest(new { message = ex.Message });
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating quiz for songId {SongId}", songId);
-                return StatusCode(500, new { message = ex.Message });
+                return StatusCode(500, new { message = "An unexpected error occurred while generating the quiz." });
             }
         }
     }
