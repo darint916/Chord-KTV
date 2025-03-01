@@ -9,6 +9,7 @@ using System.Text.Json;
 using AutoMapper;
 using ChordKTV.Dtos.FullSong;
 using ChordKTV.Dtos.TranslationGptApi;
+using ChordKTV.Data.Api.UserData;
 
 namespace ChordKTV.Controllers;
 
@@ -25,6 +26,8 @@ public class SongController : Controller
     private readonly IMapper _mapper;
     private readonly IChatGptService _chatGptService;
     private readonly IFullSongService _fullSongService;
+    private readonly IUserRepo _userRepo;
+    
     public SongController(
         IMapper mapper,
         IYouTubeClientService youTubeService,
@@ -34,6 +37,7 @@ public class SongController : Controller
         IAlbumRepo albumRepo,
         IChatGptService chatGptService,
         IFullSongService fullSongService,
+        IUserRepo userRepo,
         ILogger<SongController> logger
         )
     {
@@ -45,6 +49,7 @@ public class SongController : Controller
         _albumRepo = albumRepo;
         _chatGptService = chatGptService;
         _fullSongService = fullSongService;
+        _userRepo = userRepo;
         _logger = logger;
     }
 
@@ -274,5 +279,13 @@ public class SongController : Controller
     {
         await _songRepo.AddSongAsync(song);
         return Ok();
+    }
+
+    [DevelopmentOnly]
+    [HttpGet("database/users/{email}")]
+    public async Task<IActionResult> GetUserByEmail(string email)
+    {
+        User? user = await _userRepo.GetUserByEmailAsync(email);
+        return user != null ? Ok(user) : NotFound();
     }
 }
