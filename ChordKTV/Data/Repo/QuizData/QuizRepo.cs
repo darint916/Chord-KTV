@@ -1,6 +1,7 @@
 using ChordKTV.Data.Api.QuizData;
 using ChordKTV.Models.Quiz;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,10 +16,10 @@ namespace ChordKTV.Data.Repo.QuizData
             _context = context;
         }
 
-        public async Task<Quiz?> GetLatestQuizAsync(int geniusId, int difficulty)
+        public async Task<Quiz?> GetLatestQuizAsync(Guid songId, int difficulty)
         {
             return await _context.Quizzes
-                .Where(q => q.GeniusId == geniusId && q.Difficulty == difficulty)
+                .Where(q => q.SongId == songId && q.Difficulty == difficulty)
                 .OrderByDescending(q => q.Timestamp)
                 .FirstOrDefaultAsync();
         }

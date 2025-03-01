@@ -103,4 +103,12 @@ public class SongRepo : ISongRepo
             .Include(s => s.GeniusMetaData)
             .FirstOrDefaultAsync(s => s.GeniusMetaData.GeniusId == geniusId);
     }
+
+    public async Task<Song?> GetSongByIdAsync(Guid id)
+    {
+        return await _context.Songs
+            .Include(s => s.GeniusMetaData)
+            .Include(s => s.Albums)
+            .FirstOrDefaultAsync(s => s.Id == id);
+    }
 }

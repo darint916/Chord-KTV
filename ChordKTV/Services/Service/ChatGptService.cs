@@ -163,7 +163,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         }
     }
 
-    public async Task<QuizResponseDto> GenerateRomanizationQuizAsync(string lyrics, int difficulty, int numQuestions, int geniusId)
+    public async Task<QuizResponseDto> GenerateRomanizationQuizAsync(string lyrics, int difficulty, int numQuestions, Guid songId)
     {
         // Construct a prompt with detailed instructions
         string difficultyInstruction = difficulty switch
@@ -188,10 +188,11 @@ Your task:
 - The difficulty of the quiz is set to {difficulty} on a scale from 1 (easiest) to 5 (hardest).
 - {difficultyInstruction}
 - All the options must be written using the latin alphabet.
+- No two options should be the same, no matter the difficulty.
 - Respond with a JSON object exactly in the following format:
 {{
     ""quizId"": ""<a unique GUID>"",
-    ""geniusId"": {geniusId},
+    ""songId"": ""{songId}"",
     ""difficulty"": {difficulty},
     ""timestamp"": ""<current ISO 8601 datetime>"",
     ""questions"": [

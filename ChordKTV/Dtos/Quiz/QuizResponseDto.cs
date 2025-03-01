@@ -12,7 +12,7 @@ namespace ChordKTV.Dtos.Quiz
 
     public record QuizResponseDto(
         Guid QuizId,
-        int GeniusId,
+        Guid SongId,
         int Difficulty,
         DateTime Timestamp,
         List<QuizQuestionDto> Questions

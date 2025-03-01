@@ -19,7 +19,7 @@ namespace ChordKTV.Controllers
 
         [HttpGet("romanization")]
         public async Task<IActionResult> GetRomanizationQuiz(
-            [FromQuery] int geniusId,
+            [FromQuery] Guid songId,
             [FromQuery] bool useCachedQuiz = false,
             [FromQuery] int difficulty = 3,
             [FromQuery] int numQuestions = 5)
@@ -40,12 +40,12 @@ namespace ChordKTV.Controllers
                     return BadRequest(new { message = "Number of questions cannot exceed 20" });
                 }
 
-                QuizResponseDto quiz = await _quizService.GenerateQuizAsync(geniusId, useCachedQuiz, difficulty, numQuestions);
+                QuizResponseDto quiz = await _quizService.GenerateQuizAsync(songId, useCachedQuiz, difficulty, numQuestions);
                 return Ok(quiz);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating quiz for geniusId {GeniusId}", geniusId);
+                _logger.LogError(ex, "Error generating quiz for songId {SongId}", songId);
                 return StatusCode(500, new { message = ex.Message });
             }
         }

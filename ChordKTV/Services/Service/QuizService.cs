@@ -30,7 +30,7 @@ namespace ChordKTV.Services.Service
             _logger = logger;
         }
 
-        public async Task<QuizResponseDto> GenerateQuizAsync(int geniusId, bool useCachedQuiz, int difficulty, int numQuestions)
+        public async Task<QuizResponseDto> GenerateQuizAsync(Guid songId, bool useCachedQuiz, int difficulty, int numQuestions)
         {
             // Clamp difficulty between 1 and 5
             difficulty = Math.Clamp(difficulty, 1, 5);
@@ -41,7 +41,7 @@ namespace ChordKTV.Services.Service
             // Try to use a cached quiz if requested
             if (useCachedQuiz)
             {
-                Quiz? cachedQuiz = await _quizRepo.GetLatestQuizAsync(geniusId, difficulty);
+                Quiz? cachedQuiz = await _quizRepo.GetLatestQuizAsync(songId, difficulty);
                 if (cachedQuiz != null)
                 {
                     try
@@ -57,20 +57,20 @@ namespace ChordKTV.Services.Service
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Failed to deserialize cached quiz for geniusId {GeniusId}", geniusId);
+                        _logger.LogError(ex, "Failed to deserialize cached quiz for songId {SongId}", songId);
                     }
                 }
             }
 
-            // Retrieve the song by geniusId and verify its lyrics
-            Models.SongData.Song? song = await _songRepo.GetSongByGeniusIdAsync(geniusId) ?? throw new InvalidOperationException($"Song with geniusID {geniusId} not found in database.");
+            // Retrieve the song by songId and verify its lyrics
+            Models.SongData.Song? song = await _songRepo.GetSongByIdAsync(songId) ?? throw new InvalidOperationException($"Song with ID {songId} not found in database.");
             if (string.IsNullOrWhiteSpace(song.LrcLyrics))
             {
                 throw new InvalidOperationException("Song lyrics not available.");
             }
 
             // Generate a quiz by calling the ChatGPT service with the song lyrics
-            QuizResponseDto quizResponseDto = await _chatGptService.GenerateRomanizationQuizAsync(song.LrcLyrics, difficulty, numQuestions, geniusId);
+            QuizResponseDto quizResponseDto = await _chatGptService.GenerateRomanizationQuizAsync(song.LrcLyrics, difficulty, numQuestions, songId);
 
             // Override LLM-generated values with our own
             DateTime timestamp = DateTime.UtcNow;
@@ -85,7 +85,7 @@ namespace ChordKTV.Services.Service
             var quizEntity = new Quiz
             {
                 Id = quizId,  // Use the same Guid for the entity
-                GeniusId = geniusId,
+                SongId = songId,
                 Difficulty = difficulty,
                 NumQuestions = numQuestions,
                 QuizJson = JsonSerializer.Serialize(quizResponseWithOverrides),
