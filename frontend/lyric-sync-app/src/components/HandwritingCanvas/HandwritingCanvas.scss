@@ -1,0 +1,41 @@
+@use '../../variables' as *;
+@use '../../mixins' as *;
+
+.handwriting-canvas-card {
+  max-width: 500px;
+  margin: auto;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.canvas-container {
+  border: 2px solid $primary-color;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f9f9f9;
+  overflow: hidden;
+  touch-action: none;
+  position: relative;
+}
+
+.grid-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.drawing-canvas {
+  cursor: crosshair;
+  background-color: white;
+}
+
+.controls-container {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
