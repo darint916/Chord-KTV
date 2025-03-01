@@ -6,6 +6,7 @@ using ChordKTV.Dtos;
 using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Dtos.Quiz;
 using ChordKTV.Services.Api;
+using ChordKTV.Dtos.OpenAI;
 
 namespace ChordKTV.Services.Service;
 public class ChatGptService : IChatGptService
@@ -95,22 +96,16 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
 
             string responseContent = await response.Content.ReadAsStringAsync();
 
-            // Deserialize the response.
-            using var document = JsonDocument.Parse(responseContent);
-            JsonElement root = document.RootElement;
-
-            // The ChatGPT API returns choices in an array.
-            JsonElement choices = root.GetProperty("choices");
-            if (choices.GetArrayLength() == 0)
+            // Directly deserialize the OpenAI response
+            OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(responseContent, _jsonOptions);
+            
+            if (openAIResponse == null || openAIResponse.Choices.Count == 0)
             {
                 _logger.LogError("No choices were returned from the ChatGPT API. responseContent: {ResponseContent}", responseContent);
                 throw new InvalidOperationException("No choices were returned from the ChatGPT API.");
             }
 
-            string? messageContent = choices[0]
-                .GetProperty("message")
-                .GetProperty("content")
-                .GetString();
+            string? messageContent = openAIResponse.Choices[0].Message.Content;
 
             if (string.IsNullOrWhiteSpace(messageContent))
             {
@@ -241,23 +236,24 @@ Note: The correctOptionIndex should ALWAYS be 0 as the correct answer must be th
             }
 
             string responseContent = await response.Content.ReadAsStringAsync();
-            using var document = JsonDocument.Parse(responseContent);
-            JsonElement root = document.RootElement;
-            JsonElement choices = root.GetProperty("choices");
-            if (choices.GetArrayLength() == 0)
+            
+            // Directly deserialize the OpenAI response
+            OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(responseContent, _jsonOptions);
+            
+            if (openAIResponse == null || openAIResponse.Choices.Count == 0)
             {
                 _logger.LogError("No choices were returned from the ChatGPT API for quiz generation.");
                 throw new InvalidOperationException("No choices were returned from the ChatGPT API.");
             }
-            string? messageContent = choices[0]
-                .GetProperty("message")
-                .GetProperty("content")
-                .GetString();
+            
+            string? messageContent = openAIResponse.Choices[0].Message.Content;
+            
             if (string.IsNullOrWhiteSpace(messageContent))
             {
                 _logger.LogError("The ChatGPT API returned an empty response for quiz generation.");
                 throw new InvalidOperationException("The ChatGPT API returned an empty response.");
             }
+            
             QuizResponseDto? quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(messageContent, _jsonOptions);
             if (quizResponse == null)
             {
