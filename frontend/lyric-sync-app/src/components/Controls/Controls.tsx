@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
+import './Controls.scss';
 
 interface YouTubePlayer {
   seekTo: (_seconds: number, _allowSeekAhead: boolean) => void;
@@ -63,82 +64,36 @@ const Controls: React.FC<ControlsProps> = ({
   };
 
   return (
-    <div style={styles.controlsContainer}>
-      <div style={styles.controlsWrapper}>
-        {/* Play/Pause Icon */}
-        <div onClick={handlePlayPause} style={styles.playPauseIcon}>
+    <div className="controls-container">
+      <div className="controls-wrapper">
+        <div onClick={handlePlayPause} className="play-pause-icon">
           <FontAwesomeIcon
             icon={isPlaying ? faPause : faPlay}
-            style={styles.icon}
+            className="icon"
           />
         </div>
-
-        {/* Seek slider */}
         <input
           type="range"
           min="0"
           max={duration || 100}
           value={seekValue}
           onChange={handleSeekChange}
-          style={styles.seekBar}
+          className="seek-bar"
         />
-        <span style={styles.timeText}>
+        <span className="time-text">
           {formatTime(currentTime)} / {formatTime(duration)}
         </span>
-
-        {/* Volume control */}
         <input
           type="range"
           min="0"
           max="100"
           value={volume}
           onChange={handleVolumeChange}
-          style={styles.volumeBar}
+          className="volume-bar"
         />
       </div>
     </div>
   );
-};
-
-const styles = {
-  controlsContainer: {
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'center',
-    padding: '20px 0',
-  },
-  controlsWrapper: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '15px',
-    backgroundColor: '#000',
-    borderRadius: '8px',
-    width: '70%',
-    justifyContent: 'space-between',
-  },
-  playPauseIcon: {
-    cursor: 'pointer',
-    padding: '10px',
-  },
-  icon: {
-    fontSize: '24px', // Set icon size
-    color: 'white',
-  },
-  seekBar: {
-    width: '60%',
-    margin: '0 15px',
-    cursor: 'pointer',
-  },
-  volumeBar: {
-    width: '100px',
-    marginLeft: '15px',
-    cursor: 'pointer',
-  },
-  timeText: {
-    color: 'white',
-    marginLeft: '10px',
-    fontSize: '14px',
-  },
 };
 
 export default Controls;

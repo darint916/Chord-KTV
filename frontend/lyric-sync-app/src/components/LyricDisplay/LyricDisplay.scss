@@ -1,0 +1,47 @@
+@use '../../variables' as *;
+@use '../../mixins' as *;
+
+.lyric-display-container {
+  background-color: rgba(0, 0, 0, 0);
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 80%;
+  position: relative;
+  height: 200px; // Fixed height
+  scroll-behavior: smooth;
+}
+
+.lyric-text {
+
+  color: #ffffff8c;
+  text-align: center;
+  font-weight: bold;
+  line-height: 1.4;
+  text-transform: uppercase;
+  min-height: 10px;
+  // Responsive font sizes
+  font-size: 18px;
+  @media (min-width: 600px) {
+    font-size: 24px;
+  }
+  @media (min-width: 1200px) {
+    font-size: 32px;
+  }
+}
+
+.active
+{
+  color: #fff;
+}
+
+.lrc { //hide scroll
+  /* webkit */
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  /* firefox */
+  scrollbar-width: none;
+  height: 100%;
+}
