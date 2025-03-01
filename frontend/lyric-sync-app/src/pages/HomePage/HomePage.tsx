@@ -9,7 +9,7 @@ import {
   Container,
   Stack,
 } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../../contexts/authTypes';
 import axios from 'axios';
@@ -21,6 +21,7 @@ const HomePage: React.FC = () => {
   const [songName, setSongName] = useState('');
   const [artistName, setArtistName] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSearch = async () => {
     if (user) {
@@ -42,6 +43,9 @@ const HomePage: React.FC = () => {
         setError('Failed to save search history. Please try again.');
       }
     }
+
+    // Navigate to SongPlayerPage with songName and artistName as query params
+    navigate(`/play-song?song=${encodeURIComponent(songName)}&artist=${encodeURIComponent(artistName)}`);
   };
 
   return (

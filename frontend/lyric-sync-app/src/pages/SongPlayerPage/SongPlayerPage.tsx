@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Container, Stack, Typography } from '@mui/material';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
@@ -24,14 +25,18 @@ const SongPlayerPage: React.FC = () => {
   const [duration, setDuration] = useState<number>(100);
   const videoId = 'ChQaa0eqZak';
   const playerRef = useRef<YouTubePlayer | null>(null);
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const songName = queryParams.get('song');
+  const artistName = queryParams.get('artist');
 
   useEffect(() => {
     const fetchLyrics = async () => {
       try {
         const response = await axios.get('https://lrclib.net/api/get', {
           params: {
-            track_name: 'midnight cruisin',
-            artist_name: 'Kingo Hamada',
+            track_name: songName,
+            artist_name: artistName,
           },
         });
         setRawLrcLyrics(response.data.syncedLyrics);
@@ -40,7 +45,7 @@ const SongPlayerPage: React.FC = () => {
       }
     };
     fetchLyrics();
-  }, []);
+  }, [songName, artistName]);
 
   const handlePlayerReady = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
@@ -63,7 +68,7 @@ const SongPlayerPage: React.FC = () => {
           <Grid size={12}>
             <Stack spacing={3} className="stack">
               <Typography variant="h3" className="song-title">
-                Midnight Cruisin&#39; by Kingo Hamada
+                {songName} by {artistName}
               </Typography>
               <YouTubePlayer videoId={videoId} onReady={handlePlayerReady} />
               <LyricDisplay rawLrcLyrics={rawLrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/>
