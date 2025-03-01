@@ -1,0 +1,20 @@
+@use '../../variables' as *;
+@use '../../mixins' as *;
+
+.song-player-page {
+  .song-player-container {
+    margin-top: 40px;
+
+    .song-player-content {
+      .song-title {
+        color: white;
+        margin-bottom: 24px;
+      }
+    }
+  }
+}
+
+.stack {
+  align-items: center;
+  justify-content: center;
+}
