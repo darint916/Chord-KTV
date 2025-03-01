@@ -10,6 +10,7 @@ using AutoMapper;
 using ChordKTV.Dtos.FullSong;
 using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Data.Api.UserData;
+using ChordKTV.Models.UserData;
 
 namespace ChordKTV.Controllers;
 
