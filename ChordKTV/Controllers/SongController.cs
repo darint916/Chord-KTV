@@ -27,7 +27,7 @@ public class SongController : Controller
     private readonly IChatGptService _chatGptService;
     private readonly IFullSongService _fullSongService;
     private readonly IUserRepo _userRepo;
-    
+
     public SongController(
         IMapper mapper,
         IYouTubeClientService youTubeService,

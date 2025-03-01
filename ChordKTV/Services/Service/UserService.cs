@@ -28,7 +28,7 @@ public class UserService : IUserService
         try
         {
             _logger.LogDebug("Validating Google token");
-            
+
             GoogleJsonWebSignature.ValidationSettings validationSettings = new()
             {
                 Audience = [_googleClientId]
@@ -69,4 +69,4 @@ public class UserService : IUserService
             return null;
         }
     }
-} 
+}

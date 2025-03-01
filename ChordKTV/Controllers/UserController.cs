@@ -31,7 +31,7 @@ public class UserController : ControllerBase
             string idToken = authorization.Replace("Bearer ", "");
 
             User? user = await _userService.AuthenticateGoogleUserAsync(idToken);
-            
+
             if (user == null)
             {
                 return Unauthorized();
