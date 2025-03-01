@@ -23,7 +23,18 @@ const HomePage: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const handleSearch = async () => {
+    if (!songName.trim() || !artistName.trim()) {
+      setError('Please enter both a song name and an artist name.');
+      return;
+    }
+
     if (user) {
       try {
         await axios.post('http://localhost:5259/api/random', 
@@ -80,6 +91,7 @@ const HomePage: React.FC = () => {
               label="Song Name"
               variant="filled"
               value={songName}
+              onKeyDown={handleKeyDown}
               onChange={(e) => setSongName(e.target.value)}
               fullWidth
               className="search-input"
@@ -88,13 +100,12 @@ const HomePage: React.FC = () => {
               label="Artist Name"
               variant="filled"
               value={artistName}
+              onKeyDown={handleKeyDown}
               onChange={(e) => setArtistName(e.target.value)}
               fullWidth
               className="search-input"
             />
             <IconButton
-              component={Link}
-              to="/play-song"
               aria-label="search"
               onClick={handleSearch}
               className="search-button"
