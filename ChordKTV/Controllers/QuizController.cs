@@ -49,10 +49,10 @@ namespace ChordKTV.Controllers
                 try
                 {
                     Quiz quiz = await _quizService.GenerateQuizAsync(songId, useCachedQuiz, difficulty, numQuestions);
-                    
+
                     // Map the entity to DTO for the API response
                     QuizResponseDto quizResponseDto = MapQuizToDto(quiz);
-                    
+
                     return Ok(quizResponseDto);
                 }
                 catch (InvalidOperationException ex) when (ex.Message.Contains("not found"))
@@ -70,7 +70,7 @@ namespace ChordKTV.Controllers
                 return StatusCode(500, new { message = "An unexpected error occurred while generating the quiz." });
             }
         }
-        
+
         private static QuizResponseDto MapQuizToDto(Quiz quiz)
         {
             ArgumentNullException.ThrowIfNull(quiz);
@@ -100,7 +100,7 @@ namespace ChordKTV.Controllers
                         List<QuizOption> orderedOptions = q.Options?
                             .OrderBy(o => o.OrderIndex)
                             .ToList() ?? new List<QuizOption>();
-                            
+
                         return new QuizQuestionDto(
                             questionNumber: q.QuestionNumber,
                             lyricPhrase: q.LyricPhrase,

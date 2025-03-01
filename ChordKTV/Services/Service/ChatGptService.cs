@@ -98,7 +98,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
 
             // Directly deserialize the OpenAI response
             OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(responseContent, _jsonOptions);
-            
+
             if (openAIResponse == null || openAIResponse.Choices.Count == 0)
             {
                 _logger.LogError("No choices were returned from the ChatGPT API. responseContent: {ResponseContent}", responseContent);
@@ -236,24 +236,24 @@ Note: The correctOptionIndex should ALWAYS be 0 as the correct answer must be th
             }
 
             string responseContent = await response.Content.ReadAsStringAsync();
-            
+
             // Directly deserialize the OpenAI response
             OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(responseContent, _jsonOptions);
-            
+
             if (openAIResponse == null || openAIResponse.Choices.Count == 0)
             {
                 _logger.LogError("No choices were returned from the ChatGPT API for quiz generation.");
                 throw new InvalidOperationException("No choices were returned from the ChatGPT API.");
             }
-            
+
             string? messageContent = openAIResponse.Choices[0].Message.Content;
-            
+
             if (string.IsNullOrWhiteSpace(messageContent))
             {
                 _logger.LogError("The ChatGPT API returned an empty response for quiz generation.");
                 throw new InvalidOperationException("The ChatGPT API returned an empty response.");
             }
-            
+
             QuizResponseDto? quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(messageContent, _jsonOptions);
             if (quizResponse == null)
             {

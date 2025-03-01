@@ -4,15 +4,15 @@ public sealed class QuizQuestionDto
 {
     public int QuestionNumber { get; set; }
     public string LyricPhrase { get; set; } = string.Empty;
-    public global::System.Collections.Generic.List<string> Options { get; set; } = new();
+    public List<string> Options { get; set; } = new();
     public int CorrectOptionIndex { get; set; }
-    
+
     public QuizQuestionDto() { }
-    
+
     public QuizQuestionDto(
         int questionNumber,
         string lyricPhrase,
-        global::System.Collections.Generic.List<string> options,
+        List<string> options,
         int correctOptionIndex)
     {
         QuestionNumber = questionNumber;
@@ -24,20 +24,20 @@ public sealed class QuizQuestionDto
 
 public sealed class QuizResponseDto
 {
-    public global::System.Guid QuizId { get; set; }
-    public global::System.Guid SongId { get; set; }
+    public Guid QuizId { get; set; }
+    public Guid SongId { get; set; }
     public int Difficulty { get; set; }
-    public global::System.DateTime Timestamp { get; set; }
-    public global::System.Collections.Generic.List<QuizQuestionDto> Questions { get; set; } = new();
-    
+    public DateTime Timestamp { get; set; }
+    public List<QuizQuestionDto> Questions { get; set; } = new();
+
     public QuizResponseDto() { }
-    
+
     public QuizResponseDto(
-        global::System.Guid quizId,
-        global::System.Guid songId,
+        Guid quizId,
+        Guid songId,
         int difficulty,
-        global::System.DateTime timestamp,
-        global::System.Collections.Generic.List<QuizQuestionDto> questions)
+        DateTime timestamp,
+        List<QuizQuestionDto> questions)
     {
         QuizId = quizId;
         SongId = songId;

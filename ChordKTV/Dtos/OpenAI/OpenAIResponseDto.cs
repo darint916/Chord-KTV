@@ -54,4 +54,4 @@ public class OpenAIUsageDto
 
     [JsonPropertyName("total_tokens")]
     public int TotalTokens { get; set; }
-} 
+}

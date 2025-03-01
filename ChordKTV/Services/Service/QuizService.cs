@@ -33,7 +33,7 @@ namespace ChordKTV.Services.Service
                 {
                     if (!uniqueOptions.Add(option))
                     {
-                        _logger.LogWarning("Found duplicate option in question {QuestionNumber}: {Option}", 
+                        _logger.LogWarning("Found duplicate option in question {QuestionNumber}: {Option}",
                             question.QuestionNumber, option);
                         return true;
                     }
@@ -117,7 +117,7 @@ namespace ChordKTV.Services.Service
                         List<QuizOption> orderedOptions = q.Options?
                             .OrderBy(o => o.OrderIndex)
                             .ToList() ?? new List<QuizOption>();
-                            
+
                         return new QuizQuestionDto(
                             questionNumber: q.QuestionNumber,
                             lyricPhrase: q.LyricPhrase,
@@ -137,7 +137,7 @@ namespace ChordKTV.Services.Service
             // Clamp number of questions between 1 and 20
             numQuestions = Math.Clamp(numQuestions, 1, 20);
 
-            _logger.LogDebug("Generating quiz for SongId={SongId}, Difficulty={Difficulty}, UseCached={UseCached}", 
+            _logger.LogDebug("Generating quiz for SongId={SongId}, Difficulty={Difficulty}, UseCached={UseCached}",
                 songId, difficulty, useCachedQuiz);
 
             // Try to use a cached quiz if requested
@@ -147,16 +147,16 @@ namespace ChordKTV.Services.Service
                 Quiz? cachedQuiz = await _quizRepo.GetLatestQuizAsync(songId, difficulty);
                 if (cachedQuiz != null)
                 {
-                    _logger.LogDebug("Found cached quiz with ID: {QuizId}, Timestamp: {Timestamp}", 
+                    _logger.LogDebug("Found cached quiz with ID: {QuizId}, Timestamp: {Timestamp}",
                         cachedQuiz.Id, cachedQuiz.Timestamp);
-                    
+
                     QuizResponseDto quizResponse = MapEntityToDto(cachedQuiz);
-                    
+
                     if (!HasDuplicateOptions(quizResponse))
                     {
                         return cachedQuiz;
                     }
-                    
+
                     _logger.LogDebug("Cached quiz has duplicate options, generating new quiz");
                 }
                 else
@@ -166,9 +166,9 @@ namespace ChordKTV.Services.Service
             }
 
             // Retrieve the song by songId and verify its lyrics
-            Models.SongData.Song? song = await _songRepo.GetSongByIdAsync(songId) ?? 
+            Models.SongData.Song? song = await _songRepo.GetSongByIdAsync(songId) ??
                 throw new InvalidOperationException($"Song with ID {songId} not found in database.");
-                
+
             if (string.IsNullOrWhiteSpace(song.LrcLyrics))
             {
                 throw new InvalidOperationException("Song lyrics not available.");
@@ -183,20 +183,20 @@ namespace ChordKTV.Services.Service
             {
                 if (retryCount > 0)
                 {
-                    _logger.LogWarning("Retrying quiz generation due to duplicate options. Attempt {RetryCount} of {MaxRetries}", 
+                    _logger.LogWarning("Retrying quiz generation due to duplicate options. Attempt {RetryCount} of {MaxRetries}",
                         retryCount + 1, maxRetries);
                 }
 
                 // Generate a quiz by calling the ChatGPT service with the song lyrics
                 quizResponseDto = await _chatGptService.GenerateRomanizationQuizAsync(song.LrcLyrics, difficulty, numQuestions, songId);
-                
+
                 // Always update the timestamp to the current time instead of using the one from ChatGPT
                 DateTime currentUtcTime = DateTime.UtcNow;
                 quizResponseDto.Timestamp = currentUtcTime;
-                
-                _logger.LogDebug("Generated new quiz with ID: {QuizId}, updated timestamp to: {Timestamp}", 
+
+                _logger.LogDebug("Generated new quiz with ID: {QuizId}, updated timestamp to: {Timestamp}",
                     quizResponseDto.QuizId, quizResponseDto.Timestamp);
-                    
+
                 retryCount++;
 
                 if (!HasDuplicateOptions(quizResponseDto))
@@ -212,17 +212,17 @@ namespace ChordKTV.Services.Service
 
             // Convert DTO to entity and save
             Quiz quizEntity = MapDtoToEntity(quizResponseDto);
-            
+
             // Double-check to ensure timestamp is current
             if (quizEntity.Timestamp.Date != DateTime.UtcNow.Date)
             {
                 quizEntity.Timestamp = DateTime.UtcNow;
                 _logger.LogDebug("Updated quiz timestamp to ensure current UTC time: {Timestamp}", quizEntity.Timestamp);
             }
-            
+
             await _quizRepo.AddAsync(quizEntity);
-            
-            _logger.LogDebug("Successfully saved new quiz with ID: {QuizId}, Timestamp: {Timestamp}", 
+
+            _logger.LogDebug("Successfully saved new quiz with ID: {QuizId}, Timestamp: {Timestamp}",
                 quizEntity.Id, quizEntity.Timestamp);
 
             return quizEntity;

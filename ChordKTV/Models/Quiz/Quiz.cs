@@ -4,10 +4,10 @@ namespace ChordKTV.Models.Quiz;
 
 public sealed class Quiz
 {
-    public global::System.Guid Id { get; set; }
-    public global::System.Guid SongId { get; set; }
-    public global::System.Collections.Generic.List<QuizQuestion> Questions { get; set; } = [];
-    public global::System.DateTime Timestamp { get; set; } = global::System.DateTime.UtcNow;
+    public Guid Id { get; set; }
+    public Guid SongId { get; set; }
+    public List<QuizQuestion> Questions { get; set; } = [];
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     public int Difficulty { get; set; }
     public int NumQuestions { get; set; }
 }
