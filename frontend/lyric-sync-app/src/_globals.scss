@@ -1,0 +1,22 @@
+@use 'variables' as *;
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  background-color: $primary-color;
+  font-family: 'Inter', sans-serif;
+  color: white;
+  overflow-x: hidden;
+}
+
+// Global spacing
+.container {
+  padding: $spacing-unit;
+}
+
+// Global typography
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: bold;
+}
