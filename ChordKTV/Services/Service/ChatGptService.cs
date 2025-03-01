@@ -194,13 +194,14 @@ Your task:
         {{
             ""questionNumber"": 1,
             ""lyricPhrase"": ""<extracted song lyric phrase>"",
-            ""options"": [""<correct romanization>"", ""wrong1"", ""wrong2"", ""wrong3""],
+            ""options"": [""<correct romanization>"", ""wrong1 in latin alphabet"", ""wrong2 in latin alphabet"", ""wrong3 in latin alphabet""],
             ""correctOptionIndex"": 0
         }},
         ... up to {numQuestions} questions
     ]
 }}
 Ensure that the JSON is the only output and does not include any additional text or explanation.
+All options must be written using the LATIN alphabet and NOTHING ELSE.
 Note: The correctOptionIndex should ALWAYS be 0 as the correct answer must be the first option.";
         string systemPrompt = "You are an assistant specialized in generating romanization quizzes from song lyrics.";
 
