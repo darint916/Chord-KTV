@@ -46,7 +46,7 @@ namespace ChordKTV.Services.Service
         {
             Quiz quiz = new Quiz
             {
-                Id = dto.QuizId,
+                Id = Guid.NewGuid(),
                 SongId = dto.SongId,
                 Difficulty = dto.Difficulty,
                 NumQuestions = dto.Questions.Count,
