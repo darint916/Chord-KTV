@@ -1,8 +1,6 @@
 using ChordKTV.Dtos;
 using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Dtos.Quiz;
-using System;
-using System.Threading.Tasks;
 
 namespace ChordKTV.Services.Api;
 

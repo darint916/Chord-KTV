@@ -63,12 +63,10 @@ builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
 builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
 builder.Services.AddScoped<ISongRepo, SongRepo>();
 builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
+builder.Services.AddScoped<IQuizRepo, QuizRepo>();
 builder.Services.AddScoped<IFullSongService, FullSongService>();
 builder.Services.AddScoped<IHandwritingService, HandwritingService>();
-
-// Register new QuizService and QuizRepo
 builder.Services.AddScoped<IQuizService, QuizService>();
-builder.Services.AddScoped<IQuizRepo, QuizRepo>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
