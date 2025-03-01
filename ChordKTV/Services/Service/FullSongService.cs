@@ -79,9 +79,9 @@ public class FullSongService : IFullSongService
                 {
                     foreach (string altTitle in lyricsDto.AlternateTitles)
                     {
-                        if (!song.AlternateTitles.Contains(altTitle.ToLowerInvariant()))
+                        if (!song.AlternateTitles.Any(title => string.Equals(title, altTitle, StringComparison.OrdinalIgnoreCase)))
                         {
-                            song.AlternateTitles.Add(altTitle.ToLowerInvariant());
+                            song.AlternateTitles.Add(altTitle);
                         }
                     }
                 }
@@ -89,9 +89,9 @@ public class FullSongService : IFullSongService
                 {
                     foreach (string altArtist in lyricsDto.AlternateArtists)
                     {
-                        if (!song.FeaturedArtists.Contains(altArtist.ToLowerInvariant()))
+                        if (!song.FeaturedArtists.Any(artist => string.Equals(artist, altArtist, StringComparison.OrdinalIgnoreCase)))
                         {
-                            song.FeaturedArtists.Add(altArtist.ToLowerInvariant());
+                            song.FeaturedArtists.Add(altArtist);
                         }
                     }
                 }

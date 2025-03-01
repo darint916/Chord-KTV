@@ -82,8 +82,8 @@ public class LrcService : ILrcService
             // Get unique titles and artists that meet minimum similarity threshold
             foreach (LrcLyricsDto result in searchResults.Take(5)) // Limit to top 5 results
             {
-                if (!string.IsNullOrWhiteSpace(result.TrackName) &&
-                    CompareUtils.CompareWeightedFuzzyScore(lyricsDtoMatch.TrackName ?? "", result.TrackName, null, null, null, 0) > 80)
+                if (!string.IsNullOrWhiteSpace(result.TrackName) && 
+                    !lyricsDtoMatch.AlternateTitles.Contains(result.TrackName))
                 {
                     lyricsDtoMatch.AlternateTitles.Add(result.TrackName);
                 }
