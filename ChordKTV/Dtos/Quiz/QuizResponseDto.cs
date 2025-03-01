@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace ChordKTV.Dtos.Quiz
 {
     public record QuizQuestionDto(

@@ -1,6 +1,4 @@
 using ChordKTV.Models.Quiz;
-using System;
-using System.Threading.Tasks;
 
 namespace ChordKTV.Data.Api.QuizData
 {

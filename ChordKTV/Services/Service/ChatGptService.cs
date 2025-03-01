@@ -177,7 +177,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         };
 
         string prompt = $@"
-You are a helpful assistant that generates multiple choice quizzes from song lyrics for romanization practice.
+You are a helpful assistant that generates multiple choice ENGLISH ROMANIZATION quizzes from song lyrics for romanization practice.
 The full lyrics are provided below:
 {lyrics}
 
@@ -187,7 +187,7 @@ Your task:
 - IMPORTANT: The first option (index 0) MUST ALWAYS be the correct romanization.
 - The difficulty of the quiz is set to {difficulty} on a scale from 1 (easiest) to 5 (hardest).
 - {difficultyInstruction}
-- All the options must be written using the latin alphabet.
+- All options must be written using the LATIN alphabet and NOTHING ELSE.
 - No two options should be the same, no matter the difficulty.
 - Respond with a JSON object exactly in the following format:
 {{

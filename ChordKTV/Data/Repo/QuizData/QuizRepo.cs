@@ -1,9 +1,6 @@
 using ChordKTV.Data.Api.QuizData;
 using ChordKTV.Models.Quiz;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ChordKTV.Data.Repo.QuizData
 {
