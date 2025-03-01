@@ -129,7 +129,7 @@ namespace ChordKTV.Services.Service
             );
         }
 
-        public async Task<QuizResponseDto> GenerateQuizAsync(Guid songId, bool useCachedQuiz, int difficulty, int numQuestions)
+        public async Task<Quiz> GenerateQuizAsync(Guid songId, bool useCachedQuiz, int difficulty, int numQuestions)
         {
             // Clamp difficulty between 1 and 5
             difficulty = Math.Clamp(difficulty, 1, 5);
@@ -154,7 +154,7 @@ namespace ChordKTV.Services.Service
                     
                     if (!HasDuplicateOptions(quizResponse))
                     {
-                        return quizResponse;
+                        return cachedQuiz;
                     }
                     
                     _logger.LogDebug("Cached quiz has duplicate options, generating new quiz");
@@ -225,7 +225,7 @@ namespace ChordKTV.Services.Service
             _logger.LogDebug("Successfully saved new quiz with ID: {QuizId}, Timestamp: {Timestamp}", 
                 quizEntity.Id, quizEntity.Timestamp);
 
-            return quizResponseDto;
+            return quizEntity;
         }
     }
 }

@@ -8,7 +8,7 @@ public class OpenAIResponseDto
     public string Id { get; set; } = string.Empty;
 
     [JsonPropertyName("object")]
-    public string Object { get; set; } = string.Empty;
+    public string ObjectType { get; set; } = string.Empty;
 
     [JsonPropertyName("created")]
     public long Created { get; set; }

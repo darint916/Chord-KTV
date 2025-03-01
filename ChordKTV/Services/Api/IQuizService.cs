@@ -1,10 +1,11 @@
 using ChordKTV.Dtos.Quiz;
+using ChordKTV.Models.Quiz;
 using System;
 
 namespace ChordKTV.Services.Api
 {
     public interface IQuizService
     {
-        public Task<QuizResponseDto> GenerateQuizAsync(Guid songId, bool useCachedQuiz, int difficulty, int numQuestions);
+        public Task<Quiz> GenerateQuizAsync(Guid songId, bool useCachedQuiz, int difficulty, int numQuestions);
     }
 }

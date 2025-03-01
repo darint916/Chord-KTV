@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos.Quiz;
+using ChordKTV.Models.Quiz;
 
 namespace ChordKTV.Controllers
 {
@@ -47,8 +48,12 @@ namespace ChordKTV.Controllers
 
                 try
                 {
-                    QuizResponseDto quiz = await _quizService.GenerateQuizAsync(songId, useCachedQuiz, difficulty, numQuestions);
-                    return Ok(quiz);
+                    Quiz quiz = await _quizService.GenerateQuizAsync(songId, useCachedQuiz, difficulty, numQuestions);
+                    
+                    // Map the entity to DTO for the API response
+                    QuizResponseDto quizResponseDto = MapQuizToDto(quiz);
+                    
+                    return Ok(quizResponseDto);
                 }
                 catch (InvalidOperationException ex) when (ex.Message.Contains("not found"))
                 {
@@ -64,6 +69,47 @@ namespace ChordKTV.Controllers
                 _logger.LogError(ex, "Error generating quiz for songId {SongId}", songId);
                 return StatusCode(500, new { message = "An unexpected error occurred while generating the quiz." });
             }
+        }
+        
+        private static QuizResponseDto MapQuizToDto(Quiz quiz)
+        {
+            ArgumentNullException.ThrowIfNull(quiz);
+
+            // Handle case where Questions is null
+            if (quiz.Questions == null)
+            {
+                return new QuizResponseDto(
+                    QuizId: quiz.Id,
+                    SongId: quiz.SongId,
+                    Difficulty: quiz.Difficulty,
+                    Timestamp: quiz.Timestamp,
+                    Questions: new List<QuizQuestionDto>()
+                );
+            }
+
+            // Map quiz to DTO
+            return new QuizResponseDto(
+                QuizId: quiz.Id,
+                SongId: quiz.SongId,
+                Difficulty: quiz.Difficulty,
+                Timestamp: quiz.Timestamp,
+                Questions: quiz.Questions
+                    .OrderBy(q => q.QuestionNumber)
+                    .Select(q =>
+                    {
+                        List<QuizOption> orderedOptions = q.Options?
+                            .OrderBy(o => o.OrderIndex)
+                            .ToList() ?? new List<QuizOption>();
+                            
+                        return new QuizQuestionDto(
+                            QuestionNumber: q.QuestionNumber,
+                            LyricPhrase: q.LyricPhrase,
+                            Options: orderedOptions.Select(o => o.Text).ToList(),
+                            CorrectOptionIndex: orderedOptions.FindIndex(o => o.IsCorrect)
+                        );
+                    })
+                    .ToList()
+            );
         }
     }
 }
