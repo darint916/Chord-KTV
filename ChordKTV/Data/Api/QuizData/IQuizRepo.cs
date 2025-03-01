@@ -1,12 +1,7 @@
-using ChordKTV.Models.Quiz;
-using System;
-using System.Threading.Tasks;
+namespace ChordKTV.Data.Api.QuizData;
 
-namespace ChordKTV.Data.Api.QuizData
+public interface IQuizRepo
 {
-    public interface IQuizRepo
-    {
-        public Task<Quiz?> GetLatestQuizAsync(Guid songId, int difficulty);
-        public Task AddAsync(Quiz quiz);
-    }
+    public global::System.Threading.Tasks.Task<global::ChordKTV.Models.Quiz.Quiz?> GetLatestQuizAsync(global::System.Guid songId, int difficulty);
+    public global::System.Threading.Tasks.Task AddAsync(global::ChordKTV.Models.Quiz.Quiz quiz);
 }

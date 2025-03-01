@@ -1,4 +1,5 @@
-using System.Text.Json;
+using System;
+using System.Threading.Tasks;
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Data.Api.QuizData;
 using ChordKTV.Dtos.Quiz;
@@ -13,12 +14,6 @@ namespace ChordKTV.Services.Service
         private readonly IChatGptService _chatGptService;
         private readonly IQuizRepo _quizRepo;
         private readonly ILogger<QuizService> _logger;
-
-        // Add static readonly field for options
-        private static readonly JsonSerializerOptions _jsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
 
         public QuizService(ISongRepo songRepo, IChatGptService chatGptService, IQuizRepo quizRepo, ILogger<QuizService> logger)
         {
@@ -47,6 +42,93 @@ namespace ChordKTV.Services.Service
             return false;
         }
 
+        private static Quiz MapDtoToEntity(QuizResponseDto dto)
+        {
+            Quiz quiz = new Quiz
+            {
+                Id = dto.QuizId,
+                SongId = dto.SongId,
+                Difficulty = dto.Difficulty,
+                NumQuestions = dto.Questions.Count,
+                Timestamp = dto.Timestamp,
+                Questions = new List<QuizQuestion>()
+            };
+
+            // Create questions and add them to the quiz
+            foreach (QuizQuestionDto questionDto in dto.Questions)
+            {
+                QuizQuestion question = new QuizQuestion
+                {
+                    Id = Guid.NewGuid(),
+                    QuizId = quiz.Id,
+                    Quiz = quiz,  // Set navigation property
+                    QuestionNumber = questionDto.QuestionNumber,
+                    LyricPhrase = questionDto.LyricPhrase,
+                    Options = new List<QuizOption>()
+                };
+
+                // Create options and add them to the question
+                for (int i = 0; i < questionDto.Options.Count; i++)
+                {
+                    QuizOption option = new QuizOption
+                    {
+                        Id = Guid.NewGuid(),
+                        QuestionId = question.Id,
+                        Question = question,  // Set navigation property
+                        Text = questionDto.Options[i],
+                        OrderIndex = i,
+                        IsCorrect = i == questionDto.CorrectOptionIndex
+                    };
+                    question.Options.Add(option);
+                }
+
+                quiz.Questions.Add(question);
+            }
+
+            return quiz;
+        }
+
+        private static QuizResponseDto MapEntityToDto(Quiz quiz)
+        {
+            ArgumentNullException.ThrowIfNull(quiz);
+
+            // Handle case where Questions is null
+            if (quiz.Questions == null)
+            {
+                return new QuizResponseDto(
+                    QuizId: quiz.Id,
+                    SongId: quiz.SongId,
+                    Difficulty: quiz.Difficulty,
+                    Timestamp: quiz.Timestamp,
+                    Questions: new List<QuizQuestionDto>()
+                );
+            }
+
+            // Map quiz to DTO
+            return new QuizResponseDto(
+                QuizId: quiz.Id,
+                SongId: quiz.SongId,
+                Difficulty: quiz.Difficulty,
+                Timestamp: quiz.Timestamp,
+                Questions: quiz.Questions
+                    .OrderBy(q => q.QuestionNumber)
+                    .Select(q =>
+                    {
+                        List<QuizOption> orderedOptions = q.Options?
+                            .OrderBy(o => o.OrderIndex)
+                            .ToList() ?? new List<QuizOption>();
+                            
+                        return new QuizQuestionDto(
+                            QuestionNumber: q.QuestionNumber,
+                            LyricPhrase: q.LyricPhrase,
+                            Options: orderedOptions.Select(o => o.Text).ToList(),
+                            CorrectOptionIndex: orderedOptions.FindIndex(o => o.IsCorrect)
+                        );
+                    })
+                    .ToList()
+            );
+        }
+
         public async Task<QuizResponseDto> GenerateQuizAsync(Guid songId, bool useCachedQuiz, int difficulty, int numQuestions)
         {
             // Clamp difficulty between 1 and 5
@@ -55,32 +137,38 @@ namespace ChordKTV.Services.Service
             // Clamp number of questions between 1 and 20
             numQuestions = Math.Clamp(numQuestions, 1, 20);
 
+            _logger.LogDebug("Generating quiz for SongId={SongId}, Difficulty={Difficulty}, UseCached={UseCached}", 
+                songId, difficulty, useCachedQuiz);
+
             // Try to use a cached quiz if requested
             if (useCachedQuiz)
             {
+                _logger.LogDebug("Attempting to retrieve cached quiz");
                 Quiz? cachedQuiz = await _quizRepo.GetLatestQuizAsync(songId, difficulty);
                 if (cachedQuiz != null)
                 {
-                    try
+                    _logger.LogDebug("Found cached quiz with ID: {QuizId}, Timestamp: {Timestamp}", 
+                        cachedQuiz.Id, cachedQuiz.Timestamp);
+                    
+                    QuizResponseDto quizResponse = MapEntityToDto(cachedQuiz);
+                    
+                    if (!HasDuplicateOptions(quizResponse))
                     {
-                        // Update the deserialization to use cached options
-                        QuizResponseDto? quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(
-                            cachedQuiz.QuizJson,
-                            _jsonOptions);
-                        if (quizResponse != null && !HasDuplicateOptions(quizResponse))
-                        {
-                            return quizResponse;
-                        }
+                        return quizResponse;
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to deserialize cached quiz for songId {SongId}", songId);
-                    }
+                    
+                    _logger.LogDebug("Cached quiz has duplicate options, generating new quiz");
+                }
+                else
+                {
+                    _logger.LogDebug("No cached quiz found, generating new quiz");
                 }
             }
 
             // Retrieve the song by songId and verify its lyrics
-            Models.SongData.Song? song = await _songRepo.GetSongByIdAsync(songId) ?? throw new InvalidOperationException($"Song with ID {songId} not found in database.");
+            Models.SongData.Song? song = await _songRepo.GetSongByIdAsync(songId) ?? 
+                throw new InvalidOperationException($"Song with ID {songId} not found in database.");
+                
             if (string.IsNullOrWhiteSpace(song.LrcLyrics))
             {
                 throw new InvalidOperationException("Song lyrics not available.");
@@ -101,6 +189,14 @@ namespace ChordKTV.Services.Service
 
                 // Generate a quiz by calling the ChatGPT service with the song lyrics
                 quizResponseDto = await _chatGptService.GenerateRomanizationQuizAsync(song.LrcLyrics, difficulty, numQuestions, songId);
+                
+                // Always update the timestamp to the current time instead of using the one from ChatGPT
+                DateTime currentUtcTime = DateTime.UtcNow;
+                quizResponseDto = quizResponseDto with { Timestamp = currentUtcTime };
+                
+                _logger.LogDebug("Generated new quiz with ID: {QuizId}, updated timestamp to: {Timestamp}", 
+                    quizResponseDto.QuizId, quizResponseDto.Timestamp);
+                    
                 retryCount++;
 
                 if (!HasDuplicateOptions(quizResponseDto))
@@ -114,28 +210,22 @@ namespace ChordKTV.Services.Service
                 }
             } while (true);
 
-            // Override LLM-generated values with our own
-            DateTime timestamp = DateTime.UtcNow;
-            Guid quizId = Guid.NewGuid();
-            QuizResponseDto quizResponseWithOverrides = quizResponseDto with
+            // Convert DTO to entity and save
+            Quiz quizEntity = MapDtoToEntity(quizResponseDto);
+            
+            // Double-check to ensure timestamp is current
+            if (quizEntity.Timestamp.Date != DateTime.UtcNow.Date)
             {
-                Timestamp = timestamp,
-                QuizId = quizId
-            };
-
-            // Cache the quiz in the database
-            Quiz quizEntity = new Quiz
-            {
-                Id = quizId,  // Use the same Guid for the entity
-                SongId = songId,
-                Difficulty = difficulty,
-                NumQuestions = numQuestions,
-                QuizJson = JsonSerializer.Serialize(quizResponseWithOverrides),
-                Timestamp = timestamp
-            };
+                quizEntity.Timestamp = DateTime.UtcNow;
+                _logger.LogDebug("Updated quiz timestamp to ensure current UTC time: {Timestamp}", quizEntity.Timestamp);
+            }
+            
             await _quizRepo.AddAsync(quizEntity);
+            
+            _logger.LogDebug("Successfully saved new quiz with ID: {QuizId}, Timestamp: {Timestamp}", 
+                quizEntity.Id, quizEntity.Timestamp);
 
-            return quizResponseWithOverrides;
+            return quizResponseDto;
         }
     }
 }

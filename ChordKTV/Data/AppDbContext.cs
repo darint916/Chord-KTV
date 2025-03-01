@@ -12,8 +12,32 @@ public class AppDbContext : DbContext
     public DbSet<Song> Songs { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Quiz> Quizzes { get; set; }
+    public DbSet<QuizQuestion> QuizQuestions { get; set; }
+    public DbSet<QuizOption> QuizOptions { get; set; }
+
     public AppDbContext(DbContextOptions<AppDbContext> opt) : base(opt)
     {
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Quiz>()
+            .HasMany(q => q.Questions)
+            .WithOne(qq => qq.Quiz)
+            .HasForeignKey(qq => qq.QuizId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<QuizQuestion>()
+            .HasMany(qq => qq.Options)
+            .WithOne(qo => qo.Question)
+            .HasForeignKey(qo => qo.QuestionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<QuizOption>()
+            .HasIndex(qo => new { qo.QuestionId, qo.OrderIndex })
+            .IsUnique();
     }
 }
 
