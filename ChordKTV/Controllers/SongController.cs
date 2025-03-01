@@ -279,7 +279,6 @@ public class SongController : ControllerBase
     [HttpPost("genius/{geniusId}/enrich")]
     public async Task<IActionResult> EnrichSong(int geniusId)
     {
-        _logger.LogInformation("EnrichSong endpoint hit with geniusId: {GeniusId}", geniusId);
         try
         {
             // First get the song by genius ID
