@@ -4,26 +4,20 @@ using Google.Apis.YouTube.v3.Data;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
 using ChordKTV.Utils;
-using System.Diagnostics;
 
 namespace ChordKTV.Services.Service;
 
 public class YouTubeApiClientService : IYouTubeClientService
 {
     private readonly string? _apiKey;
-    private readonly ILogger<YouTubeApiClientService> _logger;
 
-    public YouTubeApiClientService(IConfiguration configuration, ILogger<YouTubeApiClientService> logger)
+    public YouTubeApiClientService(IConfiguration configuration)
     {
         _apiKey = configuration["YouTube:ApiKey"];
-        _logger = logger;
     }
 
     public async Task<PlaylistDetailsDto?> GetPlaylistDetailsAsync(string playlistId, bool shuffle)
     {
-        var sw = new Stopwatch();
-        sw.Start();
-
         if (string.IsNullOrEmpty(_apiKey))
         {
             return null;
@@ -91,10 +85,6 @@ public class YouTubeApiClientService : IYouTubeClientService
         {
             Shuffle.FisherYatesShuffle(videos);
         }
-
-        sw.Stop();
-        _logger.LogDebug("⏱️ GetPlaylistDetailsAsync took: {ElapsedMilliseconds}ms for {VideoCount} videos",
-            sw.ElapsedMilliseconds, videos.Count);
 
         return new PlaylistDetailsDto(playlistTitle, videos);
     }
