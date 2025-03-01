@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Container, Stack, Typography } from '@mui/material';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
@@ -7,6 +6,7 @@ import Controls from '../../components/Controls/Controls';
 import axios from 'axios';
 import './SongPlayerPage.scss';
 import Grid from '@mui/material/Grid2';
+import { useSong } from '../../contexts/SongContext';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -25,10 +25,7 @@ const SongPlayerPage: React.FC = () => {
   const [duration, setDuration] = useState<number>(100);
   const videoId = 'ChQaa0eqZak';
   const playerRef = useRef<YouTubePlayer | null>(null);
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const songName = queryParams.get('song');
-  const artistName = queryParams.get('artist');
+  const { songName, artistName } = useSong();
 
   useEffect(() => {
     const fetchLyrics = async () => {

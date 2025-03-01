@@ -9,7 +9,8 @@ import {
   Container,
   Stack,
 } from '@mui/material';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useSong } from '../../contexts/SongContext';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../../contexts/authTypes';
 import axios from 'axios';
@@ -22,6 +23,7 @@ const HomePage: React.FC = () => {
   const [artistName, setArtistName] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { setSong } = useSong();
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
@@ -55,8 +57,8 @@ const HomePage: React.FC = () => {
       }
     }
 
-    // Navigate to SongPlayerPage with songName and artistName as query params
-    navigate(`/play-song?song=${encodeURIComponent(songName)}&artist=${encodeURIComponent(artistName)}`);
+    setSong(songName, artistName);
+    navigate(`/play-song`);
   };
 
   return (
