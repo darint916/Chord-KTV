@@ -30,6 +30,25 @@ namespace ChordKTV.Services.Service
             _logger = logger;
         }
 
+        private bool HasDuplicateOptions(QuizResponseDto quiz)
+        {
+            foreach (var question in quiz.Questions)
+            {
+                // Create a HashSet to check for duplicates efficiently
+                var uniqueOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var option in question.Options)
+                {
+                    if (!uniqueOptions.Add(option))
+                    {
+                        _logger.LogWarning("Found duplicate option in question {QuestionNumber}: {Option}", 
+                            question.QuestionNumber, option);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         public async Task<QuizResponseDto> GenerateQuizAsync(Guid songId, bool useCachedQuiz, int difficulty, int numQuestions)
         {
             // Clamp difficulty between 1 and 5
@@ -50,7 +69,7 @@ namespace ChordKTV.Services.Service
                         QuizResponseDto? quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(
                             cachedQuiz.QuizJson,
                             _jsonOptions);
-                        if (quizResponse != null)
+                        if (quizResponse != null && !HasDuplicateOptions(quizResponse))
                         {
                             return quizResponse;
                         }
@@ -69,8 +88,33 @@ namespace ChordKTV.Services.Service
                 throw new InvalidOperationException("Song lyrics not available.");
             }
 
-            // Generate a quiz by calling the ChatGPT service with the song lyrics
-            QuizResponseDto quizResponseDto = await _chatGptService.GenerateRomanizationQuizAsync(song.LrcLyrics, difficulty, numQuestions, songId);
+            // Maximum number of retries for quiz generation
+            const int maxRetries = 3;
+            QuizResponseDto quizResponseDto;
+            int retryCount = 0;
+
+            do
+            {
+                if (retryCount > 0)
+                {
+                    _logger.LogWarning("Retrying quiz generation due to duplicate options. Attempt {RetryCount} of {MaxRetries}", 
+                        retryCount + 1, maxRetries);
+                }
+
+                // Generate a quiz by calling the ChatGPT service with the song lyrics
+                quizResponseDto = await _chatGptService.GenerateRomanizationQuizAsync(song.LrcLyrics, difficulty, numQuestions, songId);
+                retryCount++;
+
+                if (!HasDuplicateOptions(quizResponseDto))
+                {
+                    break;
+                }
+
+                if (retryCount >= maxRetries)
+                {
+                    throw new InvalidOperationException("Failed to generate quiz without duplicate options after maximum retries.");
+                }
+            } while (true);
 
             // Override LLM-generated values with our own
             DateTime timestamp = DateTime.UtcNow;

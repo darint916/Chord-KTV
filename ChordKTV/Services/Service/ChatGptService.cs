@@ -169,7 +169,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         string difficultyInstruction = difficulty switch
         {
             1 => "### The incorrect answers must be literally entirely different sentences than the correct answer, but taken from the same original song. The wrong answers should be the same length as the original song lyric phrase.",
-            2 => "### The incorrect answers must use entirely different words than the correct answer, but still the same length as the original song lyric phrase.",
+            2 => "### The incorrect answers must be literally entirely different words than the correct answer, but still the same length and shape as the original song lyric phrase.",
             3 => "### The incorrect answers must be must contain very exaggerated, unique, and different words, but that look similar to the correct answer. The wrong answers should be OBVIOUSLY different and incorrect.",
             4 => "### The incorrect answers must be similar to the correct answer, but not exactly the same.",
             5 => "### The incorrect answers must be very close to the correct answer, almost exactly the same.",
