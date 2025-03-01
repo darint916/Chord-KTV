@@ -96,21 +96,21 @@ namespace ChordKTV.Services.Service
             if (quiz.Questions == null)
             {
                 return new QuizResponseDto(
-                    QuizId: quiz.Id,
-                    SongId: quiz.SongId,
-                    Difficulty: quiz.Difficulty,
-                    Timestamp: quiz.Timestamp,
-                    Questions: new List<QuizQuestionDto>()
+                    quizId: quiz.Id,
+                    songId: quiz.SongId,
+                    difficulty: quiz.Difficulty,
+                    timestamp: quiz.Timestamp,
+                    questions: new List<QuizQuestionDto>()
                 );
             }
 
             // Map quiz to DTO
             return new QuizResponseDto(
-                QuizId: quiz.Id,
-                SongId: quiz.SongId,
-                Difficulty: quiz.Difficulty,
-                Timestamp: quiz.Timestamp,
-                Questions: quiz.Questions
+                quizId: quiz.Id,
+                songId: quiz.SongId,
+                difficulty: quiz.Difficulty,
+                timestamp: quiz.Timestamp,
+                questions: quiz.Questions
                     .OrderBy(q => q.QuestionNumber)
                     .Select(q =>
                     {
@@ -119,10 +119,10 @@ namespace ChordKTV.Services.Service
                             .ToList() ?? new List<QuizOption>();
                             
                         return new QuizQuestionDto(
-                            QuestionNumber: q.QuestionNumber,
-                            LyricPhrase: q.LyricPhrase,
-                            Options: orderedOptions.Select(o => o.Text).ToList(),
-                            CorrectOptionIndex: orderedOptions.FindIndex(o => o.IsCorrect)
+                            questionNumber: q.QuestionNumber,
+                            lyricPhrase: q.LyricPhrase,
+                            options: orderedOptions.Select(o => o.Text).ToList(),
+                            correctOptionIndex: orderedOptions.FindIndex(o => o.IsCorrect)
                         );
                     })
                     .ToList()
@@ -192,7 +192,7 @@ namespace ChordKTV.Services.Service
                 
                 // Always update the timestamp to the current time instead of using the one from ChatGPT
                 DateTime currentUtcTime = DateTime.UtcNow;
-                quizResponseDto = quizResponseDto with { Timestamp = currentUtcTime };
+                quizResponseDto.Timestamp = currentUtcTime;
                 
                 _logger.LogDebug("Generated new quiz with ID: {QuizId}, updated timestamp to: {Timestamp}", 
                     quizResponseDto.QuizId, quizResponseDto.Timestamp);
