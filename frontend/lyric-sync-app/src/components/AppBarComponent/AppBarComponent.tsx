@@ -1,32 +1,13 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Avatar, Menu, MenuItem, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../../contexts/authTypes';
-import { jwtDecode } from 'jwt-decode';
+import GoogleAuth from '../GoogleAuth/GoogleAuth';
 import './AppBarComponent.scss';
-
-interface GooglePayload {
-  sub: string;
-  name: string;
-  email: string;
-  picture: string;
-}
 
 const AppBarComponent: React.FC = () => {
   const { user, setUser } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-
-  const handleLogin = (credentialResponse: CredentialResponse) => {
-    const decoded: GooglePayload = jwtDecode(credentialResponse.credential ?? '');
-    setUser({
-      id: decoded.sub,
-      name: decoded.name,
-      email: decoded.email,
-      picture: decoded.picture,
-      idToken: credentialResponse.credential ?? ''
-    });
-  };
 
   const handleLogout = () => {
     setUser(null);
@@ -40,11 +21,6 @@ const AppBarComponent: React.FC = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-  };
-
-  const handleLoginError = () => {
-    // Handle login error silently or show a user-friendly message
-    setUser(null);
   };
 
   return (
@@ -76,10 +52,7 @@ const AppBarComponent: React.FC = () => {
             </Menu>
           </>
         ) : (
-          <GoogleLogin
-            onSuccess={handleLogin}
-            onError={handleLoginError}
-          />
+          <GoogleAuth />
         )}
       </Toolbar>
     </AppBar>
