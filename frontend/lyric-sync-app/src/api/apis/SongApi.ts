@@ -16,15 +16,21 @@
 import * as runtime from '../runtime';
 import type {
   FullSongRequestDto,
+  FullSongResponseDto,
   PlaylistDetailsDto,
+  ProblemDetails,
   Song,
   TranslationRequestDto,
 } from '../models/index';
 import {
     FullSongRequestDtoFromJSON,
     FullSongRequestDtoToJSON,
+    FullSongResponseDtoFromJSON,
+    FullSongResponseDtoToJSON,
     PlaylistDetailsDtoFromJSON,
     PlaylistDetailsDtoToJSON,
+    ProblemDetailsFromJSON,
+    ProblemDetailsToJSON,
     SongFromJSON,
     SongToJSON,
     TranslationRequestDtoFromJSON,
@@ -351,7 +357,7 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiSongsSearchPostRaw(requestParameters: ApiSongsSearchPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiSongsSearchPostRaw(requestParameters: ApiSongsSearchPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullSongResponseDto>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -366,13 +372,14 @@ export class SongApi extends runtime.BaseAPI {
             body: FullSongRequestDtoToJSON(requestParameters['fullSongRequestDto']),
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => FullSongResponseDtoFromJSON(jsonValue));
     }
 
     /**
      */
-    async apiSongsSearchPost(requestParameters: ApiSongsSearchPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiSongsSearchPostRaw(requestParameters, initOverrides);
+    async apiSongsSearchPost(requestParameters: ApiSongsSearchPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullSongResponseDto> {
+        const response = await this.apiSongsSearchPostRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
