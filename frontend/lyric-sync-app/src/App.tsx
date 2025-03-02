@@ -7,7 +7,7 @@ import AppBarComponent from './components/AppBarComponent/AppBarComponent';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './contexts/AuthContext';
 import { GOOGLE_CLIENT_ID } from './config/google-auth';
-import { SongProvider } from './contexts/SongContext';
+import { SongProvider } from './contexts/SongContextProvider';
 
 const App: React.FC = () => {
   return (

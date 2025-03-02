@@ -1,15 +1,7 @@
 /* eslint-disable react/prop-types */
-import { createContext, useState } from 'react';
+import { useState } from 'react';
 import { FullSongResponseDto } from '../api';
-
-// Define the context type
-interface SongContextType {
-  song: FullSongResponseDto | null;
-  setSong: (_song: FullSongResponseDto) => void;
-}
-
-// Create context
-export const SongContext = createContext<SongContextType | undefined>(undefined);
+import { SongContext } from './SongContext';
 
 // Provider component
 export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

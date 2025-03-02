@@ -6,7 +6,7 @@ import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import Controls from '../../components/Controls/Controls';
 import './SongPlayerPage.scss';
 import Grid from '@mui/material/Grid2';
-import { useSong } from '../../contexts/SongContextHooks';
+import { useSong } from '../../contexts/SongContext';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {

@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { DataGrid, GridRowParams, GridToolbarContainer } from '@mui/x-data-grid';
 import { songApi } from '../../api/apiClient';
-import { useSong } from '../../contexts/SongContextHooks';
+import { useSong } from '../../contexts/SongContext';
 import { useNavigate } from 'react-router-dom';
 import './YouTubePlaylistViewer.scss';
 

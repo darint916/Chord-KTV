@@ -11,7 +11,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useSong } from '../../contexts/SongContextHooks';
+import { useSong } from '../../contexts/SongContext';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../../contexts/authTypes';
 import axios from 'axios';
