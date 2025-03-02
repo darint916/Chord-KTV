@@ -12,7 +12,6 @@ import {
 import { Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../../contexts/AuthTypes';
-import axios from 'axios';
 import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
 import './HomePage.scss';
 
@@ -22,26 +21,9 @@ const HomePage: React.FC = () => {
   const [artistName, setArtistName] = useState('');
   const [error, setError] = useState('');
 
-  const handleSearch = async () => {
-    if (user) {
-      try {
-        await axios.post('http://localhost:5259/api/random', 
-          {
-            songName,
-            artistName,
-            timestamp: new Date()
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${user.idToken}`
-            }
-          }
-        );
-        setError('');
-      } catch {
-        setError('Failed to save search history. Please try again.');
-      }
-    }
+  const handleSearch = () => {
+    // Just navigate to the play-song page
+    setError('');
   };
 
   return (

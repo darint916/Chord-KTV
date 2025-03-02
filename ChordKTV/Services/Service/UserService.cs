@@ -27,20 +27,15 @@ public class UserService : IUserService
     {
         try
         {
-            _logger.LogDebug("Validating Google token");
-
             GoogleJsonWebSignature.ValidationSettings validationSettings = new()
             {
                 Audience = [_googleClientId]
             };
 
             GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(idToken, validationSettings);
-            _logger.LogDebug("Successfully validated Google token for email: {Email}", payload.Email);
 
             // Check if user exists
             User? user = await _userRepo.GetUserByEmailAsync(payload.Email);
-            _logger.LogDebug("Database lookup for user {Email} returned: {UserFound}",
-                payload.Email, user != null ? "Found" : "Not Found");
 
             if (user == null)
             {
@@ -52,8 +47,12 @@ public class UserService : IUserService
                 };
                 await _userRepo.CreateUserAsync(user);
                 bool saved = await _userRepo.SaveChangesAsync();
-                _logger.LogDebug("Created new user: ID: {Id}, Email: {Email}, Save successful: {Saved}",
-                    user.Id, payload.Email, saved);
+
+                if (!saved)
+                {
+                    _logger.LogWarning("Failed to save new user: {Email}", payload.Email);
+                    return null;
+                }
             }
 
             return user;

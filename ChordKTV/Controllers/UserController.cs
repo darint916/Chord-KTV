@@ -3,6 +3,9 @@ using Microsoft.Extensions.Logging;
 using ChordKTV.Utils.Extensions;
 using ChordKTV.Services.Api;
 using ChordKTV.Models.UserData;
+using ChordKTV.Dtos;
+using AutoMapper;
+using AutoMapper.Configuration;
 
 namespace ChordKTV.Controllers;
 
@@ -13,13 +16,19 @@ public class UserController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
     private readonly IUserService _userService;
+    private readonly Mapper _mapper;
 
     public UserController(
         ILogger<UserController> logger,
-        IUserService userService)
+        IUserService userService,
+        IMapper mapper)
     {
         _logger = logger;
         _userService = userService;
+        
+        // Create a new mapper with the required configuration
+        MapperConfiguration config = new MapperConfiguration(cfg => cfg.CreateMap<User, UserDto>());
+        _mapper = new Mapper(config);
     }
 
     [HttpPost("auth/google")]
@@ -27,7 +36,6 @@ public class UserController : ControllerBase
     {
         try
         {
-            _logger.LogDebug("Received authentication request");
             string idToken = authorization.Replace("Bearer ", "");
 
             User? user = await _userService.AuthenticateGoogleUserAsync(idToken);
@@ -37,7 +45,8 @@ public class UserController : ControllerBase
                 return Unauthorized();
             }
 
-            return Ok(user);
+            UserDto userDto = _mapper.Map<UserDto>(user);
+            return Ok(userDto);
         }
         catch (Exception ex)
         {
