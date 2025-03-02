@@ -32,6 +32,12 @@ const YouTubePlaylistViewer = () => {
   const { setSong } = useSong();
   const navigate = useNavigate();
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter') {
+      fetchPlaylistSongs();
+    }
+  };
+
   const handleRowClick = async (params: GridRowParams) => {
     setSearchLoading(true);
     try {
@@ -109,6 +115,7 @@ const YouTubePlaylistViewer = () => {
         value={playlistUrl}
         onChange={(e) => setPlaylistUrl(e.target.value)}
         className="playlist-url-input"
+        onKeyDown={handleKeyDown}
       />
       <Button variant="contained" color="primary" onClick={fetchPlaylistSongs}>
         Load Playlist
