@@ -33,9 +33,18 @@ const SongPlayerPage: React.FC = () => {
     return <Typography variant="h5">Error: No time-synced lyrics found for song</Typography>;
   }
 
-  // Fetch YouTube video ID
+  // Fetch YouTube video ID if song.youtubeUrl undefined
   // TODO: Delete this hook and replace with backend stub once implemented
   useEffect(() => {
+    if (song.youTubeUrl) {
+      const match = song.youTubeUrl.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+      if (match) {
+        console.log(match[1]);
+        setVideoId(match[1]);
+        return;
+      }
+    }
+
     const fetchVideoId = async () => {
       try {
         const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
@@ -60,7 +69,7 @@ const SongPlayerPage: React.FC = () => {
     };
 
     fetchVideoId();
-  }, [song.title, song.artist]);
+  }, [song.title, song.artist, song.youTubeUrl]);
 
   const handlePlayerReady = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;

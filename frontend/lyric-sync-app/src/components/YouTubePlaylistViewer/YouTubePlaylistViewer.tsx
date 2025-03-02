@@ -8,7 +8,9 @@ import {
   Box,
 } from '@mui/material';
 import { DataGrid, GridToolbarContainer } from '@mui/x-data-grid';
-import { SongApi, Configuration } from '../../api';
+import { songApi } from '../../api/apiClient';
+import { useSong } from '../../contexts/SongContext';
+import { useNavigate } from 'react-router-dom';
 import './YouTubePlaylistViewer.scss';
 
 // Define the type for a song
@@ -20,19 +22,34 @@ interface Song {
   duration?: string;
 }
 
-// Initialize API client
-const songApi = new SongApi(
-  new Configuration({
-    basePath: import.meta.env.VITE_API_URL || 'http://localhost:5259',
-  })
-);
-
 const YouTubePlaylistViewer = () => {
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [songs, setSongs] = useState<Song[]>([]);
   const [playlistTitle, setPlaylistTitle] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [playlistLoading, setPlaylistLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState('');
+  const { setSong } = useSong();
+  const navigate = useNavigate();
+
+  const handleRowClick = async (params: any) => {
+    setSearchLoading(true);
+    try {
+      const response = await songApi.apiSongsSearchPost({
+        fullSongRequestDto: {
+          title: params.row.title,
+          artist: params.row.artist,
+          youTubeUrl: params.row.url
+        }
+      });
+      setSong(response);
+      navigate(`/play-song`);
+    } catch (error) {
+      setError('Search failed. Please try again.');
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
   const extractPlaylistId = (url: string) => {
     const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
@@ -43,12 +60,12 @@ const YouTubePlaylistViewer = () => {
     setError('');
     setSongs([]);
     setPlaylistTitle('');
-    setLoading(true);
+    setPlaylistLoading(true);
 
     const playlistId = extractPlaylistId(playlistUrl);
     if (!playlistId) {
       setError('Invalid playlist URL');
-      setLoading(false);
+      setPlaylistLoading(false);
       return;
     }
 
@@ -64,7 +81,7 @@ const YouTubePlaylistViewer = () => {
     } catch {
       setError('Failed to fetch playlist. Please try again.');
     }
-    setLoading(false);
+    setPlaylistLoading(false);
   };
 
   // Define columns for the DataGrid
@@ -96,7 +113,7 @@ const YouTubePlaylistViewer = () => {
       <Button variant="contained" color="primary" onClick={fetchPlaylistSongs}>
         Load Playlist
       </Button>
-      {loading && <CircularProgress className="loading-spinner" />}
+      {playlistLoading && <CircularProgress className="loading-spinner" />}
       {error && <Typography className="error-message">{error}</Typography>}
       {songs.length > 0 && (
         <Paper className="data-grid-container">
@@ -111,6 +128,14 @@ const YouTubePlaylistViewer = () => {
             pageSizeOptions={[5, 10, 20]}
             slots={{
               toolbar: CustomToolbar,
+            }}
+            onRowClick={!searchLoading ? handleRowClick : undefined}
+            loading={searchLoading}
+            slotProps={{
+              loadingOverlay: {
+                variant: 'linear-progress',
+                noRowsVariant: 'skeleton',
+              },
             }}
           />
         </Paper>
