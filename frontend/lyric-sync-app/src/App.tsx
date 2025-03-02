@@ -6,7 +6,7 @@ import HandwritingPage from './pages/HandwritingPage/HandwritingPage';
 import AppBarComponent from './components/AppBarComponent/AppBarComponent';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './contexts/AuthContext';
-import { GOOGLE_CLIENT_ID } from './config/google-auth';
+import { GOOGLE_CLIENT_ID } from './config/GoogleAuth';
 
 const App: React.FC = () => {
   return (
