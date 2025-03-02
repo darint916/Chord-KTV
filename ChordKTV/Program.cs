@@ -9,6 +9,8 @@ using ChordKTV.Utils;
 using ChordKTV.Dtos;
 using Serilog;
 using System.Globalization;
+using ChordKTV.Data.Api.QuizData;
+using ChordKTV.Data.Repo.QuizData;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -61,8 +63,10 @@ builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
 builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
 builder.Services.AddScoped<ISongRepo, SongRepo>();
 builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
+builder.Services.AddScoped<IQuizRepo, QuizRepo>();
 builder.Services.AddScoped<IFullSongService, FullSongService>();
 builder.Services.AddScoped<IHandwritingService, HandwritingService>();
+builder.Services.AddScoped<IQuizService, QuizService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
