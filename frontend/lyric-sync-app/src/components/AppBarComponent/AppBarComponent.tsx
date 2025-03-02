@@ -1,7 +1,7 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Avatar, Menu, MenuItem, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/authTypes';
+import { useAuth } from '../../contexts/AuthTypes';
 import GoogleAuth from '../GoogleAuth/GoogleAuth';
 import './AppBarComponent.scss';
 

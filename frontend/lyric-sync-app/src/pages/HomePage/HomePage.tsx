@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
-import { useAuth } from '../../contexts/authTypes';
+import { useAuth } from '../../contexts/AuthTypes';
 import axios from 'axios';
 import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
 import './HomePage.scss';
