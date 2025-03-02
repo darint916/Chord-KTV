@@ -2,6 +2,14 @@ import React from 'react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../contexts/authTypes';
+import { AuthApi, Configuration } from '../../api';
+
+// Initialize API client
+const authApi = new AuthApi(
+  new Configuration({
+    basePath: import.meta.env.VITE_API_URL || 'http://localhost:5259',
+  })
+);
 
 interface GooglePayload {
   sub: string;
@@ -17,13 +25,8 @@ const GoogleAuth: React.FC = () => {
     const decoded: GooglePayload = jwtDecode(credentialResponse.credential ?? '');
     
     try {
-      // Use fetch for the API call
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5259'}/api/auth/google`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${credentialResponse.credential}`
-        }
-      });
+      // Use the AuthApi stub instead of a direct fetch call
+      await authApi.apiAuthGooglePost(credentialResponse.credential ?? '');
 
       setUser({
         id: decoded.sub,
