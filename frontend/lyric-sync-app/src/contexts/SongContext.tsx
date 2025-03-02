@@ -1,14 +1,15 @@
+/* eslint-disable react/prop-types */
 import { createContext, useContext, useState } from 'react';
 import { FullSongResponseDto } from '../api';
 
 // Define the context type
 interface SongContextType {
   song: FullSongResponseDto | null;
-  setSong: (song: FullSongResponseDto) => void;
+  setSong: (_song: FullSongResponseDto) => void;
 }
 
 // Create context
-const SongContext = createContext<SongContextType | undefined>(undefined);
+export const SongContext = createContext<SongContextType | undefined>(undefined);
 
 // Provider component
 export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -19,13 +20,4 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </SongContext.Provider>
   );
-};
-
-// Hook to use song context
-export const useSong = () => {
-  const context = useContext(SongContext);
-  if (!context) {
-    throw new Error('useSong must be used within a SongProvider');
-  }
-  return context;
 };

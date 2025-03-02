@@ -11,7 +11,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useSong } from '../../contexts/SongContext';
+import { useSong } from '../../contexts/SongContextHooks';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../../contexts/authTypes';
 import axios from 'axios';
@@ -70,8 +70,8 @@ const HomePage: React.FC = () => {
         }
       });
       setSong(response);
-      navigate(`/play-song`);
-    } catch (error) {
+      navigate('/play-song');
+    } catch {
       setError('Search failed. Please try again.');
     } finally {
       setIsLoading(false); // Set loading state to false when the search finishes

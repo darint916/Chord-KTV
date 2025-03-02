@@ -6,7 +6,7 @@ import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import Controls from '../../components/Controls/Controls';
 import './SongPlayerPage.scss';
 import Grid from '@mui/material/Grid2';
-import { useSong } from '../../contexts/SongContext';
+import { useSong } from '../../contexts/SongContextHooks';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -39,7 +39,6 @@ const SongPlayerPage: React.FC = () => {
     if (song.youTubeUrl) {
       const match = song.youTubeUrl.match(/[?&]v=([a-zA-Z0-9_-]+)/);
       if (match) {
-        console.log(match[1]);
         setVideoId(match[1]);
         return;
       }
@@ -61,10 +60,10 @@ const SongPlayerPage: React.FC = () => {
         if (items.length > 0) {
           setVideoId(items[0].id.videoId);
         } else {
-          console.error('No video found');
+          return <Typography variant="h5">Error: No YouTube video found for song</Typography>;
         }
-      } catch (error) {
-        console.error('Error fetching video:', error);
+      } catch {
+        return <Typography variant="h5">Error: YouTube video fetch failed</Typography>;
       }
     };
 
@@ -94,7 +93,7 @@ const SongPlayerPage: React.FC = () => {
               <Typography variant="h3" className="song-title">
                 {song.title} by {song.artist}
               </Typography>
-              <YouTubePlayer videoId={videoId ?? ""} onReady={handlePlayerReady} />
+              <YouTubePlayer videoId={videoId ?? ''} onReady={handlePlayerReady} />
               <LyricDisplay rawLrcLyrics={song.lrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/>
               <Controls
                 playerRef={playerRef}

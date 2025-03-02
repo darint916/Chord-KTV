@@ -7,9 +7,9 @@ import {
   Paper,
   Box,
 } from '@mui/material';
-import { DataGrid, GridToolbarContainer } from '@mui/x-data-grid';
+import { DataGrid, GridRowParams, GridToolbarContainer } from '@mui/x-data-grid';
 import { songApi } from '../../api/apiClient';
-import { useSong } from '../../contexts/SongContext';
+import { useSong } from '../../contexts/SongContextHooks';
 import { useNavigate } from 'react-router-dom';
 import './YouTubePlaylistViewer.scss';
 
@@ -32,7 +32,7 @@ const YouTubePlaylistViewer = () => {
   const { setSong } = useSong();
   const navigate = useNavigate();
 
-  const handleRowClick = async (params: any) => {
+  const handleRowClick = async (params: GridRowParams) => {
     setSearchLoading(true);
     try {
       const response = await songApi.apiSongsSearchPost({
@@ -43,8 +43,8 @@ const YouTubePlaylistViewer = () => {
         }
       });
       setSong(response);
-      navigate(`/play-song`);
-    } catch (error) {
+      navigate('/play-song');
+    } catch {
       setError('Search failed. Please try again.');
     } finally {
       setSearchLoading(false);
