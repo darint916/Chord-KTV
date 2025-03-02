@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Stack, Typography } from '@mui/material';
+import axios from 'axios';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import Controls from '../../components/Controls/Controls';
-import axios from 'axios';
 import './SongPlayerPage.scss';
 import Grid from '@mui/material/Grid2';
 import { useSong } from '../../contexts/SongContext';
@@ -19,30 +19,48 @@ interface YouTubePlayer {
 }
 
 const SongPlayerPage: React.FC = () => {
-  const [rawLrcLyrics, setRawLrcLyrics] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [duration, setDuration] = useState<number>(100);
-  const videoId = 'ChQaa0eqZak';
   const playerRef = useRef<YouTubePlayer | null>(null);
-  const { songName, artistName } = useSong();
+  const [videoId, setVideoId] = useState<string | null>(null);
+  const { song } = useSong();
+  if (!song) {
+    return <Typography variant="h5">Error: No song selected</Typography>;
+  }
+  
+  if (!song.lrcLyrics || !song.lrcLyrics.trim()) {
+    return <Typography variant="h5">Error: No time-synced lyrics found for song</Typography>;
+  }
 
+  // Fetch YouTube video ID
+  // TODO: Delete this hook and replace with backend stub once implemented
   useEffect(() => {
-    const fetchLyrics = async () => {
+    const fetchVideoId = async () => {
       try {
-        const response = await axios.get('https://lrclib.net/api/get', {
+        const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
           params: {
-            track_name: songName,
-            artist_name: artistName,
+            part: 'snippet',
+            q: `${song.title} ${song.artist} official music video`,
+            key: import.meta.env.VITE_YT_API_KEY,
+            maxResults: 1,
+            type: 'video',
           },
         });
-        setRawLrcLyrics(response.data.syncedLyrics);
-      } catch (err) {
-        console.error('Error fetching lyrics:', err); // eslint-disable-line no-console
+
+        const items = response.data.items;
+        if (items.length > 0) {
+          setVideoId(items[0].id.videoId);
+        } else {
+          console.error('No video found');
+        }
+      } catch (error) {
+        console.error('Error fetching video:', error);
       }
     };
-    fetchLyrics();
-  }, [songName, artistName]);
+
+    fetchVideoId();
+  }, [song.title, song.artist]);
 
   const handlePlayerReady = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
@@ -65,10 +83,10 @@ const SongPlayerPage: React.FC = () => {
           <Grid size={12}>
             <Stack spacing={3} className="stack">
               <Typography variant="h3" className="song-title">
-                {songName} by {artistName}
+                {song.title} by {song.artist}
               </Typography>
-              <YouTubePlayer videoId={videoId} onReady={handlePlayerReady} />
-              <LyricDisplay rawLrcLyrics={rawLrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/>
+              <YouTubePlayer videoId={videoId ?? ""} onReady={handlePlayerReady} />
+              <LyricDisplay rawLrcLyrics={song.lrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/>
               <Controls
                 playerRef={playerRef}
                 currentTime={currentTime}

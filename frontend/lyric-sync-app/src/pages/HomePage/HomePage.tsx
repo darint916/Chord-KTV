@@ -8,6 +8,7 @@ import {
   Paper,
   Container,
   Stack,
+  CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useSong } from '../../contexts/SongContext';
@@ -16,12 +17,14 @@ import { useAuth } from '../../contexts/authTypes';
 import axios from 'axios';
 import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
 import './HomePage.scss';
+import { songApi } from '../../api/apiClient';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
   const [songName, setSongName] = useState('');
   const [artistName, setArtistName] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { setSong } = useSong();
 
@@ -36,6 +39,8 @@ const HomePage: React.FC = () => {
       setError('Please enter both a song name and an artist name.');
       return;
     }
+
+    setIsLoading(true);
 
     if (user) {
       try {
@@ -57,8 +62,20 @@ const HomePage: React.FC = () => {
       }
     }
 
-    setSong(songName, artistName);
-    navigate(`/play-song`);
+    try {
+      const response = await songApi.apiSongsSearchPost({
+        fullSongRequestDto: {
+          title: songName,
+          artist: artistName
+        }
+      });
+      setSong(response);
+      navigate(`/play-song`);
+    } catch (error) {
+      setError('Search failed. Please try again.');
+    } finally {
+      setIsLoading(false); // Set loading state to false when the search finishes
+    }
   };
 
   return (
@@ -93,6 +110,7 @@ const HomePage: React.FC = () => {
               label="Song Name"
               variant="filled"
               value={songName}
+              disabled={isLoading}
               onKeyDown={handleKeyDown}
               onChange={(e) => setSongName(e.target.value)}
               fullWidth
@@ -101,6 +119,7 @@ const HomePage: React.FC = () => {
             <TextField
               label="Artist Name"
               variant="filled"
+              disabled={isLoading} 
               value={artistName}
               onKeyDown={handleKeyDown}
               onChange={(e) => setArtistName(e.target.value)}
@@ -110,9 +129,10 @@ const HomePage: React.FC = () => {
             <IconButton
               aria-label="search"
               onClick={handleSearch}
+              disabled={isLoading}
               className="search-button"
             >
-              <SearchIcon />
+              {isLoading ? <CircularProgress size={24} /> : <SearchIcon />}
             </IconButton>
           </Stack>
         </Paper>
