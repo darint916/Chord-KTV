@@ -13,7 +13,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady }) => {
     height: '0', // Hide the video itself (audio only)
     width: '0',
     playerVars: {
-      controls: 0, // Hide the video controls
+      // controls: 0, // Hide the video controls
     },
   };
 
