@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Stack, Typography } from '@mui/material';
+import { Container, Typography } from '@mui/material';
 import axios from 'axios';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
-import Controls from '../../components/Controls/Controls';
 import './SongPlayerPage.scss';
 import Grid from '@mui/material/Grid2';
 import { useSong } from '../../contexts/SongContext';
@@ -20,8 +19,7 @@ interface YouTubePlayer {
 
 const SongPlayerPage: React.FC = () => {
   const [currentTime, setCurrentTime] = useState<number>(0);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [duration, setDuration] = useState<number>(100);
+  const [isPlaying] = useState<boolean>(false);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const [videoId, setVideoId] = useState<string | null>(null);
   const { song } = useSong();
@@ -72,38 +70,28 @@ const SongPlayerPage: React.FC = () => {
 
   const handlePlayerReady = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
-    if (playerInstance.getDuration) { setDuration(playerInstance.getDuration()); }
-
 
     setInterval(() => {
       if (playerRef.current) { setCurrentTime(playerRef.current.getCurrentTime()); }
     }, 500);
   };
 
-  const handlePlayPause = (playState: boolean) => setIsPlaying(playState);
-  const handleSeek = (seekTime: number) => setCurrentTime(seekTime);
-
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
-        <Grid container spacing={4} className="song-player-content">
+        <Typography variant="h3" className="song-title" align="center">
+          {song.title}
+        </Typography>
+        <Typography variant="h5" className="song-title" align="center">
+          {song.artist}
+        </Typography>
+        <Grid container className="song-player-content" spacing={5} height={'480px'} display={'flex'}>
           {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
-          <Grid size={12}>
-            <Stack spacing={3} className="stack">
-              <Typography variant="h3" className="song-title">
-                {song.title} by {song.artist}
-              </Typography>
-              <YouTubePlayer videoId={videoId ?? ''} onReady={handlePlayerReady} />
-              <LyricDisplay rawLrcLyrics={song.lrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/>
-              <Controls
-                playerRef={playerRef}
-                currentTime={currentTime}
-                duration={duration}
-                onSeek={handleSeek}
-                onPlayPause={handlePlayPause}
-                isPlaying={isPlaying}
-              />
-            </Stack>
+          <Grid flex={'1'} height={'100%'} alignContent={'center'}>
+            <YouTubePlayer videoId={videoId ?? ''} onReady={handlePlayerReady} />
+          </Grid>
+          <Grid flex={'1'} height={'100%'}>
+            <LyricDisplay rawLrcLyrics={song.lrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/>
           </Grid>
         </Grid>
       </Container>
