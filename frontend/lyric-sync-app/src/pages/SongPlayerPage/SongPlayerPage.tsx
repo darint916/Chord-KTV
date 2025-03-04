@@ -47,7 +47,7 @@ const SongPlayerPage: React.FC = () => {
         const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
           params: {
             part: 'snippet',
-            q: `${song.title} ${song.artist} official music video`,
+            q: `${song.title} ${song.artist}`,
             key: import.meta.env.VITE_YT_API_KEY,
             maxResults: 1,
             type: 'video',
