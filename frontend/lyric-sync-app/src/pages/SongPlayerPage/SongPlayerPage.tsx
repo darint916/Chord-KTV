@@ -73,7 +73,7 @@ const SongPlayerPage: React.FC = () => {
 
     setInterval(() => {
       if (playerRef.current) { setCurrentTime(playerRef.current.getCurrentTime()); }
-    }, 500);
+    }, 250);
   };
 
   return (
