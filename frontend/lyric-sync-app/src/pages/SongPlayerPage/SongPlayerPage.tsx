@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Typography } from '@mui/material';
+import { Container, Typography, Box } from '@mui/material';
 import axios from 'axios';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import './SongPlayerPage.scss';
 import Grid from '@mui/material/Grid2';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 import { useSong } from '../../contexts/SongContext';
 
 // Define the YouTubePlayer interface
@@ -23,6 +25,8 @@ const SongPlayerPage: React.FC = () => {
   const playerRef = useRef<YouTubePlayer | null>(null);
   const [videoId, setVideoId] = useState<string | null>(null);
   const { song } = useSong();
+  const [selectedTab, setSelectedTab] = useState(0);
+
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
   }
@@ -76,6 +80,10 @@ const SongPlayerPage: React.FC = () => {
     }, 250);
   };
 
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setSelectedTab(newValue);
+  };
+
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
@@ -90,8 +98,28 @@ const SongPlayerPage: React.FC = () => {
           <Grid flex={'1'} height={'100%'} alignContent={'center'}>
             <YouTubePlayer videoId={videoId ?? ''} onReady={handlePlayerReady} />
           </Grid>
-          <Grid flex={'1'} height={'100%'}>
-            <LyricDisplay rawLrcLyrics={song.lrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/>
+          <Grid className='right-grid-parent'>
+            <Box className='tabs-grid-parent'>
+              <Tabs value={selectedTab} onChange={handleTabChange} aria-label="lyric-tabs">
+                <Tab label="Original Lyrics" />
+                <Tab label="Romanized Lyrics" />
+                <Tab label="Translated Lyrics" />
+              </Tabs>
+            </Box>
+            {/* <LyricDisplay rawLrcLyrics={song.lrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/> */}
+            <Box className='lrc-grid-parent'>
+              <LyricDisplay 
+                rawLrcLyrics={
+                  selectedTab === 0 
+                    ? song.lrcLyrics ?? "Not supported"
+                    : selectedTab === 1
+                    ? song.lrcRomanizedLyrics ?? "Not supported"
+                    : song.lrcTranslatedLyrics ?? "Not supported"
+                } 
+                currentTime={currentTime} 
+                isPlaying={isPlaying} 
+              />
+            </Box>
           </Grid>
         </Grid>
       </Container>
