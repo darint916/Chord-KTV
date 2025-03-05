@@ -1,6 +1,7 @@
 using ChordKTV.Data.Api.QuizData;
 using ChordKTV.Models.Quiz;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -54,45 +55,35 @@ namespace ChordKTV.Data.Repo.QuizData
 
         public async Task AddAsync(Quiz quiz)
         {
-            _logger.LogDebug("Adding quiz with ID={QuizId}, Timestamp={Timestamp}, Questions count={QuestionsCount}",
-                quiz.Id, quiz.Timestamp, quiz.Questions?.Count ?? 0);
+            _logger.LogDebug("Adding quiz with ID={QuizId}, Questions count={QuestionsCount}",
+                quiz.Id, quiz.Questions?.Count ?? 0);
 
-            // Ensure the timestamp is set if not already
-            if (quiz.Timestamp == default)
+            // Always use current time for consistency
+            quiz.Timestamp = DateTime.UtcNow;
+            _logger.LogDebug("Set quiz timestamp to current UTC time: {Timestamp}", quiz.Timestamp);
+
+            // Use a transaction to ensure consistency in concurrent scenarios
+            using IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                quiz.Timestamp = DateTime.UtcNow;
-                _logger.LogDebug("Quiz had default timestamp, updated to current UTC time: {Timestamp}",
-                    quiz.Timestamp);
+                // Add the quiz to the context
+                _context.Quizzes.Add(quiz);
+                
+                // Persist to database
+                await _context.SaveChangesAsync();
+                
+                // Commit the transaction
+                await transaction.CommitAsync();
+                
+                _logger.LogDebug("Successfully saved quiz with ID={QuizId}, Timestamp={Timestamp}",
+                    quiz.Id, quiz.Timestamp);
             }
-
-            // Get latest quiz timestamp to ensure proper ordering
-            DateTime latestTimestamp = DateTime.MinValue;
-            Quiz? existingQuiz = await _context.Quizzes
-                .Where(q => q.SongId == quiz.SongId && q.Difficulty == quiz.Difficulty)
-                .OrderByDescending(q => q.Timestamp)
-                .FirstOrDefaultAsync();
-
-            if (existingQuiz != null)
+            catch (Exception ex)
             {
-                latestTimestamp = existingQuiz.Timestamp;
-                _logger.LogDebug("Found existing quiz with timestamp: {Timestamp}", latestTimestamp);
-
-                // If the new quiz timestamp is not newer than the latest existing quiz,
-                // update it to be slightly newer to ensure it appears as the most recent
-                if (quiz.Timestamp <= latestTimestamp)
-                {
-                    // Add 1 second to the latest timestamp to ensure proper ordering
-                    quiz.Timestamp = latestTimestamp.AddSeconds(1);
-                    _logger.LogDebug("Updated quiz timestamp to be newer than existing: {NewTimestamp}",
-                        quiz.Timestamp);
-                }
+                _logger.LogError(ex, "Error adding quiz with ID={QuizId}", quiz.Id);
+                await transaction.RollbackAsync();
+                throw;
             }
-
-            _context.Quizzes.Add(quiz);
-            await _context.SaveChangesAsync();
-
-            _logger.LogDebug("Successfully saved quiz with ID={QuizId}, Timestamp={Timestamp}",
-                quiz.Id, quiz.Timestamp);
         }
     }
 }
