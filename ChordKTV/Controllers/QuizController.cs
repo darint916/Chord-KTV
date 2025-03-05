@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos.Quiz;
 using ChordKTV.Models.Quiz;
+using AutoMapper;
 
 namespace ChordKTV.Controllers
 {
@@ -11,11 +12,13 @@ namespace ChordKTV.Controllers
     {
         private readonly IQuizService _quizService;
         private readonly ILogger<QuizController> _logger;
+        private readonly IMapper _mapper;
 
-        public QuizController(IQuizService quizService, ILogger<QuizController> logger)
+        public QuizController(IQuizService quizService, ILogger<QuizController> logger, IMapper mapper)
         {
             _quizService = quizService;
             _logger = logger;
+            _mapper = mapper;
         }
 
         [HttpGet("romanization")]
@@ -50,8 +53,8 @@ namespace ChordKTV.Controllers
                 {
                     Quiz quiz = await _quizService.GenerateQuizAsync(songId, useCachedQuiz, difficulty, numQuestions);
 
-                    // Map the entity to DTO for the API response
-                    QuizResponseDto quizResponseDto = MapQuizToDto(quiz);
+                    // Map the entity to DTO for the API response using AutoMapper
+                    QuizResponseDto quizResponseDto = _mapper.Map<QuizResponseDto>(quiz);
 
                     return Ok(quizResponseDto);
                 }
@@ -69,47 +72,6 @@ namespace ChordKTV.Controllers
                 _logger.LogError(ex, "Error generating quiz for songId {SongId}", songId);
                 return StatusCode(500, new { message = "An unexpected error occurred while generating the quiz." });
             }
-        }
-
-        private static QuizResponseDto MapQuizToDto(Quiz quiz)
-        {
-            ArgumentNullException.ThrowIfNull(quiz);
-
-            // Handle case where Questions is null
-            if (quiz.Questions == null)
-            {
-                return new QuizResponseDto(
-                    quizId: quiz.Id,
-                    songId: quiz.SongId,
-                    difficulty: quiz.Difficulty,
-                    timestamp: quiz.Timestamp,
-                    questions: new List<QuizQuestionDto>()
-                );
-            }
-
-            // Map quiz to DTO
-            return new QuizResponseDto(
-                quizId: quiz.Id,
-                songId: quiz.SongId,
-                difficulty: quiz.Difficulty,
-                timestamp: quiz.Timestamp,
-                questions: quiz.Questions
-                    .OrderBy(q => q.QuestionNumber)
-                    .Select(q =>
-                    {
-                        List<QuizOption> orderedOptions = q.Options?
-                            .OrderBy(o => o.OrderIndex)
-                            .ToList() ?? new List<QuizOption>();
-
-                        return new QuizQuestionDto(
-                            questionNumber: q.QuestionNumber,
-                            lyricPhrase: q.LyricPhrase,
-                            options: orderedOptions.Select(o => o.Text).ToList(),
-                            correctOptionIndex: orderedOptions.FindIndex(o => o.IsCorrect)
-                        );
-                    })
-                    .ToList()
-            );
         }
     }
 }
