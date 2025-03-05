@@ -2,7 +2,7 @@ using System;
 
 namespace ChordKTV.Models.Quiz;
 
-public sealed class Quiz
+public class Quiz
 {
     public Guid Id { get; set; }
     public Guid SongId { get; set; }

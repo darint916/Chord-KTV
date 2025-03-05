@@ -1,6 +1,6 @@
 namespace ChordKTV.Models.Quiz;
 
-public sealed class QuizQuestion
+public class QuizQuestion
 {
     public Guid Id { get; set; }
     public Guid QuizId { get; set; }

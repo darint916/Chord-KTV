@@ -1,6 +1,6 @@
 namespace ChordKTV.Dtos.Quiz;
 
-public sealed class QuizQuestionDto
+public class QuizQuestionDto
 {
     public int QuestionNumber { get; set; }
     public string LyricPhrase { get; set; } = string.Empty;
@@ -22,7 +22,7 @@ public sealed class QuizQuestionDto
     }
 }
 
-public sealed class QuizResponseDto
+public class QuizResponseDto
 {
     public Guid QuizId { get; set; }
     public Guid SongId { get; set; }
