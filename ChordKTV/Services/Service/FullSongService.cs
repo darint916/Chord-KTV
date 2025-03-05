@@ -57,6 +57,7 @@ public class FullSongService : IFullSongService
             {
                 song.LrcId = lyricsDto.Id;
                 song.LrcLyrics = lyricsDto.SyncedLyrics;
+                song.Duration = TimeSpan.FromSeconds(lyricsDto.Duration); //overwrite since we overwrite lyrics above too
             }
         }
 
@@ -81,7 +82,7 @@ public class FullSongService : IFullSongService
                 {
                     Title = lyricsDto.TrackName ?? title ?? "Unknown",
                     Artist = lyricsDto.ArtistName ?? artist ?? "Unknown",
-                    Duration = duration,
+                    Duration = lyricsDto.Duration > 0 ? TimeSpan.FromSeconds(lyricsDto.Duration) : duration,
                     LrcLyrics = lyricsDto.SyncedLyrics,
                     PlainLyrics = lyricsDto.PlainLyrics,
                     LrcId = lyricsDto.Id,
