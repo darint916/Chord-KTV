@@ -215,13 +215,6 @@ namespace ChordKTV.Services.Service
             // Convert DTO to entity and save
             Quiz quizEntity = MapDtoToEntity(quizResponseDto);
 
-            // Double-check to ensure timestamp is current
-            if (quizEntity.Timestamp.Date != DateTime.UtcNow.Date)
-            {
-                quizEntity.Timestamp = DateTime.UtcNow;
-                _logger.LogDebug("Updated quiz timestamp to ensure current UTC time: {Timestamp}", quizEntity.Timestamp);
-            }
-
             await _quizRepo.AddAsync(quizEntity);
 
             _logger.LogDebug("Successfully saved new quiz with ID: {QuizId}, Timestamp: {Timestamp}",
