@@ -93,17 +93,19 @@ public class FullSongService : IFullSongService
             }
         }
 
-        //check if lyrics are romanized (note that we do not check LRC Lib for romanization if db alr has synced lyrics)
-        bool needRomanization = true;
-        bool needTranslation = string.IsNullOrWhiteSpace(song.LrcTranslatedLyrics);
-        if (string.IsNullOrWhiteSpace(song.LrcRomanizedLyrics) && !string.IsNullOrWhiteSpace(lyricsDto?.RomanizedSyncedLyrics))
+        // check if lyrics are translated, don't need to translate alr english
+        if (song.GeniusMetaData.Language.Equals(LanguageCode.EN))
         {
-            song.LrcRomanizedLyrics = lyricsDto.RomanizedSyncedLyrics;
-            needRomanization = false;
+            song.LrcRomanizedLyrics ??= lyricsDto?.RomanizedSyncedLyrics;
         }
+        bool needTranslation = string.IsNullOrWhiteSpace(song.LrcTranslatedLyrics);
+
+        //check if lyrics are romanized (note that we do not check LRC Lib for romanization if db alr has synced lyrics)
+        song.LrcRomanizedLyrics ??= lyricsDto?.RomanizedSyncedLyrics; //only assigns when song rom null
+        bool needRomanization = string.IsNullOrWhiteSpace(song.LrcRomanizedLyrics); //if still null, gpt rom
 
         //Get Romanized and Translated lyrics from GPT if not already present
-        if (string.IsNullOrWhiteSpace(song.LrcTranslatedLyrics) || needRomanization)
+        if (needTranslation || needRomanization)
         {
             TranslationResponseDto translationDto = await _chatGptService.TranslateLyricsAsync(
                 song.LrcLyrics, song.GeniusMetaData.Language, needRomanization, needTranslation);
