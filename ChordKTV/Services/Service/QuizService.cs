@@ -77,7 +77,7 @@ namespace ChordKTV.Services.Service
                         Question = question,  // Set navigation property
                         Text = questionDto.Options[i],
                         OrderIndex = i,
-                        IsCorrect = i == questionDto.CorrectOptionIndex
+                        IsCorrect = questionDto.CorrectOptionIndex.HasValue && i == questionDto.CorrectOptionIndex.Value
                     };
                     question.Options.Add(option);
                 }

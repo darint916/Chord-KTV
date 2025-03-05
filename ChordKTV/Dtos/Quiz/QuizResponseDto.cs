@@ -5,7 +5,7 @@ public sealed class QuizQuestionDto
     public int QuestionNumber { get; set; }
     public string LyricPhrase { get; set; } = string.Empty;
     public List<string> Options { get; set; } = new();
-    public int CorrectOptionIndex { get; set; }
+    public int? CorrectOptionIndex { get; set; }
 
     public QuizQuestionDto() { }
 
@@ -13,7 +13,7 @@ public sealed class QuizQuestionDto
         int questionNumber,
         string lyricPhrase,
         List<string> options,
-        int correctOptionIndex)
+        int? correctOptionIndex)
     {
         QuestionNumber = questionNumber;
         LyricPhrase = lyricPhrase;
