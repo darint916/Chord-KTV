@@ -22,82 +22,30 @@ namespace ChordKTV.Data.Repo.QuizData
         {
             _logger.LogDebug("Searching for latest quiz with SongId={SongId}, Difficulty={Difficulty}", songId, difficulty);
 
-            // First check how many quizzes match the criteria
-            List<Quiz> quizzes = await _context.Quizzes
+            // Get the most recent quiz with questions and options in a single query
+            Quiz? quiz = await _context.Quizzes
                 .Where(q => q.SongId == songId && q.Difficulty == difficulty)
                 .OrderByDescending(q => q.Timestamp)
-                .ToListAsync();
+                .Include(q => q.Questions)
+                    .ThenInclude(q => q.Options)
+                .FirstOrDefaultAsync();
 
-            if (quizzes.Count == 0)
+            if (quiz == null)
             {
                 _logger.LogDebug("No quizzes found for SongId={SongId}, Difficulty={Difficulty}", songId, difficulty);
                 return null;
             }
 
-            // Log all matching quizzes to help diagnose timestamp ordering issues
-            _logger.LogDebug("Found {Count} quizzes for SongId={SongId}, Difficulty={Difficulty}",
-                quizzes.Count, songId, difficulty);
+            _logger.LogDebug("Found quiz with ID={QuizId}, Timestamp={Timestamp}, Questions count={QuestionsCount}",
+                quiz.Id, quiz.Timestamp, quiz.Questions?.Count ?? 0);
 
-            for (int i = 0; i < quizzes.Count; i++)
-            {
-                _logger.LogDebug("Quiz {Index}: ID={QuizId}, Timestamp={Timestamp}",
-                    i, quizzes[i].Id, quizzes[i].Timestamp);
-            }
-
-            // Get the most recent quiz
-            Quiz quiz = quizzes.First();
-            _logger.LogDebug("Selected most recent quiz with ID={QuizId}, Timestamp={Timestamp}",
-                quiz.Id, quiz.Timestamp);
-
-            // Explicitly load the questions
-            await _context.Entry(quiz)
-                .Collection(q => q.Questions)
-                .LoadAsync();
-
-            _logger.LogDebug("Loaded {Count} questions for quiz ID={QuizId}",
-                quiz.Questions?.Count ?? 0, quiz.Id);
-
-            // Explicitly load options for each question
+            // Log question and option counts for debugging
             if (quiz.Questions != null && quiz.Questions.Count > 0)
             {
                 foreach (QuizQuestion question in quiz.Questions)
                 {
-                    await _context.Entry(question)
-                        .Collection(q => q.Options)
-                        .LoadAsync();
-
-                    _logger.LogDebug("Loaded {Count} options for question {QuestionNumber}",
-                        question.Options?.Count ?? 0, question.QuestionNumber);
-                }
-            }
-            else
-            {
-                _logger.LogDebug("No questions found, trying manual query for quiz ID={QuizId}", quiz.Id);
-
-                // Fallback: Try to manually query for questions if none were loaded
-                List<QuizQuestion> questions = await _context.QuizQuestions
-                    .Where(q => q.QuizId == quiz.Id)
-                    .ToListAsync();
-
-                _logger.LogDebug("Direct query found {Count} questions for quiz ID={QuizId}",
-                    questions.Count, quiz.Id);
-
-                if (questions.Count > 0)
-                {
-                    quiz.Questions = questions;
-
-                    // Load options for each question
-                    foreach (QuizQuestion question in quiz.Questions)
-                    {
-                        List<QuizOption> options = await _context.QuizOptions
-                            .Where(o => o.QuestionId == question.Id)
-                            .ToListAsync();
-
-                        _logger.LogDebug("Direct query found {Count} options for question {QuestionNumber}",
-                            options.Count, question.QuestionNumber);
-
-                        question.Options = options;
-                    }
+                    _logger.LogDebug("Question {QuestionNumber} has {Count} options",
+                        question.QuestionNumber, question.Options?.Count ?? 0);
                 }
             }
 
