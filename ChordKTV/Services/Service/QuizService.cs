@@ -174,7 +174,9 @@ namespace ChordKTV.Services.Service
                 throw new InvalidOperationException("Song lyrics not available.");
             }
 
-            // Maximum number of retries for quiz generation
+            // 3 is the maximum number of retries for quiz generation. 
+            // It is already unlikely that the first attempt will have duplicate options. 
+            // If we hit more than 3 retries, it means there is a problem with the input lyrics or the LLM. We should stop here to avoid an infinite loop.
             const int maxRetries = 3;
             QuizResponseDto quizResponseDto;
             int retryCount = 0;
