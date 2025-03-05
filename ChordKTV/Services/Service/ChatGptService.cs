@@ -178,6 +178,7 @@ The full lyrics are provided below:
 
 Your task:
 - Identify and select {numQuestions} key phrases from the lyrics that are significant for romanization.
+- The lyricPhrase has to be entirely non-latin.
 - For each key phrase, create a multiple-choice question with exactly 4 answer options (only one is correct, the first option is the correct romanization).
 - IMPORTANT: The first option (index 0) MUST ALWAYS be the correct romanization.
 - The difficulty of the quiz is set to {difficulty} on a scale from 1 (easiest) to 5 (hardest).
@@ -193,7 +194,7 @@ Your task:
     ""questions"": [
         {{
             ""questionNumber"": 1,
-            ""lyricPhrase"": ""<extracted song lyric phrase>"",
+            ""lyricPhrase"": ""<extracted song lyric phrase that is entirely non-latin>"",
             ""options"": [""<correct romanization>"", ""wrong1 in latin alphabet"", ""wrong2 in latin alphabet"", ""wrong3 in latin alphabet""],
             ""correctOptionIndex"": 0
         }},
