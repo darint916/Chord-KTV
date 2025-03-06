@@ -87,7 +87,7 @@ public class YouTubeApiClientService : IYouTubeClientService
         // Batch video details requests in parallel
         IEnumerable<Task<Dictionary<string, VideoDetails>>> videoDetailsTasks = allVideoIds
             .Chunk(50)
-            .Select(idBatch => GetVideosDetailsAsync(googleYouTube, idBatch.ToList()));
+            .Select(idBatch => GetVideosDetailsAsync(_youTubeService, idBatch.ToList()));
 
         Dictionary<string, VideoDetails>[] videoDetailsResults = await Task.WhenAll(videoDetailsTasks);
         var allVideoDetails = videoDetailsResults.SelectMany(dict => dict).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -150,7 +150,7 @@ public class YouTubeApiClientService : IYouTubeClientService
         return result;
     }
 
-    public async Task<string?> GetYoutubeVideoLinkAsync(string title, string artist, string? album, TimeSpan? duration)
+    public async Task<string?> SearchYoutubeVideoLinkAsync(string title, string artist, string? album, TimeSpan? duration)
     {
         if (string.IsNullOrEmpty(_youtubeSearchApiKey))
         {
@@ -161,17 +161,14 @@ public class YouTubeApiClientService : IYouTubeClientService
         SearchResource.ListRequest searchRequest = _youTubeSearchService.Search.List("snippet");
         searchRequest.Q = $"{title} {artist} {album ?? ""}";
         searchRequest.Type = "video";
-        searchRequest.MaxResults = 3; //less, and then we compare durations
+        searchRequest.MaxResults = 3; //more simple, maybe expand in future to allow users to choose
 
         //https://stackoverflow.com/a/17738994/17621099 category type 10 is music for all regions where allowed
         searchRequest.VideoCategoryId = "10";
 
         SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
-        if (duration.HasValue)
-        {
-            //order by duration
-            
-        }
-
+        //first search response item that has video id
+        SearchResult? vid = searchResponse.Items.FirstOrDefault(item => item.Id.Kind == "youtube#video"); //pray and assume youtube search is accurate
+        return vid?.Id.VideoId;
     }
 }

@@ -142,7 +142,6 @@ public class FullSongService : IFullSongService
             }
             if (lyricsDto.ArtistName is not null && !song.FeaturedArtists.Contains(lyricsDto.ArtistName.ToLowerInvariant()) && !string.IsNullOrWhiteSpace(lyricsDto.ArtistName))
             {
-
                 song.FeaturedArtists.Add(lyricsDto.ArtistName.ToLowerInvariant());
             }
             if (lyricsDto.Id != 0 && song.LrcId != lyricsDto.Id)
