@@ -137,7 +137,7 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
 
             VideoListResponse videoResponse = await videoRequest.ExecuteAsync();
 
-            foreach (Video? video in videoResponse.Items)
+            foreach (Video video in videoResponse.Items)
             {
                 TimeSpan duration = TimeSpan.Zero;
                 try
@@ -159,7 +159,7 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         return result;
     }
 
-    public async Task<string?> SearchYoutubeVideoLinkAsync(string title, string artist, string? album)
+    public async Task<string?> SearchYoutubeVideoLinkAsync(string title, string artist, string? album, TimeSpan? duration, double durationTolerance = 3.5)
     {
         if (string.IsNullOrEmpty(_youtubeSearchApiKey))
         {
@@ -170,15 +170,38 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         SearchResource.ListRequest searchRequest = _youTubeSearchService.Search.List("snippet");
         searchRequest.Q = $"{title} {artist} {album ?? ""}";
         searchRequest.Type = "video";
-        searchRequest.MaxResults = 3; //more simple, maybe expand in future to allow users to choose
+        searchRequest.MaxResults = 4; //more simple, maybe expand in future to allow users to choose, 2 groups based on relevancy sort
 
         //https://stackoverflow.com/a/17738994/17621099 category type 10 is music for all regions where allowed
         searchRequest.VideoCategoryId = "10";
 
         SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
         //first search response item that has video id
-        SearchResult? vid = searchResponse.Items.FirstOrDefault(item => item.Id.Kind == "youtube#video"); //pray and assume youtube search is accurate
-        return vid?.Id.VideoId;
+
+        List<string> videoIds = searchResponse.Items
+            .Where(item => item.Id.Kind == "youtube#video")
+            .Select(item => item.Id.VideoId)
+            .ToList();
+
+        Dictionary<string, VideoDetails> videoDetailsDict = await GetVideosDetailsAsync(videoIds);
+
+        if (duration.HasValue)
+        {
+            string? withinDurationId = videoIds.FirstOrDefault(id =>
+                videoDetailsDict.TryGetValue(id, out VideoDetails? details) &&
+                Math.Abs((details.Duration - duration.Value).TotalSeconds) <= durationTolerance);
+
+            if (withinDurationId != null)
+            {
+                return withinDurationId;
+            }
+
+            //return closest duration match
+            return videoIds.MinBy(id => videoDetailsDict.TryGetValue(id, out VideoDetails? details)
+                ? Math.Abs((details.Duration - duration.Value).TotalSeconds)
+                : double.MaxValue);
+        }
+        return videoIds.FirstOrDefault();
     }
 
     //Below is the youtube service dispose stuff, needed as we abstracted the instances out, basically so they can be shared, these get handled by DI automatically
