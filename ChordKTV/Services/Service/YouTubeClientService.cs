@@ -187,6 +187,7 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
 
         if (duration.HasValue)
         {
+            durationTolerance = Math.Abs(durationTolerance);
             string? withinDurationId = videoIds.FirstOrDefault(id =>
                 videoDetailsDict.TryGetValue(id, out VideoDetails? details) &&
                 Math.Abs((details.Duration - duration.Value).TotalSeconds) <= durationTolerance);
