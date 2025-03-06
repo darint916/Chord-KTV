@@ -18,12 +18,12 @@
       .right-grid-parent {
         height: 100%;
         display: flex;
+        flex: 1;
         flex-direction: column;
         background-color: black;
         border-radius: 8px;
         overflow: auto;
         background: linear-gradient(45deg, #8a2be2, #e2e8f085);
-        // box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5); // Subtle shadow
         box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
         
         .lrc-grid-parent {
@@ -31,7 +31,7 @@
           justify-content: center;
           align-items: center;
           height: fit-content;
-          // background-color: black;
+          width: fit-content;
           overflow: auto;
           margin-top: 2px;
         }
@@ -39,9 +39,8 @@
         .tabs-grid-parent {
           display: flex;
           flex-direction: column;
-          width: 100%;
+          width: fit-content;
           height: fit-content;
-          // background-color: white;
         }
         
       }
