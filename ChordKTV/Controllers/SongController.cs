@@ -79,7 +79,7 @@ public class SongController : Controller
         }
         catch (HttpRequestException ex) // Handles HTTP request errors
         {
-            return StatusCode(503, new { message = "Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
+            return StatusCode(503, new { message = "HTTP FAIL Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
         }
         catch (ArgumentException ex) // Handles invalid arguments
         {
@@ -115,13 +115,13 @@ public class SongController : Controller
             Song? fullSong = await _fullSongService.GetFullSongAsync(request.Title, request.Artist, request.Album, request.Duration, lyricsQuery, request.YouTubeId);
             if (fullSong == null)
             {
-                return NotFound(new { message = "Song not found. null return" });
+                return NotFound(new { message = "Song search: song not found. null return" });
             }
             return Ok(_mapper.Map<FullSongResponseDto>(fullSong));
         }
         catch (HttpRequestException ex)
         {
-            return StatusCode(503, new { message = "Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
+            return StatusCode(503, new { message = "HttpRequestException in songs/search ", error = ex.Message });
         }
         catch (Exception ex)
         {

@@ -31,7 +31,7 @@ public class FullSongService : IFullSongService
     {
         if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(lyrics) && string.IsNullOrWhiteSpace(youtubeId))
         {
-            throw new ArgumentException("Title or lyrics or youtubeid must be provided");
+            throw new ArgumentException("GetFullSongAsync: Title or lyrics or youtubeid must be provided");
         }
 
         //if youtube id first supplied, we just use that to search > user input if possible
@@ -41,7 +41,7 @@ public class FullSongService : IFullSongService
             Dictionary<string, VideoDetails> videoDict = await _youTubeClientService.GetVideosDetailsAsync([youtubeId]);
             if (videoDict.Count == 0)
             {
-                _logger.LogWarning("Youtube video not found for id: {YoutubeId}", youtubeId);
+                _logger.LogWarning("GetVideosDetailsAsync: Youtube video not found for id: {YoutubeId}", youtubeId);
             }
             else
             {
@@ -159,7 +159,7 @@ public class FullSongService : IFullSongService
         }
         else if (string.IsNullOrWhiteSpace(song.YoutubeId)) //query for a vid if none provided and non exist, expensive call
         {
-            song.YoutubeId = await _youTubeClientService.SearchYoutubeVideoLinkAsync(song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name);
+            song.YoutubeId = await _youTubeClientService.SearchYoutubeVideoLinkAsync(song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, song.Duration);
         }
 
         //Add residual information (kinda messy)
