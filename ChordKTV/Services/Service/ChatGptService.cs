@@ -7,6 +7,9 @@ using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Dtos.Quiz;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos.OpenAI;
+using ChordKTV.Models.Quiz;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace ChordKTV.Services.Service;
 public class ChatGptService : IChatGptService
@@ -158,14 +161,13 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         }
     }
 
-    public async Task<QuizResponseDto> GenerateRomanizationQuizAsync(string lyrics, int difficulty, int numQuestions, Guid songId)
+    public async Task<Quiz> GenerateRomanizationQuizAsync(string lyrics, int difficulty, int numQuestions, Guid songId)
     {
-        // Construct a prompt with detailed instructions
         string difficultyInstruction = difficulty switch
         {
             1 => "### The incorrect answers must be literally entirely different sentences than the correct answer, but taken from the same original song. The wrong answers should be the same length as the original song lyric phrase.",
             2 => "### The incorrect answers must be literally entirely different words than the correct answer, but still the same length and shape as the original song lyric phrase.",
-            3 => "### The incorrect answers must be must contain very exaggerated, unique, and different words, but that look similar to the correct answer. The wrong answers should be OBVIOUSLY different and incorrect.",
+            3 => "### The incorrect answers must contain very exaggerated, unique, and different words, but that look similar to the correct answer. The wrong answers should be OBVIOUSLY different and incorrect.",
             4 => "### The incorrect answers must be similar to the correct answer, but not exactly the same.",
             5 => "### The incorrect answers must be very close to the correct answer, almost exactly the same.",
             _ => throw new ArgumentOutOfRangeException(nameof(difficulty), "Difficulty must be between 1 and 5")
@@ -187,35 +189,29 @@ Your task:
 - No two options should be the same, no matter the difficulty.
 - Respond with a JSON object exactly in the following format:
 {{
-    ""quizId"": ""<a unique GUID>"",
-    ""songId"": ""{songId}"",
-    ""difficulty"": {difficulty},
-    ""timestamp"": ""<current ISO 8601 datetime>"",
     ""questions"": [
         {{
             ""questionNumber"": 1,
             ""lyricPhrase"": ""<extracted song lyric phrase that is entirely non-latin>"",
-            ""options"": [""<correct romanization>"", ""wrong1 in latin alphabet"", ""wrong2 in latin alphabet"", ""wrong3 in latin alphabet""],
-            ""correctOptionIndex"": 0
+            ""options"": [""<correct romanization>"", ""wrong1 in latin alphabet"", ""wrong2 in latin alphabet"", ""wrong3 in latin alphabet""]
         }},
         ... up to {numQuestions} questions
     ]
 }}
 Ensure that the JSON is the only output and does not include any additional text or explanation.
-All options must be written using the LATIN alphabet and NOTHING ELSE.
-Note: The correctOptionIndex should ALWAYS be 0 as the correct answer must be the first option.";
+All options must be written using the LATIN alphabet and NOTHING ELSE.";
+
         string systemPrompt = "You are an assistant specialized in generating romanization quizzes from song lyrics.";
 
         var requestBody = new
         {
-            model = Model,  // Use the quiz-specific model here
+            model = Model,
             messages = new object[]
             {
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = prompt }
             },
-            temperature = 1.0,
-            // top_p = 0.9
+            temperature = 1.0
         };
 
         string jsonRequest = JsonSerializer.Serialize(requestBody);
@@ -238,8 +234,6 @@ Note: The correctOptionIndex should ALWAYS be 0 as the correct answer must be th
             }
 
             string responseContent = await response.Content.ReadAsStringAsync();
-
-            // Directly deserialize the OpenAI response
             OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(responseContent, _jsonOptions);
 
             if (openAIResponse == null || openAIResponse.Choices.Count == 0)
@@ -256,13 +250,52 @@ Note: The correctOptionIndex should ALWAYS be 0 as the correct answer must be th
                 throw new InvalidOperationException("The ChatGPT API returned an empty response.");
             }
 
-            QuizResponseDto? quizResponse = JsonSerializer.Deserialize<QuizResponseDto>(messageContent, _jsonOptions);
-            if (quizResponse == null)
+            QuizResponseDto? gptResponse = JsonSerializer.Deserialize<QuizResponseDto>(messageContent, _jsonOptions);
+            if (gptResponse?.Questions == null)
             {
                 _logger.LogError("Failed to deserialize quiz response. Raw response: {MessageContent}", messageContent);
                 throw new InvalidOperationException("Invalid quiz response format from ChatGPT.");
             }
-            return quizResponse;
+
+            var quiz = new Quiz
+            {
+                Id = Guid.NewGuid(),
+                SongId = songId,
+                Difficulty = difficulty,
+                NumQuestions = gptResponse.Questions.Count,
+                Timestamp = DateTime.UtcNow,
+                Questions = []
+            };
+
+            foreach (QuizQuestionDto questionDto in gptResponse.Questions)
+            {
+                var question = new QuizQuestion
+                {
+                    Id = Guid.NewGuid(),
+                    QuizId = quiz.Id,
+                    Quiz = quiz,
+                    QuestionNumber = questionDto.QuestionNumber,
+                    LyricPhrase = questionDto.LyricPhrase,
+                    Options = []
+                };
+
+                for (int i = 0; i < questionDto.Options.Count; i++)
+                {
+                    question.Options.Add(new QuizOption
+                    {
+                        Id = Guid.NewGuid(),
+                        QuestionId = question.Id,
+                        Question = question,
+                        Text = questionDto.Options[i],
+                        IsCorrect = i == 0,
+                        OrderIndex = i
+                    });
+                }
+
+                quiz.Questions.Add(question);
+            }
+
+            return quiz;
         }
         catch (HttpRequestException httpEx)
         {

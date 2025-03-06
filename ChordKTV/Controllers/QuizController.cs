@@ -53,7 +53,7 @@ namespace ChordKTV.Controllers
                 {
                     Quiz quiz = await _quizService.GenerateQuizAsync(songId, useCachedQuiz, difficulty, numQuestions);
 
-                    // Map the entity to DTO for the API response using AutoMapper
+                    // Map the entity to DTO for the API response
                     QuizResponseDto quizResponseDto = _mapper.Map<QuizResponseDto>(quiz);
 
                     return Ok(quizResponseDto);
