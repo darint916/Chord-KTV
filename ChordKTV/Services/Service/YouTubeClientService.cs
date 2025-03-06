@@ -9,29 +9,55 @@ namespace ChordKTV.Services.Service;
 
 public class YouTubeApiClientService : IYouTubeClientService
 {
-    private readonly string? _apiKey;
-
-    public YouTubeApiClientService(IConfiguration configuration)
+    private readonly string? _youtubeApiKey;
+    private readonly string? _youtubeSearchApiKey;
+    private readonly ILogger<YouTubeApiClientService> _logger;
+    private readonly YouTubeService _youTubeService;
+    private readonly YouTubeService _youTubeSearchService;
+    public YouTubeApiClientService(IConfiguration configuration, ILogger<YouTubeApiClientService> logger)
     {
-        _apiKey = configuration["YouTube:ApiKey"];
+        _logger = logger;
+        _youtubeApiKey = configuration["YouTube:ApiKey"];
+        if (string.IsNullOrEmpty(_youtubeApiKey))
+        {
+            _logger.LogError("YouTube API key not found in backend configuration");
+        }
+        else
+        {
+            _youTubeService = new YouTubeService(
+                new BaseClientService.Initializer
+                {
+                    ApiKey = _youtubeApiKey,
+                    ApplicationName = "ChordKTV"
+                }
+            );
+        }
+
+        _youtubeSearchApiKey = configuration["YouTube:SearchApiKey"]; //separate as search is expensive
+        if (string.IsNullOrEmpty(_youtubeSearchApiKey))
+        {
+            _logger.LogError("YouTube Search API key not found in backend configuration");
+        }
+        else
+        {
+            _youTubeSearchService = new YouTubeService(
+                new BaseClientService.Initializer
+                {
+                    ApiKey = _youtubeSearchApiKey,
+                    ApplicationName = "ChordKTV"
+                }
+            );
+        }
     }
 
     public async Task<PlaylistDetailsDto?> GetPlaylistDetailsAsync(string playlistId, bool shuffle)
     {
-        if (string.IsNullOrEmpty(_apiKey))
+        if (string.IsNullOrEmpty(_youtubeApiKey))
         {
             return null;
         }
 
-        var googleYouTube = new YouTubeService(
-            new BaseClientService.Initializer
-            {
-                ApiKey = _apiKey,
-                ApplicationName = "ChordKTV"
-            }
-        );
-
-        PlaylistsResource.ListRequest playlistRequest = googleYouTube.Playlists.List("snippet");
+        PlaylistsResource.ListRequest playlistRequest = _youTubeService.Playlists.List("snippet");
         playlistRequest.Id = playlistId;
 
         PlaylistListResponse playlistResponse = await playlistRequest.ExecuteAsync();
@@ -40,7 +66,7 @@ public class YouTubeApiClientService : IYouTubeClientService
             ? playlistResponse.Items[0].Snippet.Title
             : "Unknown Playlist";
 
-        PlaylistItemsResource.ListRequest playlistItemsRequest = googleYouTube.PlaylistItems.List("snippet,contentDetails");
+        PlaylistItemsResource.ListRequest playlistItemsRequest = _youTubeService.PlaylistItems.List("snippet,contentDetails");
         playlistItemsRequest.PlaylistId = playlistId;
         playlistItemsRequest.MaxResults = 50;
 
@@ -124,4 +150,13 @@ public class YouTubeApiClientService : IYouTubeClientService
         return result;
     }
 
+    public Task<string?> GetYoutubeVideoLinkAsync(string title, string artist, string? album, TimeSpan? duration)
+    {
+        throw new NotImplementedException();
+        // if (string.IsNullOrEmpty(_youtubeSearchApiKey))
+        // {
+        //     return null;
+        // }
+        // return
+    }
 }
