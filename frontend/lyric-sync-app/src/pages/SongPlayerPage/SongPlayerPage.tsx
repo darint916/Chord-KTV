@@ -93,7 +93,7 @@ const SongPlayerPage: React.FC = () => {
         <Typography variant="h5" className="song-title" align="center">
           {song.artist}
         </Typography>
-        <Grid container className="song-player-content" spacing={5} height={'480px'} display={'flex'}>
+        <Grid container className="song-player-content" spacing={10} height={'480px'} display={'flex'}>
           {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
           <Grid flex={'1'} height={'100%'} alignContent={'center'}>
             <YouTubePlayer videoId={videoId ?? ''} onReady={handlePlayerReady} />
