@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Data.Api.QuizData;
 using ChordKTV.Models.Quiz;

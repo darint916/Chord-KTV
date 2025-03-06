@@ -68,13 +68,13 @@ namespace ChordKTV.Data.Repo.QuizData
             {
                 // Add the quiz to the context
                 _context.Quizzes.Add(quiz);
-                
+
                 // Persist to database
                 await _context.SaveChangesAsync();
-                
+
                 // Commit the transaction
                 await transaction.CommitAsync();
-                
+
                 _logger.LogDebug("Successfully saved quiz with ID={QuizId}, Timestamp={Timestamp}",
                     quiz.Id, quiz.Timestamp);
             }

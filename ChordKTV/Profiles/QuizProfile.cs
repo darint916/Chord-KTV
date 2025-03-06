@@ -17,4 +17,4 @@ public class QuizProfile : Profile
             .ForMember(dest => dest.Options, opt => opt.MapFrom(src => src.Options.OrderBy(o => o.OrderIndex).Select(o => o.Text).ToList()))
             .ForMember(dest => dest.CorrectOptionIndex, opt => opt.MapFrom(src => src.Options.OrderBy(o => o.OrderIndex).ToList().FindIndex(o => o.IsCorrect)));
     }
-} 
+}
