@@ -47,29 +47,18 @@ public class QuizService : IQuizService
         // Clamp number of questions between 1 and 20
         numQuestions = Math.Clamp(numQuestions, 1, 20);
 
-        _logger.LogDebug("Generating quiz for SongId={SongId}, Difficulty={Difficulty}, UseCached={UseCached}",
-            songId, difficulty, useCachedQuiz);
-
         // Try to use a cached quiz if requested
         if (useCachedQuiz)
         {
-            _logger.LogDebug("Attempting to retrieve cached quiz");
             Quiz? cachedQuiz = await _quizRepo.GetLatestQuizAsync(songId, difficulty);
             if (cachedQuiz != null)
             {
-                _logger.LogDebug("Found cached quiz with ID: {QuizId}, Timestamp: {Timestamp}",
-                    cachedQuiz.Id, cachedQuiz.Timestamp);
 
                 if (!HasDuplicateOptions(cachedQuiz))
                 {
                     return cachedQuiz;
                 }
 
-                _logger.LogDebug("Cached quiz has duplicate options, generating new quiz");
-            }
-            else
-            {
-                _logger.LogDebug("No cached quiz found, generating new quiz");
             }
         }
 
@@ -117,9 +106,6 @@ public class QuizService : IQuizService
         } while (true);
 
         await _quizRepo.AddAsync(quiz);
-
-        _logger.LogDebug("Successfully saved quiz with ID: {QuizId}, Timestamp: {Timestamp}",
-            quiz.Id, quiz.Timestamp);
 
         return quiz;
     }
