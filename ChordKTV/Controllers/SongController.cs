@@ -101,9 +101,9 @@ public class SongController : Controller
     [HttpPost("songs/search")]
     public async Task<IActionResult> SearchLyrics([FromBody] FullSongRequestDto request)
     {
-        if (string.IsNullOrWhiteSpace(request.Title) && string.IsNullOrWhiteSpace(request.Lyrics))
+        if (string.IsNullOrWhiteSpace(request.Title) && string.IsNullOrWhiteSpace(request.Lyrics) && string.IsNullOrWhiteSpace(request.YouTubeId))
         {
-            return BadRequest(new { message = "At least one of the following fields is required: title, lyrics." });
+            return BadRequest(new { message = "songs/search: At least one of the following fields is required: title, lyrics." });
         }
         string? lyricsQuery = null;
         if (!string.IsNullOrWhiteSpace(request.Lyrics))

@@ -8,13 +8,14 @@ using ChordKTV.Dtos.YouTubeApi;
 
 namespace ChordKTV.Services.Service;
 
-public class YouTubeApiClientService : IYouTubeClientService
+public class YouTubeApiClientService : IYouTubeClientService, IDisposable
 {
     private readonly string? _youtubeApiKey;
     private readonly string? _youtubeSearchApiKey;
     private readonly ILogger<YouTubeApiClientService> _logger;
     private readonly YouTubeService _youTubeService;
     private readonly YouTubeService _youTubeSearchService;
+    private bool _disposed;
     public YouTubeApiClientService(IConfiguration configuration, ILogger<YouTubeApiClientService> logger)
     {
         _logger = logger;
@@ -178,5 +179,31 @@ public class YouTubeApiClientService : IYouTubeClientService
         //first search response item that has video id
         SearchResult? vid = searchResponse.Items.FirstOrDefault(item => item.Id.Kind == "youtube#video"); //pray and assume youtube search is accurate
         return vid?.Id.VideoId;
+    }
+
+    //Below is the youtube service dispose stuff, needed as we abstracted the instances out, basically so they can be shared, these get handled by DI automatically
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // Dispose managed resources.
+                _youTubeService?.Dispose();
+                _youTubeSearchService?.Dispose();
+            }
+            _disposed = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this); // no need for finalizer if Dispose was called
+    }
+
+    ~YouTubeApiClientService() // finalizer (safeguard)
+    {
+        Dispose(disposing: false);
     }
 }
