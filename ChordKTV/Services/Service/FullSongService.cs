@@ -148,18 +148,18 @@ public class FullSongService : IFullSongService
         //Add/Update youtube urls
         if (!string.IsNullOrWhiteSpace(youtubeId))
         {
-            if (string.IsNullOrWhiteSpace(song.YoutubeUrl))
+            if (string.IsNullOrWhiteSpace(song.YoutubeId))
             {
-                song.YoutubeUrl = youtubeId;
+                song.YoutubeId = youtubeId;
             }
-            else if (!song.AlternateYoutubeUrls.Contains(youtubeId))
+            else if (!song.AlternateYoutubeIds.Contains(youtubeId))
             {
-                song.AlternateYoutubeUrls.Add(youtubeId);
+                song.AlternateYoutubeIds.Add(youtubeId);
             }
         }
-        else if (string.IsNullOrWhiteSpace(song.YoutubeUrl)) //query for a vid if none provided and non exist, expensive call
+        else if (string.IsNullOrWhiteSpace(song.YoutubeId)) //query for a vid if none provided and non exist, expensive call
         {
-            song.YoutubeUrl = await _youTubeClientService.SearchYoutubeVideoLinkAsync(song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name);
+            song.YoutubeId = await _youTubeClientService.SearchYoutubeVideoLinkAsync(song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name);
         }
 
         //Add residual information (kinda messy)

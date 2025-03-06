@@ -500,7 +500,7 @@
             "type": "string",
             "nullable": true
           },
-          "youTubeUrl": {
+          "youTubeId": {
             "type": "string",
             "nullable": true
           }
@@ -713,11 +713,11 @@
             "format": "int32",
             "nullable": true
           },
-          "youtubeUrl": {
+          "youtubeId": {
             "type": "string",
             "nullable": true
           },
-          "alternateYoutubeUrls": {
+          "alternateYoutubeIds": {
             "type": "array",
             "items": {
               "type": "string"

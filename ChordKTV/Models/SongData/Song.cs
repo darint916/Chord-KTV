@@ -22,7 +22,7 @@ public class Song
     public string? LrcTranslatedLyrics { get; set; } //from LLM
     public int? LrcId { get; set; }
     public int? RomLrcId { get; set; }
-    public string? YoutubeUrl { get; set; }
-    public List<string> AlternateYoutubeUrls { get; set; } = [];
+    public string? YoutubeId { get; set; }
+    public List<string> AlternateYoutubeIds { get; set; } = [];
     public GeniusMetaData GeniusMetaData { get; set; } = new GeniusMetaData();
 }
