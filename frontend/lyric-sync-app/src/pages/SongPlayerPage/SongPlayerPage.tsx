@@ -80,7 +80,7 @@ const SongPlayerPage: React.FC = () => {
     }, 250);
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
   };
 
@@ -111,10 +111,10 @@ const SongPlayerPage: React.FC = () => {
               <LyricDisplay 
                 rawLrcLyrics={
                   selectedTab === 0 
-                    ? song.lrcLyrics ?? "Not supported"
+                    ? song.lrcLyrics ?? 'Not supported'
                     : selectedTab === 1
-                    ? song.lrcRomanizedLyrics ?? "Not supported"
-                    : song.lrcTranslatedLyrics ?? "Not supported"
+                      ? song.lrcRomanizedLyrics ?? 'Not supported'
+                      : song.lrcTranslatedLyrics ?? 'Not supported'
                 } 
                 currentTime={currentTime} 
                 isPlaying={isPlaying} 
