@@ -100,7 +100,7 @@ const SongPlayerPage: React.FC = () => {
           </Grid>
           <Grid className='right-grid-parent'>
             <Box className='tabs-grid-parent'>
-              <Tabs value={selectedTab} onChange={handleTabChange} aria-label="lyric-tabs">
+              <Tabs value={selectedTab} onChange={handleTabChange} aria-label="lyric-tabs" variant="fullWidth">
                 <Tab label="Original Lyrics" />
                 <Tab label="Romanized Lyrics" />
                 <Tab label="Translated Lyrics" />
