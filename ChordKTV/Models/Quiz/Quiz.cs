@@ -1,9 +1,11 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace ChordKTV.Models.Quiz;
 
 public class Quiz
 {
+    [Key]
     public Guid Id { get; set; }
     public Guid SongId { get; set; }
     public List<QuizQuestion> Questions { get; set; } = [];

@@ -7,6 +7,8 @@ using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Dtos.Quiz;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos.OpenAI;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace ChordKTV.Services.Service;
 public class ChatGptService : IChatGptService
@@ -160,12 +162,11 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
 
     public async Task<QuizResponseDto> GenerateRomanizationQuizAsync(string lyrics, int difficulty, int numQuestions, Guid songId)
     {
-        // Construct a prompt with detailed instructions
         string difficultyInstruction = difficulty switch
         {
             1 => "### The incorrect answers must be literally entirely different sentences than the correct answer, but taken from the same original song. The wrong answers should be the same length as the original song lyric phrase.",
             2 => "### The incorrect answers must be literally entirely different words than the correct answer, but still the same length and shape as the original song lyric phrase.",
-            3 => "### The incorrect answers must be must contain very exaggerated, unique, and different words, but that look similar to the correct answer. The wrong answers should be OBVIOUSLY different and incorrect.",
+            3 => "### The incorrect answers must contain very exaggerated, unique, and different words, but that look similar to the correct answer. The wrong answers should be OBVIOUSLY different and incorrect.",
             4 => "### The incorrect answers must be similar to the correct answer, but not exactly the same.",
             5 => "### The incorrect answers must be very close to the correct answer, almost exactly the same.",
             _ => throw new ArgumentOutOfRangeException(nameof(difficulty), "Difficulty must be between 1 and 5")
@@ -214,8 +215,7 @@ Note: The correctOptionIndex should ALWAYS be 0 as the correct answer must be th
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = prompt }
             },
-            temperature = 1.0,
-            // top_p = 0.9
+            temperature = 1.0
         };
 
         string jsonRequest = JsonSerializer.Serialize(requestBody);
@@ -238,8 +238,6 @@ Note: The correctOptionIndex should ALWAYS be 0 as the correct answer must be th
             }
 
             string responseContent = await response.Content.ReadAsStringAsync();
-
-            // Directly deserialize the OpenAI response
             OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(responseContent, _jsonOptions);
 
             if (openAIResponse == null || openAIResponse.Choices.Count == 0)
