@@ -4,6 +4,7 @@ using Google.Apis.YouTube.v3.Data;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
 using ChordKTV.Utils;
+using ChordKTV.Dtos.YouTubeApi;
 
 namespace ChordKTV.Services.Service;
 
@@ -21,6 +22,7 @@ public class YouTubeApiClientService : IYouTubeClientService
         if (string.IsNullOrEmpty(_youtubeApiKey))
         {
             _logger.LogError("YouTube API key not found in backend configuration");
+            throw new ArgumentNullException(nameof(configuration), "YouTube:ApiKey is missing or not set in configuration.");
         }
         else
         {
@@ -28,7 +30,7 @@ public class YouTubeApiClientService : IYouTubeClientService
                 new BaseClientService.Initializer
                 {
                     ApiKey = _youtubeApiKey,
-                    ApplicationName = "ChordKTV"
+                    ApplicationName = "ChordKTV Base Key"
                 }
             );
         }
@@ -36,7 +38,14 @@ public class YouTubeApiClientService : IYouTubeClientService
         _youtubeSearchApiKey = configuration["YouTube:SearchApiKey"]; //separate as search is expensive
         if (string.IsNullOrEmpty(_youtubeSearchApiKey))
         {
-            _logger.LogError("YouTube Search API key not found in backend configuration");
+            _logger.LogError("YouTube Search API key not found in backend configuration defaulting to normal API key");
+            _youTubeSearchService = new YouTubeService(
+                new BaseClientService.Initializer
+                {
+                    ApiKey = _youtubeApiKey,
+                    ApplicationName = "ChordKTV Backup Search"
+                }
+            );
         }
         else
         {
@@ -44,7 +53,7 @@ public class YouTubeApiClientService : IYouTubeClientService
                 new BaseClientService.Initializer
                 {
                     ApiKey = _youtubeSearchApiKey,
-                    ApplicationName = "ChordKTV"
+                    ApplicationName = "ChordKTV Search"
                 }
             );
         }
@@ -87,7 +96,7 @@ public class YouTubeApiClientService : IYouTubeClientService
         // Batch video details requests in parallel
         IEnumerable<Task<Dictionary<string, VideoDetails>>> videoDetailsTasks = allVideoIds
             .Chunk(50)
-            .Select(idBatch => GetVideosDetailsAsync(_youTubeService, idBatch.ToList()));
+            .Select(idBatch => GetVideosDetailsAsync(idBatch.ToList()));
 
         Dictionary<string, VideoDetails>[] videoDetailsResults = await Task.WhenAll(videoDetailsTasks);
         var allVideoDetails = videoDetailsResults.SelectMany(dict => dict).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -115,16 +124,14 @@ public class YouTubeApiClientService : IYouTubeClientService
         return new PlaylistDetailsDto(playlistTitle, videos);
     }
 
-    private sealed record VideoDetails(string ChannelTitle, TimeSpan Duration);
-
-    private static async Task<Dictionary<string, VideoDetails>> GetVideosDetailsAsync(YouTubeService youTubeService, List<string> videoIds)
+    public async Task<Dictionary<string, VideoDetails>> GetVideosDetailsAsync(List<string> videoIds)
     {
         var result = new Dictionary<string, VideoDetails>();
 
         // YouTube API allows up to 50 video IDs per request
         foreach (string[] idBatch in videoIds.Chunk(50))
         {
-            VideosResource.ListRequest videoRequest = youTubeService.Videos.List("snippet,contentDetails");
+            VideosResource.ListRequest videoRequest = _youTubeService.Videos.List("snippet,contentDetails");
             videoRequest.Id = string.Join(",", idBatch);
 
             VideoListResponse videoResponse = await videoRequest.ExecuteAsync();
@@ -142,6 +149,7 @@ public class YouTubeApiClientService : IYouTubeClientService
                 }
 
                 result[video.Id] = new VideoDetails(
+                    video.Snippet.Title,
                     video.Snippet.ChannelTitle,
                     duration
                 );
@@ -150,7 +158,7 @@ public class YouTubeApiClientService : IYouTubeClientService
         return result;
     }
 
-    public async Task<string?> SearchYoutubeVideoLinkAsync(string title, string artist, string? album, TimeSpan? duration)
+    public async Task<string?> SearchYoutubeVideoLinkAsync(string title, string artist, string? album)
     {
         if (string.IsNullOrEmpty(_youtubeSearchApiKey))
         {
