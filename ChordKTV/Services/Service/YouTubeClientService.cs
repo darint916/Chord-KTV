@@ -150,13 +150,28 @@ public class YouTubeApiClientService : IYouTubeClientService
         return result;
     }
 
-    public Task<string?> GetYoutubeVideoLinkAsync(string title, string artist, string? album, TimeSpan? duration)
+    public async Task<string?> GetYoutubeVideoLinkAsync(string title, string artist, string? album, TimeSpan? duration)
     {
-        throw new NotImplementedException();
-        // if (string.IsNullOrEmpty(_youtubeSearchApiKey))
-        // {
-        //     return null;
-        // }
-        // return
+        if (string.IsNullOrEmpty(_youtubeSearchApiKey))
+        {
+            return null;
+        }
+        //reference https://developers.google.com/youtube/v3/docs/search/list#.net
+
+        SearchResource.ListRequest searchRequest = _youTubeSearchService.Search.List("snippet");
+        searchRequest.Q = $"{title} {artist} {album ?? ""}";
+        searchRequest.Type = "video";
+        searchRequest.MaxResults = 3; //less, and then we compare durations
+
+        //https://stackoverflow.com/a/17738994/17621099 category type 10 is music for all regions where allowed
+        searchRequest.VideoCategoryId = "10";
+
+        SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
+        if (duration.HasValue)
+        {
+            //order by duration
+            
+        }
+
     }
 }
