@@ -11,6 +11,7 @@ public record FullSongResponseDto
     List<string> FeaturedArtists,
     List<string> AlbumNames,
     DateOnly? ReleaseDate,
+    TimeSpan? Duration,
     string? Genre,
     string PlainLyrics,
     string LrcLyrics,
