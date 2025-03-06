@@ -5,7 +5,7 @@
 .home-page {
   min-height: 100vh;
   background-color: $primary-color;
-  color: white;
+  color: black;
   padding: 32px;
 
   .welcome-message {
@@ -17,7 +17,7 @@
   .info-alert {
     margin-bottom: 32px;
     background-color: rgba(255, 255, 255, 0.9);
-    color: black;
+    color: $text-primary;
   }
 
   .error-alert {
@@ -28,12 +28,13 @@
   .playlist-section {
     padding: 24px;
     margin-bottom: 32px;
-    background-color: rgba(255, 255, 255, 0.9);
+    background: linear-gradient(90deg, color.scale($primary-color, $lightness: -5%), #e2e8f085);
     border-radius: 8px;
 
     .section-title {
       margin-bottom: 16px;
-      color: $primary-color;
+      color: $text-primary;
+      font-weight: bold;
     }
 
     .section-subtitle {
@@ -51,11 +52,11 @@
     }
 
     .search-button {
-      background-color: $primary-color;
+      background-color: $secondary-color;
       color: white;
 
       &:hover {
-        background-color: color.scale($primary-color, $lightness: -10%);
+        background-color: color.scale($secondary-color, $lightness: -10%);
       }
     }
   }
@@ -72,7 +73,7 @@
       border-radius: 20px;
 
       .or-text {
-        color: $primary-color;
+        color: $text-primary;
         font-weight: bold;
       }
     }

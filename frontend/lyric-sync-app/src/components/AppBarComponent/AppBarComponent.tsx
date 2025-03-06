@@ -55,7 +55,7 @@ const AppBarComponent: React.FC = () => {
             Chord KTV
           </Link>
         </Typography>
-        <Button component={Link} to="/canvas" color="inherit">
+        <Button component={Link} to="/canvas" className="button-styles">
           Canvas
         </Button>
         {user ? (

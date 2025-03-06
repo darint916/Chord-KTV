@@ -2,8 +2,9 @@
 @use '../../mixins' as *;
 
 .app-bar {
-  background-color: $primary-color !important;
-  box-shadow: none;
+  // background-color: white !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 
   .toolbar {
     @include flex-center;
@@ -12,7 +13,11 @@
     .title {
       flex-grow: 1;
       text-decoration: none;
-      color: white;
+      color: black;
+    }
+
+    .button-styles {
+      color: black;
     }
 
     .avatar {

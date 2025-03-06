@@ -117,7 +117,7 @@ const YouTubePlaylistViewer = () => {
         className="playlist-url-input"
         onKeyDown={handleKeyDown}
       />
-      <Button variant="contained" color="primary" onClick={fetchPlaylistSongs}>
+      <Button variant="contained" className="button-style" onClick={fetchPlaylistSongs}>
         Load Playlist
       </Button>
       {playlistLoading && <CircularProgress className="loading-spinner" />}

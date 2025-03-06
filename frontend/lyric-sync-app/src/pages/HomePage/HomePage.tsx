@@ -85,12 +85,6 @@ const HomePage: React.FC = () => {
           Welcome {user ? user.name : 'to Chord KTV'}!
         </Typography>
 
-        {!user && (
-          <Alert severity="info" className="info-alert">
-            Sign in to save your search history and favorites!
-          </Alert>
-        )}
-
         {error && (
           <Alert severity="error" className="error-alert">
             {error}
@@ -101,9 +95,6 @@ const HomePage: React.FC = () => {
         <Paper elevation={3} className="search-section">
           <Typography variant="h5" className="section-title">
             Search for a Song
-          </Typography>
-          <Typography variant="body1" className="section-subtitle">
-            Enter a song name and artist to get started.
           </Typography>
           <Stack direction="row" spacing={2} alignItems="center">
             <TextField
@@ -150,9 +141,6 @@ const HomePage: React.FC = () => {
         <Paper elevation={3} className="playlist-section">
           <Typography variant="h5" className="section-title">
             Load a YouTube Playlist
-          </Typography>
-          <Typography variant="body1" className="section-subtitle">
-            Select songs to play from your playlist.
           </Typography>
           <YouTubePlaylistViewer />
         </Paper>
