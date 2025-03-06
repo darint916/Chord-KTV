@@ -4,7 +4,12 @@ using System.Text;
 using System.Text.Json;
 using ChordKTV.Dtos;
 using ChordKTV.Dtos.TranslationGptApi;
+using ChordKTV.Dtos.Quiz;
 using ChordKTV.Services.Api;
+using ChordKTV.Dtos.OpenAI;
+using ChordKTV.Models.Quiz;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace ChordKTV.Services.Service;
 public class ChatGptService : IChatGptService
@@ -18,6 +23,12 @@ public class ChatGptService : IChatGptService
     //KR + other lang use more tokens, but as ref, https://platform.openai.com/tokenizer to calc, 2793 char -> 1564 tokens (sick enough to die)
     // price as of testing seems like ~$0.01 after 26k tokens lol
     private const string Model = "gpt-4o-mini"; //last updated 2024-07-18 , knowledge cutoff 10/2023
+
+    // Add static readonly field for options
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     public ChatGptService(HttpClient httpClient, IConfiguration configuration, ILogger<ChatGptService> logger)
     {
@@ -88,22 +99,16 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
 
             string responseContent = await response.Content.ReadAsStringAsync();
 
-            // Deserialize the response.
-            using var document = JsonDocument.Parse(responseContent);
-            JsonElement root = document.RootElement;
+            // Directly deserialize the OpenAI response
+            OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(responseContent, _jsonOptions);
 
-            // The ChatGPT API returns choices in an array.
-            JsonElement choices = root.GetProperty("choices");
-            if (choices.GetArrayLength() == 0)
+            if (openAIResponse == null || openAIResponse.Choices.Count == 0)
             {
                 _logger.LogError("No choices were returned from the ChatGPT API. responseContent: {ResponseContent}", responseContent);
                 throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: No choices were returned from the ChatGPT API.");
             }
 
-            string? messageContent = choices[0]
-                .GetProperty("message")
-                .GetProperty("content")
-                .GetString();
+            string? messageContent = openAIResponse.Choices[0].Message.Content;
 
             if (string.IsNullOrWhiteSpace(messageContent))
             {
@@ -153,6 +158,149 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         {
             // Handle or log batch errors appropriately.
             throw new InvalidOperationException($"Error in {nameof(BatchTranslateLyricsAsync)} One or more translations failed during batch processing: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<Quiz> GenerateRomanizationQuizAsync(string lyrics, int difficulty, int numQuestions, Guid songId)
+    {
+        string difficultyInstruction = difficulty switch
+        {
+            1 => "### The incorrect answers must be literally entirely different sentences than the correct answer, but taken from the same original song. The wrong answers should be the same length as the original song lyric phrase.",
+            2 => "### The incorrect answers must be literally entirely different words than the correct answer, but still the same length and shape as the original song lyric phrase.",
+            3 => "### The incorrect answers must contain very exaggerated, unique, and different words, but that look similar to the correct answer. The wrong answers should be OBVIOUSLY different and incorrect.",
+            4 => "### The incorrect answers must be similar to the correct answer, but not exactly the same.",
+            5 => "### The incorrect answers must be very close to the correct answer, almost exactly the same.",
+            _ => throw new ArgumentOutOfRangeException(nameof(difficulty), "Difficulty must be between 1 and 5")
+        };
+
+        string prompt = $@"
+You are a helpful assistant that generates multiple choice ENGLISH ROMANIZATION quizzes from song lyrics for romanization practice.
+The full lyrics are provided below:
+{lyrics}
+
+Your task:
+- Identify and select {numQuestions} key phrases from the lyrics that are significant for romanization.
+- The lyricPhrase has to be entirely non-latin.
+- For each key phrase, create a multiple-choice question with exactly 4 answer options (only one is correct, the first option is the correct romanization).
+- IMPORTANT: The first option (index 0) MUST ALWAYS be the correct romanization.
+- The difficulty of the quiz is set to {difficulty} on a scale from 1 (easiest) to 5 (hardest).
+- {difficultyInstruction}
+- All options must be written using the LATIN alphabet and NOTHING ELSE.
+- No two options should be the same, no matter the difficulty.
+- Respond with a JSON object exactly in the following format:
+{{
+    ""questions"": [
+        {{
+            ""questionNumber"": 1,
+            ""lyricPhrase"": ""<extracted song lyric phrase that is entirely non-latin>"",
+            ""options"": [""<correct romanization>"", ""wrong1 in latin alphabet"", ""wrong2 in latin alphabet"", ""wrong3 in latin alphabet""]
+        }},
+        ... up to {numQuestions} questions
+    ]
+}}
+Ensure that the JSON is the only output and does not include any additional text or explanation.
+All options must be written using the LATIN alphabet and NOTHING ELSE.";
+
+        string systemPrompt = "You are an assistant specialized in generating romanization quizzes from song lyrics.";
+
+        var requestBody = new
+        {
+            model = Model,
+            messages = new object[]
+            {
+                new { role = "system", content = systemPrompt },
+                new { role = "user", content = prompt }
+            },
+            temperature = 1.0
+        };
+
+        string jsonRequest = JsonSerializer.Serialize(requestBody);
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, ChatGptEndpoint);
+        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+        requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+        try
+        {
+            var sw = new Stopwatch();
+            sw.Start();
+            using HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            sw.Stop();
+            _logger.LogInformation("⏱️ ChatGPT Quiz API call took: {ElapsedMilliseconds}ms", sw.ElapsedMilliseconds);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"ChatGPT API call failed with status code {response.StatusCode}: {errorContent}");
+            }
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(responseContent, _jsonOptions);
+
+            if (openAIResponse == null || openAIResponse.Choices.Count == 0)
+            {
+                _logger.LogError("No choices were returned from the ChatGPT API for quiz generation.");
+                throw new InvalidOperationException("No choices were returned from the ChatGPT API.");
+            }
+
+            string? messageContent = openAIResponse.Choices[0].Message.Content;
+
+            if (string.IsNullOrWhiteSpace(messageContent))
+            {
+                _logger.LogError("The ChatGPT API returned an empty response for quiz generation.");
+                throw new InvalidOperationException("The ChatGPT API returned an empty response.");
+            }
+
+            QuizResponseDto? gptResponse = JsonSerializer.Deserialize<QuizResponseDto>(messageContent, _jsonOptions);
+            if (gptResponse?.Questions == null)
+            {
+                _logger.LogError("Failed to deserialize quiz response. Raw response: {MessageContent}", messageContent);
+                throw new InvalidOperationException("Invalid quiz response format from ChatGPT.");
+            }
+
+            var quiz = new Quiz
+            {
+                Id = Guid.NewGuid(),
+                SongId = songId,
+                Difficulty = difficulty,
+                NumQuestions = gptResponse.Questions.Count,
+                Timestamp = DateTime.UtcNow,
+                Questions = []
+            };
+
+            foreach (QuizQuestionDto questionDto in gptResponse.Questions)
+            {
+                var question = new QuizQuestion
+                {
+                    Id = Guid.NewGuid(),
+                    QuizId = quiz.Id,
+                    Quiz = quiz,
+                    QuestionNumber = questionDto.QuestionNumber,
+                    LyricPhrase = questionDto.LyricPhrase,
+                    Options = []
+                };
+
+                for (int i = 0; i < questionDto.Options.Count; i++)
+                {
+                    question.Options.Add(new QuizOption
+                    {
+                        Id = Guid.NewGuid(),
+                        QuestionId = question.Id,
+                        Question = question,
+                        Text = questionDto.Options[i],
+                        IsCorrect = i == 0,
+                        OrderIndex = i
+                    });
+                }
+
+                quiz.Questions.Add(question);
+            }
+
+            return quiz;
+        }
+        catch (HttpRequestException httpEx)
+        {
+            _logger.LogError(httpEx, "HTTP request error while calling the ChatGPT API for quiz generation.");
+            throw new HttpRequestException("HTTP request error while calling the ChatGPT API for quiz generation.", httpEx);
         }
     }
 }
