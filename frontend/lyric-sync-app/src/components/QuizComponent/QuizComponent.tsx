@@ -62,33 +62,36 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <Box>
-      <Typography variant="h4">{currentQuestion.lyricPhrase}</Typography>
-      {currentQuestion.options && currentQuestion.options.length > 0 ? (
-        <FormControl component="fieldset">
-          <RadioGroup value={selectedAnswer} onChange={handleAnswerChange}>
-            {currentQuestion.options.map((option, index) => (
-              <FormControlLabel
-                key={index}
-                value={option}
-                control={<Radio />}
-                label={option}
-              />
-            ))}
-          </RadioGroup>
-        </FormControl>
-      ) : (
-        <Typography variant="body1">No options available for this question.</Typography>
-      )} 
-      {currentQuestionIndex < questions.length - 1 ? (
-        <Button onClick={handleNextQuestion} variant="contained" color="primary" disabled={!selectedAnswer}>
-          Next Question
-        </Button>
-      ) : (
-        <Button onClick={handleFinishQuiz} variant="contained" color="secondary" disabled={!selectedAnswer}>
-          Finish Quiz
-        </Button>
-      )}
+    <Box className="quiz-container">
+      <div className="quiz-content">
+        <Typography variant="h4">{currentQuestion.lyricPhrase}</Typography>
+        {currentQuestion.options && currentQuestion.options.length > 0 ? (
+          <FormControl component="fieldset">
+            <RadioGroup value={selectedAnswer} onChange={handleAnswerChange}>
+              {currentQuestion.options.map((option, index) => (
+                <FormControlLabel
+                  key={index}
+                  value={option}
+                  control={<Radio />}
+                  label={option}
+                  className="options"
+                />
+              ))}
+            </RadioGroup>
+          </FormControl>
+        ) : (
+          <Typography variant="body1">No options available for this question.</Typography>
+        )} 
+        {currentQuestionIndex < questions.length - 1 ? (
+          <Button onClick={handleNextQuestion} variant="contained" color="primary" disabled={!selectedAnswer}>
+            Next Question
+          </Button>
+        ) : (
+          <Button onClick={handleFinishQuiz} variant="contained" color="secondary" disabled={!selectedAnswer}>
+            Finish Quiz
+          </Button>
+        )}
+      </div>
     </Box>
   );
 };

@@ -1,2 +1,22 @@
 @use '../../variables' as *;
 @use '../../mixins' as *;
+@use 'sass:color';
+
+.quiz-container {
+    background: linear-gradient(90deg, color.scale($primary-color, $lightness: -5%), #e2e8f085);
+    border-radius: 8px;
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+
+    .quiz-content {
+        display: flex;
+        flex-direction: column;
+        padding: 24px;
+
+        .options {
+            color: $text-primary;
+        }
+    }
+}

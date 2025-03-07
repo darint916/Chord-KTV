@@ -101,7 +101,6 @@ public class SongController : Controller
     [HttpPost("songs/search")]
     [ProducesResponseType(typeof(FullSongResponseDto), 200)]
     [ProducesResponseType(404)]
-    [ProducesResponseType(404)]
     [ProducesResponseType(500)]
     [ProducesResponseType(503)]
     public async Task<IActionResult> SearchLyrics([FromBody] FullSongRequestDto request)
