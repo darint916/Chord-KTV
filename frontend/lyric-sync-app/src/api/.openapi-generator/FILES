@@ -14,6 +14,8 @@ models/HandwritingCanvasResponseDto.ts
 models/LanguageCode.ts
 models/PlaylistDetailsDto.ts
 models/ProblemDetails.ts
+models/QuizQuestionDto.ts
+models/QuizResponseDto.ts
 models/Song.ts
 models/TranslationRequestDto.ts
 models/VideoInfo.ts

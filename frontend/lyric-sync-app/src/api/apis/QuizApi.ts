@@ -14,6 +14,16 @@
 
 
 import * as runtime from '../runtime';
+import type {
+  ProblemDetails,
+  QuizResponseDto,
+} from '../models/index';
+import {
+    ProblemDetailsFromJSON,
+    ProblemDetailsToJSON,
+    QuizResponseDtoFromJSON,
+    QuizResponseDtoToJSON,
+} from '../models/index';
 
 export interface ApiQuizRomanizationGetRequest {
     songId?: string;
@@ -29,7 +39,7 @@ export class QuizApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiQuizRomanizationGetRaw(requestParameters: ApiQuizRomanizationGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiQuizRomanizationGetRaw(requestParameters: ApiQuizRomanizationGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<QuizResponseDto>> {
         const queryParameters: any = {};
 
         if (requestParameters['songId'] != null) {
@@ -57,13 +67,14 @@ export class QuizApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => QuizResponseDtoFromJSON(jsonValue));
     }
 
     /**
      */
-    async apiQuizRomanizationGet(requestParameters: ApiQuizRomanizationGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiQuizRomanizationGetRaw(requestParameters, initOverrides);
+    async apiQuizRomanizationGet(requestParameters: ApiQuizRomanizationGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<QuizResponseDto> {
+        const response = await this.apiQuizRomanizationGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
 }

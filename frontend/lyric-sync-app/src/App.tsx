@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage/HomePage';
 import SongPlayerPage from './pages/SongPlayerPage/SongPlayerPage';
 import HandwritingPage from './pages/HandwritingPage/HandwritingPage';
 import AppBarComponent from './components/AppBarComponent/AppBarComponent';
+import QuizPage from './pages/QuizPage/QuizPage';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './contexts/AuthContext';
 import { GOOGLE_CLIENT_ID } from './config/google-auth';
@@ -20,6 +21,7 @@ const App: React.FC = () => {
               <Route path="/" element={<HomePage />} />
               <Route path="/play-song" element={<SongPlayerPage />} />
               <Route path="/canvas" element={<HandwritingPage />} />
+              <Route path="/quiz" element={<QuizPage />} />
             </Routes>
           </Router>
         </AuthProvider>
