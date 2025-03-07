@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Container, Typography, Box } from '@mui/material';
+import { Container, Typography, Box, Button } from '@mui/material';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import './SongPlayerPage.scss';
@@ -7,6 +7,7 @@ import Grid from '@mui/material/Grid2';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { useSong } from '../../contexts/SongContext';
+import { useNavigate } from 'react-router-dom';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -24,6 +25,8 @@ const SongPlayerPage: React.FC = () => {
   const playerRef = useRef<YouTubePlayer | null>(null);
   const { song } = useSong();
   const [selectedTab, setSelectedTab] = useState(0);
+  const [showQuizButton, setShowQuizButton] = useState(false);
+  const navigate = useNavigate();
 
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
@@ -37,16 +40,31 @@ const SongPlayerPage: React.FC = () => {
     return <Typography variant="h5">Error: No YouTube video found for song</Typography>;
   }
 
+  const allowedQuizLanguages = new Set(['AR', 'BG', 'BN', 'EL', 'FA', 'GU', 'HE', 'HI', 'JA', 'KO', 'RU', 'SR', 'TA', 'TE', 'TH', 'UK', 'ZH']);
+  const isLanguageAllowedForQuiz = song.geniusMetaData?.language && allowedQuizLanguages.has(song.geniusMetaData.language);
+
   const handlePlayerReady = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
 
     setInterval(() => {
-      if (playerRef.current) { setCurrentTime(playerRef.current.getCurrentTime()); }
+      if (playerRef.current) { 
+        const current = playerRef.current.getCurrentTime();
+        setCurrentTime(current);
+
+        // Check if the song is 90% complete
+        if (current / playerRef.current.getDuration() >= 0.9 && isLanguageAllowedForQuiz) {
+          setShowQuizButton(true); // Show the quiz button when 90% complete
+        }
+      }
     }, 1); // Noticed player was falling behind, 1ms for absolute accuracy
   };
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
+  };
+
+  const handleQuizRedirect = () => {
+    navigate('/quiz');
   };
 
   return (
@@ -87,6 +105,17 @@ const SongPlayerPage: React.FC = () => {
             </Box>
           </Grid>
         </Grid>
+        {showQuizButton && (
+          <Box mt={3} display="flex" justifyContent="center">
+            <Button 
+              variant="contained" 
+              onClick={handleQuizRedirect}
+              className="quiz-button"
+            >
+              Go to Quiz
+            </Button>
+          </Box>
+        )}
       </Container>
     </div>
   );
