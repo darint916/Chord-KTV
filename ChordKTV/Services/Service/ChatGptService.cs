@@ -83,25 +83,15 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
             // benchmark
             var sw = new Stopwatch();
             sw.Start();
-            using HttpResponseMessage response = await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody));
+            OpenAIResponseDto? openAIResponse = await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody));
             sw.Stop();
             _logger.LogInformation("⏱️ ChatGPT API call took: {ElapsedMilliseconds}ms", sw.ElapsedMilliseconds);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                // You can add more detailed error logging here.
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Error in {nameof(TranslateLyricsAsync)}: ChatGPT API call failed with status code {response.StatusCode}: {errorContent}");
-            }
-
-            string responseContent = await response.Content.ReadAsStringAsync();
-
             // Directly deserialize the OpenAI response
-            OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(responseContent, _jsonOptions);
 
             if (openAIResponse == null || openAIResponse.Choices.Count == 0)
             {
-                _logger.LogError("No choices were returned from the ChatGPT API. responseContent: {ResponseContent}", responseContent);
+                _logger.LogError("No choices were returned from the ChatGPT API. responseContent: {ResponseContent}", openAIResponse);
                 throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: No choices were returned from the ChatGPT API.");
             }
 
@@ -109,7 +99,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
 
             if (string.IsNullOrWhiteSpace(messageContent))
             {
-                _logger.LogError("The ChatGPT API returned an empty response. responseContent: {ResponseContent}", responseContent);
+                _logger.LogError("The ChatGPT API returned an empty response. responseContent: {ResponseContent}", openAIResponse);
                 throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: The ChatGPT API returned an empty response.");
             }
 
@@ -214,10 +204,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         try
         {
 
-            using HttpResponseMessage response = await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody));
-
-            string responseContent = await response.Content.ReadAsStringAsync();
-            OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(responseContent, _jsonOptions);
+            OpenAIResponseDto? openAIResponse = await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody));
 
             if (openAIResponse == null || openAIResponse.Choices.Count == 0)
             {
@@ -335,20 +322,24 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
             top_p = 0.9
         };
 
-        using HttpResponseMessage response = await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody));
-        string responseContent = await response.Content.ReadAsStringAsync();
-        CandidateSongInfoListResponse? openAIResponse = JsonSerializer.Deserialize<CandidateSongInfoListResponse>(responseContent, _jsonOptions);
-
-        if (openAIResponse == null || openAIResponse.Candidates.Count == 0)
+        OpenAIResponseDto? openAIResponse = await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody));
+        if (openAIResponse == null || openAIResponse.Choices.Count == 0)
         {
-            _logger.LogError("No candidates were returned from the ChatGPT API for song info extraction.");
-            throw new InvalidOperationException($"{nameof(GetCandidateSongInfosAsync)}: No candidates were returned from the ChatGPT API. Response content: {responseContent}");
+            _logger.LogError("No choices were returned from the ChatGPT API for CandidateSongInfo extraction.");
+            throw new InvalidOperationException("No choices were returned from the ChatGPT API CandidateSongInfo extraction.");
         }
 
-        return openAIResponse;
+        string? messageContent = openAIResponse.Choices[0].Message.Content;
+        CandidateSongInfoListResponse? songInfoListResponse = JsonSerializer.Deserialize<CandidateSongInfoListResponse>(messageContent, _jsonOptions);
+        if (songInfoListResponse == null || songInfoListResponse.Candidates.Count == 0)
+        {
+            _logger.LogError($"{nameof(GetCandidateSongInfosAsync)}: No candidates were returned from the ChatGPT API for CandidateSongInfo extraction.");
+            throw new InvalidOperationException($"{nameof(GetCandidateSongInfosAsync)}: No candidates were returned from the ChatGPT API. Response content: {openAIResponse}");
+        }
+        return songInfoListResponse;
     }
 
-    private async Task<HttpResponseMessage> GptChatCompletionAsync(string jsonRequest, [CallerMemberName] string caller = "")
+    private async Task<OpenAIResponseDto?> GptChatCompletionAsync(string jsonRequest, [CallerMemberName] string caller = "")
     {
         try
         {
@@ -361,7 +352,8 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
                 string errorContent = await response.Content.ReadAsStringAsync();
                 throw new HttpRequestException($"Error in {nameof(GptChatCompletionAsync)} called from {caller}, ChatGPT API call failed with status code {response.StatusCode}: {errorContent}");
             }
-            return response;
+            OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(await response.Content.ReadAsStringAsync(), _jsonOptions);
+            return openAIResponse;
         }
         catch (Exception ex)
         {
