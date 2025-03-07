@@ -2,7 +2,8 @@ namespace ChordKTV.Dtos;
 
 using ChordKTV.Dtos.GeniusApi;
 
-public record SongDto(
+public record SongDto
+(
     string Title,
     string Artist,
     List<string> FeaturedArtists,

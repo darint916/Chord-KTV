@@ -8,8 +8,10 @@ using ChordKTV.Dtos.Quiz;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos.OpenAI;
 using ChordKTV.Models.Quiz;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Google.Apis.Http;
+using Google.Rpc;
+using System.Runtime.CompilerServices;
 
 namespace ChordKTV.Services.Service;
 public class ChatGptService : IChatGptService
@@ -76,17 +78,12 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
             top_p = 0.9
         };
 
-        string jsonRequest = JsonSerializer.Serialize(requestBody);
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, ChatGptEndpoint);
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-        requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-
         try
         {
             // benchmark
             var sw = new Stopwatch();
             sw.Start();
-            using HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            using HttpResponseMessage response = await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody));
             sw.Stop();
             _logger.LogInformation("⏱️ ChatGPT API call took: {ElapsedMilliseconds}ms", sw.ElapsedMilliseconds);
 
@@ -174,32 +171,32 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         };
 
         string prompt = $@"
-You are a helpful assistant that generates multiple choice ENGLISH ROMANIZATION quizzes from song lyrics for romanization practice.
-The full lyrics are provided below:
-{lyrics}
+            You are a helpful assistant that generates multiple choice ENGLISH ROMANIZATION quizzes from song lyrics for romanization practice.
+            The full lyrics are provided below:
+            {lyrics}
 
-Your task:
-- Identify and select {numQuestions} key phrases from the lyrics that are significant for romanization.
-- The lyricPhrase has to be entirely non-latin.
-- For each key phrase, create a multiple-choice question with exactly 4 answer options (only one is correct, the first option is the correct romanization).
-- IMPORTANT: The first option (index 0) MUST ALWAYS be the correct romanization.
-- The difficulty of the quiz is set to {difficulty} on a scale from 1 (easiest) to 5 (hardest).
-- {difficultyInstruction}
-- All options must be written using the LATIN alphabet and NOTHING ELSE.
-- No two options should be the same, no matter the difficulty.
-- Respond with a JSON object exactly in the following format:
-{{
-    ""questions"": [
-        {{
-            ""questionNumber"": 1,
-            ""lyricPhrase"": ""<extracted song lyric phrase that is entirely non-latin>"",
-            ""options"": [""<correct romanization>"", ""wrong1 in latin alphabet"", ""wrong2 in latin alphabet"", ""wrong3 in latin alphabet""]
-        }},
-        ... up to {numQuestions} questions
-    ]
-}}
-Ensure that the JSON is the only output and does not include any additional text or explanation.
-All options must be written using the LATIN alphabet and NOTHING ELSE.";
+            Your task:
+            - Identify and select {numQuestions} key phrases from the lyrics that are significant for romanization.
+            - The lyricPhrase has to be entirely non-latin.
+            - For each key phrase, create a multiple-choice question with exactly 4 answer options (only one is correct, the first option is the correct romanization).
+            - IMPORTANT: The first option (index 0) MUST ALWAYS be the correct romanization.
+            - The difficulty of the quiz is set to {difficulty} on a scale from 1 (easiest) to 5 (hardest).
+            - {difficultyInstruction}
+            - All options must be written using the LATIN alphabet and NOTHING ELSE.
+            - No two options should be the same, no matter the difficulty.
+            - Respond with a JSON object exactly in the following format:
+            {{
+                ""questions"": [
+                    {{
+                        ""questionNumber"": 1,
+                        ""lyricPhrase"": ""<extracted song lyric phrase that is entirely non-latin>"",
+                        ""options"": [""<correct romanization>"", ""wrong1 in latin alphabet"", ""wrong2 in latin alphabet"", ""wrong3 in latin alphabet""]
+                    }},
+                    ... up to {numQuestions} questions
+                ]
+            }}
+            Ensure that the JSON is the only output and does not include any additional text or explanation.
+            All options must be written using the LATIN alphabet and NOTHING ELSE.";
 
         string systemPrompt = "You are an assistant specialized in generating romanization quizzes from song lyrics.";
 
@@ -214,24 +211,10 @@ All options must be written using the LATIN alphabet and NOTHING ELSE.";
             temperature = 1.0
         };
 
-        string jsonRequest = JsonSerializer.Serialize(requestBody);
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, ChatGptEndpoint);
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-        requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-
         try
         {
-            var sw = new Stopwatch();
-            sw.Start();
-            using HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
-            sw.Stop();
-            _logger.LogInformation("⏱️ ChatGPT Quiz API call took: {ElapsedMilliseconds}ms", sw.ElapsedMilliseconds);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"ChatGPT API call failed with status code {response.StatusCode}: {errorContent}");
-            }
+            using HttpResponseMessage response = await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody));
 
             string responseContent = await response.Content.ReadAsStringAsync();
             OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(responseContent, _jsonOptions);
@@ -301,6 +284,89 @@ All options must be written using the LATIN alphabet and NOTHING ELSE.";
         {
             _logger.LogError(httpEx, "HTTP request error while calling the ChatGPT API for quiz generation.");
             throw new HttpRequestException("HTTP request error while calling the ChatGPT API for quiz generation.", httpEx);
+        }
+    }
+
+    // for youtube video title and channel name that enters the system, cant be found by genius
+    public async Task<CandidateSongInfoListResponse> GetCandidateSongInfosAsync(string videoTitle, string channelName)
+    {
+        string prompt = $@"
+        Extract the song title and artist from the following YouTube video title and channel name.
+        Input:
+        Video Title: ""{videoTitle}""
+        Channel Name: ""{channelName}""
+        Task:
+        - Remove unnecessary words and noise such as ""MV"", ""Official"", ""Lyrics"", and other non-essential details that typically come in song titles.
+        - Identify potential combinations of the song title and artist. If multiple valid versions exist (e.g., native and English), list them as candidates.
+        - Format the output as a JSON object with a ""candidates"" array, where each candidate is an object with ""title"" and ""artist"" fields.
+        - Use your knowledge of songs to put the most well known title and artist as first candidate. If the channel name is not the artist, ignore it and have the most likely artist as some videos are made by fans or other channels.
+        Output Format:
+        {{
+        ""candidates"": [
+            {{ ""title"": ""Song Title 1"", ""artist"": ""Artist Name 1"" }},
+            {{ ""title"": ""Song Title 2"", ""artist"": ""Artist Name 2"" }}
+        ]
+        }}
+
+        Example:
+        Input:
+        Video Title: ""韋禮安 WeiBird《如果可以 Red Scarf》MV - 電影「月老」主題曲導演親剪音樂視角版""
+        Channel Name: ""韋禮安 WeiBird""
+
+        Expected Output:
+        {{
+        ""candidates"": [
+            {{ ""title"": ""如果可以"", ""artist"": ""韋禮安"" }},
+            {{ ""title"": ""Red Scarf"", ""artist"": ""WeiBird"" }}
+        ]
+        }}
+        ";
+        string systemPrompt = "You are an AI assistant specializing in extracting or querying clean and precise song titles and artist names from YouTube video titles and channel names.";
+
+        var requestBody = new
+        {
+            model = Model,
+            messages = new object[]
+            {
+                    new { role = "system", content = systemPrompt },
+                    new { role = "user", content = prompt }
+            },
+            temperature = 0.4,
+            top_p = 0.9
+        };
+
+        using HttpResponseMessage response = await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody));
+        string responseContent = await response.Content.ReadAsStringAsync();
+        CandidateSongInfoListResponse? openAIResponse = JsonSerializer.Deserialize<CandidateSongInfoListResponse>(responseContent, _jsonOptions);
+
+        if (openAIResponse == null || openAIResponse.Candidates.Count == 0)
+        {
+            _logger.LogError("No candidates were returned from the ChatGPT API for song info extraction.");
+            throw new InvalidOperationException($"{nameof(GetCandidateSongInfosAsync)}: No candidates were returned from the ChatGPT API. Response content: {responseContent}");
+        }
+
+        return openAIResponse;
+    }
+
+    private async Task<HttpResponseMessage> GptChatCompletionAsync(string jsonRequest, [CallerMemberName] string caller = "")
+    {
+        try
+        {
+            using HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, ChatGptEndpoint);
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+            requestMessage.Content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+            using HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Error in {nameof(GptChatCompletionAsync)} called from {caller}, ChatGPT API call failed with status code {response.StatusCode}: {errorContent}");
+            }
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while calling the ChatGPT API.");
+            throw new InvalidOperationException($"Caller: {caller}: Error while calling the ChatGPT API. {ex.Message}", ex);
         }
     }
 }
