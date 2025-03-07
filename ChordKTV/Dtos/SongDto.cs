@@ -12,7 +12,7 @@ public record SongDto(
     string? LrcLyrics,
     string? LrcRomanizedLyrics,
     string? LrcTranslatedLyrics,
-    string? YouTubeUrl,
-    List<string> AlternateYoutubeUrls,
+    string? YouTubeId,
+    List<string> AlternateYoutubeIds,
     GeniusMetaDataDto GeniusMetaData
 );

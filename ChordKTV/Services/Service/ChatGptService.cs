@@ -46,7 +46,7 @@ public class ChatGptService : IChatGptService
         // Construct the prompt. You can adjust this prompt as needed.
         if (!romanize && !translate)
         {
-            throw new ArgumentException("At least one of romanize or translate must be true.");
+            throw new ArgumentException($"Error in {nameof(TranslateLyricsAsync)}: At least one of romanize or translate must be true.");
         }
         string prompt = $@"
 Input Lyrics:
@@ -94,7 +94,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
             {
                 // You can add more detailed error logging here.
                 string errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"ChatGPT API call failed with status code {response.StatusCode}: {errorContent}");
+                throw new HttpRequestException($"Error in {nameof(TranslateLyricsAsync)}: ChatGPT API call failed with status code {response.StatusCode}: {errorContent}");
             }
 
             string responseContent = await response.Content.ReadAsStringAsync();
@@ -105,7 +105,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
             if (openAIResponse == null || openAIResponse.Choices.Count == 0)
             {
                 _logger.LogError("No choices were returned from the ChatGPT API. responseContent: {ResponseContent}", responseContent);
-                throw new InvalidOperationException("No choices were returned from the ChatGPT API.");
+                throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: No choices were returned from the ChatGPT API.");
             }
 
             string? messageContent = openAIResponse.Choices[0].Message.Content;
@@ -113,7 +113,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
             if (string.IsNullOrWhiteSpace(messageContent))
             {
                 _logger.LogError("The ChatGPT API returned an empty response. responseContent: {ResponseContent}", responseContent);
-                throw new InvalidOperationException("The ChatGPT API returned an empty response.");
+                throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: The ChatGPT API returned an empty response.");
             }
 
             string[] sections = messageContent.Split("---");
@@ -125,7 +125,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
             if ((romanize && romanizedLyrics == null) || (translate && translatedLyrics == null))
             {
                 _logger.LogError("messageContent: {MessageContent}", messageContent);
-                throw new InvalidOperationException("The ChatGPT API response did not contain the expected translations.");
+                throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: The ChatGPT API response did not contain the expected translations.");
             }
             return new TranslationResponseDto
             {
@@ -139,7 +139,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         {
             // Log the error if logging is available.
             _logger.LogError(httpEx, "HTTP request error while calling the ChatGPT API.");
-            throw new HttpRequestException("HTTP request error while calling the ChatGPT API.", httpEx);
+            throw new HttpRequestException($"Error in {nameof(TranslateLyricsAsync)}: HTTP request error while calling the ChatGPT API: {httpEx.Message}", httpEx);
         }
     }
 
@@ -157,7 +157,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         catch (Exception ex)
         {
             // Handle or log batch errors appropriately.
-            throw new InvalidOperationException("One or more translations failed during batch processing.", ex);
+            throw new InvalidOperationException($"Error in {nameof(BatchTranslateLyricsAsync)} One or more translations failed during batch processing: {ex.Message}", ex);
         }
     }
 
