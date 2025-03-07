@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography, FormControl, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import { quizApi } from '../../api/apiClient';
 import { QuizQuestionDto } from '../../api';
-import './QuizComponent.scss'
+import './QuizComponent.scss';
 
 const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
   const [questions, setQuestions] = useState<QuizQuestionDto[]>([]);
@@ -16,11 +16,11 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
     const fetchQuestions = async () => {
       try {
         const response = await quizApi.apiQuizRomanizationGet({
-            'songId': songId
-        })
+          'songId': songId
+        });
         setQuestions(response.questions ?? []);
-      } catch (error) {
-        console.error('Error fetching quiz questions:', error);
+      } catch {
+        return <Typography variant="h5">Error fetching quiz questions</Typography>;
       }
     };
 
