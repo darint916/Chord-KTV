@@ -1,5 +1,6 @@
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Dtos;
+using ChordKTV.Dtos.OpenAI;
 using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Models.SongData;
 using ChordKTV.Services.Api;
@@ -68,7 +69,11 @@ public class FullSongService : IFullSongService
             lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(title, artist, null, (float?)duration?.TotalSeconds);
             if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics)) //not found anywhere
             {
-                _logger.LogWarning("2nd attempt Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}", title, artist, duration);
+                _logger.LogWarning("2nd attempt Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}, attempting GPT extraction: ", title, artist, duration);
+
+                //Get new title artist candidates from gpt if from youtube
+                CandidateSongInfoListResponse candidateSongInfoList = await _chatGptService.GetCandidateSongInfosAsync(title, artist);
+
                 return song;
             }
 
