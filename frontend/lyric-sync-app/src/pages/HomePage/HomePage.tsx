@@ -18,6 +18,7 @@ import axios from 'axios';
 import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
 import './HomePage.scss';
 import { songApi } from '../../api/apiClient';
+import logo from '../../assets/chordktv.png'
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
@@ -81,10 +82,7 @@ const HomePage: React.FC = () => {
   return (
     <Box className="home-page">
       <Container maxWidth="md">
-        <Typography variant="h2" className="welcome-message">
-          Welcome {user ? user.name : 'to Chord KTV'}!
-        </Typography>
-
+        <img src={logo} alt="Logo" className="resized-image" />
         {error && (
           <Alert severity="error" className="error-alert">
             {error}

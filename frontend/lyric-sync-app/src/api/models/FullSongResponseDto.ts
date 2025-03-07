@@ -74,6 +74,12 @@ export interface FullSongResponseDto {
      * @type {string}
      * @memberof FullSongResponseDto
      */
+    duration?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof FullSongResponseDto
+     */
     genre?: string | null;
     /**
      * 
@@ -104,13 +110,13 @@ export interface FullSongResponseDto {
      * @type {string}
      * @memberof FullSongResponseDto
      */
-    youTubeUrl?: string | null;
+    youTubeId?: string | null;
     /**
      * 
      * @type {Array<string>}
      * @memberof FullSongResponseDto
      */
-    alternateYoutubeUrls?: Array<string> | null;
+    alternateYoutubeIds?: Array<string> | null;
     /**
      * 
      * @type {GeniusMetaDataDto}
@@ -143,13 +149,14 @@ export function FullSongResponseDtoFromJSONTyped(json: any, ignoreDiscriminator:
         'featuredArtists': json['featuredArtists'] == null ? undefined : json['featuredArtists'],
         'albumNames': json['albumNames'] == null ? undefined : json['albumNames'],
         'releaseDate': json['releaseDate'] == null ? undefined : (new Date(json['releaseDate'])),
+        'duration': json['duration'] == null ? undefined : json['duration'],
         'genre': json['genre'] == null ? undefined : json['genre'],
         'plainLyrics': json['plainLyrics'] == null ? undefined : json['plainLyrics'],
         'lrcLyrics': json['lrcLyrics'] == null ? undefined : json['lrcLyrics'],
         'lrcRomanizedLyrics': json['lrcRomanizedLyrics'] == null ? undefined : json['lrcRomanizedLyrics'],
         'lrcTranslatedLyrics': json['lrcTranslatedLyrics'] == null ? undefined : json['lrcTranslatedLyrics'],
-        'youTubeUrl': json['youTubeUrl'] == null ? undefined : json['youTubeUrl'],
-        'alternateYoutubeUrls': json['alternateYoutubeUrls'] == null ? undefined : json['alternateYoutubeUrls'],
+        'youTubeId': json['youTubeId'] == null ? undefined : json['youTubeId'],
+        'alternateYoutubeIds': json['alternateYoutubeIds'] == null ? undefined : json['alternateYoutubeIds'],
         'geniusMetaData': json['geniusMetaData'] == null ? undefined : GeniusMetaDataDtoFromJSON(json['geniusMetaData']),
     };
 }
@@ -172,13 +179,14 @@ export function FullSongResponseDtoToJSONTyped(value?: FullSongResponseDto | nul
         'featuredArtists': value['featuredArtists'],
         'albumNames': value['albumNames'],
         'releaseDate': value['releaseDate'] == null ? undefined : ((value['releaseDate'] as any).toISOString().substring(0,10)),
+        'duration': value['duration'],
         'genre': value['genre'],
         'plainLyrics': value['plainLyrics'],
         'lrcLyrics': value['lrcLyrics'],
         'lrcRomanizedLyrics': value['lrcRomanizedLyrics'],
         'lrcTranslatedLyrics': value['lrcTranslatedLyrics'],
-        'youTubeUrl': value['youTubeUrl'],
-        'alternateYoutubeUrls': value['alternateYoutubeUrls'],
+        'youTubeId': value['youTubeId'],
+        'alternateYoutubeIds': value['alternateYoutubeIds'],
         'geniusMetaData': GeniusMetaDataDtoToJSON(value['geniusMetaData']),
     };
 }

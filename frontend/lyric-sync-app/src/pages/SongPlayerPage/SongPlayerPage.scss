@@ -1,5 +1,6 @@
 @use '../../variables' as *;
 @use '../../mixins' as *;
+@use 'sass:color';
 
 .song-player-page {
   .song-player-container {
@@ -7,7 +8,7 @@
 
     .song-player-content {
       .song-title {
-        color: white;
+        color: $text-primary;
         margin-bottom: 24px;
       }
       margin-top: 48px;
@@ -22,7 +23,7 @@
         flex-direction: column;
         background-color: black;
         border-radius: 8px;
-        background: linear-gradient(45deg, #8a2be2, #e2e8f085);
+        background: linear-gradient(90deg, color.scale($primary-color, $lightness: -5%), #e2e8f085);
         box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
         max-width: 100%;
         

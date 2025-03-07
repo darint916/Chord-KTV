@@ -1,4 +1,5 @@
 apis/HandwritingApi.ts
+apis/QuizApi.ts
 apis/SongApi.ts
 apis/UserApi.ts
 apis/index.ts

@@ -45,7 +45,7 @@ const YouTubePlaylistViewer = () => {
         fullSongRequestDto: {
           title: params.row.title,
           artist: params.row.artist,
-          youTubeUrl: params.row.url
+          youTubeId: params.row.url
         }
       });
       setSong(response);

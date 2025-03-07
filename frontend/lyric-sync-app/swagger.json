@@ -93,6 +93,54 @@
         }
       }
     },
+    "/api/quiz/romanization": {
+      "get": {
+        "tags": [
+          "Quiz"
+        ],
+        "parameters": [
+          {
+            "name": "songId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "useCachedQuiz",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "difficulty",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 3
+            }
+          },
+          {
+            "name": "numQuestions",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/youtube/playlists/{playlistId}": {
       "get": {
         "tags": [
@@ -591,6 +639,11 @@
             "format": "date",
             "nullable": true
           },
+          "duration": {
+            "type": "string",
+            "format": "date-span",
+            "nullable": true
+          },
           "genre": {
             "type": "string",
             "nullable": true
@@ -611,11 +664,11 @@
             "type": "string",
             "nullable": true
           },
-          "youTubeUrl": {
+          "youTubeId": {
             "type": "string",
             "nullable": true
           },
-          "alternateYoutubeUrls": {
+          "alternateYoutubeIds": {
             "type": "array",
             "items": {
               "type": "string"

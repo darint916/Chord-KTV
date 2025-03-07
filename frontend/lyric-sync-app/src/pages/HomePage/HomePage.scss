@@ -3,16 +3,18 @@
 @use 'sass:color';
 
 .home-page {
-  min-height: 100vh;
   background-color: $primary-color;
   color: black;
   padding: 32px;
 
-  .welcome-message {
-    margin-bottom: 32px;
-    text-align: center;
-    font-weight: bold;
+  .resized-image {
+    width: 125px; /* Set desired width */
+    height: auto; /* Maintain aspect ratio */
+    display: block;
+    margin: 0 auto;
+    margin-bottom: 20px;
   }
+
 
   .info-alert {
     margin-bottom: 32px;
@@ -26,8 +28,7 @@
 
   .search-section,
   .playlist-section {
-    padding: 24px;
-    margin-bottom: 32px;
+    padding: 20px;
     background: linear-gradient(90deg, color.scale($primary-color, $lightness: -5%), #e2e8f085);
     border-radius: 8px;
 
