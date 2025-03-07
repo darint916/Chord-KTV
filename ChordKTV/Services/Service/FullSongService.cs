@@ -151,6 +151,9 @@ public class FullSongService : IFullSongService
 
             if (song is not null) // we update if we found in genius, but had to query with user params in lrc
             {
+                //covers the issue if genius gets a bad match
+                song.Title = lyricsDto.TrackName ?? title ?? song.Title;
+                song.Artist = lyricsDto.ArtistName ?? artist ?? song.Artist;
                 song.LrcLyrics = lyricsDto.SyncedLyrics;
             }
             else //create if we dont find in genius at all
