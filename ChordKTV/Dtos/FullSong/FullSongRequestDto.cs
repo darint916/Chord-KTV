@@ -7,5 +7,5 @@ public record FullSongRequestDto
     string? Album,
     TimeSpan? Duration,
     string? Lyrics,
-    string? YouTubeUrl
+    string? YouTubeId
 );

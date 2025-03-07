@@ -1,6 +1,7 @@
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Dtos;
 using ChordKTV.Dtos.TranslationGptApi;
+using ChordKTV.Dtos.YouTubeApi;
 using ChordKTV.Models.SongData;
 using ChordKTV.Services.Api;
 using ChordKTV.Utils;
@@ -9,13 +10,15 @@ namespace ChordKTV.Services.Service;
 
 public class FullSongService : IFullSongService
 {
+    private readonly IYouTubeClientService _youTubeClientService;
     private readonly ILrcService _lrcService;
     private readonly IGeniusService _geniusService;
     private readonly ISongRepo _songRepo;
     private readonly IChatGptService _chatGptService;
     private readonly ILogger<FullSongService> _logger;
-    public FullSongService(ILrcService lrcService, IGeniusService geniusService, ISongRepo songRepo, IChatGptService chatGptService, ILogger<FullSongService> logger)
+    public FullSongService(ILrcService lrcService, IGeniusService geniusService, ISongRepo songRepo, IChatGptService chatGptService, ILogger<FullSongService> logger, IYouTubeClientService youTubeClient)
     {
+        _youTubeClientService = youTubeClient;
         _lrcService = lrcService;
         _geniusService = geniusService;
         _songRepo = songRepo;
@@ -24,15 +27,29 @@ public class FullSongService : IFullSongService
     }
 
     //just realized we dont take album lmao
-    public async Task<Song?> GetFullSongAsync(string? title, string? artist, string? album, TimeSpan? duration, string? lyrics, string? youtubeUrl)
+    public async Task<Song?> GetFullSongAsync(string? title, string? artist, string? album, TimeSpan? duration, string? lyrics, string? youtubeId)
     {
-        if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(lyrics))
+        if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(lyrics) && string.IsNullOrWhiteSpace(youtubeId))
         {
-            throw new ArgumentException("Title or lyrics must be provided");
+            throw new ArgumentException("GetFullSongAsync: Title or lyrics or youtubeid must be provided");
         }
-        if (!string.IsNullOrWhiteSpace(lyrics))
+
+        //if youtube id first supplied, we just use that to search > user input if possible
+        VideoDetails? videoDetails = null;
+        if (!string.IsNullOrWhiteSpace(youtubeId))
         {
-            throw new NotImplementedException("Lyrics search not implemented, issue #35");
+            Dictionary<string, VideoDetails> videoDict = await _youTubeClientService.GetVideosDetailsAsync([youtubeId]);
+            if (videoDict.Count == 0)
+            {
+                _logger.LogWarning("GetVideosDetailsAsync: Youtube video not found for id: {YoutubeId}", youtubeId);
+            }
+            else
+            {
+                videoDetails = videoDict[youtubeId];
+                title ??= videoDetails.Title;
+                artist ??= videoDetails.ChannelTitle;
+                duration ??= videoDetails.Duration;
+            }
         }
 
         //genius service
@@ -40,6 +57,14 @@ public class FullSongService : IFullSongService
         if (song is null)
         {
             _logger.LogWarning("Song not found on Genius");
+            if (videoDetails is not null)
+            {
+                _logger.LogInformation("Attempting to get song from youtube video details, as missing in genius");
+                song = await _geniusService.GetSongByArtistTitleAsync(videoDetails.Title, videoDetails.ChannelTitle, lyrics);
+                title = videoDetails.Title; //overwrite title and artist since original query failed
+                artist = videoDetails.ChannelTitle;
+                duration = videoDetails.Duration;
+            }
         }
 
         //Gets lyrics from lrc service if not already present
@@ -121,16 +146,20 @@ public class FullSongService : IFullSongService
         }
 
         //Add/Update youtube urls
-        if (!string.IsNullOrWhiteSpace(youtubeUrl))
+        if (!string.IsNullOrWhiteSpace(youtubeId))
         {
-            if (string.IsNullOrWhiteSpace(song.YoutubeUrl))
+            if (string.IsNullOrWhiteSpace(song.YoutubeId))
             {
-                song.YoutubeUrl = youtubeUrl;
+                song.YoutubeId = youtubeId;
             }
-            else if (!song.AlternateYoutubeUrls.Contains(youtubeUrl))
+            else if (!song.AlternateYoutubeIds.Contains(youtubeId))
             {
-                song.AlternateYoutubeUrls.Add(youtubeUrl);
+                song.AlternateYoutubeIds.Add(youtubeId);
             }
+        }
+        else if (string.IsNullOrWhiteSpace(song.YoutubeId)) //query for a vid if none provided and non exist, expensive call
+        {
+            song.YoutubeId = await _youTubeClientService.SearchYoutubeVideoLinkAsync(song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, song.Duration);
         }
 
         //Add residual information (kinda messy)
@@ -142,7 +171,6 @@ public class FullSongService : IFullSongService
             }
             if (lyricsDto.ArtistName is not null && !song.FeaturedArtists.Contains(lyricsDto.ArtistName.ToLowerInvariant()) && !string.IsNullOrWhiteSpace(lyricsDto.ArtistName))
             {
-
                 song.FeaturedArtists.Add(lyricsDto.ArtistName.ToLowerInvariant());
             }
             if (lyricsDto.Id != 0 && song.LrcId != lyricsDto.Id)

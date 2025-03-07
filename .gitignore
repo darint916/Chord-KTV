@@ -415,6 +415,7 @@ FodyWeavers.xsd
 ### VisualStudio ###
 
 # User-specific files
+ChordKTV/lyrics.sql
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 

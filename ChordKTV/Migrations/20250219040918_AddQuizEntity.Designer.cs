@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ChordKTV.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ChordKTV.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250219040918_AddQuizEntity")]
+    partial class AddQuizEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,11 +50,15 @@ namespace ChordKTV.Migrations
                     b.Property<int>("Difficulty")
                         .HasColumnType("integer");
 
+                    b.Property<int>("GeniusId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("NumQuestions")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("SongId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("QuizJson")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
@@ -59,56 +66,6 @@ namespace ChordKTV.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Quizzes");
-                });
-
-            modelBuilder.Entity("ChordKTV.Models.Quiz.QuizOption", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsCorrect")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("OrderIndex")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("QuestionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuestionId", "OrderIndex")
-                        .IsUnique();
-
-                    b.ToTable("QuizOptions");
-                });
-
-            modelBuilder.Entity("ChordKTV.Models.Quiz.QuizQuestion", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("LyricPhrase")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("QuestionNumber")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("QuizId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuizId");
-
-                    b.ToTable("QuizQuestions");
                 });
 
             modelBuilder.Entity("ChordKTV.Models.SongData.Album", b =>
@@ -171,7 +128,7 @@ namespace ChordKTV.Migrations
                         .IsRequired()
                         .HasColumnType("text[]");
 
-                    b.PrimitiveCollection<List<string>>("AlternateYoutubeIds")
+                    b.PrimitiveCollection<List<string>>("AlternateYoutubeUrls")
                         .IsRequired()
                         .HasColumnType("text[]");
 
@@ -217,7 +174,7 @@ namespace ChordKTV.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("YoutubeId")
+                    b.Property<string>("YoutubeUrl")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -285,28 +242,6 @@ namespace ChordKTV.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ChordKTV.Models.Quiz.QuizOption", b =>
-                {
-                    b.HasOne("ChordKTV.Models.Quiz.QuizQuestion", "Question")
-                        .WithMany("Options")
-                        .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Question");
-                });
-
-            modelBuilder.Entity("ChordKTV.Models.Quiz.QuizQuestion", b =>
-                {
-                    b.HasOne("ChordKTV.Models.Quiz.Quiz", "Quiz")
-                        .WithMany("Questions")
-                        .HasForeignKey("QuizId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Quiz");
-                });
-
             modelBuilder.Entity("ChordKTV.Models.SongData.Song", b =>
                 {
                     b.HasOne("ChordKTV.Models.SongData.GeniusMetaData", "GeniusMetaData")
@@ -316,16 +251,6 @@ namespace ChordKTV.Migrations
                         .IsRequired();
 
                     b.Navigation("GeniusMetaData");
-                });
-
-            modelBuilder.Entity("ChordKTV.Models.Quiz.Quiz", b =>
-                {
-                    b.Navigation("Questions");
-                });
-
-            modelBuilder.Entity("ChordKTV.Models.Quiz.QuizQuestion", b =>
-                {
-                    b.Navigation("Options");
                 });
 #pragma warning restore 612, 618
         }
