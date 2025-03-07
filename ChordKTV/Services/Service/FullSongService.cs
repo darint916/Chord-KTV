@@ -53,6 +53,8 @@ public class FullSongService : IFullSongService
             }
         }
 
+        CandidateSongInfoListResponse? candidateSongInfoList = null;
+
         //genius service
         Song? song = await _geniusService.GetSongByArtistTitleAsync(title, artist, lyrics);
         if (song is null)
@@ -60,11 +62,28 @@ public class FullSongService : IFullSongService
             _logger.LogWarning("Song not found on Genius");
             if (videoDetails is not null)
             {
-                _logger.LogInformation("Attempting to get song from youtube video details, as missing in genius");
+                //first test with raw video details
                 song = await _geniusService.GetSongByArtistTitleAsync(videoDetails.Title, videoDetails.ChannelTitle, lyrics);
-                title = videoDetails.Title; //overwrite title and artist since original query failed
-                artist = videoDetails.ChannelTitle;
-                duration = videoDetails.Duration;
+                if (song is not null)
+                {
+                    title = videoDetails.Title;
+                    artist = videoDetails.ChannelTitle;
+                }
+                else
+                { //try pulling out better video details
+                    _logger.LogInformation("Attempting to get song from youtube video details through GPT Parsing, as missing in genius");
+                    candidateSongInfoList = await _chatGptService.GetCandidateSongInfosAsync(videoDetails.Title, videoDetails.ChannelTitle);
+                    foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
+                    {
+                        song = await _geniusService.GetSongByArtistTitleAsync(candidate.Title, candidate.Artist, lyrics);
+                        if (song is not null)
+                        {
+                            title = candidate.Title;
+                            artist = candidate.Artist;
+                            break;
+                        }
+                    }
+                }
             }
         }
 
@@ -94,12 +113,27 @@ public class FullSongService : IFullSongService
             lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(title, artist, null, (float?)duration?.TotalSeconds);
             if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics)) //not found anywhere
             {
-                _logger.LogWarning("2nd attempt Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}, attempting GPT extraction: ", title, artist, duration);
-
-                //Get new title artist candidates from gpt if from youtube
-                CandidateSongInfoListResponse candidateSongInfoList = await _chatGptService.GetCandidateSongInfosAsync(title, artist);
-
-                return song;
+                _logger.LogWarning("2nd attempt Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}: attempting candidate gpt list", title, artist, duration);
+                bool failed = true;
+                if (candidateSongInfoList is null && videoDetails is not null) //genius title artist failed but youtube details are there to try again
+                {
+                    candidateSongInfoList = await _chatGptService.GetCandidateSongInfosAsync(videoDetails.Title, videoDetails.ChannelTitle);
+                    foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
+                    {
+                        lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(candidate.Title, candidate.Artist, null, (float?)duration?.TotalSeconds);
+                        if (lyricsDto is not null && !string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics))
+                        {
+                            title = candidate.Title;
+                            artist = candidate.Artist;
+                            failed = false;
+                            break;
+                        }
+                    }
+                }
+                if (failed)
+                {
+                    return song;
+                }
             }
 
             if (song is not null) // we update if we found in genius, but had to query with user params in lrc
