@@ -18,7 +18,7 @@ import axios from 'axios';
 import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
 import './HomePage.scss';
 import { songApi } from '../../api/apiClient';
-import logo from '../../assets/chordktv.png'
+import logo from '../../assets/chordktv.png';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
