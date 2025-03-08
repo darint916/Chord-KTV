@@ -23,7 +23,7 @@ const SongPlayerPage: React.FC = () => {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying] = useState<boolean>(false);
   const playerRef = useRef<YouTubePlayer | null>(null);
-  const { song } = useSong();
+  const { song, setQuizQuestions } = useSong();
   const [selectedTab, setSelectedTab] = useState(0);
   const [showQuizButton, setShowQuizButton] = useState(false);
   const navigate = useNavigate();
@@ -64,6 +64,7 @@ const SongPlayerPage: React.FC = () => {
   };
 
   const handleQuizRedirect = () => {
+    setQuizQuestions([]);   // Clear old song quiz questions
     navigate('/quiz');
   };
 

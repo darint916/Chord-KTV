@@ -5,7 +5,7 @@ import { QuizQuestionDto } from '../api';
 // Define the context type
 interface SongContextType {
   song: FullSongResponseDto | null;
-  quizQuestions?: QuizQuestionDto[];
+  quizQuestions?: QuizQuestionDto[] | null;
   setSong: (_song: FullSongResponseDto) => void;
   setQuizQuestions: (_quiz: QuizQuestionDto[]) => void;
 }

@@ -12,9 +12,8 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
   const { quizQuestions, setQuizQuestions } = useSong();
 
   useEffect(() => {
-    // Fetch the quiz questions from the backend API if not stored in context
     const fetchQuestions = async () => {
-      if (quizQuestions && quizQuestions.length > 0){
+      if (quizQuestions && quizQuestions.length > 0) {
         return;
       }
 
@@ -23,8 +22,37 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
           'songId': songId
         });
         const fetchedQuestions = response.questions ?? [];
-        setQuizQuestions(fetchedQuestions); 
 
+        // Shuffle options and update the correct option index
+        const shuffledQuestions = fetchedQuestions.map((question) => {
+          if (!Array.isArray(question.options) || question.options.length === 0) {
+            return question; // Return the question as is if options are invalid
+          }
+          // Clone the options array
+          const shuffledOptions = [...question.options];
+          const correctIndex = question.correctOptionIndex;
+
+          if (correctIndex === null || correctIndex === undefined) {
+            return question; // Return the question as is if the correct index is invalid
+          }
+          
+          // Shuffle the options array
+          for (let i = shuffledOptions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+          }
+
+          // Find the new index of the correct answer after shuffling
+          const newCorrectIndex = shuffledOptions.indexOf(question.options[correctIndex]);
+
+          return {
+            ...question,
+            options: shuffledOptions,
+            correctOptionIndex: newCorrectIndex,
+          };
+        });
+
+        setQuizQuestions(shuffledQuestions);
       } catch {
         return <Typography variant="h5">Error fetching quiz questions</Typography>;
       }
@@ -66,7 +94,7 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
     setQuizFinished(true);
   };
 
-  if (!quizQuestions) {
+  if (!quizQuestions || quizQuestions.length === 0) {
     return <Typography variant="h5">Loading quiz questions...</Typography>;
   }
 
