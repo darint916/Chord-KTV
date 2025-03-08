@@ -77,6 +77,17 @@ const SongPlayerPage: React.FC = () => {
         <Typography variant="h5" className="song-title" align="center">
           {song.artist}
         </Typography>
+        {showQuizButton && (
+          <Box mt={3} display="flex" justifyContent="center">
+            <Button 
+              variant="contained" 
+              onClick={handleQuizRedirect}
+              className="quiz-button"
+            >
+              Go to Quiz
+            </Button>
+          </Box>
+        )}
         <Grid container className="song-player-content" spacing={10} height={'480px'} display={'flex'}>
           {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
           <Grid flex={'1'} height={'100%'} alignContent={'center'}>
@@ -106,17 +117,6 @@ const SongPlayerPage: React.FC = () => {
             </Box>
           </Grid>
         </Grid>
-        {showQuizButton && (
-          <Box mt={3} display="flex" justifyContent="center">
-            <Button 
-              variant="contained" 
-              onClick={handleQuizRedirect}
-              className="quiz-button"
-            >
-              Go to Quiz
-            </Button>
-          </Box>
-        )}
       </Container>
     </div>
   );
