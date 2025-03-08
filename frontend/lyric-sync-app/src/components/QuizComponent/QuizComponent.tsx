@@ -14,7 +14,9 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
   useEffect(() => {
     // Fetch the quiz questions from the backend API if not stored in context
     const fetchQuestions = async () => {
-      if (quizQuestions && quizQuestions.length > 0) return;
+      if (quizQuestions && quizQuestions.length > 0){
+        return;
+      }
 
       try {
         const response = await quizApi.apiQuizRomanizationGet({
@@ -36,18 +38,30 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestion.options && currentQuestion.correctOptionIndex && 
-      selectedAnswer === currentQuestion.options[currentQuestion.correctOptionIndex]) {
-      setScore(score + 1);
+    if (selectedAnswer !== null && quizQuestions) {
+      const currentQuestion = quizQuestions[currentQuestionIndex];
+      if (currentQuestion?.options && currentQuestion.correctOptionIndex !== undefined) {
+        // Check if the answer is correct and update score
+        if (currentQuestion.correctOptionIndex !== null && currentQuestion.correctOptionIndex !== undefined
+           && selectedAnswer === currentQuestion.options[currentQuestion.correctOptionIndex]) {
+          setScore(prevScore => prevScore + 1);
+        }
+      }
     }
     setSelectedAnswer(null);
-    setCurrentQuestionIndex(currentQuestionIndex + 1);
+    setCurrentQuestionIndex(prevIndex => prevIndex + 1);
   };
 
   const handleFinishQuiz = () => {
-    if (currentQuestion.options && currentQuestion.correctOptionIndex && 
-      selectedAnswer === currentQuestion.options[currentQuestion.correctOptionIndex]) {
-      setScore(score + 1);
+    if (selectedAnswer !== null && quizQuestions) {
+      const currentQuestion = quizQuestions[currentQuestionIndex];
+      if (currentQuestion?.options && currentQuestion.correctOptionIndex !== undefined) {
+        // Final score calculation
+        if (currentQuestion.correctOptionIndex !== null && currentQuestion.correctOptionIndex !== undefined
+           && selectedAnswer === currentQuestion.options[currentQuestion.correctOptionIndex]) {
+          setScore(prevScore => prevScore + 1);
+        }
+      }
     }
     setQuizFinished(true);
   };
