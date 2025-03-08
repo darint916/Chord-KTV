@@ -1,38 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography, FormControl, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import { quizApi } from '../../api/apiClient';
-import { QuizQuestionDto } from '../../api';
+import { useSong } from '../../contexts/SongContext';
 import './QuizComponent.scss';
 
 const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
-  const [questions, setQuestions] = useState<QuizQuestionDto[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [score, setScore] = useState<number>(0);
   const [quizFinished, setQuizFinished] = useState<boolean>(false);
+  const { quizQuestions, setQuizQuestions } = useSong();
 
   useEffect(() => {
-    // Fetch the quiz questions from the backend API
+    // Fetch the quiz questions from the backend API if not stored in context
     const fetchQuestions = async () => {
+      if (quizQuestions && quizQuestions.length > 0) return;
+
       try {
         const response = await quizApi.apiQuizRomanizationGet({
           'songId': songId
         });
-        setQuestions(response.questions ?? []);
+        const fetchedQuestions = response.questions ?? [];
+        setQuizQuestions(fetchedQuestions); 
+
       } catch {
         return <Typography variant="h5">Error fetching quiz questions</Typography>;
       }
     };
 
     fetchQuestions();
-  }, [songId]);
+  }, [songId, quizQuestions, setQuizQuestions]);
 
   const handleAnswerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedAnswer(event.target.value);
   };
 
   const handleNextQuestion = () => {
-    if (selectedAnswer === questions[currentQuestionIndex].correctOptionIndex) {
+    if (currentQuestion.options && currentQuestion.correctOptionIndex && 
+      selectedAnswer === currentQuestion.options[currentQuestion.correctOptionIndex]) {
       setScore(score + 1);
     }
     setSelectedAnswer(null);
@@ -40,26 +45,27 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
   };
 
   const handleFinishQuiz = () => {
-    if (selectedAnswer === questions[currentQuestionIndex].correctOptionIndex) {
+    if (currentQuestion.options && currentQuestion.correctOptionIndex && 
+      selectedAnswer === currentQuestion.options[currentQuestion.correctOptionIndex]) {
       setScore(score + 1);
     }
     setQuizFinished(true);
   };
 
+  if (!quizQuestions) {
+    return <Typography variant="h5">Loading quiz questions...</Typography>;
+  }
+
   if (quizFinished) {
     return (
       <Box>
         <Typography variant="h5">Quiz Finished!</Typography>
-        <Typography variant="h6">Your score: {score}/{questions.length}</Typography>
+        <Typography variant="h6">Your score: {score}/{quizQuestions.length}</Typography>
       </Box>
     );
   }
 
-  if (questions.length === 0) {
-    return <Typography variant="h5">Loading quiz questions...</Typography>;
-  }
-
-  const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestion = quizQuestions[currentQuestionIndex];
 
   return (
     <div>
@@ -84,7 +90,7 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
           ) : (
             <Typography variant="body1">No options available for this question.</Typography>
           )} 
-          {currentQuestionIndex < questions.length - 1 ? (
+          {currentQuestionIndex < quizQuestions.length - 1 ? (
             <Button onClick={handleNextQuestion} variant="contained" color="primary" disabled={!selectedAnswer}>
               Next Question
             </Button>

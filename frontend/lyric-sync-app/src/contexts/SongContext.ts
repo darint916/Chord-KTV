@@ -1,10 +1,13 @@
 import { createContext, useContext } from 'react';
 import { FullSongResponseDto } from '../api';
+import { QuizQuestionDto } from '../api';
 
 // Define the context type
 interface SongContextType {
   song: FullSongResponseDto | null;
+  quizQuestions?: QuizQuestionDto[];
   setSong: (_song: FullSongResponseDto) => void;
+  setQuizQuestions: (_quiz: QuizQuestionDto[]) => void;
 }
 
 // Create context
