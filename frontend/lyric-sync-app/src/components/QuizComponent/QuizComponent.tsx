@@ -61,7 +61,7 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
           answers: question.options,
           correctAnswer: ((question.correctOptionIndex ?? 0) + 1).toString(),
           point: '2',
-          messageForCorrectAnswer: 'Correct! Click Next to continue.',
+          messageForCorrectAnswer: 'Correct, well done!',
           messageForIncorrectAnswer: 'Incorrect, click Next to continue.'
         };
       }),
