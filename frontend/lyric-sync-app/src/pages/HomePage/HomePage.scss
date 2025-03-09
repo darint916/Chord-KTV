@@ -90,4 +90,21 @@
     text-align: center;
     opacity: 0.8;
   }
+
+  .playlist-url-input {
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    .MuiButton-root {
+      margin-left: 16px; 
+      background-color: $secondary-color;
+      height: 55px;
+    }
+
+    .MuiFilledInput-root {
+      background-color: white;
+    }
+  }
 }

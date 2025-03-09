@@ -1,9 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  TextField,
-  Button,
   Typography,
-  CircularProgress,
   Paper,
   Box,
 } from '@mui/material';
@@ -22,19 +19,51 @@ interface Song {
   duration?: string;
 }
 
-const YouTubePlaylistViewer = () => {
-  const [playlistUrl, setPlaylistUrl] = useState('');
+interface YouTubePlaylistViewerProps {
+  playlistUrl: string;
+}
+
+const YouTubePlaylistViewer: React.FC<YouTubePlaylistViewerProps> = ({ playlistUrl }) => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [playlistTitle, setPlaylistTitle] = useState('');
-  const [playlistLoading, setPlaylistLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState('');
   const { setSong } = useSong();
   const navigate = useNavigate();
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter') {
+  const extractPlaylistId = (url: string) => {
+    const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+    return match ? match[1] : null;
+  };
+
+  useEffect(() => {
+    if (playlistUrl) {
       fetchPlaylistSongs();
+    }
+  }, [playlistUrl]);
+
+  const fetchPlaylistSongs = async () => {
+    setError('');
+    setSongs([]);
+    setPlaylistTitle('');
+
+    const playlistId = extractPlaylistId(playlistUrl);
+    if (!playlistId) {
+      setError('Invalid playlist URL');
+      return;
+    }
+
+    try {
+      const response = await songApi.apiYoutubePlaylistsPlaylistIdGet({
+        playlistId: playlistId,
+      });
+
+      // Handle case where `response.videos` is null or undefined
+      const videos = response.videos || [];
+      setPlaylistTitle(response.playlistTitle || 'Untitled Playlist');
+      setSongs(videos.map((song, index) => ({ ...song, id: index })));
+    } catch {
+      setError('Failed to fetch playlist. Please try again.');
     }
   };
 
@@ -57,39 +86,6 @@ const YouTubePlaylistViewer = () => {
     }
   };
 
-  const extractPlaylistId = (url: string) => {
-    const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-    return match ? match[1] : null;
-  };
-
-  const fetchPlaylistSongs = async () => {
-    setError('');
-    setSongs([]);
-    setPlaylistTitle('');
-    setPlaylistLoading(true);
-
-    const playlistId = extractPlaylistId(playlistUrl);
-    if (!playlistId) {
-      setError('Invalid playlist URL');
-      setPlaylistLoading(false);
-      return;
-    }
-
-    try {
-      const response = await songApi.apiYoutubePlaylistsPlaylistIdGet({
-        playlistId: playlistId,
-      });
-
-      // Handle case where `response.videos` is null or undefined
-      const videos = response.videos || [];
-      setPlaylistTitle(response.playlistTitle || 'Untitled Playlist');
-      setSongs(videos.map((song, index) => ({ ...song, id: index })));
-    } catch {
-      setError('Failed to fetch playlist. Please try again.');
-    }
-    setPlaylistLoading(false);
-  };
-
   // Define columns for the DataGrid
   const columns = [
     { field: 'title', headerName: 'Title', flex: 2 },
@@ -108,21 +104,6 @@ const YouTubePlaylistViewer = () => {
 
   return (
     <div className="youtube-playlist-viewer">
-      <TextField
-        fullWidth
-        label="Enter YouTube Playlist URL"
-        variant="filled"
-        value={playlistUrl}
-        onChange={(e) => setPlaylistUrl(e.target.value)}
-        className="playlist-url-input"
-        onKeyDown={handleKeyDown}
-      />
-      <div className="load-section">
-        <Button variant="contained" className="button-style" onClick={fetchPlaylistSongs}>
-          Load Playlist
-        </Button>
-        {playlistLoading && <CircularProgress className="loading-spinner" />}
-      </div>
       {error && <Typography className="error-message">{error}</Typography>}
       {songs.length > 0 && (
         <Paper className="data-grid-container">

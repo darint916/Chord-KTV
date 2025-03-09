@@ -8,7 +8,8 @@ import {
   Paper,
   Container,
   Stack,
-  CircularProgress
+  CircularProgress,
+  Button
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useSong } from '../../contexts/SongContext';
@@ -28,6 +29,8 @@ const HomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { setSong } = useSong();
+  const [playlistUrl, setPlaylistUrl] = useState('');
+  const [showPlaylist, setShowPlaylist] = useState(false); // New state to control when to show the playlist
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
@@ -77,6 +80,14 @@ const HomePage: React.FC = () => {
     } finally {
       setIsLoading(false); // Set loading state to false when the search finishes
     }
+  };
+
+  const handleLoadPlaylist = () => {
+    if (!playlistUrl.trim()) {
+      setError('Please enter a valid YouTube playlist URL.');
+      return;
+    }
+    setShowPlaylist(true);
   };
 
   return (
@@ -140,7 +151,28 @@ const HomePage: React.FC = () => {
           <Typography variant="h5" className="section-title">
             Load a YouTube Playlist
           </Typography>
-          <YouTubePlaylistViewer />
+          <div className='playlist-url-input'>
+            <TextField
+              fullWidth
+              label="Enter YouTube Playlist URL"
+              variant="filled"
+              value={playlistUrl}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleLoadPlaylist();
+                }
+              }}
+              onChange={(e) => setPlaylistUrl(e.target.value)}
+            />
+            <Button
+              variant="contained"
+              onClick={handleLoadPlaylist}
+              disabled={isLoading}
+            >
+              Load Playlist
+            </Button>
+          </div>
+          {showPlaylist && <YouTubePlaylistViewer playlistUrl={playlistUrl} />}
         </Paper>
 
         {user && (
