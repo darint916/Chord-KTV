@@ -22,7 +22,7 @@ interface QuizData {
 }
 
 const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
-  const [quizData, setQuizData] = useState<QuizData | null>(null); // Specify the type as QuizData or null
+  const [quizData, setQuizData] = useState<QuizData | null>(null);
   const { quizQuestions, setQuizQuestions } = useSong();
   const [quizCompleted, setQuizCompleted] = useState(false);
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
           answerSelectionType: 'single',
           answers: question.options,
           correctAnswer: ((question.correctOptionIndex ?? 0) + 1).toString(),
-          point: '1',
+          point: '2',
         };
       }),
     };

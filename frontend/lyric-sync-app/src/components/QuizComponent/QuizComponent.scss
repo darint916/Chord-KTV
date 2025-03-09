@@ -11,4 +11,18 @@
     box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
     margin-top: 24px;
     color: $text-primary;
+
+    .tag-container {
+        display: none !important;
+    }
+
+    .alert.correct, .correct.answerBtn.btn {
+        background: rgb(123, 210, 123) !important;
+        color: $text-primary !important;
+    }
+
+    .alert.incorrect, .incorrect.answerBtn.btn {
+        background: rgb(255, 113, 113) !important;
+        color: $text-primary !important;
+    }
 }
