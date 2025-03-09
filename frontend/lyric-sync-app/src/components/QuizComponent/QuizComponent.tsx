@@ -89,13 +89,13 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
           onComplete={handleQuizComplete}
         />
       </Box>
-        {quizCompleted && (
-          <Box marginTop={2}>
-            <Button variant="contained" color="primary" onClick={handleBackToHome}>
+      {quizCompleted && (
+        <Box marginTop={2}>
+          <Button variant="contained" color="primary" onClick={handleBackToHome}>
               Back to Home
-            </Button>
-          </Box>
-        )}
+          </Button>
+        </Box>
+      )}
     </div>
   );
 };
