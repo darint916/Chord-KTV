@@ -97,7 +97,7 @@ const YouTubePlaylistViewer: React.FC<YouTubePlaylistViewerProps> = ({ playlistU
   const CustomToolbar = () => (
     <GridToolbarContainer>
       <Box className="toolbar-title">
-        <Typography variant="h6">{playlistTitle}</Typography>
+        <Typography variant="h5">{playlistTitle}</Typography>
       </Box>
     </GridToolbarContainer>
   );
