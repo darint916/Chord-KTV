@@ -21,7 +21,7 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ rawLrcLyrics, currentTime, 
 
   const lineRenderer = useCallback(({ active, line }: { active: boolean; line: LrcLine }) => (
     <div className={`lyric-text ${active ? 'active' : ''}`}>
-      {line.content}
+      {line.content.trim() ? line.content : '♫ ♫'}
     </div>
   ), []
   );
@@ -32,7 +32,6 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ rawLrcLyrics, currentTime, 
         lrc={rawLrcLyrics}
         currentMillisecond={currentTime * 1000}
         lineRenderer={lineRenderer}
-        verticalSpace
         recoverAutoScrollSingal={signal}
         recoverAutoScrollInterval={3000} //3 second for recovery auto
         className="lrc"

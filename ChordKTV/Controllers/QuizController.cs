@@ -22,6 +22,10 @@ namespace ChordKTV.Controllers
         }
 
         [HttpGet("romanization")]
+        [ProducesResponseType(typeof(QuizResponseDto), 200)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> GetRomanizationQuiz(
             [FromQuery] Guid songId,
             [FromQuery] bool useCachedQuiz = false,

@@ -1,14 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  TextField,
-  Button,
   Typography,
-  CircularProgress,
   Paper,
   Box,
 } from '@mui/material';
-import { DataGrid, GridToolbarContainer } from '@mui/x-data-grid';
-import { SongApi, Configuration } from '../../api';
+import { DataGrid, GridRowParams, GridToolbarContainer } from '@mui/x-data-grid';
+import { songApi } from '../../api/apiClient';
+import { useSong } from '../../contexts/SongContext';
+import { useNavigate } from 'react-router-dom';
 import './YouTubePlaylistViewer.scss';
 
 // Define the type for a song
@@ -20,35 +19,37 @@ interface Song {
   duration?: string;
 }
 
-// Initialize API client
-const songApi = new SongApi(
-  new Configuration({
-    basePath: import.meta.env.VITE_API_URL || 'http://localhost:5259',
-  })
-);
+interface YouTubePlaylistViewerProps {
+  playlistUrl: string;
+}
 
-const YouTubePlaylistViewer = () => {
-  const [playlistUrl, setPlaylistUrl] = useState('');
+const YouTubePlaylistViewer: React.FC<YouTubePlaylistViewerProps> = ({ playlistUrl }) => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [playlistTitle, setPlaylistTitle] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState('');
+  const { setSong } = useSong();
+  const navigate = useNavigate();
 
   const extractPlaylistId = (url: string) => {
     const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
     return match ? match[1] : null;
   };
 
+  useEffect(() => {
+    if (playlistUrl) {
+      fetchPlaylistSongs();
+    }
+  }, [playlistUrl]);
+
   const fetchPlaylistSongs = async () => {
     setError('');
     setSongs([]);
     setPlaylistTitle('');
-    setLoading(true);
 
     const playlistId = extractPlaylistId(playlistUrl);
     if (!playlistId) {
       setError('Invalid playlist URL');
-      setLoading(false);
       return;
     }
 
@@ -64,7 +65,25 @@ const YouTubePlaylistViewer = () => {
     } catch {
       setError('Failed to fetch playlist. Please try again.');
     }
-    setLoading(false);
+  };
+
+  const handleRowClick = async (params: GridRowParams) => {
+    setSearchLoading(true);
+    try {
+      const response = await songApi.apiSongsSearchPost({
+        fullSongRequestDto: {
+          title: params.row.title,
+          artist: params.row.artist,
+          youTubeId: params.row.url
+        }
+      });
+      setSong(response);
+      navigate('/play-song', { state: { playlistUrl } });
+    } catch {
+      setError('Search failed. Please try again.');
+    } finally {
+      setSearchLoading(false);
+    }
   };
 
   // Define columns for the DataGrid
@@ -78,25 +97,13 @@ const YouTubePlaylistViewer = () => {
   const CustomToolbar = () => (
     <GridToolbarContainer>
       <Box className="toolbar-title">
-        <Typography variant="h6">{playlistTitle}</Typography>
+        <Typography variant="h5">{playlistTitle}</Typography>
       </Box>
     </GridToolbarContainer>
   );
 
   return (
     <div className="youtube-playlist-viewer">
-      <TextField
-        fullWidth
-        label="Enter YouTube Playlist URL"
-        variant="filled"
-        value={playlistUrl}
-        onChange={(e) => setPlaylistUrl(e.target.value)}
-        className="playlist-url-input"
-      />
-      <Button variant="contained" color="primary" onClick={fetchPlaylistSongs}>
-        Load Playlist
-      </Button>
-      {loading && <CircularProgress className="loading-spinner" />}
       {error && <Typography className="error-message">{error}</Typography>}
       {songs.length > 0 && (
         <Paper className="data-grid-container">
@@ -111,6 +118,14 @@ const YouTubePlaylistViewer = () => {
             pageSizeOptions={[5, 10, 20]}
             slots={{
               toolbar: CustomToolbar,
+            }}
+            onRowClick={!searchLoading ? handleRowClick : undefined}
+            loading={searchLoading}
+            slotProps={{
+              loadingOverlay: {
+                variant: 'linear-progress',
+                noRowsVariant: 'skeleton',
+              },
             }}
           />
         </Paper>

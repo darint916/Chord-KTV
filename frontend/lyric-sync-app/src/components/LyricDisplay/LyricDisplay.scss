@@ -4,34 +4,34 @@
 .lyric-display-container {
   background-color: rgba(0, 0, 0, 0);
   border-radius: 8px;
-  padding: 16px;
   max-width: 80%;
   position: relative;
-  height: 200px; // Fixed height
+  height: 100%;
+  display: flex;
   scroll-behavior: smooth;
+  justify-content: center;
 }
 
 .lyric-text {
 
-  color: #ffffff8c;
+  color: $text-primary;
   text-align: center;
   font-weight: bold;
   line-height: 1.4;
-  text-transform: uppercase;
   min-height: 10px;
   // Responsive font sizes
-  font-size: 18px;
+  font-size: 10px;
   @media (min-width: 600px) {
-    font-size: 24px;
+    font-size: 18px;
   }
   @media (min-width: 1200px) {
-    font-size: 32px;
+    font-size: 26px;
   }
 }
 
 .active
 {
-  color: #fff;
+  color: $secondary-color;
 }
 
 .lrc { //hide scroll
