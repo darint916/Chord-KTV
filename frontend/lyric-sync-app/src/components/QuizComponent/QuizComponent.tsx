@@ -41,12 +41,12 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
   }, [songId, quizQuestions, setQuizQuestions]);
 
   useEffect(() => {
-    if (!quizQuestions || quizQuestions.length === 0) return;
+    if (!quizQuestions || quizQuestions.length === 0) {return;}
 
     const formattedQuiz: QuizData = {
       quizTitle: 'Lyrics Romanization Quiz',
       quizSynopsis: 'Select the correct romanized version of the lyric.',
-      progressBarColor: "#9de1f6",
+      progressBarColor: '#9de1f6',
       nrOfQuestions: quizQuestions.length.toString(),
       questions: quizQuestions.map((question) => {
         return {
@@ -55,7 +55,7 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
           answerSelectionType: 'single',
           answers: question.options,
           correctAnswer: ((question.correctOptionIndex ?? 0) + 1).toString(),
-          point: "1",
+          point: '1',
         };
       }),
     };
