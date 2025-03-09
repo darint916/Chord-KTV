@@ -19,7 +19,7 @@
     "@mui/x-data-grid": "^7.27.1",
     "@react-oauth/google": "^0.12.1",
     "@types/google-one-tap": "^1.2.6",
-    "axios": "^1.7.9",
+    "axios": "^1.8.2",
     "jwt-decode": "^4.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
