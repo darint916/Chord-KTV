@@ -174,12 +174,6 @@ const HomePage: React.FC = () => {
           </div>
           {showPlaylist && <YouTubePlaylistViewer playlistUrl={playlistUrl} />}
         </Paper>
-
-        {user && (
-          <Typography variant="body1" className="logged-in-message">
-            Logged in as: {user.email}
-          </Typography>
-        )}
       </Container>
     </Box>
   );
