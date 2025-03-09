@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { quizApi } from '../../api/apiClient';
 import { useSong } from '../../contexts/SongContext';
 import Quiz from 'react-quiz-component';
+import { useNavigate } from 'react-router-dom';
 import './QuizComponent.scss';
 
 interface QuizData {
@@ -23,6 +24,8 @@ interface QuizData {
 const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
   const [quizData, setQuizData] = useState<QuizData | null>(null); // Specify the type as QuizData or null
   const { quizQuestions, setQuizQuestions } = useSong();
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -67,10 +70,33 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
     return <Typography variant="h5">Loading quiz questions...</Typography>;
   }
 
+  const handleQuizComplete = () => {
+    setQuizCompleted(true); // Set quiz as completed
+  };
+
+  const handleBackToHome = () => {
+    navigate('/'); // Navigate to home page
+  };
+
   return (
-    <Box className="quiz-container">
-      <Quiz quiz={quizData} shuffle={true} showInstantFeedback={true} />
-    </Box>
+    <div>
+      <Box className="quiz-container">
+        <Quiz
+          quiz={quizData}
+          shuffle={true}
+          shuffleAnswer={true}
+          showInstantFeedback={true}
+          onComplete={handleQuizComplete}
+        />
+      </Box>
+        {quizCompleted && (
+          <Box marginTop={2}>
+            <Button variant="contained" color="primary" onClick={handleBackToHome}>
+              Back to Home
+            </Button>
+          </Box>
+        )}
+    </div>
   );
 };
 

@@ -78,7 +78,7 @@ const YouTubePlaylistViewer: React.FC<YouTubePlaylistViewerProps> = ({ playlistU
         }
       });
       setSong(response);
-      navigate('/play-song');
+      navigate('/play-song', { state: { playlistUrl } });
     } catch {
       setError('Search failed. Please try again.');
     } finally {

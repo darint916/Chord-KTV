@@ -8,6 +8,8 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { useSong } from '../../contexts/SongContext';
 import { useNavigate } from 'react-router-dom';
+import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
+import { useLocation } from 'react-router-dom';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -27,6 +29,8 @@ const SongPlayerPage: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [showQuizButton, setShowQuizButton] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { playlistUrl } = location.state || {};
 
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
@@ -117,6 +121,7 @@ const SongPlayerPage: React.FC = () => {
             </Box>
           </Grid>
         </Grid>
+        {playlistUrl && <YouTubePlaylistViewer playlistUrl={playlistUrl} />}
       </Container>
     </div>
   );

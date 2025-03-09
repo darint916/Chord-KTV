@@ -2,16 +2,7 @@
 @use '../../mixins' as *;
 
 .youtube-playlist-viewer {
-  .playlist-url-input {
-    background-color: white;
-    border-radius: 8px;
-    margin-bottom: 16px;
-
-    .MuiFilledInput-root {
-      background-color: white;
-    }
-  }
-
+  margin-top: 54px;
   .load-section{
     display: flex;
     flex-direction: row;
@@ -31,6 +22,11 @@
     margin-top: 16px;
     height: 400px;
     width: 100%;
+    border-radius: 8px;
+
+    .MuiDataGrid-row {
+      cursor: pointer;
+    }
   }
 
   .toolbar-title {
