@@ -8,7 +8,7 @@
   padding: 32px;
 
   .resized-image {
-    width: 125px; 
+    width: 175px; 
     height: auto;
     display: block;
     margin: 0 auto;
@@ -29,7 +29,7 @@
   .search-section,
   .playlist-section {
     padding: 20px;
-    background: linear-gradient(90deg, color.scale($primary-color, $lightness: -5%), #e2e8f085);
+    background: $gradient;
     border-radius: 8px;
 
     .section-title {

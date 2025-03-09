@@ -23,7 +23,7 @@
         flex-direction: column;
         background-color: black;
         border-radius: 8px;
-        background: linear-gradient(90deg, color.scale($primary-color, $lightness: -5%), #e2e8f085);
+        background: $gradient;
         box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
         max-width: 100%;
         

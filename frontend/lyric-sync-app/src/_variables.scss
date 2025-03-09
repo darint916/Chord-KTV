@@ -1,7 +1,10 @@
+@use 'sass:color';
+
 $primary-color: #E0E7FF;
-$secondary-color: #335adb;
+$secondary-color: #617ddb;
 $error-color: #e74c3c;
 $text-primary: #000000;
 $text-secondary: #666666;
 $spacing-unit: 16px;
 $border-radius: 8px;
+$gradient: linear-gradient(90deg, color.scale($primary-color, $lightness: -5%), #91b5e385);

@@ -3,7 +3,7 @@
 @use 'sass:color';
 
 .quiz-container {
-    background: linear-gradient(90deg, color.scale($primary-color, $lightness: -5%), #e2e8f085);
+    background: $gradient;
     border-radius: 8px;
     position: relative;
     display: inline-flex;

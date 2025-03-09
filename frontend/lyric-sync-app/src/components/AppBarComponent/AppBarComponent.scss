@@ -9,11 +9,26 @@
   .toolbar {
     @include flex-center;
     justify-content: space-between;
+    display: flex;
+    width: 100%;
+
+    .section {
+      display: flex;
+      align-items: center;
+      margin-right: 32px;
+    }
+
+    .logo {
+      height: 18px;
+      width: auto;
+      margin-right: 10px;
+    }
 
     .title {
       flex-grow: 1;
       text-decoration: none;
       color: black;
+      font-size: 18px;
     }
 
     .button-styles {
