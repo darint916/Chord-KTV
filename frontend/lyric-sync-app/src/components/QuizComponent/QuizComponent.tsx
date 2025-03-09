@@ -1,14 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Typography, FormControl, RadioGroup, FormControlLabel, Radio } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { quizApi } from '../../api/apiClient';
 import { useSong } from '../../contexts/SongContext';
+import Quiz from 'react-quiz-component';
 import './QuizComponent.scss';
 
+interface QuizData {
+  quizTitle: string;
+  quizSynopsis: string;
+  progressBarColor: string;
+  nrOfQuestions: string;
+  questions: {
+    question: string | null | undefined;
+    questionType: string;
+    answerSelectionType: string;
+    answers: string[] | null | undefined;
+    correctAnswer: string;
+    point: string;
+  }[];
+}
+
 const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [score, setScore] = useState<number>(0);
-  const [quizFinished, setQuizFinished] = useState<boolean>(false);
+  const [quizData, setQuizData] = useState<QuizData | null>(null); // Specify the type as QuizData or null
   const { quizQuestions, setQuizQuestions } = useSong();
 
   useEffect(() => {
@@ -16,134 +29,48 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
       if (quizQuestions && quizQuestions.length > 0) {
         return;
       }
-
       try {
-        const response = await quizApi.apiQuizRomanizationGet({
-          'songId': songId
-        });
-        const fetchedQuestions = response.questions ?? [];
-
-        // Shuffle options and update the correct option index
-        const shuffledQuestions = fetchedQuestions.map((question) => {
-          if (!Array.isArray(question.options) || question.options.length === 0) {
-            return question; // Return the question as is if options are invalid
-          }
-          // Clone the options array
-          const shuffledOptions = [...question.options];
-          const correctIndex = question.correctOptionIndex;
-
-          if (correctIndex === null || correctIndex === undefined) {
-            return question; // Return the question as is if the correct index is invalid
-          }
-          
-          // Shuffle the options array
-          for (let i = shuffledOptions.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
-          }
-
-          // Find the new index of the correct answer after shuffling
-          const newCorrectIndex = shuffledOptions.indexOf(question.options[correctIndex]);
-
-          return {
-            ...question,
-            options: shuffledOptions,
-            correctOptionIndex: newCorrectIndex,
-          };
-        });
-
-        setQuizQuestions(shuffledQuestions);
+        const response = await quizApi.apiQuizRomanizationGet({ songId });
+        setQuizQuestions(response.questions ?? []);
       } catch {
-        return <Typography variant="h5">Error fetching quiz questions</Typography>;
+        setQuizQuestions([]);
       }
     };
 
     fetchQuestions();
   }, [songId, quizQuestions, setQuizQuestions]);
 
-  const handleAnswerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedAnswer(event.target.value);
-  };
+  useEffect(() => {
+    if (!quizQuestions || quizQuestions.length === 0) return;
 
-  const handleNextQuestion = () => {
-    if (selectedAnswer !== null && quizQuestions) {
-      const currentQuestion = quizQuestions[currentQuestionIndex];
-      if (currentQuestion?.options && currentQuestion.correctOptionIndex !== undefined) {
-        // Check if the answer is correct and update score
-        if (currentQuestion.correctOptionIndex !== null && currentQuestion.correctOptionIndex !== undefined
-           && selectedAnswer === currentQuestion.options[currentQuestion.correctOptionIndex]) {
-          setScore(prevScore => prevScore + 1);
-        }
-      }
-    }
-    setSelectedAnswer(null);
-    setCurrentQuestionIndex(prevIndex => prevIndex + 1);
-  };
+    const formattedQuiz: QuizData = {
+      quizTitle: 'Lyrics Romanization Quiz',
+      quizSynopsis: 'Select the correct romanized version of the lyric.',
+      progressBarColor: "#9de1f6",
+      nrOfQuestions: quizQuestions.length.toString(),
+      questions: quizQuestions.map((question) => {
+        return {
+          question: question.lyricPhrase,
+          questionType: 'text',
+          answerSelectionType: 'single',
+          answers: question.options,
+          correctAnswer: ((question.correctOptionIndex ?? 0) + 1).toString(),
+          point: "1",
+        };
+      }),
+    };
 
-  const handleFinishQuiz = () => {
-    if (selectedAnswer !== null && quizQuestions) {
-      const currentQuestion = quizQuestions[currentQuestionIndex];
-      if (currentQuestion?.options && currentQuestion.correctOptionIndex !== undefined) {
-        // Final score calculation
-        if (currentQuestion.correctOptionIndex !== null && currentQuestion.correctOptionIndex !== undefined
-           && selectedAnswer === currentQuestion.options[currentQuestion.correctOptionIndex]) {
-          setScore(prevScore => prevScore + 1);
-        }
-      }
-    }
-    setQuizFinished(true);
-  };
+    setQuizData(formattedQuiz);
+  }, [quizQuestions]);
 
-  if (!quizQuestions || quizQuestions.length === 0) {
+  if (!quizData || !quizData.questions || quizData.questions.length === 0) {
     return <Typography variant="h5">Loading quiz questions...</Typography>;
   }
 
-  if (quizFinished) {
-    return (
-      <Box>
-        <Typography variant="h5">Quiz Finished!</Typography>
-        <Typography variant="h6">Your score: {score}/{quizQuestions.length}</Typography>
-      </Box>
-    );
-  }
-
-  const currentQuestion = quizQuestions[currentQuestionIndex];
-
   return (
-    <div>
-      <Typography variant='h5'>Select the correct romanized version of the lyric below:</Typography>
-      <Box className="quiz-container">
-        <div className="quiz-content">
-          <Typography variant="h4">{currentQuestion.lyricPhrase}</Typography>
-          {currentQuestion.options && currentQuestion.options.length > 0 ? (
-            <FormControl component="fieldset">
-              <RadioGroup value={selectedAnswer} onChange={handleAnswerChange}>
-                {currentQuestion.options.map((option, index) => (
-                  <FormControlLabel
-                    key={index}
-                    value={option}
-                    control={<Radio />}
-                    label={option}
-                    className="options"
-                  />
-                ))}
-              </RadioGroup>
-            </FormControl>
-          ) : (
-            <Typography variant="body1">No options available for this question.</Typography>
-          )} 
-          {currentQuestionIndex < quizQuestions.length - 1 ? (
-            <Button onClick={handleNextQuestion} variant="contained" color="primary" disabled={!selectedAnswer}>
-              Next Question
-            </Button>
-          ) : (
-            <Button onClick={handleFinishQuiz} variant="contained" color="secondary" disabled={!selectedAnswer}>
-              Finish Quiz
-            </Button>
-          )}
-        </div>
-      </Box>
-    </div>
+    <Box className="quiz-container">
+      <Quiz quiz={quizData} shuffle={true} showInstantFeedback={true} />
+    </Box>
   );
 };
 

@@ -117,10 +117,12 @@ const YouTubePlaylistViewer = () => {
         className="playlist-url-input"
         onKeyDown={handleKeyDown}
       />
-      <Button variant="contained" className="button-style" onClick={fetchPlaylistSongs}>
-        Load Playlist
-      </Button>
-      {playlistLoading && <CircularProgress className="loading-spinner" />}
+      <div className="load-section">
+        <Button variant="contained" className="button-style" onClick={fetchPlaylistSongs}>
+          Load Playlist
+        </Button>
+        {playlistLoading && <CircularProgress className="loading-spinner" />}
+      </div>
       {error && <Typography className="error-message">{error}</Typography>}
       {songs.length > 0 && (
         <Paper className="data-grid-container">

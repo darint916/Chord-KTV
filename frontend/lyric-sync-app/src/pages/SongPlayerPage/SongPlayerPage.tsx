@@ -90,10 +90,10 @@ const SongPlayerPage: React.FC = () => {
         )}
         <Grid container className="song-player-content" spacing={10} height={'480px'} display={'flex'}>
           {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
-          <Grid flex={'1'} height={'100%'} alignContent={'center'}>
+          <Grid flex={'1'} alignContent={'center'} className='grid-parent'>
             <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={handlePlayerReady} />
           </Grid>
-          <Grid className='right-grid-parent'>
+          <Grid className='grid-parent'>
             <Box className='tabs-grid-parent'>
               <Tabs value={selectedTab} onChange={handleTabChange} aria-label="lyric-tabs" variant="fullWidth">
                 <Tab label="Original Lyrics" />

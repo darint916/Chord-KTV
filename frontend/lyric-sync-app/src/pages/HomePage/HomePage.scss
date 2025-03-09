@@ -53,6 +53,11 @@
     }
 
     .search-button {
+      &.loading {
+        background-color: transparent !important;  
+        opacity: 0.5; 
+        pointer-events: none;  
+      }
       background-color: $secondary-color;
       color: white;
 

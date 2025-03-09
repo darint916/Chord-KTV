@@ -119,7 +119,7 @@ const HomePage: React.FC = () => {
               aria-label="search"
               onClick={handleSearch}
               disabled={isLoading}
-              className="search-button"
+              className={`search-button ${isLoading ? 'loading' : ''}`}
             >
               {isLoading ? <CircularProgress size={24} /> : <SearchIcon />}
             </IconButton>

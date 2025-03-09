@@ -12,8 +12,14 @@
     }
   }
 
-  .loading-spinner {
-    margin-top: 16px;
+  .load-section{
+    display: flex;
+    flex-direction: row;
+    .loading-spinner {
+      margin-left: 5px;
+      margin-top: 16px;
+      height: auto;
+    }
   }
 
   .error-message {

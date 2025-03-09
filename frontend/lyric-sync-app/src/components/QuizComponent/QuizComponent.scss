@@ -10,14 +10,5 @@
     justify-content: center;
     box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
     margin-top: 24px;
-
-    .quiz-content {
-        display: flex;
-        flex-direction: column;
-        padding: 24px;
-
-        .options {
-            color: $text-primary;
-        }
-    }
+    color: $text-primary;
 }
