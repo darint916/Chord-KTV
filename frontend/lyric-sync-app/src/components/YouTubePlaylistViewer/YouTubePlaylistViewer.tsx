@@ -67,14 +67,21 @@ const YouTubePlaylistViewer: React.FC<YouTubePlaylistViewerProps> = ({ playlistU
     }
   };
 
+  const extractYouTubeVideoId = (url: string | null | undefined): string | null => {
+    if (!url) {return null;}
+    const match = url.match(/(?:\?v=|\/embed\/|\.be\/|\/watch\?v=|\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/);
+    return match ? match[1] : null;
+  };
+
   const handleRowClick = async (params: GridRowParams) => {
     setSearchLoading(true);
     try {
+      const vidId = extractYouTubeVideoId(params.row.url);
       const response = await songApi.apiSongsSearchPost({
         fullSongRequestDto: {
           title: params.row.title,
           artist: params.row.artist,
-          youTubeId: params.row.url
+          youTubeId: vidId
         }
       });
       setSong(response);
