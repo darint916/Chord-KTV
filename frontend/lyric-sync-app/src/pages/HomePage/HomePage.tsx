@@ -7,7 +7,6 @@ import {
   Alert,
   Paper,
   Container,
-  Stack,
   CircularProgress,
   Button
 } from '@mui/material';
@@ -30,7 +29,9 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { setSong } = useSong();
   const [playlistUrl, setPlaylistUrl] = useState('');
-  const [showPlaylist, setShowPlaylist] = useState(false); // New state to control when to show the playlist
+  const [showPlaylist, setShowPlaylist] = useState(false); 
+  const [lyrics, setLyrics] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
@@ -38,13 +39,21 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const extractYouTubeVideoId = (url: string | null | undefined): string | null => {
+    if (!url) {return null;}
+    const match = url.match(/(?:\?v=|\/embed\/|\.be\/|\/watch\?v=|\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/);
+    return match ? match[1] : null;
+  };
+
   const handleSearch = async () => {
-    if (!songName.trim() || !artistName.trim()) {
-      setError('Please enter both a song name and an artist name.');
+    if (!songName.trim() && !artistName.trim() && !lyrics.trim() && !youtubeUrl.trim()) {
+      setError('Please enter at least one field to search.');
       return;
     }
 
     setIsLoading(true);
+
+    const youTubeId = extractYouTubeVideoId(youtubeUrl);
 
     if (user) {
       try {
@@ -70,7 +79,9 @@ const HomePage: React.FC = () => {
       const response = await songApi.apiSongsSearchPost({
         fullSongRequestDto: {
           title: songName,
-          artist: artistName
+          artist: artistName,
+          lyrics: lyrics,
+          youTubeId: youTubeId || ''
         }
       });
       setSong(response);
@@ -105,36 +116,64 @@ const HomePage: React.FC = () => {
           <Typography variant="h5" className="section-title">
             Search for a Song
           </Typography>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <TextField
-              label="Song Name"
-              variant="filled"
-              value={songName}
-              disabled={isLoading}
-              onKeyDown={handleKeyDown}
-              onChange={(e) => setSongName(e.target.value)}
-              fullWidth
-              className="search-input"
-            />
-            <TextField
-              label="Artist Name"
-              variant="filled"
-              disabled={isLoading} 
-              value={artistName}
-              onKeyDown={handleKeyDown}
-              onChange={(e) => setArtistName(e.target.value)}
-              fullWidth
-              className="search-input"
-            />
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box
+              display="grid"
+              gridTemplateColumns="1fr 1fr"
+              gap={2}
+              flexGrow={1}
+            >
+              <TextField
+                label="Song Name"
+                variant="filled"
+                value={songName}
+                disabled={isLoading}
+                onKeyDown={handleKeyDown}
+                onChange={(e) => setSongName(e.target.value)}
+                className="search-input"
+                fullWidth
+              />
+              <TextField
+                label="Artist Name"
+                variant="filled"
+                value={artistName}
+                disabled={isLoading}
+                onKeyDown={handleKeyDown}
+                onChange={(e) => setArtistName(e.target.value)}
+                className="search-input"
+                fullWidth
+              />
+              <TextField
+                label="Lyrics"
+                variant="filled"
+                value={lyrics}
+                disabled={isLoading}
+                onKeyDown={handleKeyDown}
+                onChange={(e) => setLyrics(e.target.value)}
+                className="search-input"
+                fullWidth
+              />
+              <TextField
+                label="YouTube URL"
+                variant="filled"
+                value={youtubeUrl}
+                disabled={isLoading}
+                onKeyDown={handleKeyDown}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                className="search-input"
+                fullWidth
+              />
+            </Box>
             <IconButton
               aria-label="search"
               onClick={handleSearch}
               disabled={isLoading}
               className={`search-button ${isLoading ? 'loading' : ''}`}
+              size="large"
             >
               {isLoading ? <CircularProgress size={24} /> : <SearchIcon />}
             </IconButton>
-          </Stack>
+          </Box>
         </Paper>
 
         {/* OR Divider */}
