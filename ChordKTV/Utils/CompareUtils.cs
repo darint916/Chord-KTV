@@ -13,7 +13,6 @@ public static partial class CompareUtils
         {
             return true;
         }
-
         return MathF.Abs(a.Value - b.Value) < tolerance;
     }
 

@@ -10,7 +10,7 @@ public class SongProfile : Profile
     public SongProfile()
     {
         CreateMap<Song, SongDto>()
-            .ForCtorParam("AlbumNames", opt => opt.MapFrom(src => src.Albums.Select(a => a.Name).ToList()));
+            .ForMember("AlbumNames", opt => opt.MapFrom(src => src.Albums.Select(a => a.Name).ToList()));
         CreateMap<GeniusMetaData, GeniusMetaDataDto>();
     }
 }
