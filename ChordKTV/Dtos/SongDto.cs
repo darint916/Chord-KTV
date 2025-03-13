@@ -1,6 +1,6 @@
-namespace ChordKTV.Dtos;
-
 using ChordKTV.Dtos.GeniusApi;
+
+namespace ChordKTV.Dtos;
 
 public record SongDto
 (

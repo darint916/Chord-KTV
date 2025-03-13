@@ -1,7 +1,8 @@
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using Microsoft.EntityFrameworkCore;
-namespace ChordKTV.Data.Repo;
+
+namespace ChordKTV.Data.Repo.SongData;
 
 
 public class SongRepo : ISongRepo
@@ -83,7 +84,7 @@ public class SongRepo : ISongRepo
     {
         return await _context.Songs.FirstOrDefaultAsync(s =>
             (s.Title == name || s.AlternateTitles.Contains(name)) &&
-            ((s.Artist == artist) || s.FeaturedArtists.Contains(artist)) &&
+            (s.Artist == artist || s.FeaturedArtists.Contains(artist)) &&
             s.Albums.Any(album => album.Name == albumName));
     }
 

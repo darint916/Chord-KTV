@@ -1,4 +1,4 @@
-namespace ChordKTV.Dtos;
+namespace ChordKTV.Dtos.HandwritingCanvas;
 
 public record HandwritingCanvasRequestDto(
     string Image,

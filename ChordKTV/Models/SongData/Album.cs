@@ -1,6 +1,6 @@
-namespace ChordKTV.Models.SongData;
-
 using System.ComponentModel.DataAnnotations;
+
+namespace ChordKTV.Models.SongData;
 
 public class Album
 {

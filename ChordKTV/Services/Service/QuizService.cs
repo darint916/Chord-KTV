@@ -2,7 +2,6 @@ using ChordKTV.Data.Api.SongData;
 using ChordKTV.Data.Api.QuizData;
 using ChordKTV.Models.Quiz;
 using ChordKTV.Services.Api;
-using Microsoft.Extensions.Logging;
 
 namespace ChordKTV.Services.Service;
 
@@ -71,8 +70,8 @@ public class QuizService : IQuizService
             throw new InvalidOperationException("Song lyrics not available.");
         }
 
-        // 3 is the maximum number of retries for quiz generation. 
-        // It is already unlikely that the first attempt will have duplicate options. 
+        // 3 is the maximum number of retries for quiz generation.
+        // It is already unlikely that the first attempt will have duplicate options.
         // If we hit more than 3 retries, it means there is a problem with the input lyrics or the LLM. We should stop here to avoid an infinite loop.
         const int maxRetries = 3;
         Quiz quiz;
