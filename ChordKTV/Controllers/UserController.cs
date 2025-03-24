@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Google.Apis.Auth;
-using Microsoft.Extensions.Logging;
 using ChordKTV.Utils.Extensions;
 
 namespace ChordKTV.Controllers;

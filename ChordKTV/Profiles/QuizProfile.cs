@@ -1,7 +1,6 @@
 using AutoMapper;
 using ChordKTV.Models.Quiz;
 using ChordKTV.Dtos.Quiz;
-using System.Linq;
 
 namespace ChordKTV.Profiles;
 

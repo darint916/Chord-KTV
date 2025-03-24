@@ -1,9 +1,9 @@
-namespace ChordKTV.Data;
-
 using ChordKTV.Models.SongData;
 using ChordKTV.Models.UserData;
 using ChordKTV.Models.Quiz;
 using Microsoft.EntityFrameworkCore;
+
+namespace ChordKTV.Data;
 
 public class AppDbContext : DbContext
 {

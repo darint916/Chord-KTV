@@ -3,7 +3,6 @@ using ChordKTV.Data;
 using ChordKTV.Services.Service;
 using ChordKTV.Services.Api;
 using ChordKTV.Data.Api.SongData;
-using ChordKTV.Data.Repo;
 using ChordKTV.Data.Repo.SongData;
 using ChordKTV.Utils;
 using ChordKTV.Dtos;

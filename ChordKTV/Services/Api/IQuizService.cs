@@ -1,4 +1,3 @@
-using ChordKTV.Dtos.Quiz;
 using ChordKTV.Models.Quiz;
 
 namespace ChordKTV.Services.Api;

@@ -8,9 +8,6 @@ using ChordKTV.Dtos.Quiz;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos.OpenAI;
 using ChordKTV.Models.Quiz;
-using Microsoft.Extensions.Logging;
-using Google.Apis.Http;
-using Google.Rpc;
 using System.Runtime.CompilerServices;
 
 namespace ChordKTV.Services.Service;

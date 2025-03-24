@@ -1,9 +1,9 @@
 using System.Text.RegularExpressions;
 using System.Globalization;
 using Google.Cloud.Vision.V1;
-using ChordKTV.Dtos;
 using ChordKTV.Services.Api;
 using FuzzySharp;
+using ChordKTV.Dtos.HandwritingCanvas;
 
 namespace ChordKTV.Services.Service;
 

@@ -1,4 +1,3 @@
-
 namespace ChordKTV.Utils;
 
 public class Shuffle
