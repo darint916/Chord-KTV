@@ -51,6 +51,7 @@ public class ChatGptService : IChatGptService
 You are a helpful assistant that translates LRC formatted lyrics into an English translation (if needed) and, if needed, a romanized version (using the English alphabet) while maintaing the same format.
 Is romanization needed: {(romanize ? "Yes" : "No")}
 Is translation needed: {(translate ? "Yes" : "No")}
+Notice the only exception to this is if the original lyrics are already in English, in which case no translation or romanization is needed. This occurs if language code is UNK, correct to EN if it is english and null out romanization and translation.
 If not needed, have the json response for the section be null or not there. Maintain the LRC text format timestamps exactly in the responses.
 If the language cannot be determined, auto-detect it instead of returning 'UNK'. Correct the suggested ISO 639-1 language code (2 letters if not uknown) if needed: {languageCode}.
 If multiple languages are detected, use the most common non-English language code. If unknown make it 'UNK'.
@@ -58,6 +59,7 @@ If multiple languages are detected, use the most common non-English language cod
 Input Lyrics:
 {originalLyrics}
 
+Remember if the original lyrics are already in English, no translation or romanization is needed and ignore the is needed clauses above.
 The lyrics input contains timestamps LRC Format. Do not change any timestamps or the formatting.
 Ensure that the output follows the expected JSON structure.
 Output Format:
@@ -100,12 +102,6 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
             throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: Failed to deserialize the ChatGPT API response.");
         }
 
-        if ((romanize && string.IsNullOrEmpty(translatedSongLyrics.RomanizedLyrics)) || (translate && string.IsNullOrEmpty(translatedSongLyrics.TranslatedLyrics)))
-        {
-            _logger.LogError("messageContent: {MessageContent}", messageContent);
-            throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: The ChatGPT API response did not contain the expected translations.");
-        }
-
         //Try parsing language code from string
         if (Enum.TryParse(translatedSongLyrics.LanguageCode, out LanguageCode parsedLanguageCode))
         {
@@ -121,6 +117,17 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         else
         {
             _logger.LogError("Failed to parse language code from ChatGPT API response: {LanguageCode} \n Lyrics: {OriginalLyrics}", translatedSongLyrics.LanguageCode, originalLyrics);
+        }
+        if (languageCode == LanguageCode.EN)
+        {
+            romanize = false;
+            translate = false;
+        }
+
+        if ((romanize && string.IsNullOrEmpty(translatedSongLyrics.RomanizedLyrics)) || (translate && string.IsNullOrEmpty(translatedSongLyrics.TranslatedLyrics)))
+        {
+            _logger.LogError("messageContent: {MessageContent}", messageContent);
+            throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: The ChatGPT API response did not contain the expected translations.");
         }
 
         return new TranslationResponseDto
