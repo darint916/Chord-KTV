@@ -171,9 +171,10 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         searchRequest.Q = $"{title} {artist} {album ?? ""}";
         searchRequest.Type = "video";
         searchRequest.MaxResults = 4; //more simple, maybe expand in future to allow users to choose, 2 groups based on relevancy sort
+        searchRequest.VideoEmbeddable = SearchResource.ListRequest.VideoEmbeddableEnum.True__;
 
         //https://stackoverflow.com/a/17738994/17621099 category type 10 is music for all regions where allowed
-        searchRequest.VideoCategoryId = "10";
+        // searchRequest.VideoCategoryId = "10"; //disabled for now, might be too specific
 
         SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
         //first search response item that has video id
