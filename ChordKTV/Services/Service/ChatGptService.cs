@@ -118,24 +118,21 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         {
             _logger.LogError("Failed to parse language code from ChatGPT API response: {LanguageCode} \n Lyrics: {OriginalLyrics}", translatedSongLyrics.LanguageCode, originalLyrics);
         }
-        if (languageCode == LanguageCode.EN)
+        if (languageCode != LanguageCode.EN)
         {
-            romanize = false;
-            translate = false;
-        }
-
-        if ((romanize && string.IsNullOrEmpty(translatedSongLyrics.RomanizedLyrics)) || (translate && string.IsNullOrEmpty(translatedSongLyrics.TranslatedLyrics)))
-        {
-            _logger.LogError("messageContent: {MessageContent}", messageContent);
-            throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: The ChatGPT API response did not contain the expected translations.");
+            if ((romanize && string.IsNullOrEmpty(translatedSongLyrics.RomanizedLyrics)) || (translate && string.IsNullOrEmpty(translatedSongLyrics.TranslatedLyrics)))
+            {
+                _logger.LogError("messageContent: {MessageContent}", messageContent);
+                throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: The ChatGPT API response did not contain the expected translations.");
+            }
         }
 
         return new TranslationResponseDto
         {
             OriginalLyrics = originalLyrics,
             LanguageCode = languageCode,
-            RomanizedLyrics = translatedSongLyrics.RomanizedLyrics,
-            TranslatedLyrics = translatedSongLyrics.TranslatedLyrics,
+            RomanizedLyrics = languageCode == LanguageCode.EN ? originalLyrics : translatedSongLyrics.RomanizedLyrics,
+            TranslatedLyrics = languageCode == LanguageCode.EN ? originalLyrics : translatedSongLyrics.TranslatedLyrics,
         };
     }
 
