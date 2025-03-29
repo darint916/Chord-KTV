@@ -168,12 +168,12 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         //reference https://developers.google.com/youtube/v3/docs/search/list#.net
 
         SearchResource.ListRequest searchRequest = _youTubeSearchService.Search.List("snippet");
-        searchRequest.Q = $"{title} {artist} {album ?? ""}";
+        searchRequest.Q = $"{title} {artist}"; //no album for now, as youtube search api is kinda lobotomized, will return no result
         searchRequest.Type = "video";
-        searchRequest.MaxResults = 4; //more simple, maybe expand in future to allow users to choose, 2 groups based on relevancy sort
+        searchRequest.MaxResults = 10; //more simple, maybe expand in future to allow users to choose, 2 groups based on relevancy sort
 
         //https://stackoverflow.com/a/17738994/17621099 category type 10 is music for all regions where allowed
-        searchRequest.VideoCategoryId = "10";
+        // searchRequest.VideoCategoryId = "10";
 
         SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
         //first search response item that has video id
