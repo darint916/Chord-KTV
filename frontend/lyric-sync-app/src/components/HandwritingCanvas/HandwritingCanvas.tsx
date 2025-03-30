@@ -6,11 +6,6 @@ import {
   CardContent,
   Typography,
   Stack,
-  TextField,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
 } from '@mui/material';
 import { HandwritingApi, Configuration, LanguageCode } from '../../api';
 import './HandwritingCanvas.scss';
@@ -22,7 +17,12 @@ const handwritingApi = new HandwritingApi(
   })
 );
 
-const HandwritingCanvas: React.FC = () => {
+interface HandwritingCanvasProps {
+  expectedText: string;
+  selectedLanguage: LanguageCode;
+}
+
+const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({ expectedText, selectedLanguage }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -31,8 +31,6 @@ const HandwritingCanvas: React.FC = () => {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [recognizedText, setRecognizedText] = useState('');
   const [matchPercentage, setMatchPercentage] = useState<number | null>(null);
-  const [expectedText, setExpectedText] = useState<string>('');
-  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>(LanguageCode.En); // Default language is English
 
   // Initialize canvas and grid
   useEffect(() => {
@@ -166,29 +164,6 @@ const HandwritingCanvas: React.FC = () => {
         <Typography variant="h6" gutterBottom>
           Handwriting Recognition
         </Typography>
-
-        <Stack direction="row" spacing={2} justifyContent="center" mt={2} mb={2}>
-          <TextField
-            label="Expected Text"
-            variant="outlined"
-            value={expectedText}
-            onChange={(e) => setExpectedText(e.target.value)}
-          />
-          <FormControl variant="outlined" sx={{ minWidth: 120 }}>
-            <InputLabel>Language</InputLabel>
-            <Select
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value as LanguageCode)}
-              label="Language"
-            >
-              {Object.keys(LanguageCode).map((key) => (
-                <MenuItem key={key} value={LanguageCode[key as keyof typeof LanguageCode]}>
-                  {LanguageCode[key as keyof typeof LanguageCode]}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Stack>
 
         <Box className="canvas-container">
           <canvas

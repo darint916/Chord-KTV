@@ -75,15 +75,26 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
   }
 
   const handleQuizComplete = () => {
-    setQuizCompleted(true); // Set quiz as completed
+    setQuizCompleted(true);
   };
 
   const handleBackToHome = () => {
-    navigate('/'); // Navigate to home page
+    navigate('/');
+  };
+
+  const handleStartHandwritingQuiz = () => {
+    navigate(`/handwriting-quiz`);
   };
 
   return (
     <div>
+      {quizCompleted && (
+        <Box marginTop={2}>
+          <Button variant="contained" color="primary" onClick={handleStartHandwritingQuiz}>
+            Start Handwriting Quiz
+          </Button>
+        </Box>
+      )}
       <Box className="quiz-container">
         <Quiz
           quiz={quizData}

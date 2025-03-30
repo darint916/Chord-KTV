@@ -58,9 +58,6 @@ const AppBarComponent: React.FC = () => {
           </Link>
         </div>
         <div className="section">
-          <Button component={Link} to="/canvas" className="button-styles">
-            Handwriting Demo
-          </Button>
           {user ? (
             <>
               <Avatar
