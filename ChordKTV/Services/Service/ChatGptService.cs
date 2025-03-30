@@ -48,8 +48,8 @@ public class ChatGptService : IChatGptService
             throw new ArgumentException($"Error in {nameof(TranslateLyricsAsync)}: At least one of romanize or translate must be true.");
         }
         string prompt = $@"
-        You are a helpful assistant that translates LRC formatted lyrics into an English translation (if needed) and, if needed, a romanized version (using the English alphabet) while maintaining the same format.
-        Is romanization needed: {(romanize ? "Yes" : "No")}
+You are a helpful assistant that translates LRC formatted lyrics into an English translation (if needed) and, if needed, a romanized version (using the English alphabet) while maintaining the same format.
+Is romanization needed: {(romanize ? "Yes" : "No")}
 Is translation needed: {(translate ? "Yes" : "No")}
 Notice the only exception to this is if the original lyrics are already in English, in which case no translation or romanization is needed. This occurs if language code is UNK, correct to EN if it is english and null out romanization and translation.
 If not needed, have the json response for the section be null or not there. Maintain the LRC text format timestamps exactly in the responses.
