@@ -1,5 +1,7 @@
+using AutoMapper;
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Dtos;
+using ChordKTV.Dtos.FullSong;
 using ChordKTV.Dtos.OpenAI;
 using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Dtos.YouTubeApi;
@@ -17,7 +19,9 @@ public class FullSongService : IFullSongService
     private readonly ISongRepo _songRepo;
     private readonly IChatGptService _chatGptService;
     private readonly ILogger<FullSongService> _logger;
-    public FullSongService(ILrcService lrcService, IGeniusService geniusService, ISongRepo songRepo, IChatGptService chatGptService, ILogger<FullSongService> logger, IYouTubeClientService youTubeClient)
+    private readonly IMapper _mapper;
+
+    public FullSongService(IMapper mapper, ILrcService lrcService, IGeniusService geniusService, ISongRepo songRepo, IChatGptService chatGptService, ILogger<FullSongService> logger, IYouTubeClientService youTubeClient)
     {
         _youTubeClientService = youTubeClient;
         _lrcService = lrcService;
@@ -25,6 +29,7 @@ public class FullSongService : IFullSongService
         _songRepo = songRepo;
         _chatGptService = chatGptService;
         _logger = logger;
+        _mapper = mapper;
     }
 
     //**
@@ -43,7 +48,7 @@ public class FullSongService : IFullSongService
     // If title and artist are present, we add them to the song if not already present
     // If song is created, we add it to the db, if not we update it
     //**
-    public async Task<Song?> GetFullSongAsync(string? title, string? artist, string? album, TimeSpan? duration, string? lyrics, string? youtubeId)
+    public async Task<FullSongResponseDto?> GetFullSongAsync(string? title, string? artist, string? album, TimeSpan? duration, string? lyrics, string? youtubeId)
     {
         if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(lyrics) && string.IsNullOrWhiteSpace(youtubeId))
         {
@@ -103,21 +108,21 @@ public class FullSongService : IFullSongService
         }
 
         //Gets lyrics from lrc service if not already present
-        LrcLyricsDto? lyricsDto = null;
+        LrcLyricsDto? lrcLyricsDto = null;
         if (song is not null && string.IsNullOrWhiteSpace(song.LrcLyrics))
         {
             song.Duration ??= duration;
             float? songDuration = (float?)song.Duration?.TotalSeconds;
-            lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(song.Title, song.Artist, null, songDuration);
-            if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics))
+            lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(song.Title, song.Artist, null, songDuration);
+            if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics))
             {
                 _logger.LogWarning("Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
             }
             else
             {
-                song.LrcId = lyricsDto.Id;
-                song.LrcLyrics = lyricsDto.SyncedLyrics;
-                song.Duration = TimeSpan.FromSeconds(lyricsDto.Duration); //overwrite since we overwrite lyrics above too
+                song.LrcId = lrcLyricsDto.Id;
+                song.LrcLyrics = lrcLyricsDto.SyncedLyrics;
+                song.Duration = TimeSpan.FromSeconds(lrcLyricsDto.Duration); //overwrite since we overwrite lyrics above too
             }
         }
 
@@ -125,8 +130,8 @@ public class FullSongService : IFullSongService
         bool songCreate = false;
         if (song is null || string.IsNullOrWhiteSpace(song.LrcLyrics))
         {
-            lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(title, artist, null, (float?)duration?.TotalSeconds);
-            if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics)) //not found anywhere
+            lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(title, artist, null, (float?)duration?.TotalSeconds);
+            if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics)) //not found anywhere
             {
                 _logger.LogWarning("2nd attempt Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}: attempting candidate gpt list", title, artist, duration);
                 if (candidateSongInfoList is null && videoDetails is not null) //genius title artist failed but youtube details are there to try again
@@ -134,8 +139,8 @@ public class FullSongService : IFullSongService
                     candidateSongInfoList = await _chatGptService.GetCandidateSongInfosAsync(videoDetails.Title, videoDetails.ChannelTitle);
                     foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
                     {
-                        lyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(candidate.Title, candidate.Artist, null, (float?)duration?.TotalSeconds);
-                        if (lyricsDto is not null && !string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics))
+                        lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(candidate.Title, candidate.Artist, null, (float?)duration?.TotalSeconds);
+                        if (lrcLyricsDto is not null && !string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics))
                         {
                             title = candidate.Title;
                             artist = candidate.Artist;
@@ -143,22 +148,22 @@ public class FullSongService : IFullSongService
                         }
                     }
                 }
-                if (lyricsDto is null || string.IsNullOrWhiteSpace(lyricsDto.SyncedLyrics)) //recheck if we still dont find it with candidate list
+                if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics)) //recheck if we still dont find it with candidate list
                 {
-                    return song;
+                    return _mapper.Map<FullSongResponseDto>(song); //return empty song
                 }
             }
 
             if (song is not null) // we update if we found in genius, but had to query with user params in lrc
             {
                 //covers the issue if genius gets a bad match
-                song.Title = lyricsDto.TrackName ?? title ?? song.Title;
-                song.Artist = lyricsDto.ArtistName ?? artist ?? song.Artist;
-                song.LrcLyrics = lyricsDto.SyncedLyrics;
+                song.Title = lrcLyricsDto.TrackName ?? title ?? song.Title;
+                song.Artist = lrcLyricsDto.ArtistName ?? artist ?? song.Artist;
+                song.LrcLyrics = lrcLyricsDto.SyncedLyrics;
                 // Add new alternates from LRC search
-                if (lyricsDto.AlternateTitles?.Count > 0)
+                if (lrcLyricsDto.AlternateTitles?.Count > 0)
                 {
-                    foreach (string altTitle in lyricsDto.AlternateTitles)
+                    foreach (string altTitle in lrcLyricsDto.AlternateTitles)
                     {
                         if (!song.AlternateTitles.Any(title => string.Equals(title, altTitle, StringComparison.OrdinalIgnoreCase)))
                         {
@@ -166,9 +171,9 @@ public class FullSongService : IFullSongService
                         }
                     }
                 }
-                if (lyricsDto.AlternateArtists?.Count > 0)
+                if (lrcLyricsDto.AlternateArtists?.Count > 0)
                 {
-                    foreach (string altArtist in lyricsDto.AlternateArtists)
+                    foreach (string altArtist in lrcLyricsDto.AlternateArtists)
                     {
                         if (!song.FeaturedArtists.Any(artist => string.Equals(artist, altArtist, StringComparison.OrdinalIgnoreCase)))
                         {
@@ -181,16 +186,16 @@ public class FullSongService : IFullSongService
             {
                 song = new Song
                 {
-                    Title = lyricsDto.TrackName ?? title ?? "Unknown",
-                    Artist = lyricsDto.ArtistName ?? artist ?? "Unknown",
-                    Duration = lyricsDto.Duration > 0 ? TimeSpan.FromSeconds(lyricsDto.Duration) : duration,
-                    LrcLyrics = lyricsDto.SyncedLyrics,
-                    PlainLyrics = lyricsDto.PlainLyrics,
-                    LrcId = lyricsDto.Id,
-                    RomLrcId = lyricsDto.RomanizedId,
-                    LrcRomanizedLyrics = lyricsDto.RomanizedSyncedLyrics,
-                    AlternateTitles = lyricsDto.AlternateTitles.Select(t => t.ToLowerInvariant()).ToList(),
-                    FeaturedArtists = lyricsDto.AlternateArtists.Select(a => a.ToLowerInvariant()).ToList(),
+                    Title = lrcLyricsDto.TrackName ?? title ?? "Unknown",
+                    Artist = lrcLyricsDto.ArtistName ?? artist ?? "Unknown",
+                    Duration = lrcLyricsDto.Duration > 0 ? TimeSpan.FromSeconds(lrcLyricsDto.Duration) : duration,
+                    LrcLyrics = lrcLyricsDto.SyncedLyrics,
+                    PlainLyrics = lrcLyricsDto.PlainLyrics,
+                    LrcId = lrcLyricsDto.Id,
+                    RomLrcId = lrcLyricsDto.RomanizedId,
+                    LrcRomanizedLyrics = lrcLyricsDto.RomanizedSyncedLyrics,
+                    AlternateTitles = lrcLyricsDto.AlternateTitles,
+                    FeaturedArtists = lrcLyricsDto.AlternateArtists,
                     GeniusMetaData = new GeniusMetaData { }
                 };
                 songCreate = true;
@@ -200,10 +205,10 @@ public class FullSongService : IFullSongService
         // check if lyrics are translated, don't need to translate/romanize if alr english
         if (song.GeniusMetaData.Language.Equals(LanguageCode.EN))
         {
-            song.LrcTranslatedLyrics ??= lyricsDto?.SyncedLyrics;
-            song.LrcRomanizedLyrics ??= lyricsDto?.SyncedLyrics;
+            song.LrcTranslatedLyrics ??= lrcLyricsDto?.SyncedLyrics;
+            song.LrcRomanizedLyrics ??= lrcLyricsDto?.SyncedLyrics;
         }
-        song.LrcRomanizedLyrics ??= lyricsDto?.RomanizedSyncedLyrics;
+        song.LrcRomanizedLyrics ??= lrcLyricsDto?.RomanizedSyncedLyrics;
 
         //check if lyrics are romanized (note that we do not check LRC Lib for romanization if db alr has synced lyrics)
         bool needTranslation = string.IsNullOrWhiteSpace(song.LrcTranslatedLyrics);
@@ -242,7 +247,7 @@ public class FullSongService : IFullSongService
         }
 
         //Add residual information (kinda messy)
-        if (lyricsDto != null)
+        if (lrcLyricsDto != null)
         {
             if (!string.IsNullOrWhiteSpace(lyricsDto.TrackName) && !song.AlternateTitles.Any(alt => alt.Equals(lyricsDto.TrackName, StringComparison.OrdinalIgnoreCase)))
             {
@@ -252,17 +257,17 @@ public class FullSongService : IFullSongService
             {
                 song.FeaturedArtists.Add(lyricsDto.ArtistName);
             }
-            if (lyricsDto.Id != 0 && song.LrcId != lyricsDto.Id)
+            if (lrcLyricsDto.Id != 0 && song.LrcId != lrcLyricsDto.Id)
             {
-                song.LrcId = lyricsDto.Id; //assume new lyrics found??
+                song.LrcId = lrcLyricsDto.Id; //assume new lyrics found??
             }
-            if (lyricsDto.RomanizedId != 0 && song.RomLrcId != lyricsDto.RomanizedId)
+            if (lrcLyricsDto.RomanizedId != 0 && song.RomLrcId != lrcLyricsDto.RomanizedId)
             {
-                song.RomLrcId ??= lyricsDto.RomanizedId; //assume new lyrics found??
+                song.RomLrcId ??= lrcLyricsDto.RomanizedId; //assume new lyrics found??
             }
-            if (lyricsDto.PlainLyrics is not null && string.IsNullOrWhiteSpace(song.PlainLyrics))
+            if (lrcLyricsDto.PlainLyrics is not null && string.IsNullOrWhiteSpace(song.PlainLyrics))
             {
-                song.PlainLyrics = lyricsDto.PlainLyrics;
+                song.PlainLyrics = lrcLyricsDto.PlainLyrics;
             }
         }
         if (!string.IsNullOrWhiteSpace(title) && !song.AlternateTitles.Any(alt => alt.Equals(title, StringComparison.OrdinalIgnoreCase)))
@@ -287,6 +292,12 @@ public class FullSongService : IFullSongService
         {
             await _songRepo.UpdateSongAsync(song);
         }
-        return song;
+        FullSongResponseDto? response = _mapper.Map<FullSongResponseDto>(song);
+        if (lrcLyricsDto != null) //add LRC Scores
+        {
+            response.TitleMatchScores = lrcLyricsDto.TitleMatchScores;
+            response.ArtistMatchScores = lrcLyricsDto.ArtistMatchScores;
+        }
+        return response;
     }
 }

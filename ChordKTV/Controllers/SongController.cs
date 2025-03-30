@@ -116,12 +116,12 @@ public class SongController : Controller
         }
         try
         {
-            Song? fullSong = await _fullSongService.GetFullSongAsync(request.Title, request.Artist, request.Album, request.Duration, lyricsQuery, request.YouTubeId);
+            FullSongResponseDto? fullSong = await _fullSongService.GetFullSongAsync(request.Title, request.Artist, request.Album, request.Duration, lyricsQuery, request.YouTubeId);
             if (fullSong == null)
             {
                 return NotFound(new { message = "Song search: song not found. null return" });
             }
-            return Ok(_mapper.Map<FullSongResponseDto>(fullSong));
+            return Ok(fullSong);
         }
         catch (HttpRequestException ex)
         {
