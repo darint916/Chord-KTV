@@ -7,20 +7,14 @@ import {
   Typography,
   Stack,
 } from '@mui/material';
-import { HandwritingApi, Configuration, LanguageCode } from '../../api';
+import { LanguageCode } from '../../api';
+import { handwritingApi } from '../../api/apiClient';
 import './HandwritingCanvas.scss';
-
-// Initialize API client
-const handwritingApi = new HandwritingApi(
-  new Configuration({
-    basePath: import.meta.env.VITE_API_URL || 'http://localhost:5259',
-  })
-);
 
 interface HandwritingCanvasProps {
   expectedText: string;
   selectedLanguage: LanguageCode;
-  onComplete?: () => void;
+  onComplete?: (isSuccess: boolean) => void;
 }
 
 const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({ 
@@ -36,7 +30,6 @@ const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [recognizedText, setRecognizedText] = useState('');
   const [matchPercentage, setMatchPercentage] = useState<number | null>(null);
-  const [isCompleted, setIsCompleted] = useState(false);
 
   // Initialize canvas and grid
   useEffect(() => {
@@ -156,20 +149,14 @@ const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({
 
       if (match === 100) {
         setFeedbackMessage('Good job!');
-        setIsCompleted(true);
+        if (onComplete) onComplete(true);
       } else {
         setFeedbackMessage(`Try again! Match: ${match}%`);
-        setIsCompleted(false);
+        if (onComplete) onComplete(false);
       }
     } catch {
       setFeedbackMessage('Error in recognition. Please try again.');
-      setIsCompleted(false);
-    }
-  };
-
-  const handleNextWord = () => {
-    if (onComplete) {
-      onComplete();
+      if (onComplete) onComplete(false);
     }
   };
 
@@ -213,11 +200,6 @@ const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({
           >
             {isEraser ? 'Drawing' : 'Erase'}
           </Button>
-          {isCompleted && (
-            <Button variant="contained" color="success" onClick={handleNextWord}>
-              Next Word
-            </Button>
-          )}
         </Stack>
 
         <Typography variant="h6" mt={2}>

@@ -10,6 +10,7 @@ const HandwritingPage: React.FC = () => {
   const { song, quizQuestions } = useSong();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [completedWords, setCompletedWords] = useState<number[]>([]);
+  const [currentWordCompleted, setCurrentWordCompleted] = useState(false);
 
   if (!quizQuestions || quizQuestions.length === 0) {
     return <Typography variant="h5">Error: Failed to load handwriting quiz as reading quiz questions were not found</Typography>;
@@ -41,12 +42,17 @@ const HandwritingPage: React.FC = () => {
 
   const currentWord = wordsToPractice[currentWordIndex % wordsToPractice.length];
   
-  const handleWordCompleted = () => {
-    setCompletedWords([...completedWords, currentWordIndex]);
-    setCurrentWordIndex((currentWordIndex + 1) % wordsToPractice.length);
+  const handleWordCompletionAttempt = (isSuccess: boolean) => {
+    if (isSuccess) {
+      setCompletedWords([...completedWords, currentWordIndex]);
+      setCurrentWordCompleted(true);
+    }
   };
 
-  console.log(wordsToPractice);
+  const moveToNextWord = () => {
+    setCurrentWordIndex((currentWordIndex + 1) % wordsToPractice.length);
+    setCurrentWordCompleted(false);
+  };
 
   return (
     <Container maxWidth="md" className="handwriting-page-container">
@@ -61,7 +67,7 @@ const HandwritingPage: React.FC = () => {
         <HandwritingCanvas 
           expectedText={currentWord}
           selectedLanguage={song.geniusMetaData.language as LanguageCode}
-          onComplete={handleWordCompleted}
+          onComplete={handleWordCompletionAttempt}
         />
       </Box>
       
@@ -69,13 +75,17 @@ const HandwritingPage: React.FC = () => {
         <Typography variant="body1">
           Progress: {completedWords.length} of {wordsToPractice.length} words completed
         </Typography>
-        <Button 
-          variant="outlined" 
-          onClick={() => setCurrentWordIndex((currentWordIndex + 1) % wordsToPractice.length)}
-          sx={{ mt: 2 }}
-        >
-          Skip to Next Word
-        </Button>
+        
+        {currentWordCompleted && (
+          <Button 
+            variant="contained" 
+            color="success"
+            onClick={moveToNextWord}
+            sx={{ mt: 2 }}
+          >
+            Next Word
+          </Button>
+        )}
       </Box>
     </Container>
   );
