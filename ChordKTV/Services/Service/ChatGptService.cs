@@ -115,7 +115,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         {
             if (parsedLanguageCode == LanguageCode.UNK)
             {
-                _logger.LogError("Unkown language code returned from ChatGPT API: {LanguageCode} \n Lyrics: {OriginalLyrics}", translatedSongLyrics.LanguageCode, originalLyrics);
+                _logger.LogError("Unknown language code returned from ChatGPT API: {LanguageCode} \n Lyrics: {OriginalLyrics}", translatedSongLyrics.LanguageCode, originalLyrics);
             }
             else
             {
