@@ -3,7 +3,7 @@ import HandwritingCanvas from '../../components/HandwritingCanvas/HandwritingCan
 import { Container, Box, Typography, Button } from '@mui/material';
 import { useSong } from '../../contexts/SongContext';
 import './HandwritingPage.scss';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { LanguageCode } from '../../api';
 
 const HandwritingPage: React.FC = () => {
@@ -29,7 +29,7 @@ const HandwritingPage: React.FC = () => {
       .filter(segment => segment.isWordLike)
       .map(segment => segment.segment);
     
-    if (words.length === 0) return text; // fallback if no word-like segments found
+    if (words.length === 0) {return text;} // fallback if no word-like segments found
     
     return words.reduce((longest, current) => 
       current.length > longest.length ? current : longest
@@ -37,7 +37,7 @@ const HandwritingPage: React.FC = () => {
   };
 
   const wordsToPractice = quizQuestions
-    .map(q => getLongestWord(q.lyricPhrase))
+    .map(q => getLongestWord(q.lyricPhrase ?? ''))
     .filter(word => word.length > 0); // Remove empty strings
 
   const currentWord = wordsToPractice[currentWordIndex % wordsToPractice.length];

@@ -83,7 +83,7 @@ const QuizComponent: React.FC<{ songId: string }> = ({ songId }) => {
   };
 
   const handleStartHandwritingQuiz = () => {
-    navigate(`/handwriting-quiz`);
+    navigate('/handwriting-quiz');
   };
 
   return (

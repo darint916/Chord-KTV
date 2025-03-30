@@ -14,7 +14,7 @@ import './HandwritingCanvas.scss';
 interface HandwritingCanvasProps {
   expectedText: string;
   selectedLanguage: LanguageCode;
-  onComplete?: (isSuccess: boolean) => void;
+  onComplete?: (isSuccess: boolean) => void; // eslint-disable-line no-unused-vars
 }
 
 const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({ 
@@ -149,14 +149,14 @@ const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({
 
       if (match === 100) {
         setFeedbackMessage('Good job!');
-        if (onComplete) onComplete(true);
+        if (onComplete) {onComplete(true);}
       } else {
         setFeedbackMessage(`Try again! Match: ${match}%`);
-        if (onComplete) onComplete(false);
+        if (onComplete) {onComplete(false);}
       }
     } catch {
       setFeedbackMessage('Error in recognition. Please try again.');
-      if (onComplete) onComplete(false);
+      if (onComplete) {onComplete(false);}
     }
   };
 
