@@ -20,9 +20,14 @@ const handwritingApi = new HandwritingApi(
 interface HandwritingCanvasProps {
   expectedText: string;
   selectedLanguage: LanguageCode;
+  onComplete?: () => void;
 }
 
-const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({ expectedText, selectedLanguage }) => {
+const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({ 
+  expectedText, 
+  selectedLanguage,
+  onComplete 
+}) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -31,6 +36,7 @@ const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({ expectedText, sel
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [recognizedText, setRecognizedText] = useState('');
   const [matchPercentage, setMatchPercentage] = useState<number | null>(null);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   // Initialize canvas and grid
   useEffect(() => {
@@ -150,11 +156,20 @@ const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({ expectedText, sel
 
       if (match === 100) {
         setFeedbackMessage('Good job!');
+        setIsCompleted(true);
       } else {
         setFeedbackMessage(`Try again! Match: ${match}%`);
+        setIsCompleted(false);
       }
     } catch {
       setFeedbackMessage('Error in recognition. Please try again.');
+      setIsCompleted(false);
+    }
+  };
+
+  const handleNextWord = () => {
+    if (onComplete) {
+      onComplete();
     }
   };
 
@@ -162,7 +177,7 @@ const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({ expectedText, sel
     <Card className="handwriting-canvas-card">
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          Handwriting Recognition
+          Write: {expectedText}
         </Typography>
 
         <Box className="canvas-container">
@@ -198,6 +213,11 @@ const HandwritingCanvas: React.FC<HandwritingCanvasProps> = ({ expectedText, sel
           >
             {isEraser ? 'Drawing' : 'Erase'}
           </Button>
+          {isCompleted && (
+            <Button variant="contained" color="success" onClick={handleNextWord}>
+              Next Word
+            </Button>
+          )}
         </Stack>
 
         <Typography variant="h6" mt={2}>
