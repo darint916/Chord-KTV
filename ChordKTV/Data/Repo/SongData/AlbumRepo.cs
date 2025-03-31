@@ -2,8 +2,8 @@ using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace ChordKTV.Data.Repo.SongData;
+
 public class AlbumRepo : IAlbumRepo
 {
     private readonly AppDbContext _context;

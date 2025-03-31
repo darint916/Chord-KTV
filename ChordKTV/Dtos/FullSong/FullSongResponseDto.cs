@@ -11,12 +11,13 @@ public record FullSongResponseDto
     List<string> FeaturedArtists,
     List<string> AlbumNames,
     DateOnly? ReleaseDate,
+    TimeSpan? Duration,
     string? Genre,
     string PlainLyrics,
     string LrcLyrics,
     string LrcRomanizedLyrics,
     string LrcTranslatedLyrics,
-    string YouTubeUrl,
-    List<string> AlternateYoutubeUrls,
+    string YouTubeId,
+    List<string> AlternateYoutubeIds,
     GeniusMetaDataDto GeniusMetaData
 );

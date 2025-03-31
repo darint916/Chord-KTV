@@ -79,7 +79,7 @@ public class SongController : ControllerBase
         }
         catch (HttpRequestException ex) // Handles HTTP request errors
         {
-            return StatusCode(503, new { message = "Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
+            return StatusCode(503, new { message = "HTTP FAIL Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
         }
         catch (ArgumentException ex) // Handles invalid arguments
         {
@@ -99,11 +99,15 @@ public class SongController : ControllerBase
     }
 
     [HttpPost("songs/search")]
+    [ProducesResponseType(typeof(FullSongResponseDto), 200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    [ProducesResponseType(503)]
     public async Task<IActionResult> SearchLyrics([FromBody] FullSongRequestDto request)
     {
-        if (string.IsNullOrWhiteSpace(request.Title) && string.IsNullOrWhiteSpace(request.Lyrics))
+        if (string.IsNullOrWhiteSpace(request.Title) && string.IsNullOrWhiteSpace(request.Lyrics) && string.IsNullOrWhiteSpace(request.YouTubeId))
         {
-            return BadRequest(new { message = "At least one of the following fields is required: title, lyrics." });
+            return BadRequest(new { message = "songs/search: At least one of the following fields is required: title, lyrics." });
         }
         string? lyricsQuery = null;
         if (!string.IsNullOrWhiteSpace(request.Lyrics))
@@ -112,16 +116,16 @@ public class SongController : ControllerBase
         }
         try
         {
-            Song? fullSong = await _fullSongService.GetFullSongAsync(request.Title, request.Artist, request.Album, request.Duration, lyricsQuery, request.YouTubeUrl);
+            Song? fullSong = await _fullSongService.GetFullSongAsync(request.Title, request.Artist, request.Album, request.Duration, lyricsQuery, request.YouTubeId);
             if (fullSong == null)
             {
-                return NotFound(new { message = "Song not found. null return" });
+                return NotFound(new { message = "Song search: song not found. null return" });
             }
             return Ok(_mapper.Map<FullSongResponseDto>(fullSong));
         }
         catch (HttpRequestException ex)
         {
-            return StatusCode(503, new { message = "Failed to fetch lyrics. Service may be unavailable.", error = ex.Message });
+            return StatusCode(503, new { message = "HttpRequestException in songs/search ", error = ex.Message });
         }
         catch (Exception ex)
         {

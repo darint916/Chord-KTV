@@ -129,17 +129,6 @@ public class GeniusService : IGeniusService
                 .OrderByDescending(m => m.TotalScore)
                 .ToList();
 
-            _logger.LogInformation("Found {Count} potential matches", matches.Count);
-
-            // Log top matches for debugging
-            foreach (SearchMatch? match in matches.Take(3))
-            {
-                _logger.LogInformation(
-                    "Match - Title: '{Title}', Artist: '{Artist}', Scores: Title={TitleScore}, Artist={ArtistScore}, Total={TotalScore}",
-                    match.Result.Title, match.Result.PrimaryArtistNames, match.TitleScore, match.ArtistScore, match.TotalScore
-                );
-            }
-
             SearchMatch? bestMatch = matches.FirstOrDefault();
             if (bestMatch?.Result == null)
             {
@@ -199,6 +188,7 @@ public class GeniusService : IGeniusService
 
         if (result != null)
         {
+            result = await EnrichSongDetailsAsync(result);
             _logger.LogInformation("Found matching song. Adding to cache.");
             await _songRepo.AddSongAsync(result);
             await _songRepo.SaveChangesAsync();
@@ -271,7 +261,7 @@ public class GeniusService : IGeniusService
         return song;
     }
 
-    public async Task<Song?> EnrichSongDetailsAsync(Song song)
+    public async Task<Song> EnrichSongDetailsAsync(Song song)
     {
         if (song.GeniusMetaData.GeniusId == 0)
         {

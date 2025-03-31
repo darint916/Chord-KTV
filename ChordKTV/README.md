@@ -70,15 +70,6 @@ Returns time-synced lyrics from LRCLIB. Attempts to retrieve both original and r
 We use both of LRCLIB's endpoints (https://lrclib.net/docs), performing an exact match (if at least title and artist exists), and then also a fuzzier search function. Exact searches from most strict parameters to least strict. For the batch search, it sends api requests in parallel from most strict to least (20 entries max each call), along with key word extraction. Post processing involves sorting by fuzzy matching the title and artist and duration. 
 When finding romanized lyrics, it does a more strict artist filter search, to match full words with the artist to try to get a very accurate match on the artist names.
 
-Swagger spec:
-![image](https://github.com/user-attachments/assets/758b8ed1-d081-4afd-a0e3-fd3e203197dd)
-
-Note: need to be careful with the "fuzzy" search mode. Example bug case:
-![image](https://github.com/user-attachments/assets/1a1aa934-4af8-44e0-9c27-4bd499a3f28a)
-![image](https://github.com/user-attachments/assets/1401fab4-bd66-46df-9074-4b9e68409ffc)
-
-The API returned the romanized lyrics for the Spanish version of the song. Since it only looks for the first entry in LRCLIB with time-synced lyrics, it has no way of validating whether those lyrics are actually the romanized version of the original song.
-
 ## Google Cloud for Handwriting Recognition
 
 Make sure that you have gcloud CLI installed. Run ```gcloud auth application-default login``` before running the backend.

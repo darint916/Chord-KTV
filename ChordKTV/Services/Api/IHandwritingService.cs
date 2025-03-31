@@ -1,4 +1,4 @@
-using ChordKTV.Dtos;
+using ChordKTV.Dtos.HandwritingCanvas;
 
 namespace ChordKTV.Services.Api;
 

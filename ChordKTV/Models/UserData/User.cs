@@ -1,5 +1,6 @@
-namespace ChordKTV.Models.UserData;
 using System.ComponentModel.DataAnnotations;
+
+namespace ChordKTV.Models.UserData;
 
 public class User
 {
