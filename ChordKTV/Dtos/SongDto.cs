@@ -1,8 +1,9 @@
-namespace ChordKTV.Dtos;
-
 using ChordKTV.Dtos.GeniusApi;
 
-public record SongDto(
+namespace ChordKTV.Dtos;
+
+public record SongDto
+(
     string Title,
     string Artist,
     List<string> FeaturedArtists,
@@ -12,7 +13,7 @@ public record SongDto(
     string? LrcLyrics,
     string? LrcRomanizedLyrics,
     string? LrcTranslatedLyrics,
-    string? YouTubeUrl,
-    List<string> AlternateYoutubeUrls,
+    string? YouTubeId,
+    List<string> AlternateYoutubeIds,
     GeniusMetaDataDto GeniusMetaData
 );

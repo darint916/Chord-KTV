@@ -2,18 +2,15 @@
 @use '../../mixins' as *;
 
 .youtube-playlist-viewer {
-  .playlist-url-input {
-    background-color: white;
-    border-radius: 8px;
-    margin-bottom: 16px;
-
-    .MuiFilledInput-root {
-      background-color: white;
+  margin-top: 54px;
+  .load-section{
+    display: flex;
+    flex-direction: row;
+    .loading-spinner {
+      margin-left: 5px;
+      margin-top: 16px;
+      height: auto;
     }
-  }
-
-  .loading-spinner {
-    margin-top: 16px;
   }
 
   .error-message {
@@ -25,6 +22,11 @@
     margin-top: 16px;
     height: 400px;
     width: 100%;
+    border-radius: 8px;
+
+    .MuiDataGrid-row {
+      cursor: pointer;
+    }
   }
 
   .toolbar-title {
@@ -33,5 +35,13 @@
     align-items: center;
     justify-content: center;
     padding-left: 16px;
+    padding: 24px;
+    border: 2px solid black;
+    border-radius: 8px;
+  }
+
+  .button-style {
+    background: $secondary-color;
+    border-radius: 8px;
   }
 }

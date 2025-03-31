@@ -1,5 +1,6 @@
 @use '../../variables' as *;
 @use '../../mixins' as *;
+@use 'sass:color';
 
 .song-player-page {
   .song-player-container {
@@ -7,14 +8,66 @@
 
     .song-player-content {
       .song-title {
-        color: white;
+        color: $text-primary;
         margin-bottom: 24px;
       }
-    }
-  }
-}
+      margin-top: 48px;
+      background-color: transparent;
+      border-radius: 8px;
+      display: flex;
 
-.stack {
-  align-items: center;
-  justify-content: center;
+      .grid-parent {
+        height: 100%;
+        width: 50%;
+        display: flex;
+        flex-direction: column;
+        background-color: black;
+        border-radius: 8px;
+        background: $gradient;
+        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+        max-width: 100%;
+        justify-content: center;
+        
+        .lrc-grid-parent {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: fit-content;
+          width: 100%;
+          overflow: auto;
+          margin-top: 2px;
+        }
+
+        .tabs-grid-parent {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+        }
+        
+      }
+    }
+
+    .quiz-button {
+      box-shadow: 3;
+      animation: pulse 2s infinite;
+      padding: 10px 20px;
+      background: $secondary-color;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      }
+      50% {
+        transform: scale(1.01);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+  }
 }

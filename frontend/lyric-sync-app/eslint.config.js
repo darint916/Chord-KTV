@@ -37,6 +37,7 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'error', // Disallow `any` type in TypeScript
       '@typescript-eslint/no-non-null-assertion': 'error', // Disallow `!` non-null assertions
       "react/react-in-jsx-scope": "off", // No longer needed with React 17+
+      'react/prop-types': 'off',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },

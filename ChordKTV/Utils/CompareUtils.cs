@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using FuzzySharp;
-using Microsoft.Net.Http.Headers;
 namespace ChordKTV.Utils;
 
 public static partial class CompareUtils
@@ -14,7 +13,6 @@ public static partial class CompareUtils
         {
             return true;
         }
-
         return MathF.Abs(a.Value - b.Value) < tolerance;
     }
 

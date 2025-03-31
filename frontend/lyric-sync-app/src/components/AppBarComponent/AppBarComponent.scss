@@ -2,17 +2,37 @@
 @use '../../mixins' as *;
 
 .app-bar {
-  background-color: $primary-color !important;
-  box-shadow: none;
+  // background-color: white !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 
   .toolbar {
     @include flex-center;
     justify-content: space-between;
+    display: flex;
+    width: 100%;
+
+    .section {
+      display: flex;
+      align-items: center;
+      margin-right: 32px;
+    }
+
+    .logo {
+      height: 18px;
+      width: auto;
+      margin-right: 10px;
+    }
 
     .title {
       flex-grow: 1;
       text-decoration: none;
-      color: white;
+      color: black;
+      font-size: 18px;
+    }
+
+    .button-styles {
+      color: black;
     }
 
     .avatar {

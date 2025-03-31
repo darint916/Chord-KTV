@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using ChordKTV.Dtos;
 using ChordKTV.Services.Api;
+using ChordKTV.Dtos.HandwritingCanvas;
 
 namespace ChordKTV.Controllers;
 

@@ -1,7 +1,8 @@
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Models.SongData;
 using Microsoft.EntityFrameworkCore;
-namespace ChordKTV.Data.Repo;
+
+namespace ChordKTV.Data.Repo.SongData;
 
 
 public class SongRepo : ISongRepo
@@ -83,7 +84,7 @@ public class SongRepo : ISongRepo
     {
         return await _context.Songs.FirstOrDefaultAsync(s =>
             (s.Title == name || s.AlternateTitles.Contains(name)) &&
-            ((s.Artist == artist) || s.FeaturedArtists.Contains(artist)) &&
+            (s.Artist == artist || s.FeaturedArtists.Contains(artist)) &&
             s.Albums.Any(album => album.Name == albumName));
     }
 
@@ -95,5 +96,20 @@ public class SongRepo : ISongRepo
     public async Task<GeniusMetaData?> GetGeniusMetaDataAsync(int geniusId)
     {
         return await _context.GeniusMetaData.FindAsync(geniusId);
+    }
+
+    public async Task<Song?> GetSongByGeniusIdAsync(int geniusId)
+    {
+        return await _context.Songs
+            .Include(s => s.GeniusMetaData)
+            .FirstOrDefaultAsync(s => s.GeniusMetaData.GeniusId == geniusId);
+    }
+
+    public async Task<Song?> GetSongByIdAsync(Guid id)
+    {
+        return await _context.Songs
+            .Include(s => s.GeniusMetaData)
+            .Include(s => s.Albums)
+            .FirstOrDefaultAsync(s => s.Id == id);
     }
 }

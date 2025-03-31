@@ -6,6 +6,7 @@ using System.Web;
 using System.Globalization;
 using System.Collections.Specialized;
 using ChordKTV.Utils;
+using System.Net;
 
 namespace ChordKTV.Services.Service;
 
@@ -32,7 +33,7 @@ public class LrcService : ILrcService
         }
         else
         {
-            throw new ArgumentException("At least title be provided");
+            throw new ArgumentException($"Error in {nameof(GetAllLrcLibLyricsAsync)}: At least title be provided");
         }
         if (!string.IsNullOrEmpty(artist))
         {
@@ -268,11 +269,15 @@ public class LrcService : ILrcService
         string url = $"https://lrclib.net/api/get?{queryString}";
 
         HttpResponseMessage response = await _httpClient.GetAsync(url);
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound) //dont want it throw if not found, continue execution
+        if (response.StatusCode == HttpStatusCode.NotFound) //dont want it throw if not found, continue execution
         {
             return null;
         }
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Error in {MethodName}: {StatusCode} {ReasonPhrase} for {Url}: \n Return body {Message}", nameof(LrcLibGetEndpointResponse), response.StatusCode, response.ReasonPhrase, url, await response.Content.ReadAsStringAsync());
+            return null;
+        }
         string content = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<LrcLyricsDto>(content, _jsonSerializerOptions);
     }
@@ -281,12 +286,17 @@ public class LrcService : ILrcService
     public async Task<List<LrcLyricsDto>?> LrcLibSearchEndpointResponse(NameValueCollection queryParams)
     {
         string queryString = queryParams.ToString() ?? string.Empty;
-        HttpResponseMessage response = await _httpClient.GetAsync($"https://lrclib.net/api/search?{queryString}");
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound) //dont want it throw if not found, continue execution
+        string url = $"https://lrclib.net/api/search?{queryString}";
+        HttpResponseMessage response = await _httpClient.GetAsync(url);
+        if (response.StatusCode == HttpStatusCode.NotFound) //dont want it throw if not found, continue execution
         {
             return null;
         }
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Error in {MethodName}: {StatusCode} {ReasonPhrase} for {Url}: \n Return body {Message}", nameof(LrcLibSearchEndpointResponse), response.StatusCode, response.ReasonPhrase, url, await response.Content.ReadAsStringAsync());
+            return null;
+        }
         string content = await response.Content.ReadAsStringAsync();
         List<LrcLyricsDto>? searchResults = JsonSerializer.Deserialize<List<LrcLyricsDto>?>(content, _jsonSerializerOptions);
         return (searchResults is { Count: > 0 }) ? searchResults : null;
