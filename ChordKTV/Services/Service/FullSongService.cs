@@ -155,6 +155,27 @@ public class FullSongService : IFullSongService
                 song.Title = lyricsDto.TrackName ?? title ?? song.Title;
                 song.Artist = lyricsDto.ArtistName ?? artist ?? song.Artist;
                 song.LrcLyrics = lyricsDto.SyncedLyrics;
+                // Add new alternates from LRC search
+                if (lyricsDto.AlternateTitles?.Count > 0)
+                {
+                    foreach (string altTitle in lyricsDto.AlternateTitles)
+                    {
+                        if (!song.AlternateTitles.Any(title => string.Equals(title, altTitle, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            song.AlternateTitles.Add(altTitle);
+                        }
+                    }
+                }
+                if (lyricsDto.AlternateArtists?.Count > 0)
+                {
+                    foreach (string altArtist in lyricsDto.AlternateArtists)
+                    {
+                        if (!song.FeaturedArtists.Any(artist => string.Equals(artist, altArtist, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            song.FeaturedArtists.Add(altArtist);
+                        }
+                    }
+                }
             }
             else //create if we dont find in genius at all
             {
@@ -168,6 +189,8 @@ public class FullSongService : IFullSongService
                     LrcId = lyricsDto.Id,
                     RomLrcId = lyricsDto.RomanizedId,
                     LrcRomanizedLyrics = lyricsDto.RomanizedSyncedLyrics,
+                    AlternateTitles = lyricsDto.AlternateTitles.Select(t => t.ToLowerInvariant()).ToList(),
+                    FeaturedArtists = lyricsDto.AlternateArtists.Select(a => a.ToLowerInvariant()).ToList(),
                     GeniusMetaData = new GeniusMetaData { }
                 };
                 songCreate = true;
@@ -221,13 +244,13 @@ public class FullSongService : IFullSongService
         //Add residual information (kinda messy)
         if (lyricsDto != null)
         {
-            if (lyricsDto.TrackName is not null && !song.AlternateTitles.Contains(lyricsDto.TrackName.ToLowerInvariant()) && !string.IsNullOrWhiteSpace(lyricsDto.TrackName))
+            if (!string.IsNullOrWhiteSpace(lyricsDto.TrackName) && !song.AlternateTitles.Any(alt => alt.Equals(lyricsDto.TrackName, StringComparison.OrdinalIgnoreCase)))
             {
-                song.AlternateTitles.Add(lyricsDto.TrackName.ToLowerInvariant());
+                song.AlternateTitles.Add(lyricsDto.TrackName);
             }
-            if (lyricsDto.ArtistName is not null && !song.FeaturedArtists.Contains(lyricsDto.ArtistName.ToLowerInvariant()) && !string.IsNullOrWhiteSpace(lyricsDto.ArtistName))
+            if (!string.IsNullOrWhiteSpace(lyricsDto.ArtistName) && !song.FeaturedArtists.Any(artist => artist.Equals(lyricsDto.ArtistName, StringComparison.OrdinalIgnoreCase)))
             {
-                song.FeaturedArtists.Add(lyricsDto.ArtistName.ToLowerInvariant());
+                song.FeaturedArtists.Add(lyricsDto.ArtistName);
             }
             if (lyricsDto.Id != 0 && song.LrcId != lyricsDto.Id)
             {
@@ -242,11 +265,11 @@ public class FullSongService : IFullSongService
                 song.PlainLyrics = lyricsDto.PlainLyrics;
             }
         }
-        if (title is not null && !song.AlternateTitles.Contains(title) && !string.IsNullOrWhiteSpace(title))
+        if (!string.IsNullOrWhiteSpace(title) && !song.AlternateTitles.Any(alt => alt.Equals(title, StringComparison.OrdinalIgnoreCase)))
         {
             song.AlternateTitles.Add(title);
         }
-        if (artist is not null && !song.FeaturedArtists.Contains(artist) && !string.IsNullOrWhiteSpace(artist))
+        if (!string.IsNullOrWhiteSpace(artist) && !song.FeaturedArtists.Any(alt => alt.Equals(artist, StringComparison.OrdinalIgnoreCase)))
         {
             if (CompareUtils.CompareArtistFuzzyScore(song.Artist, artist) > 75) //filters out youtube personal channels
             {
