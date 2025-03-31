@@ -65,6 +65,7 @@ builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
 builder.Services.AddScoped<IQuizRepo, QuizRepo>();
 builder.Services.AddScoped<IFullSongService, FullSongService>();
 builder.Services.AddScoped<IHandwritingService, HandwritingService>();
+builder.Services.AddScoped<IGeniusMetaDataRepo, GeniusMetaDataRepo>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 
 builder.Services.AddEndpointsApiExplorer();

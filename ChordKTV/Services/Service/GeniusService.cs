@@ -15,6 +15,7 @@ public class GeniusService : IGeniusService
     private readonly HttpClient _httpClient;
     private readonly ISongRepo _songRepo;
     private readonly IAlbumRepo _albumRepo;
+    private readonly IGeniusMetaDataRepo _geniusMetaDataRepo;
     private readonly ILogger<GeniusService> _logger;
     private readonly string _accessToken;
     private const string BaseUrl = "https://api.genius.com";
@@ -25,6 +26,7 @@ public class GeniusService : IGeniusService
         HttpClient httpClient,
         ISongRepo songRepo,
         IAlbumRepo albumRepo,
+        IGeniusMetaDataRepo geniusMetaDataRepo,
         ILogger<GeniusService> logger)
     {
         _accessToken = configuration["Genius:ApiKey"] ??
@@ -32,6 +34,7 @@ public class GeniusService : IGeniusService
         _httpClient = httpClient;
         _songRepo = songRepo;
         _albumRepo = albumRepo;
+        _geniusMetaDataRepo = geniusMetaDataRepo;
         _logger = logger;
 
         _httpClient.BaseAddress = new Uri(BaseUrl);
@@ -215,7 +218,7 @@ public class GeniusService : IGeniusService
     private async Task<Song?> MapGeniusResultToSongAsync(GeniusResult result)
     {
         // First check if GeniusMetaData already exists
-        GeniusMetaData? existingMetaData = await _songRepo.GetGeniusMetaDataAsync(result.Id);
+        GeniusMetaData? existingMetaData = await _geniusMetaDataRepo.GetGeniusMetaDataAsync(result.Id);
 
         GeniusMetaData metaData = existingMetaData ?? new GeniusMetaData
         {
@@ -223,6 +226,11 @@ public class GeniusService : IGeniusService
             HeaderImageUrl = result.HeaderImageUrl,
             SongImageUrl = result.SongArtImageUrl
         };
+
+        if (existingMetaData == null)
+        {
+            await _geniusMetaDataRepo.AddGeniusMetaDataAsync(metaData);
+        }
 
         // Create song object with existing or new metadata
         Song song = new()
@@ -284,6 +292,7 @@ public class GeniusService : IGeniusService
                 if (Enum.TryParse(langStr, out LanguageCode language))
                 {
                     song.GeniusMetaData.Language = language;
+                    await _geniusMetaDataRepo.UpdateGeniusMetaDataAsync(song.GeniusMetaData);
                 }
             }
 
