@@ -86,14 +86,14 @@ public class LrcService : ILrcService
                 // Only add titles if the artists match with high confidence
                 if (!string.IsNullOrWhiteSpace(result.TrackName) &&
                     !lyricsDtoMatch.AlternateTitles.Contains(result.TrackName) &&
-                    CompareUtils.CompareArtistFuzzyScore(lyricsDtoMatch.ArtistName, result.ArtistName, 90) > 80)
+                    CompareUtils.CompareArtistFuzzyScore(artist, result.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80)
                 {
                     lyricsDtoMatch.AlternateTitles.Add(result.TrackName);
                 }
 
                 // For artists, keep the existing high threshold check
                 if (!string.IsNullOrWhiteSpace(result.ArtistName) &&
-                    CompareUtils.CompareArtistFuzzyScore(lyricsDtoMatch.ArtistName, result.ArtistName) > 80)
+                    CompareUtils.CompareArtistFuzzyScore(artist, result.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80)
                 {
                     lyricsDtoMatch.AlternateArtists.Add(result.ArtistName);
                 }
