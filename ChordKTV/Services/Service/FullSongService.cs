@@ -293,7 +293,7 @@ public class FullSongService : IFullSongService
             await _songRepo.UpdateSongAsync(song);
         }
         FullSongResponseDto? response = _mapper.Map<FullSongResponseDto>(song);
-        if (lrcLyricsDto != null) //add LRC Scores
+        if (lrcLyricsDto != null) //add LRC
         {
             response.TitleMatchScores = lrcLyricsDto.TitleMatchScores;
             response.ArtistMatchScores = lrcLyricsDto.ArtistMatchScores;
