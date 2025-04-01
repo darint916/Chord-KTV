@@ -64,6 +64,7 @@ public class LrcService : ILrcService
         }
 
         //We fuzzy order to add layer of confidence
+        //TODO: remove null check if #70 issue resolved
         searchResults = searchResults
             .OrderByDescending(ele => CompareUtils
             .CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration))
@@ -76,30 +77,6 @@ public class LrcService : ILrcService
                 !string.IsNullOrEmpty(ele.PlainLyrics) &&
                 !string.IsNullOrEmpty(ele.SyncedLyrics));
         }
-
-        // Collect alternate titles and artists from search results
-        if (lyricsDtoMatch != null && searchResults.Count > 0)
-        {
-            // Get unique titles and artists that meet minimum similarity threshold
-            foreach (LrcLyricsDto result in searchResults.Take(5)) // Limit to top 5 results
-            {
-                // Only add titles if the artists match with high confidence
-                if (!string.IsNullOrWhiteSpace(result.TrackName) &&
-                    !lyricsDtoMatch.AlternateTitles.Contains(result.TrackName) &&
-                    CompareUtils.CompareArtistFuzzyScore(artist, result.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80)
-                {
-                    lyricsDtoMatch.AlternateTitles.Add(result.TrackName);
-                }
-
-                // For artists, keep the existing high threshold check
-                if (!string.IsNullOrWhiteSpace(result.ArtistName) &&
-                    CompareUtils.CompareArtistFuzzyScore(artist, result.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80)
-                {
-                    lyricsDtoMatch.AlternateArtists.Add(result.ArtistName);
-                }
-            }
-        }
-
         if (lyricsDtoMatch == null)
         {
             //if we fail to find even a single match, just grab first entry if it exists
