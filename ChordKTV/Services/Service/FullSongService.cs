@@ -226,13 +226,13 @@ public class FullSongService : IFullSongService
         //Add residual information (kinda messy)
         if (lrcLyricsDto != null)
         {
-            if (!string.IsNullOrWhiteSpace(lyricsDto.TrackName) && !song.AlternateTitles.Any(alt => alt.Equals(lyricsDto.TrackName, StringComparison.OrdinalIgnoreCase)))
+            if (lrcLyricsDto.TrackName is not null && !song.AlternateTitles.Contains(lrcLyricsDto.TrackName.ToLowerInvariant()) && !string.IsNullOrWhiteSpace(lrcLyricsDto.TrackName))
             {
-                song.AlternateTitles.Add(lyricsDto.TrackName);
+                song.AlternateTitles.Add(lrcLyricsDto.TrackName.ToLowerInvariant());
             }
-            if (!string.IsNullOrWhiteSpace(lyricsDto.ArtistName) && !song.FeaturedArtists.Any(artist => artist.Equals(lyricsDto.ArtistName, StringComparison.OrdinalIgnoreCase)))
+            if (lrcLyricsDto.ArtistName is not null && !song.FeaturedArtists.Contains(lrcLyricsDto.ArtistName.ToLowerInvariant()) && !string.IsNullOrWhiteSpace(lrcLyricsDto.ArtistName))
             {
-                song.FeaturedArtists.Add(lyricsDto.ArtistName);
+                song.FeaturedArtists.Add(lrcLyricsDto.ArtistName.ToLowerInvariant());
             }
             if (lrcLyricsDto.Id != 0 && song.LrcId != lrcLyricsDto.Id)
             {
