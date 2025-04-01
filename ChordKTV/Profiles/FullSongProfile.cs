@@ -8,7 +8,9 @@ public class FullSongProfile : Profile
 {
     public FullSongProfile()
     {
+        DisableConstructorMapping();
         CreateMap<Song, FullSongResponseDto>()
-            .ForCtorParam("AlbumNames", opt => opt.MapFrom(src => src.Albums.Select(a => a.Name).ToList()));
+            .DisableCtorValidation()
+            .ForMember("AlbumNames", opt => opt.MapFrom(src => src.Albums.Select(a => a.Name).ToList()));
     }
 }
