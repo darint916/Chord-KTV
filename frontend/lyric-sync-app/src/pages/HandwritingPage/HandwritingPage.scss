@@ -2,10 +2,37 @@
 @use '../../mixins' as *;
 
 .handwriting-page-container {
-  .handwriting-canvas-wrapper {
+  margin-top: 40px;
+  color: $text-primary;
+
+  .handwriting-canvas-parent {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh; // Full viewport height
+    height: 100%;
+    flex-direction: column;
+    
+    .grid-parent {
+      height: 500px;
+      margin-top: auto;
+    }
+
+    .grid-item {
+      height: 100%;
+      border-radius: $border-radius;
+
+      .handwriting-canvas-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+      }
+      .buttons-box {
+        margin-top: auto;
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-bottom: 48px;
+        align-items: center;
+      }
+    }
   }
 }

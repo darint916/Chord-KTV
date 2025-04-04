@@ -2,8 +2,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   Typography,
   Stack,
 } from '@mui/material';
@@ -41,26 +39,42 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
 
     useEffect(() => {
       const initializeCanvas = () => {
-        if (canvasRef.current) {
-          const ctx = canvasRef.current.getContext('2d');
-          if (ctx) {
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = '#000';
-            ctxRef.current = ctx;
-          }
-        }
+        if (canvasRef.current && gridCanvasRef.current) {
+          // Get the container dimensions
+          const container = canvasRef.current.parentElement;
+          if (container) {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // Set canvas dimensions to match display
+            canvasRef.current.width = width;
+            canvasRef.current.height = height;
+            gridCanvasRef.current.width = width;
+            gridCanvasRef.current.height = height;
+            
+            const ctx = canvasRef.current.getContext('2d');
+            if (ctx) {
+              ctx.lineCap = 'round';
+              ctx.lineJoin = 'round';
+              ctx.lineWidth = 4;
+              ctx.strokeStyle = '#000';
+              ctxRef.current = ctx;
+            }
 
-        if (gridCanvasRef.current) {
-          const ctx = gridCanvasRef.current.getContext('2d');
-          if (ctx) {
-            drawGridlines(ctx, gridCanvasRef.current.width, gridCanvasRef.current.height);
+            const gridCtx = gridCanvasRef.current.getContext('2d');
+            if (gridCtx) {
+              drawGridlines(gridCtx, width, height);
+            }
           }
         }
       };
 
       initializeCanvas();
+
+      // Add resize listener
+      const handleResize = () => initializeCanvas();
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const drawGridlines = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
@@ -162,12 +176,7 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
     };
 
     return (
-      <Card className="handwriting-canvas-card">
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Write: {expectedText}
-          </Typography>
-
+      <div className="handwriting-canvas-card">
           <Box className="canvas-container">
             <canvas
               ref={gridCanvasRef}
@@ -177,8 +186,6 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
             />
             <canvas
               ref={canvasRef}
-              width={500}
-              height={300}
               className="drawing-canvas"
               onPointerDown={startDrawing}
               onPointerMove={draw}
@@ -199,7 +206,7 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
               color="secondary"
               onClick={() => setIsEraser((prev) => !prev)}
             >
-              {isEraser ? 'Drawing' : 'Erase'}
+              {isEraser ? 'Draw' : 'Erase'}
             </Button>
           </Stack>
 
@@ -218,8 +225,7 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
               Match: {matchPercentage}%
             </Typography>
           )}
-        </CardContent>
-      </Card>
+          </div>
     );
   }
 );
