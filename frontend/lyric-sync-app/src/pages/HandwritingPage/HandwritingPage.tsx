@@ -9,11 +9,14 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemButton
+  ListItemButton,
+  Stack,
+  Chip,
 } from '@mui/material';
 import { useSong } from '../../contexts/SongContext';
 import './HandwritingPage.scss';
 import { LanguageCode } from '../../api';
+import { useNavigate } from 'react-router-dom';
 
 const HandwritingPage: React.FC = () => {
   const { song, quizQuestions } = useSong();
@@ -21,6 +24,8 @@ const HandwritingPage: React.FC = () => {
   const [completedWords, setCompletedWords] = useState<number[]>([]);
   const [currentWordCompleted, setCurrentWordCompleted] = useState(false);
   const handwritingCanvasRef = useRef<{ clearCanvas: () => void }>(null);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  const navigate = useNavigate();
 
   if (!quizQuestions || quizQuestions.length === 0) {
     return <Typography variant="h5">Error: Failed to load handwriting quiz as reading quiz questions were not found</Typography>;
@@ -50,6 +55,9 @@ const HandwritingPage: React.FC = () => {
   
   const currentWord = wordsToPractice[currentWordIndex % wordsToPractice.length];
   const allWordsCompleted = completedWords.length >= wordsToPractice.length;
+  if (allWordsCompleted) {
+    setQuizCompleted(true);
+  }
   
   const handleWordCompletionAttempt = (isSuccess: boolean) => {
     if (isSuccess) {
@@ -81,6 +89,7 @@ const HandwritingPage: React.FC = () => {
     setCurrentWordIndex(0);
     setCompletedWords([]);
     setCurrentWordCompleted(false);
+    setQuizCompleted(false);
   };
 
   const handleWordSelect = (index: number) => {
@@ -91,23 +100,72 @@ const HandwritingPage: React.FC = () => {
     setCurrentWordCompleted(false);
   };
 
-  if (allWordsCompleted) {
+  const completeQuiz = () => {
+    setQuizCompleted(true);
+  };
+
+  const handleBackToHome = () => {
+    navigate('/');
+  };
+
+
+  if (quizCompleted) {
+    const completedWordsList = completedWords.map(index => wordsToPractice[index]);
+
     return (
       <Container maxWidth="md" className="handwriting-page-container">
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h4" gutterBottom align="center">
           Handwriting Practice Completed!
         </Typography>
-        <Button 
-          variant="contained" 
-          color="primary"
-          onClick={resetQuiz}
-          sx={{ mt: 2 }}
-        >
-          Practice Again
-        </Button>
+        <Typography variant="h6" gutterBottom align="center">
+          You practiced {completedWords.length} out of {wordsToPractice.length} words successfully.
+        </Typography>
+        
+        <Box sx={{ mt: 4, mb: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Completed Words:
+          </Typography>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            {completedWordsList.length > 0 ? (
+              completedWordsList.map((word, index) => (
+                <Chip 
+                  key={index} 
+                  label={word} 
+                  color="success" 
+                  variant="outlined"
+                  sx={{ mb: 1 }}
+                />
+              ))
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                No words completed yet
+              </Typography>
+            )}
+          </Stack>
+        </Box>
+
+        <Box textAlign="center" mt={4} display="flex" gap={2} justifyContent={"center"}>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={resetQuiz}
+            sx={{ mt: 2 }}
+          >
+            Practice Again
+          </Button>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={handleBackToHome}
+            sx={{ mt: 2 }}
+          >
+            Back to Home
+          </Button>
+        </Box>
       </Container>
     );
   }
+
 
   return (
     <Container maxWidth="lg" className="handwriting-page-container">
@@ -153,6 +211,13 @@ const HandwritingPage: React.FC = () => {
                   Skip
                 </Button>
               )}
+              <Button 
+                variant="outlined" 
+                color="secondary"
+                onClick={completeQuiz}
+              >
+               Complete Quiz
+              </Button>
           </Box>
           </div>
         </Grid>
