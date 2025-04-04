@@ -131,7 +131,7 @@ const HandwritingPage: React.FC = () => {
               />
             </Box>
             
-            <Box className="buttons-box">
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 6, mt: 1 }}>
               {currentWordCompleted ? (
                 <Button 
                   variant="contained" 
