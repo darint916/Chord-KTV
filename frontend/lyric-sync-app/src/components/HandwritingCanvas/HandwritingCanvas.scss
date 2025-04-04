@@ -30,7 +30,7 @@
 }
 
 .drawing-canvas {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4" fill="black" /></svg>') 8 8, crosshair;
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M16 2 V6 M16 26 V30 M2 16 H6 M26 16 H30" stroke="black" stroke-width="2"/><circle cx="16" cy="16" r="4" fill="none" stroke="black" stroke-width="1"/></svg>') 16 16, crosshair;
   background-color: white;
   width: 100%;
   height: 100%;

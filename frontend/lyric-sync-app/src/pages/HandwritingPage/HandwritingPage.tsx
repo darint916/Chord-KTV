@@ -39,13 +39,13 @@ const HandwritingPage: React.FC = () => {
 
   const getLongestWord = (text: string): string => {
     const segments = Array.from(segmenter.segment(text))
-        .filter(segment => segment.isWordLike)
-        .map(segment => segment.segment);
+      .filter(segment => segment.isWordLike)
+      .map(segment => segment.segment);
     
-    if (segments.length === 0) return '';
+    if (segments.length === 0) {return '';}
     
     return segments.reduce((longest, current) => 
-        current.length > longest.length ? current : longest
+      current.length > longest.length ? current : longest
     );
   };
   
@@ -144,7 +144,7 @@ const HandwritingPage: React.FC = () => {
           </Stack>
         </Box>
 
-        <Box textAlign="center" mt={4} display="flex" gap={2} justifyContent={"center"}>
+        <Box textAlign="center" mt={4} display="flex" gap={2} justifyContent={'center'}>
           <Button 
             variant="contained" 
             color="primary"
@@ -208,7 +208,7 @@ const HandwritingPage: React.FC = () => {
                   color="error"
                   onClick={moveToNextWord}
                 >
-                  Skip
+                  Skip Word
                 </Button>
               )}
               <Button 
@@ -218,7 +218,7 @@ const HandwritingPage: React.FC = () => {
               >
                Complete Quiz
               </Button>
-          </Box>
+            </Box>
           </div>
         </Grid>
 

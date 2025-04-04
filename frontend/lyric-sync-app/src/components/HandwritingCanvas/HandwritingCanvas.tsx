@@ -12,7 +12,7 @@ import './HandwritingCanvas.scss';
 interface HandwritingCanvasProps {
   expectedText: string;
   selectedLanguage: LanguageCode;
-  onComplete?: (isSuccess: boolean) => void;
+  onComplete?: (_isSuccess: boolean) => void;
 }
 
 const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, HandwritingCanvasProps>(
@@ -29,7 +29,7 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
 
     React.useImperativeHandle(ref, () => ({
       clearCanvas: () => {
-        if (!canvasRef.current || !ctxRef.current) return;
+        if (!canvasRef.current || !ctxRef.current) {return;}
         ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         setFeedbackMessage('');
         setRecognizedText('');
@@ -177,55 +177,55 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
 
     return (
       <div className="handwriting-canvas-card">
-          <Box className="canvas-container">
-            <canvas
-              ref={gridCanvasRef}
-              width={500}
-              height={300}
-              className="grid-canvas"
-            />
-            <canvas
-              ref={canvasRef}
-              className="drawing-canvas"
-              onPointerDown={startDrawing}
-              onPointerMove={draw}
-              onPointerUp={stopDrawing}
-              onPointerOut={stopDrawing}
-            />
-          </Box>
+        <Box className="canvas-container">
+          <canvas
+            ref={gridCanvasRef}
+            width={500}
+            height={300}
+            className="grid-canvas"
+          />
+          <canvas
+            ref={canvasRef}
+            className="drawing-canvas"
+            onPointerDown={startDrawing}
+            onPointerMove={draw}
+            onPointerUp={stopDrawing}
+            onPointerOut={stopDrawing}
+          />
+        </Box>
 
-          <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
-            <Button variant="contained" color="primary" onClick={exportImage}>
+        <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
+          <Button variant="contained" color="primary" onClick={exportImage}>
               Recognize
-            </Button>
-            <Button variant="outlined" color="secondary" onClick={clearCanvas}>
+          </Button>
+          <Button variant="outlined" color="secondary" onClick={clearCanvas}>
               Clear
-            </Button>
-            <Button
-              variant={isEraser ? 'contained' : 'outlined'}
-              color="secondary"
-              onClick={() => setIsEraser((prev) => !prev)}
-            >
-              {isEraser ? 'Draw' : 'Erase'}
-            </Button>
-          </Stack>
+          </Button>
+          <Button
+            variant={isEraser ? 'contained' : 'outlined'}
+            color="secondary"
+            onClick={() => setIsEraser((prev) => !prev)}
+          >
+            {isEraser ? 'Draw' : 'Erase'}
+          </Button>
+        </Stack>
 
-          <Typography variant="h6" mt={2}>
-            {feedbackMessage}
-          </Typography>
+        <Typography variant="h6" mt={2}>
+          {feedbackMessage}
+        </Typography>
 
-          {recognizedText && (
-            <Typography variant="body1" mt={1}>
+        {recognizedText && (
+          <Typography variant="body1" mt={1}>
               Recognized Text: {recognizedText}
-            </Typography>
-          )}
+          </Typography>
+        )}
 
-          {matchPercentage !== null && (
-            <Typography variant="body2" mt={1}>
+        {matchPercentage !== null && (
+          <Typography variant="body2" mt={1}>
               Match: {matchPercentage}%
-            </Typography>
-          )}
-          </div>
+          </Typography>
+        )}
+      </div>
     );
   }
 );
