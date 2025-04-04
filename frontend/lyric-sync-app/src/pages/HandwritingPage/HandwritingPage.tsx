@@ -63,7 +63,14 @@ const HandwritingPage: React.FC = () => {
     if (handwritingCanvasRef.current) {
       handwritingCanvasRef.current.clearCanvas();
     }
-    setCurrentWordIndex((currentWordIndex + 1) % wordsToPractice.length);
+
+    // Find the next uncompleted word index
+    let nextIndex = currentWordIndex;
+    do {
+      nextIndex = (nextIndex + 1) % wordsToPractice.length;
+    } while (completedWords.includes(nextIndex) && completedWords.length < wordsToPractice.length);
+
+    setCurrentWordIndex(nextIndex);
     setCurrentWordCompleted(false);
   };
 
@@ -89,9 +96,6 @@ const HandwritingPage: React.FC = () => {
       <Container maxWidth="md" className="handwriting-page-container">
         <Typography variant="h4" gutterBottom>
           Handwriting Practice Completed!
-        </Typography>
-        <Typography variant="h6" gutterBottom>
-          You've successfully practiced all {wordsToPractice.length} words.
         </Typography>
         <Button 
           variant="contained" 
