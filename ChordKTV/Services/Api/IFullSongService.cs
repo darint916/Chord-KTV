@@ -1,8 +1,8 @@
-using ChordKTV.Models.SongData;
+using ChordKTV.Dtos.FullSong;
 
 namespace ChordKTV.Services.Api;
 
 public interface IFullSongService
 {
-    public Task<Song?> GetFullSongAsync(string? title, string? artist, string? album, TimeSpan? duration, string? lyrics, string? youtubeId);
+    public Task<FullSongResponseDto?> GetFullSongAsync(string? title, string? artist, string? album, TimeSpan? duration, string? lyrics, string? youtubeId);
 }

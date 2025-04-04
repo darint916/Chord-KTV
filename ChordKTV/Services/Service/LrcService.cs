@@ -64,7 +64,6 @@ public class LrcService : ILrcService
         }
 
         //We fuzzy order to add layer of confidence
-        //TODO: remove null check if #70 issue resolved
         searchResults = searchResults
             .OrderByDescending(ele => CompareUtils
             .CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration))
@@ -77,6 +76,30 @@ public class LrcService : ILrcService
                 !string.IsNullOrEmpty(ele.PlainLyrics) &&
                 !string.IsNullOrEmpty(ele.SyncedLyrics));
         }
+
+        // Collect alternate titles and artists from search results
+        if (lyricsDtoMatch != null && searchResults.Count > 0)
+        {
+            // Get unique titles and artists that meet minimum similarity threshold
+            foreach (LrcLyricsDto result in searchResults.Take(5)) // Limit to top 5 results
+            {
+                // Only add titles if the artists match with high confidence
+                if (!string.IsNullOrWhiteSpace(result.TrackName) &&
+                    !lyricsDtoMatch.AlternateTitles.Contains(result.TrackName) &&
+                    CompareUtils.CompareArtistFuzzyScore(artist, result.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80)
+                {
+                    lyricsDtoMatch.AlternateTitles.Add(result.TrackName);
+                }
+
+                // For artists, keep the existing high threshold check
+                if (!string.IsNullOrWhiteSpace(result.ArtistName) &&
+                    CompareUtils.CompareArtistFuzzyScore(artist, result.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80)
+                {
+                    lyricsDtoMatch.AlternateArtists.Add(result.ArtistName);
+                }
+            }
+        }
+
         if (lyricsDtoMatch == null)
         {
             //if we fail to find even a single match, just grab first entry if it exists
@@ -86,6 +109,10 @@ public class LrcService : ILrcService
             }
             return null;
         }
+
+        lyricsDtoMatch.TitleMatchScores.LrcInputParamScore =
+            lyricsDtoMatch.ArtistMatchScores.LrcInputParamScore =
+                CompareUtils.CompareWeightedFuzzyScore(title, lyricsDtoMatch.TrackName ?? "", artist, lyricsDtoMatch.ArtistName, duration, lyricsDtoMatch.Duration);
 
         // we go more strict on time sync if we have a match, note we prioritize LRC
         if (!LanguageUtils.IsRomanizedText(lyricsDtoMatch.PlainLyrics)) // If lyrics are in non en language
@@ -98,6 +125,7 @@ public class LrcService : ILrcService
 
             if (romanizedMatch != null)
             {
+                lyricsDtoMatch.ArtistMatchScores.LrcRomanizedScore = CompareUtils.CompareArtistFuzzyScore(artist, romanizedMatch.ArtistName, lyricsDtoMatch.ArtistName, 90);
                 lyricsDtoMatch.RomanizedPlainLyrics = romanizedMatch.PlainLyrics;
                 lyricsDtoMatch.RomanizedSyncedLyrics = romanizedMatch.SyncedLyrics;
                 lyricsDtoMatch.RomanizedId = romanizedMatch.Id;
@@ -116,6 +144,7 @@ public class LrcService : ILrcService
 
             if (origMatch != null)
             {
+                lyricsDtoMatch.ArtistMatchScores.LrcOriginalScore = CompareUtils.CompareArtistFuzzyScore(artist, origMatch.ArtistName, lyricsDtoMatch.ArtistName, 90);
                 lyricsDtoMatch.PlainLyrics = origMatch.PlainLyrics;
                 lyricsDtoMatch.SyncedLyrics = origMatch.SyncedLyrics;
                 lyricsDtoMatch.Id = origMatch.Id;
@@ -205,7 +234,7 @@ public class LrcService : ILrcService
         // time for a strip search, need to fine tune based off youtube results/ other names
         // we can use fuzzy search to find the best match
         //turns out LRCLib uses strip type too? (G)I-DLE -> G I Dle works
-        List<Task<List<LrcLyricsDto>?>> queryTasks = new(); //batch the calls in parallel, we force strip search for more results
+        List<Task<List<LrcLyricsDto>?>> queryTasks = []; //batch the calls in parallel, we force strip search for more results
         string? titleKeywords = KeywordExtractorUtils.ExtractSongKeywords(title); //for now i think this is enough
         string? artistKeywords = KeywordExtractorUtils.ExtractSongKeywords(artist);
         if (!string.IsNullOrWhiteSpace(titleKeywords)) //we query with both title, title+artist as artist may sometimes be bad match
@@ -259,7 +288,13 @@ public class LrcService : ILrcService
             return null;
         }
         string content = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<LrcLyricsDto>(content, _jsonSerializerOptions);
+        LrcLyricsDto? lrcLyricsDto = JsonSerializer.Deserialize<LrcLyricsDto>(content, _jsonSerializerOptions);
+        if (lrcLyricsDto is not null)
+        {
+            lrcLyricsDto.TitleMatchScores.LrcExactMatch = true;
+            lrcLyricsDto.ArtistMatchScores.LrcExactMatch = true;
+        }
+        return lrcLyricsDto;
     }
 
     //api endpoint for LRCLib search https://lrclib.net/docs

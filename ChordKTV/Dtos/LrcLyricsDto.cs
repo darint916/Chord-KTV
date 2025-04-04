@@ -14,4 +14,8 @@ public class LrcLyricsDto
     public string? SyncedLyrics { get; set; }
     public string? RomanizedPlainLyrics { get; set; }
     public string? RomanizedSyncedLyrics { get; set; }
+    public List<string> AlternateTitles { get; set; } = [];
+    public List<string> AlternateArtists { get; set; } = [];
+    public MatchScores TitleMatchScores { get; set; } = new();
+    public MatchScores ArtistMatchScores { get; set; } = new();
 }

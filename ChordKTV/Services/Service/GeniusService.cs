@@ -19,13 +19,15 @@ public class GeniusService : IGeniusService
     private readonly string _accessToken;
     private const string BaseUrl = "https://api.genius.com";
     private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
+    private readonly IGeniusMetaDataRepo _geniusMetaDataRepo;
 
     public GeniusService(
         IConfiguration configuration,
         HttpClient httpClient,
         ISongRepo songRepo,
         IAlbumRepo albumRepo,
-        ILogger<GeniusService> logger)
+        ILogger<GeniusService> logger,
+        IGeniusMetaDataRepo geniusMetaDataRepo)
     {
         _accessToken = configuration["Genius:ApiKey"] ??
             throw new ArgumentNullException(nameof(configuration), "Genius API key is required");
@@ -33,6 +35,7 @@ public class GeniusService : IGeniusService
         _songRepo = songRepo;
         _albumRepo = albumRepo;
         _logger = logger;
+        _geniusMetaDataRepo = geniusMetaDataRepo;
 
         _httpClient.BaseAddress = new Uri(BaseUrl);
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
@@ -215,7 +218,7 @@ public class GeniusService : IGeniusService
     private async Task<Song?> MapGeniusResultToSongAsync(GeniusResult result)
     {
         // First check if GeniusMetaData already exists
-        GeniusMetaData? existingMetaData = await _songRepo.GetGeniusMetaDataAsync(result.Id);
+        GeniusMetaData? existingMetaData = await _geniusMetaDataRepo.GetGeniusMetaDataAsync(result.Id);
 
         GeniusMetaData metaData = existingMetaData ?? new GeniusMetaData
         {
