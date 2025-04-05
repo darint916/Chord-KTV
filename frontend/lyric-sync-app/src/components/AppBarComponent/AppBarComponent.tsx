@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar, Avatar, Menu, MenuItem, Button } from '@mui/material';
+import { AppBar, Toolbar, Avatar, Menu, MenuItem } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../../contexts/authTypes';
@@ -58,9 +58,6 @@ const AppBarComponent: React.FC = () => {
           </Link>
         </div>
         <div className="section">
-          <Button component={Link} to="/canvas" className="button-styles">
-            Handwriting Demo
-          </Button>
           {user ? (
             <>
               <Avatar
