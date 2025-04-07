@@ -11,4 +11,4 @@ public class UserDto
     public List<string> FavoritePlaylistLinks { get; set; } = [];
     public List<string> SongHistory { get; set; } = [];
     public List<string> PlaylistHistory { get; set; } = [];
-} 
+}

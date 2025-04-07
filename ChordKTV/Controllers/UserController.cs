@@ -26,7 +26,7 @@ public class UserController : ControllerBase
     {
         _logger = logger;
         _userService = userService;
-        
+
         MapperConfiguration config = new MapperConfiguration(cfg => cfg.CreateMap<User, UserDto>());
         _mapper = new Mapper(config);
     }
