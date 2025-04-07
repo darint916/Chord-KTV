@@ -10,11 +10,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady }) => {
   const setPlayer = useState<YouTubePlayerInstance | null>(null)[1]; // Extract only the setter
 
   const opts = {
-    height: '0', // Hide the video itself (audio only)
-    width: '0',
-    playerVars: {
-      controls: 0, // Hide the video controls
-    },
+    width: '100%'
   };
 
   const handleReady = (event: { target: YouTubePlayerInstance }) => {

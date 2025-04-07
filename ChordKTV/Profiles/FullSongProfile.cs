@@ -9,6 +9,6 @@ public class FullSongProfile : Profile
     public FullSongProfile()
     {
         CreateMap<Song, FullSongResponseDto>()
-            .ForCtorParam("AlbumNames", opt => opt.MapFrom(src => src.Albums.Select(a => a.Name).ToList()));
+            .ForMember("AlbumNames", opt => opt.MapFrom(src => src.Albums.Select(a => a.Name).ToList()));
     }
 }

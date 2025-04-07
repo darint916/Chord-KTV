@@ -129,13 +129,13 @@ export interface Song {
      * @type {string}
      * @memberof Song
      */
-    youtubeUrl?: string | null;
+    youtubeId?: string | null;
     /**
      * 
      * @type {Array<string>}
      * @memberof Song
      */
-    alternateYoutubeUrls?: Array<string> | null;
+    alternateYoutubeIds?: Array<string> | null;
     /**
      * 
      * @type {GeniusMetaData}
@@ -177,8 +177,8 @@ export function SongFromJSONTyped(json: any, ignoreDiscriminator: boolean): Song
         'lrcTranslatedLyrics': json['lrcTranslatedLyrics'] == null ? undefined : json['lrcTranslatedLyrics'],
         'lrcId': json['lrcId'] == null ? undefined : json['lrcId'],
         'romLrcId': json['romLrcId'] == null ? undefined : json['romLrcId'],
-        'youtubeUrl': json['youtubeUrl'] == null ? undefined : json['youtubeUrl'],
-        'alternateYoutubeUrls': json['alternateYoutubeUrls'] == null ? undefined : json['alternateYoutubeUrls'],
+        'youtubeId': json['youtubeId'] == null ? undefined : json['youtubeId'],
+        'alternateYoutubeIds': json['alternateYoutubeIds'] == null ? undefined : json['alternateYoutubeIds'],
         'geniusMetaData': json['geniusMetaData'] == null ? undefined : GeniusMetaDataFromJSON(json['geniusMetaData']),
     };
 }
@@ -209,8 +209,8 @@ export function SongToJSONTyped(value?: Song | null, ignoreDiscriminator: boolea
         'lrcTranslatedLyrics': value['lrcTranslatedLyrics'],
         'lrcId': value['lrcId'],
         'romLrcId': value['romLrcId'],
-        'youtubeUrl': value['youtubeUrl'],
-        'alternateYoutubeUrls': value['alternateYoutubeUrls'],
+        'youtubeId': value['youtubeId'],
+        'alternateYoutubeIds': value['alternateYoutubeIds'],
         'geniusMetaData': GeniusMetaDataToJSON(value['geniusMetaData']),
     };
 }

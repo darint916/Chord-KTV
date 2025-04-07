@@ -1,7 +1,7 @@
-namespace ChordKTV.Models.SongData;
-
 using System.ComponentModel.DataAnnotations;
 using ChordKTV.Dtos;
+
+namespace ChordKTV.Models.SongData;
 
 public class GeniusMetaData
 {

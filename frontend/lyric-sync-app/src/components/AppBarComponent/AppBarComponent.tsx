@@ -1,9 +1,10 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Avatar, Menu, MenuItem, Button } from '@mui/material';
+import { AppBar, Toolbar, Avatar, Menu, MenuItem } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthTypes';
 import GoogleAuth from '../GoogleAuth/GoogleAuth';
 import './AppBarComponent.scss';
+import logo from '../../assets/chordktv.png';
 
 const AppBarComponent: React.FC = () => {
   const { user, setUser } = useAuth();
@@ -26,34 +27,34 @@ const AppBarComponent: React.FC = () => {
   return (
     <AppBar position="static" elevation={0} className="app-bar">
       <Toolbar className="toolbar">
-        <Typography variant="h6" className="title">
+        <div className="section">
+          <Link to="/"><img src={logo} alt="Logo" className="logo" /></Link>
           <Link to="/" className="title">
             Chord KTV
           </Link>
-        </Typography>
-        <Button component={Link} to="/canvas" color="inherit">
-          Canvas
-        </Button>
-        {user ? (
-          <>
-            <Avatar
-              src={user.picture}
-              alt={user.name}
-              onClick={handleMenuClick}
-              className="avatar"
-            />
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-            >
-              <MenuItem>{user.name}</MenuItem>
-              <MenuItem onClick={handleLogout}>Logout</MenuItem>
-            </Menu>
-          </>
-        ) : (
-          <GoogleAuth />
-        )}
+        </div>
+        <div className="section">
+          {user ? (
+            <>
+              <Avatar
+                src={user.picture}
+                alt={user.name}
+                onClick={handleMenuClick}
+                className="avatar"
+              />
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+              >
+                <MenuItem>{user.name}</MenuItem>
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <GoogleAuth />
+          )}
+        </div>
       </Toolbar>
     </AppBar>
   );

@@ -54,7 +54,7 @@ export interface FullSongRequestDto {
      * @type {string}
      * @memberof FullSongRequestDto
      */
-    youTubeUrl?: string | null;
+    youTubeId?: string | null;
 }
 
 /**
@@ -79,7 +79,7 @@ export function FullSongRequestDtoFromJSONTyped(json: any, ignoreDiscriminator: 
         'album': json['album'] == null ? undefined : json['album'],
         'duration': json['duration'] == null ? undefined : json['duration'],
         'lyrics': json['lyrics'] == null ? undefined : json['lyrics'],
-        'youTubeUrl': json['youTubeUrl'] == null ? undefined : json['youTubeUrl'],
+        'youTubeId': json['youTubeId'] == null ? undefined : json['youTubeId'],
     };
 }
 
@@ -99,7 +99,7 @@ export function FullSongRequestDtoToJSONTyped(value?: FullSongRequestDto | null,
         'album': value['album'],
         'duration': value['duration'],
         'lyrics': value['lyrics'],
-        'youTubeUrl': value['youTubeUrl'],
+        'youTubeId': value['youTubeId'],
     };
 }
 

@@ -13,7 +13,7 @@ Chord KTV is a web-based application designed to enhance language learning throu
 - **Progress Tracking:** Monitor your learning journey with personalized progress reports, highlighting areas of improvement.
 
 ## Technical Details 🔤 
-Chord KTV leverages **LRC files** to synchronize lyrics with music playback. 🎶 These files contain **time-stamped lyrics**, enabling a karaoke-like experience. 🎤 The application integrates with external APIs, including **YouTube and Spotify**, to manage song playback and playlists. 🎵 Additionally, the **ChatGPT API** is utilized to generate transliterations and translations, ensuring consistency and accuracy. 🎶🎼🎧
+Chord KTV leverages **LRC files** to synchronize lyrics with music playback. 🎶 These files contain **time-stamped lyrics**, enabling a karaoke-like experience. 🎤 The application integrates with external APIs, including **YouTube, LRCLib, Genius**, to manage song playback and playlists. 🎵 Additionally, the **ChatGPT API** is utilized to generate transliterations and translations, ensuring consistency and accuracy. 🎶🎼🎧
 
 ## Installation 🎵💻📥
 ### Clone the Repository: 🖥️📂🔽
@@ -48,4 +48,4 @@ We welcome contributions from the community! To get involved:
 4. **Submit a Pull Request:** Provide a clear description of your changes. (Use the PR template)
 
 ## License 📜📝⚖️
-This project is licensed under the [**MIT License**](LICENSE). 🎼🎵🎧
+This project is licensed under the [**Apache 2 License**](LICENSE). 🎼🎵🎧

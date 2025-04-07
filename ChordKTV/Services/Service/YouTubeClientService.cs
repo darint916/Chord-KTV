@@ -4,34 +4,70 @@ using Google.Apis.YouTube.v3.Data;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
 using ChordKTV.Utils;
+using ChordKTV.Dtos.YouTubeApi;
 
 namespace ChordKTV.Services.Service;
 
-public class YouTubeApiClientService : IYouTubeClientService
+public class YouTubeApiClientService : IYouTubeClientService, IDisposable
 {
-    private readonly string? _apiKey;
-
-    public YouTubeApiClientService(IConfiguration configuration)
+    private readonly string? _youtubeApiKey;
+    private readonly string? _youtubeSearchApiKey;
+    private readonly ILogger<YouTubeApiClientService> _logger;
+    private readonly YouTubeService _youTubeService;
+    private readonly YouTubeService _youTubeSearchService;
+    private bool _disposed;
+    public YouTubeApiClientService(IConfiguration configuration, ILogger<YouTubeApiClientService> logger)
     {
-        _apiKey = configuration["YouTube:ApiKey"];
+        _logger = logger;
+        _youtubeApiKey = configuration["YouTube:ApiKey"];
+        if (string.IsNullOrEmpty(_youtubeApiKey))
+        {
+            _logger.LogError("YouTube API key not found in backend configuration");
+            throw new ArgumentNullException(nameof(configuration), "YouTube:ApiKey is missing or not set in configuration.");
+        }
+        else
+        {
+            _youTubeService = new YouTubeService(
+                new BaseClientService.Initializer
+                {
+                    ApiKey = _youtubeApiKey,
+                    ApplicationName = "ChordKTV Base Key"
+                }
+            );
+        }
+
+        _youtubeSearchApiKey = configuration["YouTube:SearchApiKey"]; //separate as search is expensive
+        if (string.IsNullOrEmpty(_youtubeSearchApiKey))
+        {
+            _logger.LogError("YouTube Search API key not found in backend configuration defaulting to normal API key");
+            _youTubeSearchService = new YouTubeService(
+                new BaseClientService.Initializer
+                {
+                    ApiKey = _youtubeApiKey,
+                    ApplicationName = "ChordKTV Backup Search"
+                }
+            );
+        }
+        else
+        {
+            _youTubeSearchService = new YouTubeService(
+                new BaseClientService.Initializer
+                {
+                    ApiKey = _youtubeSearchApiKey,
+                    ApplicationName = "ChordKTV Search"
+                }
+            );
+        }
     }
 
     public async Task<PlaylistDetailsDto?> GetPlaylistDetailsAsync(string playlistId, bool shuffle)
     {
-        if (string.IsNullOrEmpty(_apiKey))
+        if (string.IsNullOrEmpty(_youtubeApiKey))
         {
             return null;
         }
 
-        var googleYouTube = new YouTubeService(
-            new BaseClientService.Initializer
-            {
-                ApiKey = _apiKey,
-                ApplicationName = "ChordKTV"
-            }
-        );
-
-        PlaylistsResource.ListRequest playlistRequest = googleYouTube.Playlists.List("snippet");
+        PlaylistsResource.ListRequest playlistRequest = _youTubeService.Playlists.List("snippet");
         playlistRequest.Id = playlistId;
 
         PlaylistListResponse playlistResponse = await playlistRequest.ExecuteAsync();
@@ -40,7 +76,7 @@ public class YouTubeApiClientService : IYouTubeClientService
             ? playlistResponse.Items[0].Snippet.Title
             : "Unknown Playlist";
 
-        PlaylistItemsResource.ListRequest playlistItemsRequest = googleYouTube.PlaylistItems.List("snippet,contentDetails");
+        PlaylistItemsResource.ListRequest playlistItemsRequest = _youTubeService.PlaylistItems.List("snippet,contentDetails");
         playlistItemsRequest.PlaylistId = playlistId;
         playlistItemsRequest.MaxResults = 50;
 
@@ -61,7 +97,7 @@ public class YouTubeApiClientService : IYouTubeClientService
         // Batch video details requests in parallel
         IEnumerable<Task<Dictionary<string, VideoDetails>>> videoDetailsTasks = allVideoIds
             .Chunk(50)
-            .Select(idBatch => GetVideosDetailsAsync(googleYouTube, idBatch.ToList()));
+            .Select(idBatch => GetVideosDetailsAsync(idBatch.ToList()));
 
         Dictionary<string, VideoDetails>[] videoDetailsResults = await Task.WhenAll(videoDetailsTasks);
         var allVideoDetails = videoDetailsResults.SelectMany(dict => dict).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -89,21 +125,19 @@ public class YouTubeApiClientService : IYouTubeClientService
         return new PlaylistDetailsDto(playlistTitle, videos);
     }
 
-    private sealed record VideoDetails(string ChannelTitle, TimeSpan Duration);
-
-    private static async Task<Dictionary<string, VideoDetails>> GetVideosDetailsAsync(YouTubeService youTubeService, List<string> videoIds)
+    public async Task<Dictionary<string, VideoDetails>> GetVideosDetailsAsync(List<string> videoIds)
     {
         var result = new Dictionary<string, VideoDetails>();
 
         // YouTube API allows up to 50 video IDs per request
         foreach (string[] idBatch in videoIds.Chunk(50))
         {
-            VideosResource.ListRequest videoRequest = youTubeService.Videos.List("snippet,contentDetails");
+            VideosResource.ListRequest videoRequest = _youTubeService.Videos.List("snippet,contentDetails");
             videoRequest.Id = string.Join(",", idBatch);
 
             VideoListResponse videoResponse = await videoRequest.ExecuteAsync();
 
-            foreach (Video? video in videoResponse.Items)
+            foreach (Video video in videoResponse.Items)
             {
                 TimeSpan duration = TimeSpan.Zero;
                 try
@@ -116,6 +150,7 @@ public class YouTubeApiClientService : IYouTubeClientService
                 }
 
                 result[video.Id] = new VideoDetails(
+                    video.Snippet.Title,
                     video.Snippet.ChannelTitle,
                     duration
                 );
@@ -124,4 +159,76 @@ public class YouTubeApiClientService : IYouTubeClientService
         return result;
     }
 
+    public async Task<string?> SearchYoutubeVideoLinkAsync(string title, string artist, string? album, TimeSpan? duration, double durationTolerance = 3.5)
+    {
+        if (string.IsNullOrEmpty(_youtubeSearchApiKey))
+        {
+            return null;
+        }
+        //reference https://developers.google.com/youtube/v3/docs/search/list#.net
+
+        SearchResource.ListRequest searchRequest = _youTubeSearchService.Search.List("snippet");
+        searchRequest.Q = $"{title} {artist}"; //no album for now, as youtube search api is kinda lobotomized, will return no result
+        searchRequest.Type = "video";
+        searchRequest.MaxResults = 10; //more simple, maybe expand in future to allow users to choose, 2 groups based on relevancy sort
+        searchRequest.VideoEmbeddable = SearchResource.ListRequest.VideoEmbeddableEnum.True__;
+
+        //https://stackoverflow.com/a/17738994/17621099 category type 10 is music for all regions where allowed
+        // searchRequest.VideoCategoryId = "10"; //disabled for now, might be too specific
+
+        SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
+        //first search response item that has video id
+
+        List<string> videoIds = searchResponse.Items
+            .Where(item => item.Id.Kind == "youtube#video")
+            .Select(item => item.Id.VideoId)
+            .ToList();
+
+        Dictionary<string, VideoDetails> videoDetailsDict = await GetVideosDetailsAsync(videoIds);
+
+        if (duration.HasValue)
+        {
+            durationTolerance = Math.Abs(durationTolerance);
+            string? withinDurationId = videoIds.FirstOrDefault(id =>
+                videoDetailsDict.TryGetValue(id, out VideoDetails? details) &&
+                Math.Abs((details.Duration - duration.Value).TotalSeconds) <= durationTolerance);
+
+            if (withinDurationId != null)
+            {
+                return withinDurationId;
+            }
+
+            //return closest duration match
+            return videoIds.MinBy(id => videoDetailsDict.TryGetValue(id, out VideoDetails? details)
+                ? Math.Abs((details.Duration - duration.Value).TotalSeconds)
+                : double.MaxValue);
+        }
+        return videoIds.FirstOrDefault();
+    }
+
+    //Below is the youtube service dispose stuff, needed as we abstracted the instances out, basically so they can be shared, these get handled by DI automatically
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // Dispose managed resources.
+                _youTubeService?.Dispose();
+                _youTubeSearchService?.Dispose();
+            }
+            _disposed = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this); // no need for finalizer if Dispose was called
+    }
+
+    ~YouTubeApiClientService() // finalizer (safeguard)
+    {
+        Dispose(disposing: false);
+    }
 }
