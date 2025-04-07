@@ -8,6 +8,8 @@ using ChordKTV.Utils;
 using ChordKTV.Dtos;
 using Serilog;
 using System.Globalization;
+using ChordKTV.Data.Api.UserData;
+using ChordKTV.Data.Repo.UserData;
 using ChordKTV.Data.Api.QuizData;
 using ChordKTV.Data.Repo.QuizData;
 
@@ -65,6 +67,8 @@ builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
 builder.Services.AddScoped<IQuizRepo, QuizRepo>();
 builder.Services.AddScoped<IFullSongService, FullSongService>();
 builder.Services.AddScoped<IHandwritingService, HandwritingService>();
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IGeniusMetaDataRepo, GeniusMetaDataRepo>();
 

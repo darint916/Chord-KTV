@@ -1,6 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Google.Apis.Auth;
 using ChordKTV.Utils.Extensions;
+using ChordKTV.Services.Api;
+using ChordKTV.Models.UserData;
+using ChordKTV.Dtos;
+using AutoMapper;
+using AutoMapper.Configuration;
 
 namespace ChordKTV.Controllers;
 
@@ -9,41 +15,43 @@ namespace ChordKTV.Controllers;
 [DevelopmentOnly]
 public class UserController : ControllerBase
 {
-    private readonly string _googleClientId;
     private readonly ILogger<UserController> _logger;
+    private readonly IUserService _userService;
+    private readonly Mapper _mapper;
 
-    public UserController(IConfiguration configuration, ILogger<UserController> logger)
+    public UserController(
+        ILogger<UserController> logger,
+        IUserService userService,
+        IMapper mapper)
     {
-        _googleClientId = configuration["Authentication:Google:ClientId"] ??
-            throw new ArgumentNullException(nameof(configuration), "Google Client ID is not configured");
         _logger = logger;
+        _userService = userService;
+
+        MapperConfiguration config = new MapperConfiguration(cfg => cfg.CreateMap<User, UserDto>());
+        _mapper = new Mapper(config);
     }
 
-    [HttpPost("random")]
-    public async Task<IActionResult> AddSearchHistory([FromHeader] string authorization)
+    [HttpPost("auth/google")]
+    public async Task<IActionResult> AuthenticateGoogle([FromHeader] string authorization)
     {
         try
         {
-            // 1. Extract token from Authorization header
             string idToken = authorization.Replace("Bearer ", "");
 
-            // 2. Verify the token with Google
-            var validationSettings = new GoogleJsonWebSignature.ValidationSettings
+            User? user = await _userService.AuthenticateGoogleUserAsync(idToken);
+
+            if (user == null)
             {
-                Audience = [_googleClientId]
-            };
+                return Unauthorized();
+            }
 
-            GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(idToken, validationSettings);
-
-            // 3. Now we can trust the user ID (payload.Subject)
-            _logger.LogDebug("Processing request for user {UserId}", payload.Subject);
-
-            return Ok();
+            UserDto userDto = _mapper.Map<UserDto>(user);
+            return Ok(userDto);
         }
-        catch (InvalidJwtException)
+        catch (Exception ex)
         {
-            _logger.LogWarning("Invalid JWT token received");
-            return Unauthorized();
+            _logger.LogError(ex, "Unexpected error during authentication");
+            return StatusCode(500, new { message = "An unexpected error occurred" });
         }
     }
 }

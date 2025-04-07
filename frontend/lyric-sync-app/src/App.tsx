@@ -7,7 +7,7 @@ import AppBarComponent from './components/AppBarComponent/AppBarComponent';
 import QuizPage from './pages/QuizPage/QuizPage';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './contexts/AuthContext';
-import { GOOGLE_CLIENT_ID } from './config/google-auth';
+import { GOOGLE_CLIENT_ID } from './config/GoogleAuth';
 import { SongProvider } from './contexts/SongContextProvider';
 
 const App: React.FC = () => {
