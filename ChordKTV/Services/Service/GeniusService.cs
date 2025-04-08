@@ -189,7 +189,8 @@ public class GeniusService : IGeniusService
         if (result != null)
         {
             result = await EnrichSongDetailsAsync(result);
-            _logger.LogInformation("Found matching song. Adding to cache.");
+            _logger.LogInformation("Found matching song. Adding to cache. Title: '{Title}', Artist: '{Artist}'",
+                result.Title, result.Artist);
             await _songRepo.AddSongAsync(result);
             await _songRepo.SaveChangesAsync();
         }

@@ -122,7 +122,11 @@ public class FullSongService : IFullSongService
             {
                 song.LrcId = lrcLyricsDto.Id;
                 song.LrcLyrics = lrcLyricsDto.SyncedLyrics;
-                song.Duration = TimeSpan.FromSeconds(lrcLyricsDto.Duration); //overwrite since we overwrite lyrics above too
+                if (lrcLyricsDto.Duration != null)
+                {
+                    //overwrite duration if we have a better one
+                    song.Duration = TimeSpan.FromSeconds(lrcLyricsDto.Duration.Value);
+                }
             }
         }
 
@@ -184,11 +188,12 @@ public class FullSongService : IFullSongService
             }
             else //create if we dont find in genius at all
             {
+
                 song = new Song
                 {
                     Title = lrcLyricsDto.TrackName ?? title ?? "Unknown",
                     Artist = lrcLyricsDto.ArtistName ?? artist ?? "Unknown",
-                    Duration = lrcLyricsDto.Duration > 0 ? TimeSpan.FromSeconds(lrcLyricsDto.Duration) : duration,
+                    Duration = lrcLyricsDto.Duration != null ? TimeSpan.FromSeconds(lrcLyricsDto.Duration.Value) : duration,
                     LrcLyrics = lrcLyricsDto.SyncedLyrics,
                     PlainLyrics = lrcLyricsDto.PlainLyrics,
                     LrcId = lrcLyricsDto.Id,

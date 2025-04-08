@@ -62,6 +62,7 @@ Input Lyrics:
 Remember if the original lyrics are already in English, no translation or romanization is needed and ignore the is needed clauses above.
 The lyrics input contains timestamps LRC Format. Do not change any timestamps or the formatting.
 Ensure that the output follows the expected JSON structure and also escape all quotation marks within the translation/romanization to be able to be json parsed.
+Make sure apostrophies in translation and romanization are escaped as well.
 Output Format:
 {{
     ""romanizedLyrics"": ""<romanized lyrics in LRC format, if applicable or null>"",
