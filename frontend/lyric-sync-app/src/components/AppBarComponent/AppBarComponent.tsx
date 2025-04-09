@@ -17,7 +17,7 @@ const AppBarComponent: React.FC = () => {
   const [issueTitle, setIssueTitle] = useState('');
 
   const repoOwner = 'darint916';
-  const repoName = 'chordKTV';
+  const repoName = 'Chord-KTV';
 
   const handleLogout = () => {
     setUser(null);
@@ -61,16 +61,16 @@ const AppBarComponent: React.FC = () => {
 
     switch (issueType) {
     case 'bug':
-      template = 'bug_report.md';
+      template = 'bug-report.md';
       labels = 'bug';
       break;
     case 'feature':
-      template = 'feature_request.md';
+      template = 'feature-request.md';
       labels = 'enhancement';
       break;
     case 'lyrics':
-      template = 'lyrics_issue.md';
-      labels = 'lyrics,content';
+      template = 'search-play-report.md';
+      labels = 'search issue,bug';
       break;
     default:
       template = '';
@@ -103,7 +103,7 @@ const AppBarComponent: React.FC = () => {
               color="inherit"
               startIcon={<BugReportIcon />}
               onClick={handleBugMenuClick}
-              sx={{ marginRight: 2 }}
+              className='report-button'
             >
               Report Issue
             </Button>
@@ -112,9 +112,10 @@ const AppBarComponent: React.FC = () => {
               open={Boolean(bugMenuAnchorEl)}
               onClose={handleBugMenuClose}
             >
-              <MenuItem onClick={() => openIssueModal('bug')}>Report Bug</MenuItem>
+              <MenuItem onClick={() => openIssueModal('song')}>Report Search/Play Related Issue</MenuItem>
+              <MenuItem onClick={() => openIssueModal('bug')}>Report Misc Bug</MenuItem>
               <MenuItem onClick={() => openIssueModal('feature')}>Request Feature</MenuItem>
-              <MenuItem onClick={() => openIssueModal('lyrics')}>Report Lyrics Issue</MenuItem>
+              <MenuItem onClick={() => openIssueModal('lyrics')}>Report Other</MenuItem>
             </Menu>
 
             {user ? (
@@ -161,7 +162,7 @@ const AppBarComponent: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            You'll be redirected to GitHub to create an issue with the appropriate template.
+            You'll be redirected to GitHub to create an issue with the appropriate template (title copied over).
             Please enter a brief title for your issue:
           </Typography>
           <TextField

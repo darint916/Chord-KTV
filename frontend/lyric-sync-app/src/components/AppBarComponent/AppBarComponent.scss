@@ -40,3 +40,19 @@
     }
   }
 }
+
+.report-button {
+  background-color: $text-background !important;
+  color: #FFFFFF !important;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: $border-radius;
+  transition: background-color 0.3s ease;
+  &:hover {
+    background-color: #333333 !important;
+  }
+
+  .MuiSvgIcon-root {
+    margin-right: 8px;
+  }
+}
