@@ -60,17 +60,17 @@ const AppBarComponent: React.FC = () => {
     let labels = '';
 
     switch (issueType) {
-    case 'bug':
-      template = 'bug-report.md';
-      labels = 'bug';
-      break;
     case 'feature':
       template = 'feature-request.md';
       labels = 'enhancement';
       break;
-    case 'lyrics':
+    case 'song':
       template = 'search-play-report.md';
       labels = 'search issue,bug';
+      break;
+    case 'bug':
+      template = 'bug-report.md';
+      labels = 'bug';
       break;
     default:
       template = '';
@@ -112,10 +112,10 @@ const AppBarComponent: React.FC = () => {
               open={Boolean(bugMenuAnchorEl)}
               onClose={handleBugMenuClose}
             >
-              <MenuItem onClick={() => openIssueModal('song')}>Report Search/Play Related Issue</MenuItem>
-              <MenuItem onClick={() => openIssueModal('bug')}>Report Misc Bug</MenuItem>
+              <MenuItem onClick={() => openIssueModal('song')}>Report Search/Play Related Bug</MenuItem>
               <MenuItem onClick={() => openIssueModal('feature')}>Request Feature</MenuItem>
-              <MenuItem onClick={() => openIssueModal('lyrics')}>Report Other</MenuItem>
+              <MenuItem onClick={() => openIssueModal('bug')}>Report Misc Bug</MenuItem>
+              <MenuItem onClick={() => openIssueModal('other')}>Report Other</MenuItem>
             </Menu>
 
             {user ? (
@@ -153,7 +153,7 @@ const AppBarComponent: React.FC = () => {
             <Typography variant="h6">
               {issueType === 'bug' ? 'Report a Bug' :
                 issueType === 'feature' ? 'Request a Feature' :
-                  'Report Lyrics Issue'}
+                  'Report Search/Play Issue'}
             </Typography>
             <IconButton onClick={handleModalClose}>
               <CloseIcon />
