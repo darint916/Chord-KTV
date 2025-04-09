@@ -153,16 +153,17 @@ const AppBarComponent: React.FC = () => {
             <Typography variant="h6">
               {issueType === 'bug' ? 'Report a Bug' :
                 issueType === 'feature' ? 'Request a Feature' :
-                  'Report Search/Play Issue'}
+                  issueType === 'song' ? 'Report Search/Play Bug' :
+                    'Report Other Issue'}
             </Typography>
-            <IconButton onClick={handleModalClose}>
+            <IconButton onClick={handleModalClose} aria-label="close">
               <CloseIcon />
             </IconButton>
           </Box>
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            You'll be redirected to GitHub to create an issue with the appropriate template (title copied over).
+            You&apos;ll be redirected to GitHub to create an issue with the appropriate template (title copied over).
             Please enter a brief title for your issue:
           </Typography>
           <TextField
