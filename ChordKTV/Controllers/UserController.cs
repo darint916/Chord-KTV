@@ -7,6 +7,10 @@ using ChordKTV.Models.UserData;
 using ChordKTV.Dtos;
 using AutoMapper;
 using AutoMapper.Configuration;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ChordKTV.Controllers;
 
@@ -17,7 +21,7 @@ public class UserController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
     private readonly IUserService _userService;
-    private readonly Mapper _mapper;
+    private readonly IMapper _mapper;
 
     public UserController(
         ILogger<UserController> logger,
@@ -26,9 +30,7 @@ public class UserController : ControllerBase
     {
         _logger = logger;
         _userService = userService;
-
-        MapperConfiguration config = new MapperConfiguration(cfg => cfg.CreateMap<User, UserDto>());
-        _mapper = new Mapper(config);
+        _mapper = mapper;
     }
 
     [HttpPost("auth/google")]
@@ -37,7 +39,6 @@ public class UserController : ControllerBase
         try
         {
             string idToken = authorization.Replace("Bearer ", "");
-
             User? user = await _userService.AuthenticateGoogleUserAsync(idToken);
 
             if (user == null)
@@ -45,8 +46,11 @@ public class UserController : ControllerBase
                 return Unauthorized();
             }
 
-            UserDto userDto = _mapper.Map<UserDto>(user);
-            return Ok(userDto);
+            // return the user and let the client continue using the Google token
+            return Ok(new { 
+                user = _mapper.Map<UserDto>(user),
+                token = idToken
+            });
         }
         catch (Exception ex)
         {

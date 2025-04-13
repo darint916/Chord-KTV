@@ -1,6 +1,8 @@
 using ChordKTV.Models.SongData;
 using ChordKTV.Models.UserData;
 using ChordKTV.Models.Quiz;
+using ChordKTV.Models.Playlist;
+using ChordKTV.Models.Handwriting;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChordKTV.Data;
@@ -14,6 +16,14 @@ public class AppDbContext : DbContext
     public DbSet<Quiz> Quizzes { get; set; }
     public DbSet<QuizQuestion> QuizQuestions { get; set; }
     public DbSet<QuizOption> QuizOptions { get; set; }
+    
+    public DbSet<UserPlaylistActivity> UserPlaylistActivities { get; set; }
+    public DbSet<UserQuizResult> UserQuizzesDone { get; set; }
+    public DbSet<UserSongPlay> UserSongPlays { get; set; }
+    public DbSet<UserHandwritingResult> UserHandwritingResults { get; set; }
+    public DbSet<LearnedWord> LearnedWords { get; set; }
+    public DbSet<UserFavoriteSong> FavoriteSongs { get; set; }
+    public DbSet<UserFavoritePlaylist> FavoritePlaylists { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> opt) : base(opt)
     {
@@ -38,6 +48,47 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<QuizOption>()
             .HasIndex(qo => new { qo.QuestionId, qo.OrderIndex })
             .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.PlaylistActivities)
+            .WithOne()
+            .HasForeignKey(pa => pa.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.QuizResults)
+            .WithOne()
+            .HasForeignKey(qr => qr.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.SongPlays)
+            .WithOne()
+            .HasForeignKey(sp => sp.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.HandwritingResults)
+            .WithOne()
+            .HasForeignKey(hr => hr.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.LearnedWords)
+            .WithOne()
+            .HasForeignKey(lw => lw.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.FavoriteSongs)
+            .WithOne()
+            .HasForeignKey(fs => fs.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.FavoritePlaylists)
+            .WithOne()
+            .HasForeignKey(fp => fp.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
 
