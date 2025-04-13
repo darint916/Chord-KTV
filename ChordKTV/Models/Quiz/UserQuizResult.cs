@@ -13,4 +13,4 @@ public class UserQuizResult
     public string Language { get; set; } = string.Empty;
     public DateTime CompletedAt { get; set; }
     public Guid UserId { get; set; }
-} 
+}

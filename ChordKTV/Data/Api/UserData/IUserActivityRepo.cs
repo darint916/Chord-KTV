@@ -12,15 +12,15 @@ public interface IUserActivityRepo
     Task<IEnumerable<UserSongPlay>> GetUserSongPlaysAsync(Guid userId);
     Task<IEnumerable<UserHandwritingResult>> GetUserHandwritingResultsAsync(Guid userId);
     Task<IEnumerable<LearnedWord>> GetUserLearnedWordsAsync(Guid userId, string? language = null);
-    
+
     Task AddPlaylistActivityAsync(UserPlaylistActivity activity);
     Task AddQuizResultAsync(UserQuizResult result);
     Task AddSongPlayAsync(UserSongPlay play);
     Task AddHandwritingResultAsync(UserHandwritingResult result);
     Task AddLearnedWordAsync(LearnedWord word);
-    
+
     Task<bool> SaveChangesAsync();
-    
+
     Task<UserFavoriteSong?> GetFavoriteSongAsync(Guid userId, Guid songId);
     Task AddFavoriteSongAsync(UserFavoriteSong favoriteSong);
     Task RemoveFavoriteSongAsync(UserFavoriteSong favoriteSong);
@@ -32,4 +32,4 @@ public interface IUserActivityRepo
     Task AddFavoritePlaylistAsync(UserFavoritePlaylist favoritePlaylist);
     Task RemoveFavoritePlaylistAsync(UserFavoritePlaylist favoritePlaylist);
     Task<IEnumerable<UserFavoritePlaylist>> GetUserFavoritePlaylistsAsync(Guid userId);
-} 
+}

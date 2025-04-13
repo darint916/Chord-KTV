@@ -50,12 +50,12 @@ public class UserActivityRepo : IUserActivityRepo
     public async Task<IEnumerable<LearnedWord>> GetUserLearnedWordsAsync(Guid userId, string? language = null)
     {
         IQueryable<LearnedWord> query = _context.LearnedWords.Where(x => x.UserId == userId);
-        
+
         if (!string.IsNullOrEmpty(language))
         {
             query = query.Where(x => x.Language == language);
         }
-        
+
         return await query.OrderByDescending(x => x.LearnedOn).ToListAsync();
     }
 
@@ -146,4 +146,4 @@ public class UserActivityRepo : IUserActivityRepo
         _context.FavoritePlaylists.Remove(favoritePlaylist);
         return Task.CompletedTask;
     }
-} 
+}

@@ -11,4 +11,4 @@ public class UserPlaylistActivity
     public int PlayCount { get; set; }
     public DateTime LastPlayed { get; set; }
     public Guid UserId { get; set; }
-} 
+}

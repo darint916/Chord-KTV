@@ -23,4 +23,4 @@ public class UserActivityProfile : Profile
         CreateMap<UserHandwritingResultDto, UserHandwritingResult>();
         CreateMap<UserHandwritingResult, UserHandwritingResultDto>();
     }
-} 
+}

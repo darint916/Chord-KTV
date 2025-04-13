@@ -4,4 +4,4 @@ public class UserSongPlayDto
 {
     public Guid SongId { get; set; }
     public DateTime? PlayedAt { get; set; }
-} 
+}

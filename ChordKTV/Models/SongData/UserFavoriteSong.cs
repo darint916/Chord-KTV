@@ -12,4 +12,4 @@ public class UserFavoriteSong
     public Guid SongId { get; set; }
     public DateTime FavoritedAt { get; set; }
     public Guid UserId { get; set; }
-} 
+}

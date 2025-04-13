@@ -47,7 +47,8 @@ public class UserController : ControllerBase
             }
 
             // return the user and let the client continue using the Google token
-            return Ok(new { 
+            return Ok(new
+            {
                 user = _mapper.Map<UserDto>(user),
                 token = idToken
             });

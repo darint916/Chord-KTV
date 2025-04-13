@@ -10,4 +10,4 @@ public class UserFavoritePlaylist
     public required Guid UserId { get; set; }
     public required string PlaylistUrl { get; set; }
     public DateTime FavoritedAt { get; set; }
-} 
+}

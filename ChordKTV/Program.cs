@@ -119,7 +119,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.Authority = "https://accounts.google.com";
-        options.Audience  = "626673404798-lc7pm62to3kkgp641d68bj691c9tk2u6.apps.googleusercontent.com";
+        options.Audience = "626673404798-lc7pm62to3kkgp641d68bj691c9tk2u6.apps.googleusercontent.com";
 
         options.TokenValidationParameters.ValidateIssuer = true;
 

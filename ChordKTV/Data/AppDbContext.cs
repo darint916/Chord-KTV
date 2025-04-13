@@ -16,7 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Quiz> Quizzes { get; set; }
     public DbSet<QuizQuestion> QuizQuestions { get; set; }
     public DbSet<QuizOption> QuizOptions { get; set; }
-    
+
     public DbSet<UserPlaylistActivity> UserPlaylistActivities { get; set; }
     public DbSet<UserQuizResult> UserQuizzesDone { get; set; }
     public DbSet<UserSongPlay> UserSongPlays { get; set; }

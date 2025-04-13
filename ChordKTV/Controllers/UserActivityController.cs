@@ -135,7 +135,7 @@ public class UserActivityController : Controller
             }
 
             await _activityRepo.SaveChangesAsync();
-            
+
             return Ok(new
             {
                 result.Id,
@@ -491,52 +491,59 @@ public class UserActivityController : Controller
         var activities = new
         {
             PlaylistActivities = (await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id))
-                .Select(pa => new {
+                .Select(pa => new
+                {
                     pa.Id,
                     pa.PlaylistUrl,
                     pa.PlayCount,
                     pa.LastPlayed
                 }),
             QuizzesDone = (await _activityRepo.GetUserQuizResultsAsync(user.Id))
-                .Select(qr => new { 
-                    qr.Id, 
-                    qr.QuizId, 
-                    qr.Score, 
-                    qr.Language, 
-                    qr.CompletedAt 
+                .Select(qr => new
+                {
+                    qr.Id,
+                    qr.QuizId,
+                    qr.Score,
+                    qr.Language,
+                    qr.CompletedAt
                 }),
             SongPlays = (await _activityRepo.GetUserSongPlaysAsync(user.Id))
-                .Select(sp => new { 
-                    sp.Id, 
-                    sp.SongId, 
-                    sp.PlayedAt 
+                .Select(sp => new
+                {
+                    sp.Id,
+                    sp.SongId,
+                    sp.PlayedAt
                 }),
             FavoriteSongs = (await _activityRepo.GetUserFavoriteSongsAsync(user.Id))
-                .Select(fs => new {
+                .Select(fs => new
+                {
                     fs.Id,
                     fs.SongId,
                     fs.FavoritedAt
                 }),
             FavoritePlaylists = (await _activityRepo.GetUserFavoritePlaylistsAsync(user.Id))
-                .Select(fp => new {
+                .Select(fp => new
+                {
                     fp.Id,
                     fp.PlaylistUrl,
                     fp.FavoritedAt
                 }),
             HandwritingResults = (await _activityRepo.GetUserHandwritingResultsAsync(user.Id))
-                .Select(hr => new { 
-                    hr.Id, 
-                    hr.Language, 
-                    hr.Score, 
+                .Select(hr => new
+                {
+                    hr.Id,
+                    hr.Language,
+                    hr.Score,
                     hr.WordTested,
-                    hr.CompletedAt 
+                    hr.CompletedAt
                 }),
             LearnedWords = (await _activityRepo.GetUserLearnedWordsAsync(user.Id))
-                .Select(lw => new { 
-                    lw.Id, 
-                    lw.Word, 
-                    lw.Language, 
-                    lw.LearnedOn 
+                .Select(lw => new
+                {
+                    lw.Id,
+                    lw.Word,
+                    lw.Language,
+                    lw.LearnedOn
                 }),
             Message = "Activity history retrieved successfully. If lists are empty, you haven't recorded any activity yet."
         };
@@ -546,22 +553,22 @@ public class UserActivityController : Controller
 
     private async Task<User?> GetUserFromClaimsAsync()
     {
-        _logger.LogInformation("Claims present: {Claims}", 
+        _logger.LogInformation("Claims present: {Claims}",
             string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}")));
-        
+
         string? email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
         if (string.IsNullOrEmpty(email))
         {
             _logger.LogWarning("No email claim found in token");
             return null;
         }
-        
+
         User? user = await _userRepo.GetUserByEmailAsync(email);
         if (user == null)
         {
             _logger.LogWarning("User not found for email: {Email}", email);
         }
-        
+
         return user;
     }
-} 
+}

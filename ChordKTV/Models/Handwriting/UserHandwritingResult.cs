@@ -12,4 +12,4 @@ public class UserHandwritingResult
     public string WordTested { get; set; } = string.Empty;
     public DateTime CompletedAt { get; set; }
     public Guid UserId { get; set; }
-} 
+}

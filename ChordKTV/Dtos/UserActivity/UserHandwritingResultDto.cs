@@ -6,4 +6,4 @@ public class UserHandwritingResultDto
     public decimal Score { get; set; }
     public string WordTested { get; set; } = string.Empty;
     public DateTime? CompletedAt { get; set; }
-} 
+}

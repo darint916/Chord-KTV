@@ -11,4 +11,4 @@ public class LearnedWord
     public string Language { get; set; } = string.Empty;
     public DateTime LearnedOn { get; set; }
     public Guid UserId { get; set; }
-} 
+}

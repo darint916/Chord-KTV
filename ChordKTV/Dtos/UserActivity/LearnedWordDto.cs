@@ -4,4 +4,4 @@ public record LearnedWordDto(
     string Word,
     string Language,
     DateTime? LearnedOn
-); 
+);

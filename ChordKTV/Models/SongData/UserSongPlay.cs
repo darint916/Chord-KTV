@@ -11,4 +11,4 @@ public class UserSongPlay
     public Song Song { get; set; } = null!;
     public DateTime PlayedAt { get; set; }
     public Guid UserId { get; set; }
-} 
+}
