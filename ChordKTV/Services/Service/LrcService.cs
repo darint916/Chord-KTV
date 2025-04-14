@@ -65,8 +65,9 @@ public class LrcService : ILrcService
 
         //We fuzzy order to add layer of confidence
         searchResults = searchResults
+            .Where(ele => ele.Duration != null)
             .OrderByDescending(ele => CompareUtils
-            .CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration))
+            .CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration!.Value))
             .ToList();
 
         // Get the first result with time-synced lyrics
@@ -112,7 +113,7 @@ public class LrcService : ILrcService
 
         lyricsDtoMatch.TitleMatchScores.LrcInputParamScore =
             lyricsDtoMatch.ArtistMatchScores.LrcInputParamScore =
-                CompareUtils.CompareWeightedFuzzyScore(title, lyricsDtoMatch.TrackName ?? "", artist, lyricsDtoMatch.ArtistName, duration, lyricsDtoMatch.Duration);
+                CompareUtils.CompareWeightedFuzzyScore(title, lyricsDtoMatch.TrackName ?? "", artist, lyricsDtoMatch.ArtistName, duration, lyricsDtoMatch.Duration ?? 0);
 
         // we go more strict on time sync if we have a match, note we prioritize LRC
         if (!LanguageUtils.IsRomanizedText(lyricsDtoMatch.PlainLyrics)) // If lyrics are in non en language
@@ -252,15 +253,18 @@ public class LrcService : ILrcService
         {
             queryTasks.Add(LrcLibSearchEndpointResponse(new NameValueCollection(queryParams))); //copy so we don't get race conditions in parallel
         }
-        if (!string.IsNullOrEmpty(artist)) //artist + title query (no album)
+        if (!string.IsNullOrEmpty(artist) && !string.Equals(artistKeywords, artist, StringComparison.OrdinalIgnoreCase)) //artist + title query (no album)
         {
             queryParams.Remove("album_name");
             queryTasks.Add(LrcLibSearchEndpointResponse(new NameValueCollection(queryParams)));
         }
         //raw title query
-        queryParams.Remove("artist_name");
-        queryParams.Remove("album_name");
-        queryTasks.Add(LrcLibSearchEndpointResponse(new NameValueCollection(queryParams))); //diff that keywords above, is more exact
+        if (!string.Equals(titleKeywords, title, StringComparison.OrdinalIgnoreCase))
+        {
+            queryParams.Remove("artist_name");
+            queryParams.Remove("album_name");
+            queryTasks.Add(LrcLibSearchEndpointResponse(new NameValueCollection(queryParams))); //diff that keywords above, is more exact
+        }
 
         // Run all tasks in parallel and await them
         List<LrcLyricsDto> results = (await Task.WhenAll(queryTasks))
