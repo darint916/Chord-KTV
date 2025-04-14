@@ -517,6 +517,6 @@ dotnet_diagnostic.IDE0161.severity = suggestion # file-scoped namespace on autog
 dotnet_diagnostic.CA1856.severity = suggestion #.contains specification
 dotnet_diagnostic.CA1848.severity = suggestion # logging delegation, not useful unless high
 dotnet_diagnostic.IDE0305.severity = suggestion # simplifying .ToList() calls
-
+dotnet_diagnostic.SYSLIB1045.severity = suggestion # regex compiler
 # IDE0007: Use implicit type
 dotnet_diagnostic.IDE0007.severity = suggestion
