@@ -10,6 +10,6 @@ public class UserFavoriteSong
     [Key]
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid SongId { get; set; }
-    public DateTime FavoritedAt { get; set; }
+    public DateTime DateFavorited { get; set; }
     public Guid UserId { get; set; }
 }

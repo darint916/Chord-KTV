@@ -72,7 +72,7 @@ namespace ChordKTV.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     SongId = table.Column<Guid>(type: "uuid", nullable: false),
-                    FavoritedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateFavorited = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>

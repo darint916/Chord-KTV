@@ -9,6 +9,6 @@ public class UserSongPlay
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid SongId { get; set; }
     public Song Song { get; set; } = null!;
-    public DateTime PlayedAt { get; set; }
+    public DateTime DatePlayed { get; set; }
     public Guid UserId { get; set; }
 }

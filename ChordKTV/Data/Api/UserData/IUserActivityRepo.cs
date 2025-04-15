@@ -2,6 +2,7 @@ using ChordKTV.Models.Playlist;
 using ChordKTV.Models.Quiz;
 using ChordKTV.Models.SongData;
 using ChordKTV.Models.Handwriting;
+using ChordKTV.Dtos;
 
 namespace ChordKTV.Data.Api.UserData;
 
@@ -11,7 +12,7 @@ public interface IUserActivityRepo
     Task<IEnumerable<UserQuizResult>> GetUserQuizResultsAsync(Guid userId);
     Task<IEnumerable<UserSongPlay>> GetUserSongPlaysAsync(Guid userId);
     Task<IEnumerable<UserHandwritingResult>> GetUserHandwritingResultsAsync(Guid userId);
-    Task<IEnumerable<LearnedWord>> GetUserLearnedWordsAsync(Guid userId, string? language = null);
+    Task<IEnumerable<LearnedWord>> GetUserLearnedWordsAsync(Guid userId, LanguageCode? language = null);
 
     Task AddPlaylistActivityAsync(UserPlaylistActivity activity);
     Task AddQuizResultAsync(UserQuizResult result);

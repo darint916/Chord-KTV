@@ -5,6 +5,7 @@ using ChordKTV.Models.Playlist;
 using ChordKTV.Models.SongData;
 using ChordKTV.Models.Handwriting;
 using Microsoft.EntityFrameworkCore;
+using ChordKTV.Dtos;
 
 namespace ChordKTV.Data.Repo.UserData;
 
@@ -27,7 +28,7 @@ public class UserActivityRepo : IUserActivityRepo
     {
         return await _context.UserQuizzesDone
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.CompletedAt)
+            .OrderByDescending(x => x.DateCompleted)
             .ToListAsync();
     }
 
@@ -35,7 +36,7 @@ public class UserActivityRepo : IUserActivityRepo
     {
         return await _context.UserSongPlays
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.PlayedAt)
+            .OrderByDescending(x => x.DatePlayed)
             .ToListAsync();
     }
 
@@ -43,20 +44,20 @@ public class UserActivityRepo : IUserActivityRepo
     {
         return await _context.UserHandwritingResults
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.CompletedAt)
+            .OrderByDescending(x => x.DateCompleted)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<LearnedWord>> GetUserLearnedWordsAsync(Guid userId, string? language = null)
+    public async Task<IEnumerable<LearnedWord>> GetUserLearnedWordsAsync(Guid userId, LanguageCode? language = null)
     {
         IQueryable<LearnedWord> query = _context.LearnedWords.Where(x => x.UserId == userId);
 
-        if (!string.IsNullOrEmpty(language))
+        if (language.HasValue)
         {
-            query = query.Where(x => x.Language == language);
+            query = query.Where(x => x.Language == language.Value);
         }
 
-        return await query.OrderByDescending(x => x.LearnedOn).ToListAsync();
+        return await query.OrderByDescending(x => x.DateLearned).ToListAsync();
     }
 
     public async Task AddPlaylistActivityAsync(UserPlaylistActivity activity)
@@ -99,7 +100,7 @@ public class UserActivityRepo : IUserActivityRepo
     {
         return await _context.FavoriteSongs
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.FavoritedAt)
+            .OrderByDescending(x => x.DateFavorited)
             .ToListAsync();
     }
 
@@ -132,7 +133,7 @@ public class UserActivityRepo : IUserActivityRepo
     {
         return await _context.FavoritePlaylists
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.FavoritedAt)
+            .OrderByDescending(x => x.DateFavorited)
             .ToListAsync();
     }
 

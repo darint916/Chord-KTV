@@ -9,5 +9,5 @@ public class UserFavoritePlaylist
     public Guid Id { get; set; } = Guid.NewGuid();
     public required Guid UserId { get; set; }
     public required string PlaylistUrl { get; set; }
-    public DateTime FavoritedAt { get; set; }
+    public DateTime DateFavorited { get; set; }
 }

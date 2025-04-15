@@ -9,6 +9,7 @@ using ChordKTV.Models.Handwriting;
 using ChordKTV.Services.Api;
 using AutoMapper;
 using ChordKTV.Models.UserData;
+using ChordKTV.Dtos;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using System.IdentityModel.Tokens.Jwt;
@@ -53,7 +54,7 @@ public class UserActivityController : Controller
             if (existingActivity != null)
             {
                 existingActivity.PlayCount++;
-                existingActivity.LastPlayed = dto.PlayedAt ?? DateTime.UtcNow;
+                existingActivity.LastPlayed = dto.DatePlayed ?? DateTime.UtcNow;
             }
             else
             {
@@ -62,7 +63,7 @@ public class UserActivityController : Controller
                     UserId = user.Id,
                     PlaylistUrl = dto.PlaylistUrl,
                     PlayCount = 1,
-                    LastPlayed = dto.PlayedAt ?? DateTime.UtcNow
+                    LastPlayed = dto.DatePlayed ?? DateTime.UtcNow
                 };
                 await _activityRepo.AddPlaylistActivityAsync(existingActivity);
             }
@@ -113,7 +114,7 @@ public class UserActivityController : Controller
                 QuizId = dto.QuizId,
                 Score = dto.Score,
                 Language = dto.Language,
-                CompletedAt = dto.CompletedAt ?? DateTime.UtcNow
+                DateCompleted = dto.DateCompleted ?? DateTime.UtcNow
             };
 
             await _activityRepo.AddQuizResultAsync(result);
@@ -130,7 +131,7 @@ public class UserActivityController : Controller
                     UserId = user.Id,
                     Word = word,
                     Language = dto.Language,
-                    LearnedOn = DateTime.UtcNow
+                    DateLearned = DateTime.UtcNow
                 });
             }
 
@@ -142,7 +143,7 @@ public class UserActivityController : Controller
                 result.QuizId,
                 result.Score,
                 result.Language,
-                result.CompletedAt,
+                result.DateCompleted,
                 result.UserId,
                 dto.CorrectAnswers
             });
@@ -170,7 +171,7 @@ public class UserActivityController : Controller
             qr.QuizId,
             qr.Score,
             qr.Language,
-            qr.CompletedAt
+            qr.DateCompleted
         }));
     }
 
@@ -189,7 +190,7 @@ public class UserActivityController : Controller
             {
                 UserId = user.Id,
                 SongId = dto.SongId,
-                PlayedAt = dto.PlayedAt ?? DateTime.UtcNow
+                DatePlayed = dto.DatePlayed ?? DateTime.UtcNow
             };
 
             await _activityRepo.AddSongPlayAsync(songPlay);
@@ -217,7 +218,7 @@ public class UserActivityController : Controller
         {
             sp.Id,
             sp.SongId,
-            sp.PlayedAt
+            sp.DatePlayed
         }));
     }
 
@@ -238,7 +239,7 @@ public class UserActivityController : Controller
                 Language = dto.Language,
                 Score = dto.Score,
                 WordTested = dto.WordTested,
-                CompletedAt = dto.CompletedAt ?? DateTime.UtcNow
+                DateCompleted = dto.DateCompleted ?? DateTime.UtcNow
             };
 
             await _activityRepo.AddHandwritingResultAsync(result);
@@ -250,7 +251,7 @@ public class UserActivityController : Controller
                 result.Language,
                 result.Score,
                 result.WordTested,
-                result.CompletedAt,
+                result.DateCompleted,
                 result.UserId
             });
         }
@@ -277,7 +278,7 @@ public class UserActivityController : Controller
             hr.Language,
             hr.Score,
             hr.WordTested,
-            hr.CompletedAt
+            hr.DateCompleted
         }));
     }
 
@@ -302,13 +303,13 @@ public class UserActivityController : Controller
                     {
                         UserId = user.Id,
                         SongId = dto.SongId,
-                        FavoritedAt = DateTime.UtcNow
+                        DateFavorited = DateTime.UtcNow
                     };
                     await _activityRepo.AddFavoriteSongAsync(favorite);
                 }
                 else
                 {
-                    existingFavorite.FavoritedAt = DateTime.UtcNow;
+                    existingFavorite.DateFavorited = DateTime.UtcNow;
                 }
             }
             else if (existingFavorite != null)
@@ -342,7 +343,7 @@ public class UserActivityController : Controller
             {
                 f.Id,
                 f.SongId,
-                f.FavoritedAt
+                f.DateFavorited
             }));
         }
         catch (Exception ex)
@@ -373,13 +374,13 @@ public class UserActivityController : Controller
                     {
                         UserId = user.Id,
                         PlaylistUrl = dto.PlaylistUrl,
-                        FavoritedAt = DateTime.UtcNow
+                        DateFavorited = DateTime.UtcNow
                     };
                     await _activityRepo.AddFavoritePlaylistAsync(favorite);
                 }
                 else
                 {
-                    existingFavorite.FavoritedAt = DateTime.UtcNow;
+                    existingFavorite.DateFavorited = DateTime.UtcNow;
                 }
             }
             else if (existingFavorite != null)
@@ -413,7 +414,7 @@ public class UserActivityController : Controller
             {
                 f.Id,
                 f.PlaylistUrl,
-                f.FavoritedAt
+                f.DateFavorited
             }));
         }
         catch (Exception ex)
@@ -439,7 +440,7 @@ public class UserActivityController : Controller
                 UserId = user.Id,
                 Word = dto.Word,
                 Language = dto.Language,
-                LearnedOn = dto.LearnedOn ?? DateTime.UtcNow
+                DateLearned = dto.DateLearned ?? DateTime.UtcNow
             };
 
             await _activityRepo.AddLearnedWordAsync(learnedWord);
@@ -450,7 +451,7 @@ public class UserActivityController : Controller
                 learnedWord.Id,
                 learnedWord.Word,
                 learnedWord.Language,
-                learnedWord.LearnedOn
+                learnedWord.DateLearned
             });
         }
         catch (Exception ex)
@@ -461,7 +462,7 @@ public class UserActivityController : Controller
     }
 
     [HttpGet("learned-words")]
-    public async Task<IActionResult> GetUserLearnedWords([FromQuery] string? language)
+    public async Task<IActionResult> GetUserLearnedWords([FromQuery] LanguageCode? language = null)
     {
         User? user = await GetUserFromClaimsAsync();
         if (user is null)
@@ -475,7 +476,7 @@ public class UserActivityController : Controller
             lw.Id,
             lw.Word,
             lw.Language,
-            lw.LearnedOn
+            lw.DateLearned
         }));
     }
 
@@ -505,28 +506,28 @@ public class UserActivityController : Controller
                     qr.QuizId,
                     qr.Score,
                     qr.Language,
-                    qr.CompletedAt
+                    qr.DateCompleted
                 }),
             SongPlays = (await _activityRepo.GetUserSongPlaysAsync(user.Id))
                 .Select(sp => new
                 {
                     sp.Id,
                     sp.SongId,
-                    sp.PlayedAt
+                    sp.DatePlayed
                 }),
             FavoriteSongs = (await _activityRepo.GetUserFavoriteSongsAsync(user.Id))
                 .Select(fs => new
                 {
                     fs.Id,
                     fs.SongId,
-                    fs.FavoritedAt
+                    fs.DateFavorited
                 }),
             FavoritePlaylists = (await _activityRepo.GetUserFavoritePlaylistsAsync(user.Id))
                 .Select(fp => new
                 {
                     fp.Id,
                     fp.PlaylistUrl,
-                    fp.FavoritedAt
+                    fp.DateFavorited
                 }),
             HandwritingResults = (await _activityRepo.GetUserHandwritingResultsAsync(user.Id))
                 .Select(hr => new
@@ -535,7 +536,7 @@ public class UserActivityController : Controller
                     hr.Language,
                     hr.Score,
                     hr.WordTested,
-                    hr.CompletedAt
+                    hr.DateCompleted
                 }),
             LearnedWords = (await _activityRepo.GetUserLearnedWordsAsync(user.Id))
                 .Select(lw => new
@@ -543,7 +544,7 @@ public class UserActivityController : Controller
                     lw.Id,
                     lw.Word,
                     lw.Language,
-                    lw.LearnedOn
+                    lw.DateLearned
                 }),
             Message = "Activity history retrieved successfully. If lists are empty, you haven't recorded any activity yet."
         };
