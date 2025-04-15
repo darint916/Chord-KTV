@@ -183,11 +183,6 @@ const SongPlayerPage: React.FC = () => {
             {/* </Paper> */}
           </Grid>
           
-          {/* Video Player Column */}
-          <Grid flex={'1'} alignContent={'center'} className='grid-parent'>
-            <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={handlePlayerReady} />
-          </Grid>
-          
           {/* Lyrics Column */}
           <Grid className='grid-parent'>
             <Box className='tabs-grid-parent'>
@@ -211,6 +206,10 @@ const SongPlayerPage: React.FC = () => {
               />
             </Box>
           </Grid>
+          {/* Video Player Column */}
+          <Grid className='youtube-grid-parent'>
+            <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={handlePlayerReady} />
+          </Grid>
         </Grid>
         {playlistUrl && <YouTubePlaylistViewer playlistUrl={playlistUrl} />}
         {error && (
@@ -218,6 +217,7 @@ const SongPlayerPage: React.FC = () => {
             {error}
           </Alert>
         )}
+          
         {/* Search Section */}
         <Paper elevation={3} className="search-section">
           <Typography variant="h5" className="section-title">

@@ -1,4 +1,3 @@
-import { rowHeightWarning } from '@mui/x-data-grid/hooks/features/rows/gridRowsUtils';
 import React, { useState } from 'react';
 import YouTube, { YouTubePlayer as YouTubePlayerInstance } from 'react-youtube';
 
@@ -23,7 +22,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady }) => {
 
   return (
     <div>
-      <YouTube videoId={videoId} opts={opts} onReady={handleReady} />
+      <YouTube videoId={videoId} className="youtube-player" opts={opts} onReady={handleReady} />
     </div>
   );
 };
