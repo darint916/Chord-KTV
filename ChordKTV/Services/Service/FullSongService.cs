@@ -225,7 +225,7 @@ public class FullSongService : IFullSongService
             }
             if (dbSong is not null)
             {
-                _logger.LogWarning("Found song in db with same LRC/Genius ID, skipping LLM processing");
+                _logger.LogInformation("Found song in db with same LRC/Genius ID, skipping LLM processing");
                 return _mapper.Map<FullSongResponseDto>(dbSong);
             }
         }
