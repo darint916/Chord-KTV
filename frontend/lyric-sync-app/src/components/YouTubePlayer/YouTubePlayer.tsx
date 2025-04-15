@@ -1,3 +1,4 @@
+import { rowHeightWarning } from '@mui/x-data-grid/hooks/features/rows/gridRowsUtils';
 import React, { useState } from 'react';
 import YouTube, { YouTubePlayer as YouTubePlayerInstance } from 'react-youtube';
 
@@ -10,7 +11,8 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady }) => {
   const setPlayer = useState<YouTubePlayerInstance | null>(null)[1]; // Extract only the setter
 
   const opts = {
-    width: '100%'
+    width: '100%',
+    // height: '100%'
   };
 
   const handleReady = (event: { target: YouTubePlayerInstance }) => {

@@ -11,7 +11,6 @@ import { useSong } from '../../contexts/SongContext';
 import { useNavigate } from 'react-router-dom';
 import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
 import { useLocation } from 'react-router-dom';
-import '../HomePage/HomePage.scss';
 import { songApi } from '../../api/apiClient';
 import ListItemButton from '@mui/material/ListItemButton';
 import { FullSongResponseDto } from '../../api';
@@ -152,10 +151,10 @@ const SongPlayerPage: React.FC = () => {
             </Button>
           </Box>
         )}
-        <Grid container className="song-player-content" spacing={10} height={'480px'} display={'flex'}>
+        <Grid container className="song-player-content">
           {/* Queue Column */}
           <Grid className="queue-column" component={Paper}>
-            <Paper elevation={3} className="queue-paper">
+            {/* <Paper elevation={3} className="queue-paper"> */}
               <Typography variant="h6" className="queue-title" align="center">
                 Queue
               </Typography>
@@ -181,7 +180,7 @@ const SongPlayerPage: React.FC = () => {
                   </Typography>
                 )}
               </List>
-            </Paper>
+            {/* </Paper> */}
           </Grid>
           
           {/* Video Player Column */}
