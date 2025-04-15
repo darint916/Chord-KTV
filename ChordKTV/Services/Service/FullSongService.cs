@@ -207,6 +207,29 @@ public class FullSongService : IFullSongService
             }
         }
 
+        //Now that we have the song go through LRC + Genius, can check the DB if it matches any of the cached data based on id before we waste time processing through LLM
+        if (!songCreate)
+        {
+            Song? dbSong = null;
+            if (song.LrcId != null)
+            {
+                dbSong = await _songRepo.GetSongByLrcIdAsync(song.LrcId.Value);
+            }
+            if (dbSong is null && song.RomLrcId != null)
+            {
+                dbSong = await _songRepo.GetSongByRomanizedLrcIdAsync(song.RomLrcId.Value);
+            }
+            if (dbSong is null && song.GeniusMetaData.GeniusId != 0)
+            {
+                dbSong = await _songRepo.GetSongByGeniusIdAsync(song.GeniusMetaData.GeniusId);
+            }
+            if (dbSong is not null)
+            {
+                _logger.LogWarning("Found song in db with same LRC/Genius ID, skipping LLM processing");
+                return _mapper.Map<FullSongResponseDto>(dbSong);
+            }
+        }
+
         // check if lyrics are translated, don't need to translate/romanize if alr english
         if (song.GeniusMetaData.Language.Equals(LanguageCode.EN))
         {
@@ -287,16 +310,7 @@ public class FullSongService : IFullSongService
             }
         }
 
-        //Save to db, only update, assuming genius creates the resource
-        //TODO: Consider abstracting song creation out of genius service or as flag
-        if (songCreate)
-        {
-            await _songRepo.AddSongAsync(song);
-        }
-        else
-        {
-            await _songRepo.UpdateSongAsync(song);
-        }
+        await _songRepo.AddSongAsync(song);
         FullSongResponseDto? response = _mapper.Map<FullSongResponseDto>(song);
         if (lrcLyricsDto != null) //add LRC
         {
