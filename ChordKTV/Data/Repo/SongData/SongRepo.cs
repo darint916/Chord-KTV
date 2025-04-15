@@ -39,16 +39,13 @@ public class SongRepo : ISongRepo
         string normalizedName = name.Trim().Replace(" ", "");
 
         // Retrieve songs from the database first
-        List<Song> songs = await _context.Songs
+        return await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
-            .ToListAsync();
-
-        // Use a case-insensitive comparison with StringComparison.OrdinalIgnoreCase
-        return songs.FirstOrDefault(s =>
-            string.Equals(s.Title.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
-            s.AlternateTitles.Any(n => string.Equals(n.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase))
-        );
+            .FirstOrDefaultAsync(s =>
+                string.Equals(s.Title.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
+                s.AlternateTitles.Any(n => string.Equals(n.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase))
+            );
     }
 
     // Will null if artist isnt direct match, as we expect direct artist match (assuming this is from genius data)
@@ -61,20 +58,21 @@ public class SongRepo : ISongRepo
         _logger.LogDebug("Looking up song in cache. Name: {Name}, Artist: {Artist}", normalizedName, normalizedArtist);
 
         // Retrieve songs from the database first
-        List<Song> songs = await _context.Songs
+        Song? result = await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
-            .ToListAsync();
+            .Where(s =>
+                // Filter by normalized title or alternate titles
+                (EF.Functions.Collate(s.Title.Trim().Replace(" ", ""), "NOCASE") == normalizedName ||
+                s.AlternateTitles.Any(n => EF.Functions.Collate(n.Trim().Replace(" ", ""), "NOCASE") == normalizedName))
+                &&
+                // Filter by artist or featured artists
+                (EF.Functions.Collate(s.Artist.Trim(), "NOCASE").StartsWith(normalizedArtist, StringComparison.OrdinalIgnoreCase) ||
+                s.FeaturedArtists.Any(a => EF.Functions.Collate(a.Trim(), "NOCASE").StartsWith(normalizedArtist, StringComparison.OrdinalIgnoreCase)))
+            )
+            .FirstOrDefaultAsync();
 
         // Use string.Equals(..., StringComparison.OrdinalIgnoreCase) and the StartsWith overload with StringComparison
-        Song? result = songs.FirstOrDefault(s =>
-            (string.Equals(s.Title.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
-             s.AlternateTitles.Any(n =>
-                 string.Equals(n.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase))) &&
-            (s.Artist.Trim().StartsWith(normalizedArtist, StringComparison.OrdinalIgnoreCase) ||
-             s.FeaturedArtists.Any(a => a.Trim().StartsWith(normalizedArtist, StringComparison.OrdinalIgnoreCase)))
-        );
-
         _logger.LogDebug("Cache lookup result: {Result}", result != null ? "Found" : "Not found");
 
         return result;
