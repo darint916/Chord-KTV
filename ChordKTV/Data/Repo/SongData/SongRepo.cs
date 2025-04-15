@@ -57,7 +57,6 @@ public class SongRepo : ISongRepo
 
         _logger.LogDebug("Looking up song in cache. Name: {Name}, Artist: {Artist}", normalizedName, normalizedArtist);
 
-        // Retrieve songs from the database first
         Song? result = await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
@@ -72,7 +71,6 @@ public class SongRepo : ISongRepo
             )
             .FirstOrDefaultAsync();
 
-        // Use string.Equals(..., StringComparison.OrdinalIgnoreCase) and the StartsWith overload with StringComparison
         _logger.LogDebug("Cache lookup result: {Result}", result != null ? "Found" : "Not found");
 
         return result;
@@ -91,6 +89,14 @@ public class SongRepo : ISongRepo
         return await _context.Songs.ToListAsync();
     }
 
+    public async Task<Song?> GetSongByIdAsync(Guid id)
+    {
+        return await _context.Songs
+            .Include(s => s.GeniusMetaData)
+            .Include(s => s.Albums)
+            .FirstOrDefaultAsync(s => s.Id == id);
+    }
+
     public async Task<Song?> GetSongByGeniusIdAsync(int geniusId)
     {
         return await _context.Songs
@@ -98,11 +104,18 @@ public class SongRepo : ISongRepo
             .FirstOrDefaultAsync(s => s.GeniusMetaData.GeniusId == geniusId);
     }
 
-    public async Task<Song?> GetSongByIdAsync(Guid id)
+    public async Task<Song?> GetSongByLrcIdAsync(int lrcId)
     {
         return await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
-            .FirstOrDefaultAsync(s => s.Id == id);
+            .FirstOrDefaultAsync(s => s.LrcId == lrcId);
+    }
+    public async Task<Song?> GetSongByRomanizedLrcIdAsync(int romLrcId)
+    {
+        return await _context.Songs
+            .Include(s => s.GeniusMetaData)
+            .Include(s => s.Albums)
+            .FirstOrDefaultAsync(s => s.RomLrcId == romLrcId);
     }
 }
