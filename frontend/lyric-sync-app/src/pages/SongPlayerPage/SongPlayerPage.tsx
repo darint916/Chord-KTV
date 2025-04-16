@@ -15,6 +15,7 @@ import { useLocation } from 'react-router-dom';
 import { songApi } from '../../api/apiClient';
 import ListItemButton from '@mui/material/ListItemButton';
 import { FullSongResponseDto } from '../../api';
+import { v4 as uuidv4 } from 'uuid';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -24,6 +25,10 @@ interface YouTubePlayer {
   getCurrentTime: () => number;
   getDuration: () => number;
   setVolume: (_volume: number) => void;
+}
+
+interface QueueItem extends FullSongResponseDto {
+  queueId: string;
 }
 
 const SongPlayerPage: React.FC = () => {
@@ -43,7 +48,7 @@ const SongPlayerPage: React.FC = () => {
   const [error, setError] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
 
-  const [queue, setQueue] = useState<FullSongResponseDto[]>(() => {
+  const [queue, setQueue] = useState<QueueItem[]>(() => {
     const savedQueue = typeof window !== 'undefined' ? localStorage.getItem('songQueue') : null;
     return savedQueue ? JSON.parse(savedQueue) : [];
   });
@@ -56,7 +61,7 @@ const SongPlayerPage: React.FC = () => {
   useEffect(() => {
     // Restore current song if needed
     if (currentPlayingId && !song) {
-      const savedSong = queue.find(item => item.id === currentPlayingId);
+      const savedSong = queue.find(item => item.queueId === currentPlayingId);
       if (savedSong) {
         setSong(savedSong);
       }
@@ -138,9 +143,9 @@ const SongPlayerPage: React.FC = () => {
 
       // Add to queue
       if (response) {
-        const newQueue = [...queue, response];
+        const newQueue = [...queue, { ...response, queueId: uuidv4() }];
         setQueue(newQueue);
-        saveQueueState(newQueue, currentPlayingId);
+        saveQueueState(newQueue, currentPlayingId); 
       };
     } catch {
       setError('Search failed. Please try again.');
@@ -155,10 +160,10 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
-  const handlePlayFromQueue = (item: FullSongResponseDto) => {
+  const handlePlayFromQueue = (item: QueueItem) => {
     setSong(item); 
-    setCurrentPlayingId(item.id ?? "");
-    saveQueueState(queue, item.id ?? "");
+    setCurrentPlayingId(item.queueId);
+    saveQueueState(queue, item.queueId);
   };
 
   const clearQueue = () => {
@@ -224,14 +229,14 @@ const SongPlayerPage: React.FC = () => {
               <Divider />
               <List className="queue-list">
               {queue.map((item, index) => (
-                <React.Fragment key={item.id}>
+                <React.Fragment key={item.queueId}>
                   <ListItemButton 
                     onClick={() => handlePlayFromQueue(item)}
-                    className={`queue-item ${currentPlayingId === item.id ? 'active-song' : ''}`}
+                    className={`queue-item ${currentPlayingId === item.queueId ? 'active-song' : ''}`}
                     sx={{
-                      backgroundColor: currentPlayingId === item.id ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
+                      backgroundColor: currentPlayingId === item.queueId ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
                       '&:hover': {
-                        backgroundColor: currentPlayingId === item.id 
+                        backgroundColor: currentPlayingId === item.queueId 
                           ? 'rgba(25, 118, 210, 0.12)' 
                           : 'rgba(255, 255, 255, 0.1)'
                       }
@@ -242,11 +247,11 @@ const SongPlayerPage: React.FC = () => {
                       secondary={item.artist}
                       primaryTypographyProps={{ 
                         noWrap: true,
-                        fontWeight: currentPlayingId === item.id ? 'bold' : 'normal'
+                        fontWeight: currentPlayingId === item.queueId ? 'bold' : 'normal'
                       }}
                       secondaryTypographyProps={{ noWrap: true }}
                     />
-                    {currentPlayingId === item.id && (
+                    {currentPlayingId === item.queueId && (
                       <Box sx={{ 
                         width: 8, 
                         height: 8, 
