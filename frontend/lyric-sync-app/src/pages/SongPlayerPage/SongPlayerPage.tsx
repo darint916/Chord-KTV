@@ -16,6 +16,7 @@ import { songApi } from '../../api/apiClient';
 import ListItemButton from '@mui/material/ListItemButton';
 import { FullSongResponseDto } from '../../api';
 import { v4 as uuidv4 } from 'uuid';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -172,6 +173,13 @@ const SongPlayerPage: React.FC = () => {
     saveQueueState([], null);
   };
 
+  const removeFromQueue = (queueId: string) => {
+    const newQueue = queue.filter(item => item.queueId !== queueId);
+    setQueue(newQueue);
+    
+    saveQueueState(newQueue, currentPlayingId === queueId ? null : currentPlayingId);
+  };
+
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
@@ -243,7 +251,7 @@ const SongPlayerPage: React.FC = () => {
                     }}
                   >
                     <ListItemText 
-                      primary={item.title} 
+                      primary={`${index + 1}. ${item.title}`} 
                       secondary={item.artist}
                       primaryTypographyProps={{ 
                         noWrap: true,
@@ -259,6 +267,25 @@ const SongPlayerPage: React.FC = () => {
                         bgcolor: 'primary.main',
                         ml: 1
                       }} />
+                    )}
+                    {/* Only show delete button if NOT the current playing song */}
+                    {currentPlayingId !== item.queueId && (
+                      <IconButton
+                        edge="end"
+                        aria-label="remove"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFromQueue(item.queueId);
+                        }}
+                        sx={{
+                          color: 'error.main',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 0, 0, 0.1)'
+                          }
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
                     )}
                   </ListItemButton>
                   {index < queue.length - 1 && <Divider />}
