@@ -42,6 +42,7 @@ const SongPlayerPage: React.FC = () => {
   const [error, setError] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [queue, setQueue] = useState<FullSongResponseDto[]>([]);
+  const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
 
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
@@ -128,7 +129,7 @@ const SongPlayerPage: React.FC = () => {
 
   const handlePlayFromQueue = (item: FullSongResponseDto) => {
     setSong(item); 
-    setQueue(prevQueue => prevQueue.filter(song => song.id !== item.id));
+    setCurrentPlayingId(item.id ?? "");
   };
 
   return (
@@ -152,37 +153,11 @@ const SongPlayerPage: React.FC = () => {
           </Box>
         )}
         <Grid container className="song-player-content">
-          {/* Queue Column */}
-          <Grid className="queue-column" component={Paper}>
-            {/* <Paper elevation={3} className="queue-paper"> */}
-              <Typography variant="h6" className="queue-title" align="center">
-                Queue
-              </Typography>
-              <Divider />
-              <List className="queue-list">
-                {queue.map((item, index) => (
-                  <React.Fragment key={item.id}>
-                    <ListItemButton 
-                      onClick={() => handlePlayFromQueue(item)}
-                      className="queue-item"
-                    >
-                      <ListItemText 
-                        primary={item.title} 
-                        secondary={item.artist} 
-                      />
-                    </ListItemButton>
-                    {index < queue.length - 1 && <Divider />}
-                  </React.Fragment>
-                ))}
-                {queue.length === 0 && (
-                  <Typography variant="body2" color="textSecondary" align="center" className="empty-queue">
-                    Your queue is empty
-                  </Typography>
-                )}
-              </List>
-            {/* </Paper> */}
-          </Grid>
           
+          {/* Video Player Column */}
+          <Grid className='youtube-grid-parent'>
+            <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={handlePlayerReady} />
+          </Grid>
           {/* Lyrics Column */}
           <Grid className='grid-parent'>
             <Box className='tabs-grid-parent'>
@@ -206,9 +181,50 @@ const SongPlayerPage: React.FC = () => {
               />
             </Box>
           </Grid>
-          {/* Video Player Column */}
-          <Grid className='youtube-grid-parent'>
-            <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={handlePlayerReady} />
+          {/* Queue Column */}
+          <Grid className="queue-column" component={Paper}>
+              <Typography variant="h6" className="queue-title" align="center">
+                Queue
+              </Typography>
+              <Divider />
+              <List className="queue-list">
+              {queue.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  <ListItemButton 
+                    onClick={() => handlePlayFromQueue(item)}
+                    className={`queue-item ${currentPlayingId === item.id ? 'active-song' : ''}`}
+                    sx={{
+                      backgroundColor: currentPlayingId === item.id ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
+                      '&:hover': {
+                        backgroundColor: currentPlayingId === item.id 
+                          ? 'rgba(25, 118, 210, 0.12)' 
+                          : 'rgba(255, 255, 255, 0.1)'
+                      }
+                    }}
+                  >
+                    <ListItemText 
+                      primary={item.title} 
+                      secondary={item.artist}
+                      primaryTypographyProps={{ 
+                        noWrap: true,
+                        fontWeight: currentPlayingId === item.id ? 'bold' : 'normal'
+                      }}
+                      secondaryTypographyProps={{ noWrap: true }}
+                    />
+                    {currentPlayingId === item.id && (
+                      <Box sx={{ 
+                        width: 8, 
+                        height: 8, 
+                        borderRadius: '50%', 
+                        bgcolor: 'primary.main',
+                        ml: 1
+                      }} />
+                    )}
+                  </ListItemButton>
+                  {index < queue.length - 1 && <Divider />}
+                </React.Fragment>
+              ))}
+            </List>
           </Grid>
         </Grid>
         {playlistUrl && <YouTubePlaylistViewer playlistUrl={playlistUrl} />}
