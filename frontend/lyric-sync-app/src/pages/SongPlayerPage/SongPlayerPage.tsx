@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Container, Typography, Box, Button, Paper, TextField, IconButton, CircularProgress, Alert, List, ListItem, ListItemText, Divider } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import ClearAll from '@mui/icons-material/Search';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import './SongPlayerPage.scss';
@@ -51,6 +52,16 @@ const SongPlayerPage: React.FC = () => {
     const savedCurrentId = typeof window !== 'undefined' ? localStorage.getItem('currentPlayingId') : null;
     return savedCurrentId ? JSON.parse(savedCurrentId) : null;
   });
+
+  useEffect(() => {
+    // Restore current song if needed
+    if (currentPlayingId && !song) {
+      const savedSong = queue.find(item => item.id === currentPlayingId);
+      if (savedSong) {
+        setSong(savedSong);
+      }
+    }
+  }, []);
 
   const saveQueueState = (queue: FullSongResponseDto[], currentId: string | null) => {
     if (typeof window !== 'undefined') {
@@ -150,6 +161,12 @@ const SongPlayerPage: React.FC = () => {
     saveQueueState(queue, item.id ?? "");
   };
 
+  const clearQueue = () => {
+    setQueue([]);
+    setCurrentPlayingId(null);
+    saveQueueState([], null);
+  };
+
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
@@ -243,6 +260,15 @@ const SongPlayerPage: React.FC = () => {
                 </React.Fragment>
               ))}
             </List>
+            <Box mt={2} display="flex" gap={1}>
+              <Button 
+                variant="outlined" 
+                onClick={clearQueue}
+                startIcon={<ClearAll />}
+              >
+                Clear Queue
+              </Button>
+            </Box>
           </Grid>
         </Grid>
         {playlistUrl && <YouTubePlaylistViewer playlistUrl={playlistUrl} />}
