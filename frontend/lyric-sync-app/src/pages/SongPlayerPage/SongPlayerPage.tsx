@@ -41,8 +41,23 @@ const SongPlayerPage: React.FC = () => {
   const [lyrics, setLyrics] = useState('');
   const [error, setError] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [queue, setQueue] = useState<FullSongResponseDto[]>([]);
-  const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
+
+  const [queue, setQueue] = useState<FullSongResponseDto[]>(() => {
+    const savedQueue = typeof window !== 'undefined' ? localStorage.getItem('songQueue') : null;
+    return savedQueue ? JSON.parse(savedQueue) : [];
+  });
+
+  const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(() => {
+    const savedCurrentId = typeof window !== 'undefined' ? localStorage.getItem('currentPlayingId') : null;
+    return savedCurrentId ? JSON.parse(savedCurrentId) : null;
+  });
+
+  const saveQueueState = (queue: FullSongResponseDto[], currentId: string | null) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('songQueue', JSON.stringify(queue));
+      localStorage.setItem('currentPlayingId', JSON.stringify(currentId));
+    }
+  };
 
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
@@ -112,7 +127,9 @@ const SongPlayerPage: React.FC = () => {
 
       // Add to queue
       if (response) {
-        setQueue(prevQueue => [...prevQueue, response]);
+        const newQueue = [...queue, response];
+        setQueue(newQueue);
+        saveQueueState(newQueue, currentPlayingId);
       };
     } catch {
       setError('Search failed. Please try again.');
@@ -130,6 +147,7 @@ const SongPlayerPage: React.FC = () => {
   const handlePlayFromQueue = (item: FullSongResponseDto) => {
     setSong(item); 
     setCurrentPlayingId(item.id ?? "");
+    saveQueueState(queue, item.id ?? "");
   };
 
   return (
