@@ -10,8 +10,6 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { useSong } from '../../contexts/SongContext';
 import { useNavigate } from 'react-router-dom';
-import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistLoader';
-import { useLocation } from 'react-router-dom';
 import { songApi } from '../../api/apiClient';
 import { FullSongResponseDto } from '../../api';
 import { v4 as uuidv4 } from 'uuid';
@@ -40,8 +38,6 @@ const SongPlayerPage: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [showQuizButton, setShowQuizButton] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  const { playlistUrl } = location.state || {};
   const [songName, setSongName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [artistName, setArtistName] = useState('');
@@ -271,7 +267,6 @@ const SongPlayerPage: React.FC = () => {
             </Grid>
           </DndProvider>
         </Grid>
-        {playlistUrl && <YouTubePlaylistViewer playlistUrl={playlistUrl} />}
         {error && (
           <Alert severity="error" className="error-alert">
             {error}
