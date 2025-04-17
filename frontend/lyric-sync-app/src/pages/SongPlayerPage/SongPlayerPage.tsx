@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Container, Typography, Box, Button, Paper, TextField, IconButton, CircularProgress, Alert, List, ListItem, ListItemText, Divider } from '@mui/material';
+import { Container, Typography, Box, Button, Paper, TextField, IconButton, CircularProgress, Alert, List, Divider } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearAll from '@mui/icons-material/Search';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
@@ -13,10 +13,11 @@ import { useNavigate } from 'react-router-dom';
 import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
 import { useLocation } from 'react-router-dom';
 import { songApi } from '../../api/apiClient';
-import ListItemButton from '@mui/material/ListItemButton';
 import { FullSongResponseDto } from '../../api';
 import { v4 as uuidv4 } from 'uuid';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import DraggableQueueItem from '../../components/DraggableQueueItem/DraggableQueueItem';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -155,6 +156,16 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
+  const moveQueueItem = (dragIndex: number, hoverIndex: number) => {
+    setQueue(prevQueue => {
+      const newQueue = [...prevQueue];
+      const [removed] = newQueue.splice(dragIndex, 1);
+      newQueue.splice(hoverIndex, 0, removed);
+      saveQueueState(newQueue, currentPlayingId);
+      return newQueue;
+    });
+  };
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
       handleQueueAddition();
@@ -243,78 +254,38 @@ const SongPlayerPage: React.FC = () => {
             </Box>
           </Grid>
           {/* Queue Column */}
-          <Grid className="queue-column" component={Paper}>
+          <DndProvider backend={HTML5Backend}>
+            <Grid className="queue-column" component={Paper}>
               <Typography variant="h6" className="queue-title" align="center">
                 Queue
               </Typography>
               <Divider />
               <List className="queue-list">
-              {queue.map((item, index) => (
-                <React.Fragment key={item.queueId}>
-                  <ListItemButton 
-                    onClick={() => handlePlayFromQueue(item)}
-                    className={`queue-item ${currentPlayingId === item.queueId ? 'active-song' : ''}`}
-                    sx={{
-                      backgroundColor: currentPlayingId === item.queueId ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
-                      '&:hover': {
-                        backgroundColor: currentPlayingId === item.queueId 
-                          ? 'rgba(25, 118, 210, 0.12)' 
-                          : 'rgba(255, 255, 255, 0.1)'
-                      }
-                    }}
-                  >
-                    <ListItemText 
-                      primary={`${index + 1}. ${item.title}`} 
-                      secondary={item.artist}
-                      primaryTypographyProps={{ 
-                        noWrap: true,
-                        fontWeight: currentPlayingId === item.queueId ? 'bold' : 'normal'
-                      }}
-                      secondaryTypographyProps={{ noWrap: true }}
+                {queue.map((item, index) => (
+                  <React.Fragment key={item.queueId}>
+                    <DraggableQueueItem 
+                      item={item}
+                      index={index}
+                      moveItem={moveQueueItem}
+                      onRemove={removeFromQueue}
+                      onPlay={handlePlayFromQueue}
+                      currentPlayingId={currentPlayingId}
                     />
-                    {currentPlayingId === item.queueId && (
-                      <Box sx={{ 
-                        width: 8, 
-                        height: 8, 
-                        borderRadius: '50%', 
-                        bgcolor: 'primary.main',
-                        ml: 1
-                      }} />
-                    )}
-                    {/* Only show delete button if NOT the current playing song */}
-                    {currentPlayingId !== item.queueId && (
-                      <IconButton
-                        edge="end"
-                        aria-label="remove"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFromQueue(item.queueId);
-                        }}
-                        sx={{
-                          color: 'error.main',
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 0, 0, 0.1)'
-                          }
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    )}
-                  </ListItemButton>
-                  {index < queue.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-            <Box mt={2} display="flex" gap={1}>
-              <Button 
-                variant="outlined" 
-                onClick={clearQueue}
-                startIcon={<ClearAll />}
-              >
-                Clear Queue
-              </Button>
-            </Box>
-          </Grid>
+                    {index < queue.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
+              <Box mt={2} display="flex" gap={1}>
+                <Button 
+                  variant="outlined" 
+                  onClick={clearQueue}
+                  startIcon={<ClearAll />}
+                >
+                  Clear Queue
+                </Button>
+              </Box>
+            </Grid>
+          </DndProvider>
         </Grid>
         {playlistUrl && <YouTubePlaylistViewer playlistUrl={playlistUrl} />}
         {error && (
