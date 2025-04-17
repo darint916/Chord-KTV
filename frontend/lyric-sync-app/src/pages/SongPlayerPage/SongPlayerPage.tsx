@@ -10,7 +10,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { useSong } from '../../contexts/SongContext';
 import { useNavigate } from 'react-router-dom';
-import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
+import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistLoader';
 import { useLocation } from 'react-router-dom';
 import { songApi } from '../../api/apiClient';
 import { FullSongResponseDto } from '../../api';

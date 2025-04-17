@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSong } from '../../contexts/SongContext';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../../contexts/AuthTypes';
-import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
+import YouTubePlaylistLoader from '../../components/YouTubePlaylistLoader/YouTubePlaylistLoader';
 import './HomePage.scss';
 import { songApi } from '../../api/apiClient';
 import logo from '../../assets/chordktv.png';
@@ -97,7 +97,7 @@ const HomePage: React.FC = () => {
       setQueue([...queue, newQueueItem]);
       setCurrentPlayingId(newQueueItem.queueId);
       setSong(response);
-      
+
       navigate('/play-song');
     } catch {
       setError('Search failed. Please try again.');
@@ -224,7 +224,7 @@ const HomePage: React.FC = () => {
               Load Playlist
             </Button>
           </div>
-          {showPlaylist && <YouTubePlaylistViewer playlistUrl={playlistUrl} />}
+          {showPlaylist && <YouTubePlaylistLoader playlistUrl={playlistUrl} />}
         </Paper>
       </Container>
     </Box>
