@@ -37,7 +37,6 @@ const SongPlayerPage: React.FC = () => {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying] = useState<boolean>(false);
   const playerRef = useRef<YouTubePlayer | null>(null);
-  const { song, setQuizQuestions, setSong } = useSong();
   const [selectedTab, setSelectedTab] = useState(0);
   const [showQuizButton, setShowQuizButton] = useState(false);
   const navigate = useNavigate();
@@ -49,16 +48,15 @@ const SongPlayerPage: React.FC = () => {
   const [lyrics, setLyrics] = useState('');
   const [error, setError] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
-
-  const [queue, setQueue] = useState<QueueItem[]>(() => {
-    const savedQueue = typeof window !== 'undefined' ? localStorage.getItem('songQueue') : null;
-    return savedQueue ? JSON.parse(savedQueue) : [];
-  });
-
-  const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(() => {
-    const savedCurrentId = typeof window !== 'undefined' ? localStorage.getItem('currentPlayingId') : null;
-    return savedCurrentId ? JSON.parse(savedCurrentId) : null;
-  });
+  const { 
+    song, 
+    setQuizQuestions, 
+    setSong, 
+    queue, 
+    setQueue, 
+    currentPlayingId, 
+    setCurrentPlayingId 
+  } = useSong();
 
   useEffect(() => {
     // Restore current song if needed
@@ -69,13 +67,6 @@ const SongPlayerPage: React.FC = () => {
       }
     }
   }, []);
-
-  const saveQueueState = (queue: FullSongResponseDto[], currentId: string | null) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('songQueue', JSON.stringify(queue));
-      localStorage.setItem('currentPlayingId', JSON.stringify(currentId));
-    }
-  };
 
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
@@ -147,7 +138,6 @@ const SongPlayerPage: React.FC = () => {
       if (response) {
         const newQueue = [...queue, { ...response, queueId: uuidv4() }];
         setQueue(newQueue);
-        saveQueueState(newQueue, currentPlayingId); 
       };
     } catch {
       setError('Search failed. Please try again.');
@@ -156,12 +146,12 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
-  const moveQueueItem = (dragIndex: number, hoverIndex: number) => {
-    setQueue(prevQueue => {
+  const moveQueueItem: (dragIndex: number, hoverIndex: number) => void = 
+  (dragIndex, hoverIndex) => {
+    setQueue((prevQueue: QueueItem[]) => {
       const newQueue = [...prevQueue];
       const [removed] = newQueue.splice(dragIndex, 1);
       newQueue.splice(hoverIndex, 0, removed);
-      saveQueueState(newQueue, currentPlayingId);
       return newQueue;
     });
   };
@@ -173,35 +163,29 @@ const SongPlayerPage: React.FC = () => {
   };
 
   const handlePlayFromQueue = (item: QueueItem) => {
-    setSong(item); 
+    setSong(item);
     setCurrentPlayingId(item.queueId);
-    saveQueueState(queue, item.queueId);
   };
 
   const clearQueue = () => {
     if (!currentPlayingId) {
       setQueue([]);
       setCurrentPlayingId(null);
-      saveQueueState([], null);
       return;
     }
 
     const currentSong = queue.find(item => item.queueId === currentPlayingId);
     if (currentSong) {
       setQueue([currentSong]);
-      saveQueueState([currentSong], currentPlayingId);
     } else {
       setQueue([]);
       setCurrentPlayingId(null);
-      saveQueueState([], null);
     }
   };
 
   const removeFromQueue = (queueId: string) => {
     const newQueue = queue.filter(item => item.queueId !== queueId);
     setQueue(newQueue);
-    
-    saveQueueState(newQueue, currentPlayingId === queueId ? null : currentPlayingId);
   };
 
   return (

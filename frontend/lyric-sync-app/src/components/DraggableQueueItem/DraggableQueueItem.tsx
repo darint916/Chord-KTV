@@ -4,6 +4,7 @@ import { ListItemButton, ListItemText, IconButton, Box } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { FullSongResponseDto } from '../../api';
+import './DraggableQueueItem.scss';
 
 interface QueueItem extends FullSongResponseDto {
   queueId: string;

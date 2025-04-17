@@ -10,6 +10,27 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return savedSong ? JSON.parse(savedSong) : null;
   });
 
+  interface QueueItem extends FullSongResponseDto {
+    queueId: string;
+  }
+
+  const [queue, setQueue] = useState<QueueItem[]>(() => {
+    const savedQueue = typeof window !== 'undefined' ? localStorage.getItem('songQueue') : null;
+    return savedQueue ? JSON.parse(savedQueue) : [];
+  });
+
+  const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(() => {
+    const savedCurrentId = typeof window !== 'undefined' ? localStorage.getItem('currentPlayingId') : null;
+    return savedCurrentId ? JSON.parse(savedCurrentId) : null;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('songQueue', JSON.stringify(queue));
+      localStorage.setItem('currentPlayingId', JSON.stringify(currentPlayingId));
+    }
+  }, [queue, currentPlayingId]);
+
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestionDto[] | undefined>(() => {
     // Try to get quizQuestions from localStorage on initial load
     const savedQuizQuestions = localStorage.getItem('quizQuestions');
@@ -33,7 +54,7 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [quizQuestions]);
 
   return (
-    <SongContext.Provider value={{ song, setSong, quizQuestions, setQuizQuestions }}>
+    <SongContext.Provider value={{ song, setSong, quizQuestions, setQuizQuestions, queue, setQueue, currentPlayingId, setCurrentPlayingId }}>
       {children}
     </SongContext.Provider>
   );

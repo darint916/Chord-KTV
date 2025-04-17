@@ -18,6 +18,12 @@ import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTub
 import './HomePage.scss';
 import { songApi } from '../../api/apiClient';
 import logo from '../../assets/chordktv.png';
+import { v4 as uuidv4 } from 'uuid';
+import { FullSongResponseDto } from '../../api';
+
+interface QueueItem extends FullSongResponseDto {
+  queueId: string;
+}
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
@@ -26,7 +32,7 @@ const HomePage: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { setSong } = useSong();
+  const { setSong, queue, setQueue, setCurrentPlayingId } = useSong();
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [showPlaylist, setShowPlaylist] = useState(false); 
   const [lyrics, setLyrics] = useState('');
@@ -83,7 +89,15 @@ const HomePage: React.FC = () => {
           youTubeId: youTubeId || ''
         }
       });
+
+      const newQueueItem: QueueItem = {
+        ...response,
+        queueId: uuidv4()
+      };
+      setQueue([...queue, newQueueItem]);
+      setCurrentPlayingId(newQueueItem.queueId);
       setSong(response);
+      
       navigate('/play-song');
     } catch {
       setError('Search failed. Please try again.');
