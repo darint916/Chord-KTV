@@ -20,10 +20,7 @@ import { songApi } from '../../api/apiClient';
 import logo from '../../assets/chordktv.png';
 import { v4 as uuidv4 } from 'uuid';
 import { FullSongResponseDto } from '../../api';
-
-interface QueueItem extends FullSongResponseDto {
-  queueId: string;
-}
+import { QueueItem } from '../../contexts/QueueTypes';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();

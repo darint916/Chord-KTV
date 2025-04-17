@@ -11,11 +11,11 @@ import Tab from '@mui/material/Tab';
 import { useSong } from '../../contexts/SongContext';
 import { useNavigate } from 'react-router-dom';
 import { songApi } from '../../api/apiClient';
-import { FullSongResponseDto } from '../../api';
 import { v4 as uuidv4 } from 'uuid';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import DraggableQueueItem from '../../components/DraggableQueueItem/DraggableQueueItem';
+import { QueueItem } from '../../contexts/QueueTypes';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -25,10 +25,6 @@ interface YouTubePlayer {
   getCurrentTime: () => number;
   getDuration: () => number;
   setVolume: (_volume: number) => void;
-}
-
-interface QueueItem extends FullSongResponseDto {
-  queueId: string;
 }
 
 const SongPlayerPage: React.FC = () => {
@@ -64,18 +60,68 @@ const SongPlayerPage: React.FC = () => {
     }
   }, []);
 
+  // Process queue items in the background
+  useEffect(() => {
+    // Only process if we have items in queue
+    if (queue.length === 0) return;
+
+    const processQueueItem = async (item: QueueItem) => {
+      try {
+        // Skip if already processed or processing
+        if (item.processedData || item.processing) return;
+
+        // Mark as processing
+        setQueue(prev => prev.map(q => 
+          q.queueId === item.queueId ? { ...q, processing: true } : q
+        ));
+
+        const vidId = extractYouTubeVideoId(item.youtubeUrl);
+        const response = await songApi.apiSongsSearchPost({
+          fullSongRequestDto: {
+            title: item.title,
+            artist: item.artist,
+            youTubeId: vidId || '',
+            lyrics: item.lyrics || ''
+          }
+        });
+
+        // Update with processed data
+        setQueue(prev => prev.map(q => 
+          q.queueId === item.queueId ? { ...q, processedData: response, processing: false } : q
+        ));
+
+        // If this is the currently playing song, update the player
+        if (currentPlayingId === item.queueId) {
+          setSong(response);
+        }
+      } catch (error) {
+        setQueue(prev => prev.map(q => 
+          q.queueId === item.queueId ? { ...q, error: 'Failed to process', processing: false } : q
+        ));
+      }
+    };
+
+    // Process current song first if it needs processing
+    const currentSong = queue.find(item => item.queueId === currentPlayingId);
+    if (currentSong && !currentSong.processedData && !currentSong.processing) {
+      processQueueItem(currentSong);
+      return;
+    }
+
+    // Then process the next unprocessed item
+    const nextUnprocessed = queue.find(item => 
+      !item.processedData && !item.processing && !item.error
+    );
+    
+    if (nextUnprocessed) {
+      processQueueItem(nextUnprocessed);
+    }
+  }, [queue.length, currentPlayingId]);
+
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
   }
   
-  if (!song.lrcLyrics || !song.lrcLyrics.trim()) {
-    return <Typography variant="h5">Error: No time-synced lyrics found for song</Typography>;
-  }
-
-  if (!song.youTubeId || !song.youTubeId.trim()) {
-    return <Typography variant="h5">Error: No YouTube video found for song</Typography>;
-  }
-
   const allowedQuizLanguages = new Set(['AR', 'BG', 'BN', 'EL', 'FA', 'GU', 'HE', 'HI', 'JA', 'KO', 'RU', 'SR', 'TA', 'TE', 'TH', 'UK', 'ZH']);
   const isLanguageAllowedForQuiz = song.geniusMetaData?.language && allowedQuizLanguages.has(song.geniusMetaData.language);
 
@@ -117,28 +163,46 @@ const SongPlayerPage: React.FC = () => {
     }
 
     setIsLoading(true);
-
-    const youTubeId = extractYouTubeVideoId(youtubeUrl);
+    setError('');
 
     try {
-      const response = await songApi.apiSongsSearchPost({
-        fullSongRequestDto: {
-          title: songName,
-          artist: artistName,
-          lyrics: lyrics,
-          youTubeId: youTubeId || ''
-        }
-      });
-
-      // Add to queue
-      if (response) {
-        const newQueue = [...queue, { ...response, queueId: uuidv4() }];
-        setQueue(newQueue);
+      const youTubeId = extractYouTubeVideoId(youtubeUrl);
+      const newItem: QueueItem = {
+        queueId: uuidv4(),
+        title: songName,
+        artist: artistName,
+        lyrics: lyrics,
+        youtubeUrl: youtubeUrl
       };
-    } catch {
+
+      setQueue(prev => [...prev, newItem]);
+      
+      // If nothing is currently playing, play this new item
+      if (!currentPlayingId) {
+        setCurrentPlayingId(newItem.queueId);
+        if (youTubeId) {
+          // Minimal song data for immediate playback
+          setSong({
+            title: songName,
+            artist: artistName,
+            youTubeId: youTubeId,
+            lrcLyrics: '',
+            lrcRomanizedLyrics: '',
+            lrcTranslatedLyrics: ''
+          });
+        }
+      }
+
+      // Clear form
+      setSongName('');
+      setArtistName('');
+      setLyrics('');
+      setYoutubeUrl('');
+
+    } catch (err) {
       setError('Search failed. Please try again.');
     } finally {
-      setIsLoading(false); // Set loading state to false when the search finishes
+      setIsLoading(false);
     }
   };
 
@@ -159,8 +223,23 @@ const SongPlayerPage: React.FC = () => {
   };
 
   const handlePlayFromQueue = (item: QueueItem) => {
-    setSong(item);
     setCurrentPlayingId(item.queueId);
+    
+    // If we have processed data, use that
+    if (item.processedData) {
+      setSong(item.processedData);
+    } 
+    // Otherwise use minimal data for playback
+    else if (item.youtubeUrl) {
+      setSong({
+        title: item.title,
+        artist: item.artist,
+        youTubeId: extractYouTubeVideoId(youtubeUrl),
+        lrcLyrics: '',
+        lrcRomanizedLyrics: '',
+        lrcTranslatedLyrics: ''
+      });
+    }
   };
 
   const clearQueue = () => {

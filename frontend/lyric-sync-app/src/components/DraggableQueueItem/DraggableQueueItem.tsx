@@ -3,12 +3,8 @@ import { useDrag, useDrop } from 'react-dnd';
 import { ListItemButton, ListItemText, IconButton, Box } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { FullSongResponseDto } from '../../api';
 import './DraggableQueueItem.scss';
-
-interface QueueItem extends FullSongResponseDto {
-  queueId: string;
-}
+import { QueueItem } from '../../contexts/QueueTypes';
 
 interface DraggableQueueItemProps {
   item: QueueItem;
@@ -39,7 +35,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
 
   const [, drop] = useDrop({
     accept: 'QUEUE_ITEM',
-    hover: (draggedItem: { index: number }, monitor) => {
+    hover: (draggedItem: { index: number }, _monitor) => {
       if (!ref.current) return;
       const dragIndex = draggedItem.index;
       const hoverIndex = index;

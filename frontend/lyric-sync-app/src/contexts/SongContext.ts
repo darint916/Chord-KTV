@@ -1,10 +1,7 @@
 import { createContext, useContext } from 'react';
 import { FullSongResponseDto } from '../api';
 import { QuizQuestionDto } from '../api';
-
-interface QueueItem extends FullSongResponseDto {
-  queueId: string;
-}
+import { QueueItem } from './QueueTypes';
 
 // Define the context type
 interface SongContextType {

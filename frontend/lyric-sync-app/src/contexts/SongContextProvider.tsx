@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FullSongResponseDto, QuizQuestionDto } from '../api';
 import { SongContext } from './SongContext';
+import { QueueItem } from './QueueTypes';
 
 // Provider component
 export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -9,10 +10,6 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedSong = localStorage.getItem('song');
     return savedSong ? JSON.parse(savedSong) : null;
   });
-
-  interface QueueItem extends FullSongResponseDto {
-    queueId: string;
-  }
 
   const [queue, setQueue] = useState<QueueItem[]>(() => {
     const savedQueue = typeof window !== 'undefined' ? localStorage.getItem('songQueue') : null;
