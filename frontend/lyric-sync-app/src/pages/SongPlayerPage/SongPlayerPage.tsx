@@ -168,9 +168,22 @@ const SongPlayerPage: React.FC = () => {
   };
 
   const clearQueue = () => {
-    setQueue([]);
-    setCurrentPlayingId(null);
-    saveQueueState([], null);
+    if (!currentPlayingId) {
+      setQueue([]);
+      setCurrentPlayingId(null);
+      saveQueueState([], null);
+      return;
+    }
+
+    const currentSong = queue.find(item => item.queueId === currentPlayingId);
+    if (currentSong) {
+      setQueue([currentSong]);
+      saveQueueState([currentSong], currentPlayingId);
+    } else {
+      setQueue([]);
+      setCurrentPlayingId(null);
+      saveQueueState([], null);
+    }
   };
 
   const removeFromQueue = (queueId: string) => {
