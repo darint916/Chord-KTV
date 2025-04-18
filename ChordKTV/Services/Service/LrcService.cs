@@ -74,10 +74,20 @@ public class LrcService : ILrcService
         // Get the first result with time-synced lyrics
         if (string.IsNullOrWhiteSpace(lyricsDtoMatch?.SyncedLyrics))
         {
-            lyricsDtoMatch = searchResults.FirstOrDefault(ele =>
-                !string.IsNullOrEmpty(ele.PlainLyrics) &&
-                !string.IsNullOrEmpty(ele.SyncedLyrics) &&
-                CompareUtils.CompareArtistFuzzyScore(artist, ele.ArtistName) > 70);
+            if (!string.IsNullOrWhiteSpace(artist))
+            {
+                lyricsDtoMatch = searchResults.FirstOrDefault(ele =>
+                    !string.IsNullOrEmpty(ele.PlainLyrics) &&
+                    !string.IsNullOrEmpty(ele.SyncedLyrics) &&
+                    CompareUtils.CompareArtistFuzzyScore(artist, ele.ArtistName) > 70);
+            }
+            else
+            { //the case where title only search without artist, want a more strict title match instead
+                lyricsDtoMatch = searchResults.FirstOrDefault(ele =>
+                    !string.IsNullOrEmpty(ele.PlainLyrics) &&
+                    !string.IsNullOrEmpty(ele.SyncedLyrics) &&
+                    CompareUtils.CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration!.Value) > 80);
+            }
         }
 
         // Collect alternate titles and artists from search results
@@ -105,11 +115,6 @@ public class LrcService : ILrcService
 
         if (lyricsDtoMatch == null)
         {
-            //if we fail to find even a single match, just grab first entry if it exists
-            if (searchResults.Count > 0)
-            {
-                return searchResults[0];
-            }
             return null;
         }
 

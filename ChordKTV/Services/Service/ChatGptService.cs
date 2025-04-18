@@ -140,7 +140,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         }
 
         //Try parsing language code from string
-        if (Enum.TryParse(translatedSongLyrics.LanguageCode, out LanguageCode parsedLanguageCode))
+        if (Enum.TryParse(translatedSongLyrics.LanguageCode.ToUpperInvariant(), out LanguageCode parsedLanguageCode))
         {
             if (parsedLanguageCode == LanguageCode.UNK)
             {
