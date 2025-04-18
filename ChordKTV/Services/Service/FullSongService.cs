@@ -62,13 +62,19 @@ public class FullSongService : IFullSongService
             Dictionary<string, VideoDetails> videoDict = await _youTubeClientService.GetVideosDetailsAsync([youtubeId]);
             if (videoDict.Count == 0)
             {
-                _logger.LogWarning("GetVideosDetailsAsync: Youtube video not found for id: {YoutubeId}", youtubeId);
+                _logger.LogError("GetVideosDetailsAsync: Youtube video not found for id: {YoutubeId}", youtubeId);
             }
             else
             {
                 videoDetails = videoDict[youtubeId];
-                title ??= videoDetails.Title;
-                artist ??= videoDetails.ChannelTitle;
+                if (string.IsNullOrWhiteSpace(title))
+                {
+                    title = videoDetails.Title;
+                }
+                if (string.IsNullOrWhiteSpace(artist))
+                {
+                    artist = videoDetails.ChannelTitle;
+                }
                 duration ??= videoDetails.Duration;
             }
         }

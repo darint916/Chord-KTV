@@ -33,6 +33,7 @@ public class LrcService : ILrcService
         }
         else
         {
+            _logger.LogError("Error in {MethodName}: At least title be provided", nameof(GetAllLrcLibLyricsAsync));
             throw new ArgumentException($"Error in {nameof(GetAllLrcLibLyricsAsync)}: At least title be provided");
         }
         if (!string.IsNullOrEmpty(artist))

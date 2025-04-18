@@ -119,8 +119,6 @@ public class GeniusService : IGeniusService
                     hit.Result.Title, hit.Result.PrimaryArtistNames);
             }
 
-            // const int minTitleScore = 50;  // Renamed to follow C# naming conventions
-
             // Update the score check
             List<GeniusHit> matches = searchResponse.Response.Hits
                 .Where(h => h.Result != null)
@@ -130,10 +128,20 @@ public class GeniusService : IGeniusService
 
             //TODO: Later refactor maybe and return all the hit list to maybe be selectable options for user (to refine search query)
             //Do a subcheck to ensure it meets min artist requirements
+            GeniusHit? bestMatch = null;
+            if (!string.IsNullOrWhiteSpace(fuzzyArtist))
+            {
+                bestMatch = matches
+                    .FirstOrDefault(h => CompareUtils
+                        .CompareArtistFuzzyScore(fuzzyArtist, h.Result.PrimaryArtistNames) > 90);
+            }
+            else
+            {   //if no artist is provided, we can use the title match, looser, still testing, use a custom title match if needed
+                bestMatch = matches
+                    .FirstOrDefault(h => CompareUtils
+                        .CompareArtistFuzzyScore(fuzzyTitle, h.Result.Title, bonusWeight: 0.32) > 80);
+            }
 
-            GeniusHit? bestMatch = matches
-                .FirstOrDefault(h => CompareUtils
-                    .CompareArtistFuzzyScore(fuzzyArtist, h.Result.PrimaryArtistNames) > 90);
 
             if (bestMatch?.Result == null)
             {
