@@ -3,9 +3,14 @@
 @use 'sass:color';
 
 .song-player-page {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+
   .song-player-container {
     margin-top: 40px;
-
+    max-width: 100% !important;
+    padding: 0 16px !important;
     .song-player-content {
       .song-title {
         color: $text-primary;
@@ -15,13 +20,63 @@
       background-color: transparent;
       border-radius: 8px;
       display: flex;
+      flex-wrap: nowrap;
+      height: 480px;
+      gap: 20px;
+      width: 100%;
+
+      .queue-column {
+        padding-right: 16px;
+        background: $gradient;
+        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        width: 22%;
+        align-items: center;
+        
+        .queue-title {
+          padding: 16px;
+          color: $text-primary;
+          font-weight: bold;
+        }
+        
+        .queue-list {
+          flex: 1;
+          padding: 0;
+          width: 100%;
+          overflow-y: scroll;
+          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none;  /* Internet Explorer 10+ */
+          
+          .queue-item {
+            &.active-song {
+              background-color: rgba(25, 118, 210, 0.08);
+              // border-left: 3px solid $primary-color;
+              
+              .MuiListItemText-primary {
+                color: $text-primary;
+                font-weight: bold;
+              }
+            }
+          }
+        }
+        
+        .empty-queue {
+          padding: 16px;
+          font-style: italic;
+        }
+      }
+      .queue-list::-webkit-scrollbar{ /* WebKit */
+        width: 0;
+        height: 0;
+      }
 
       .grid-parent {
         height: 100%;
-        width: 50%;
+        width: 48%; 
         display: flex;
         flex-direction: column;
-        background-color: black;
         border-radius: 8px;
         background: $gradient;
         box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
@@ -32,10 +87,9 @@
           display: flex;
           justify-content: center;
           align-items: center;
-          height: fit-content;
-          width: 100%;
           overflow: auto;
           margin-top: 2px;
+          height: 100%;
         }
 
         .tabs-grid-parent {
@@ -43,7 +97,17 @@
           flex-direction: column;
           width: 100%;
         }
-        
+      }
+      .youtube-grid-parent {
+        height: 100%;
+        width: 33%; 
+        display: flex;
+        flex-direction: column;
+        border-radius: 8px;
+        background: $gradient;
+        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+        max-width: 100%;
+        justify-content: center;
       }
     }
 
@@ -69,5 +133,49 @@
       }
     }
 
+    .search-section {
+      padding: 20px;
+      background: $gradient;
+      border-radius: 8px;
+      margin-top: 20px;
+      width: 100%;
+      margin-right: 20px;
+      max-width: 100%;
+      box-sizing: border-box;
+
+      .section-title {
+        margin-bottom: 16px;
+        color: $text-primary;
+        font-weight: bold;
+      }
+
+      .section-subtitle {
+        margin-bottom: 24px;
+        color: $text-secondary;
+      }
+
+      .search-input {
+        background-color: white;
+        border-radius: 8px;
+
+        .MuiFilledInput-root {
+          background-color: white;
+        }
+      }
+
+      .search-button {
+        &.loading {
+          background-color: transparent !important;  
+          opacity: 0.5; 
+          pointer-events: none;  
+        }
+        background-color: $secondary-color;
+        color: white;
+
+        &:hover {
+          background-color: color.scale($secondary-color, $lightness: -10%);
+        }
+      }
+    }
   }
 }
