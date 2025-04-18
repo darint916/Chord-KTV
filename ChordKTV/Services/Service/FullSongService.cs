@@ -237,10 +237,15 @@ public class FullSongService : IFullSongService
         }
 
         // check if lyrics are translated, don't need to translate/romanize if alr english
-        if (song.GeniusMetaData.Language.Equals(LanguageCode.EN))
+        // Genius LangCode could be wrong, so we explicitly check romanization too.
+        if (song.GeniusMetaData.Language.Equals(LanguageCode.EN) && LanguageUtils.IsRomanizedText(song.LrcLyrics))
         {
             song.LrcTranslatedLyrics ??= lrcLyricsDto?.SyncedLyrics;
             song.LrcRomanizedLyrics ??= lrcLyricsDto?.SyncedLyrics;
+        }
+        else if (song.GeniusMetaData.Language.Equals(LanguageCode.EN))
+        {
+            _logger.LogError("Genius Language code is English but lyrics are romanized, for song: '{Title}' by '{Artist}'", song.Title, song.Artist);
         }
         song.LrcRomanizedLyrics ??= lrcLyricsDto?.RomanizedSyncedLyrics;
 
