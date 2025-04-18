@@ -7,7 +7,8 @@ import {
   Box, 
   CircularProgress,
   Tooltip,
-  Avatar
+  Avatar,
+  Typography
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ErrorIcon from '@mui/icons-material/Error';
@@ -17,9 +18,9 @@ import { QueueItem } from '../../contexts/QueueTypes';
 interface DraggableQueueItemProps {
   item: QueueItem;
   index: number;
-  moveItem: (dragIndex: number, hoverIndex: number) => void;
-  onRemove: (id: string) => void;
-  onPlay: (item: QueueItem) => void;
+  moveItem: (_dragIndex: number, _hoverIndex: number) => void;
+  onRemove: (_id: string) => void;
+  onPlay: (_item: QueueItem) => void;
   currentPlayingId: string | null;
 }
 
@@ -43,12 +44,12 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
 
   const [, drop] = useDrop({
     accept: 'QUEUE_ITEM',
-    hover: (draggedItem: { index: number }, _monitor) => {
-      if (!ref.current) return;
+    hover: (draggedItem: { index: number }) => {
+      if (!ref.current) {return;}
       const dragIndex = draggedItem.index;
       const hoverIndex = index;
 
-      if (dragIndex === hoverIndex) return;
+      if (dragIndex === hoverIndex) {return;}
 
       moveItem(dragIndex, hoverIndex);
       draggedItem.index = hoverIndex;
@@ -58,7 +59,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
   drag(drop(ref));
 
   const isLoading = item.apiRequested && !item.processedData && !item.error;
-  const hasError = item.error;
+  const hasError = !!item.error;
   const songImageUrl = item.processedData?.geniusMetaData?.songImageUrl;
   const isCurrentSong = currentPlayingId === item.queueId;
 
@@ -86,7 +87,16 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
         {isLoading ? (
           <CircularProgress size={20} sx={{ mr: 2 }} />
         ) : hasError ? (
-          <Tooltip title={item.error || "Failed to load song details"}>
+          <Tooltip 
+            title={
+              <Box>
+                <Typography variant="body2" color="inherit">
+                  {item.error}
+                </Typography>
+              </Box>
+            }
+            arrow
+          >
             <ErrorIcon color="error" sx={{ mr: 1 }} />
           </Tooltip>
         ) : null}
@@ -103,7 +113,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
             }}
           />
         ) : (
-          <Box sx={{ width: 40, mr: 2 }} /> // Empty space for alignment when no image
+          <Box sx={{ width: 40, mr: 2 }} />
         )}
 
         <ListItemText 
@@ -131,7 +141,6 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
           }} />
         )}
         
-        {/* Only show delete button if not current song and not loading */}
         {!isLoading && !isCurrentSong && (
           <IconButton
             edge="end"
@@ -141,7 +150,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
               onRemove(item.queueId);
             }}
             sx={{
-              color: hasError ? 'error.main' : 'error.main',
+              color: 'error.main',
               '&:hover': {
                 backgroundColor: 'rgba(255, 0, 0, 0.1)'
               }

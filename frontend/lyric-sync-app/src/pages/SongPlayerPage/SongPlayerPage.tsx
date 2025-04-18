@@ -107,22 +107,22 @@ const SongPlayerPage: React.FC = () => {
                   setQueue(prevQueue => prevQueue.map(item => 
                     item.queueId === nextItem.queueId 
                       ? { 
-                          ...item, 
-                          processedData: {
-                            title: response.title,
-                            artist: response.artist,
-                            youTubeId: response.youTubeId,
-                            lrcLyrics: response.lrcLyrics,
-                            lrcRomanizedLyrics: response.lrcRomanizedLyrics,
-                            lrcTranslatedLyrics: response.lrcTranslatedLyrics,
-                            geniusMetaData: response.geniusMetaData
-                          }
-                        } 
+                        ...item, 
+                        processedData: {
+                          title: response.title,
+                          artist: response.artist,
+                          youTubeId: response.youTubeId,
+                          lrcLyrics: response.lrcLyrics,
+                          lrcRomanizedLyrics: response.lrcRomanizedLyrics,
+                          lrcTranslatedLyrics: response.lrcTranslatedLyrics,
+                          geniusMetaData: response.geniusMetaData
+                        }
+                      } 
                       : item
                   ));
                 }).catch(err => {
-                  console.error(`Failed to pre-process song ${nextItem.title}:`, err);
-                  // Even if it fails, we keep apiRequested as true to prevent retries
+                  const errorMessage = err instanceof Error ? err.message : 'Failed to process song';
+                  nextItem.error = errorMessage;
                 });
               }
             });
@@ -166,7 +166,7 @@ const SongPlayerPage: React.FC = () => {
         title: songName,
         artist: artistName,
         lyrics: lyrics,
-        youTubeId: youTubeId ?? "",
+        youTubeId: youTubeId ?? '',
         apiRequested: false
       };
 
@@ -178,14 +178,14 @@ const SongPlayerPage: React.FC = () => {
       setLyrics('');
       setYoutubeUrl('');
 
-    } catch (err) {
+    } catch {
       setError('Search failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const moveQueueItem: (dragIndex: number, hoverIndex: number) => void = 
+  const moveQueueItem: (_dragIndex: number, _hoverIndex: number) => void = 
   (dragIndex, hoverIndex) => {
     setQueue((prevQueue: QueueItem[]) => {
       const newQueue = [...prevQueue];
@@ -202,7 +202,7 @@ const SongPlayerPage: React.FC = () => {
   };
 
   const handlePlayFromQueue = async (item: QueueItem) => {
-    if (item.error) return; // Don't try to play errored items
+    if (item.error) {return;} // Don't try to play errored items
 
     setIsLoading(true);
     setError('');

@@ -1,4 +1,4 @@
-import { FullSongResponseDto } from "../api";
+import { FullSongResponseDto } from '../api';
 
 export interface QueueItem {
   queueId: string;

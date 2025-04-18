@@ -88,11 +88,11 @@ const HomePage: React.FC = () => {
 
       const newQueueItem: QueueItem = {
         ...response,
-        title: response.title ?? "",
-        artist: response.artist ?? "",
-        youTubeId: response.youTubeId ?? "",
+        title: response.title ?? '',
+        artist: response.artist ?? '',
+        youTubeId: response.youTubeId ?? '',
         queueId: uuidv4(),
-        lyrics: lyrics ?? "",
+        lyrics: lyrics ?? '',
         apiRequested: true,
         processedData: response
       };

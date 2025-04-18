@@ -21,7 +21,7 @@ const YouTubePlaylistLoader: React.FC<YouTubePlaylistLoaderProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const extractPlaylistId = (url: string): string | null => {
-    if (!url) return null;
+    if (!url) {return null;}
     const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
     return match ? match[1] : null;
   };
@@ -32,19 +32,19 @@ const YouTubePlaylistLoader: React.FC<YouTubePlaylistLoaderProps> = ({
 
     try {
       const playlistId = extractPlaylistId(playlistUrl);
-      if (!playlistId) throw new Error('Invalid YouTube playlist URL');
+      if (!playlistId) {throw new Error('Invalid YouTube playlist URL');}
 
       const response = await songApi.apiYoutubePlaylistsPlaylistIdGet({ playlistId });
       const videos = response.videos || [];
-      if (videos.length === 0) throw new Error('This playlist contains no videos');
+      if (videos.length === 0) {throw new Error('This playlist contains no videos');}
 
       // Create queue items with basic info
       const newQueue = videos.map(video => ({
         queueId: uuidv4(),
         title: video.title || 'Unknown Track',
         artist: video.artist || 'Unknown Artist',
-        youTubeId: extractVideoId(video.url ?? "") || '',
-        lyrics: "",
+        youTubeId: extractVideoId(video.url ?? '') || '',
+        lyrics: '',
         apiRequested: false
       }));
 
@@ -74,7 +74,7 @@ const YouTubePlaylistLoader: React.FC<YouTubePlaylistLoaderProps> = ({
         setCurrentPlayingId(firstSong.queueId);
         setSong(processed);
       } catch (err) {
-        console.error('Failed to process first song:', err);
+        setError(err instanceof Error ? err.message : 'Failed to process first song');
         // Fallback to basic info if processing fails
         setCurrentPlayingId(firstSong.queueId);
         setSong({
@@ -96,7 +96,7 @@ const YouTubePlaylistLoader: React.FC<YouTubePlaylistLoaderProps> = ({
   };
 
   const extractVideoId = (url: string): string | null => {
-    if (!url) return null;
+    if (!url) {return null;}
     const match = url.match(/(?:\?v=|\/embed\/|\.be\/|\/watch\?v=|\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/);
     return match ? match[1] : null;
   };

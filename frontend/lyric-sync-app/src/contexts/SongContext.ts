@@ -10,9 +10,9 @@ interface SongContextType {
   setSong: (_song: FullSongResponseDto) => void;
   setQuizQuestions: (_quiz: QuizQuestionDto[]) => void;
   queue: QueueItem[];
-  setQueue: (queue: QueueItem[] | ((prevQueue: QueueItem[]) => QueueItem[])) => void;
+  setQueue: (_queue: QueueItem[] | ((_prevQueue: QueueItem[]) => QueueItem[])) => void;
   currentPlayingId: string | null;
-  setCurrentPlayingId: (id: string | null) => void;
+  setCurrentPlayingId: (_id: string | null) => void;
 }
 
 // Create context
