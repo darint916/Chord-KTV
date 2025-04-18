@@ -96,7 +96,7 @@ public class FullSongService : IFullSongService
                     foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
                     {
                         song = await _geniusService.GetSongByArtistTitleAsync(candidate.Title, candidate.Artist, lyrics);
-                        if (song is not null)
+                        if (song is not null || (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist)))
                         {
                             title = candidate.Title;
                             artist = candidate.Artist;

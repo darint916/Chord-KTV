@@ -130,13 +130,14 @@ public class GeniusService : IGeniusService
 
             //TODO: Later refactor maybe and return all the hit list to maybe be selectable options for user (to refine search query)
             //Do a subcheck to ensure it meets min artist requirements
+
             GeniusHit? bestMatch = matches
                 .FirstOrDefault(h => CompareUtils
                     .CompareArtistFuzzyScore(fuzzyArtist, h.Result.PrimaryArtistNames) > 90);
 
             if (bestMatch?.Result == null)
             {
-                _logger.LogWarning("SearchGenius: No matches found for query: {SearchQuery} ; matching with Title: {FuzzyTitle} ; Artist: {FuzzyArtist}", searchQuery, fuzzyTitle, fuzzyArtist); );
+                _logger.LogWarning("SearchGenius: No matches found for query: {SearchQuery} ; matching with Title: {FuzzyTitle} ; Artist: {FuzzyArtist}", searchQuery, fuzzyTitle, fuzzyArtist);
                 return null;
             }
             return await MapGeniusResultToSongAsync(bestMatch.Result);
@@ -150,6 +151,11 @@ public class GeniusService : IGeniusService
 
     public async Task<Song?> GetSongByArtistTitleAsync(string? title, string? artist, string? lyrics, bool forceRefresh = false)
     {
+        if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist) && string.IsNullOrWhiteSpace(lyrics))
+        {
+            return null;
+        }
+
         _logger.LogInformation("Starting song search - Title: '{Title}', Artist: '{Artist}', ForceRefresh: {ForceRefresh}",
             title, artist, forceRefresh);
 
@@ -197,7 +203,7 @@ public class GeniusService : IGeniusService
         }
         else
         {
-            _logger.LogWarning("No matching song found after all search attempts");
+            _logger.LogWarning("GeniusService: GetSongByArtistTitleAsync: No matching song found after all search attempts");
         }
 
         return result;
