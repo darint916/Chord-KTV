@@ -84,11 +84,20 @@ public class GeniusService : IGeniusService
             }
 
             // Update the score check
-            List<GeniusHit> matches = searchResponse.Response.Hits
+            Dictionary<GeniusHit, int> hitScores = searchResponse.Response.Hits
                 .Where(h => h.Result != null)
-                .OrderByDescending(h => CompareUtils
-                .CompareWeightedFuzzyScore(fuzzyTitle ?? "", h.Result.Title, fuzzyArtist ?? "", h.Result.PrimaryArtistNames, 0, 0))
+                .ToDictionary(
+                    h => h,
+                    h => CompareUtils.CompareWeightedFuzzyScore(fuzzyTitle ?? "", h.Result.Title, fuzzyArtist ?? "", h.Result.PrimaryArtistNames, 0, 0)
+                );
+
+            //Order and filter titles
+            List<GeniusHit> matches = hitScores
+                .Where(dic => dic.Value > 70)
+                .OrderByDescending(dic => dic.Value)
+                .Select(dic => dic.Key)
                 .ToList();
+
 
             //TODO: Later refactor maybe and return all the hit list to maybe be selectable options for user (to refine search query)
             //Do a subcheck to ensure it meets min artist requirements
