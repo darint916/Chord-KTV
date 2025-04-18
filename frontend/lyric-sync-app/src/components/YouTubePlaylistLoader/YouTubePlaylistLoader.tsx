@@ -32,47 +32,63 @@ const YouTubePlaylistLoader: React.FC<YouTubePlaylistLoaderProps> = ({
 
     try {
       const playlistId = extractPlaylistId(playlistUrl);
-      if (!playlistId) {
-        throw new Error('Invalid YouTube playlist URL');
-      }
+      if (!playlistId) throw new Error('Invalid YouTube playlist URL');
 
-      const response = await songApi.apiYoutubePlaylistsPlaylistIdGet({
-        playlistId,
-      });
-
+      const response = await songApi.apiYoutubePlaylistsPlaylistIdGet({ playlistId });
       const videos = response.videos || [];
-      if (videos.length === 0) {
-        throw new Error('This playlist contains no videos');
-      }
+      if (videos.length === 0) throw new Error('This playlist contains no videos');
 
       // Create queue items with basic info
       const newQueue = videos.map(video => ({
         queueId: uuidv4(),
         title: video.title || 'Unknown Track',
         artist: video.artist || 'Unknown Artist',
-        youtubeUrl: video.url || '',
+        youTubeId: extractVideoId(video.url ?? "") || '',
         lyrics: "",
         apiRequested: false
       }));
 
-      // Set the queue with new songs at the start
+      // Set the queue with new songs
       setQueue(newQueue);
       
-      // Set the first song as current and navigate to player
+      // Immediately process the first song
       const firstSong = newQueue[0];
-      setCurrentPlayingId(firstSong.queueId);
-      setSong({
-        title: firstSong.title,
-        artist: firstSong.artist,
-        youTubeId: extractVideoId(firstSong.youtubeUrl) || '',
-        lrcLyrics: '',
-        lrcRomanizedLyrics: '',
-        lrcTranslatedLyrics: ''
-      });
+      try {
+        const processed = await songApi.apiSongsSearchPost({
+          fullSongRequestDto: {
+            title: firstSong.title,
+            artist: firstSong.artist,
+            youTubeId: firstSong.youTubeId,
+            lyrics: firstSong.lyrics
+          }
+        });
+        
+        // Update queue with processed data for first song
+        setQueue(prev => prev.map(item => 
+          item.queueId === firstSong.queueId 
+            ? { ...item, processedData: processed, apiRequested: true }
+            : item
+        ));
+        
+        // Set as current song with full data
+        setCurrentPlayingId(firstSong.queueId);
+        setSong(processed);
+      } catch (err) {
+        console.error('Failed to process first song:', err);
+        // Fallback to basic info if processing fails
+        setCurrentPlayingId(firstSong.queueId);
+        setSong({
+          title: firstSong.title,
+          artist: firstSong.artist,
+          youTubeId: firstSong.youTubeId,
+          lrcLyrics: '',
+          lrcRomanizedLyrics: '',
+          lrcTranslatedLyrics: ''
+        });
+      }
       
       navigate('/play-song');
     } catch (err) {
-      console.error('Failed to load playlist:', err);
       setError(err instanceof Error ? err.message : 'Failed to load playlist');
     } finally {
       setLoading(false);
