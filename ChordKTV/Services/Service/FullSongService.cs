@@ -112,6 +112,21 @@ public class FullSongService : IFullSongService
                 }
             }
         }
+        else if (!string.IsNullOrWhiteSpace(lyrics) && string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist))
+        {
+            //since there is a high chance people search with romanization, which returns like genius romanization as artist (basically unclean title), use candidate cleaning like with youtube
+            candidateSongInfoList = await _chatGptService.GetCandidateSongInfosAsync(song.Title, song.Artist);
+            foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
+            {
+                song = await _geniusService.GetSongByArtistTitleAsync(candidate.Title, candidate.Artist, lyrics);
+                if (song is not null || (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist)))
+                {
+                    title = candidate.Title;
+                    artist = candidate.Artist;
+                    break;
+                }
+            }
+        }
 
         //Gets lyrics from lrc service if not already present
         LrcLyricsDto? lrcLyricsDto = null;
