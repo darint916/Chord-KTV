@@ -19,6 +19,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace ChordKTV.Controllers;
 
@@ -53,6 +54,15 @@ public class UserActivityController : Controller
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
+            }
+
+            // Validate the playlist URL using regex
+            var urlRegex = new Regex(
+                @"^(https?:\/\/)?([\w\-]+\.)+([a-z]{2,})(\/[\w\-?=&%\.]*)?$",
+                RegexOptions.IgnoreCase);
+            if (string.IsNullOrWhiteSpace(dto.PlaylistUrl) || !urlRegex.IsMatch(dto.PlaylistUrl))
+            {
+                return BadRequest(new { message = "Invalid playlist URL." });
             }
 
             // Ensure at least one play date is provided
