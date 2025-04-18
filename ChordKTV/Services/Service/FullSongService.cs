@@ -245,8 +245,7 @@ public class FullSongService : IFullSongService
         }
         else if (song.GeniusMetaData.Language.Equals(LanguageCode.EN))
         {
-            _logger.LogError("Genius Language code is English but lyrics are romanized, for song: '{Title}' by '{Artist}'", song.Title, song.Artist);
-        }
+            _logger.LogError("Genius Language code is English but lyrics are not romanized as expected, for song: '{Title}' by '{Artist}'", song.Title, song.Artist);
         song.LrcRomanizedLyrics ??= lrcLyricsDto?.RomanizedSyncedLyrics;
 
         //check if lyrics are romanized (note that we do not check LRC Lib for romanization if db alr has synced lyrics)
