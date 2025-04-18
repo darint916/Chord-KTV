@@ -60,64 +60,6 @@ const SongPlayerPage: React.FC = () => {
     }
   }, []);
 
-  // Process queue items in the background
-  useEffect(() => {
-    // Only process if we have items in queue
-    if (queue.length === 0) return;
-
-    const processQueueItem = async (item: QueueItem) => {
-      try {
-        // Skip if already processed or processing
-        if (item.processedData || item.processing) return;
-
-        // Mark as processing
-        setQueue(prev => prev.map(q => 
-          q.queueId === item.queueId ? { ...q, processing: true } : q
-        ));
-
-        const vidId = extractYouTubeVideoId(item.youtubeUrl);
-        const response = await songApi.apiSongsSearchPost({
-          fullSongRequestDto: {
-            title: item.title,
-            artist: item.artist,
-            youTubeId: vidId || '',
-            lyrics: item.lyrics || ''
-          }
-        });
-
-        // Update with processed data
-        setQueue(prev => prev.map(q => 
-          q.queueId === item.queueId ? { ...q, processedData: response, processing: false } : q
-        ));
-
-        // If this is the currently playing song, update the player
-        if (currentPlayingId === item.queueId) {
-          setSong(response);
-        }
-      } catch (error) {
-        setQueue(prev => prev.map(q => 
-          q.queueId === item.queueId ? { ...q, error: 'Failed to process', processing: false } : q
-        ));
-      }
-    };
-
-    // Process current song first if it needs processing
-    const currentSong = queue.find(item => item.queueId === currentPlayingId);
-    if (currentSong && !currentSong.processedData && !currentSong.processing) {
-      processQueueItem(currentSong);
-      return;
-    }
-
-    // Then process the next unprocessed item
-    const nextUnprocessed = queue.find(item => 
-      !item.processedData && !item.processing && !item.error
-    );
-    
-    if (nextUnprocessed) {
-      processQueueItem(nextUnprocessed);
-    }
-  }, [queue.length, currentPlayingId]);
-
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
   }
@@ -131,14 +73,61 @@ const SongPlayerPage: React.FC = () => {
     setInterval(() => {
       if (playerRef.current) { 
         const current = playerRef.current.getCurrentTime();
+        const duration = playerRef.current.getDuration();
         setCurrentTime(current);
 
-        // Check if the song is 90% complete
-        if (current / playerRef.current.getDuration() >= 0.9 && isLanguageAllowedForQuiz) {
-          setShowQuizButton(true); // Show the quiz button when 90% complete
+        // Check if the song is 90% complete for quiz button
+        if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
+          setShowQuizButton(true);
+        }
+
+        // Check if we're at the halfway point and there's a next song in queue
+        if (current / duration >= 0.5 && queue.length > 1 && currentPlayingId) {
+          const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
+          if (currentIndex >= 0 && currentIndex < queue.length - 1) {
+            const nextItem = queue[currentIndex + 1];
+            console.log(nextItem);
+            
+            // Only proceed if we haven't already requested the API for this song
+            if (!nextItem.apiRequested) {
+              // Mark as requested immediately to prevent duplicate calls
+              nextItem.apiRequested = true;
+
+              // Call the API for the next song
+              songApi.apiSongsSearchPost({
+                fullSongRequestDto: {
+                  title: nextItem.title,
+                  artist: nextItem.artist,
+                  youTubeId: extractYouTubeVideoId(nextItem.youtubeUrl) || '',
+                  lyrics: nextItem.lyrics || ''
+                }
+              }).then(response => {
+                // Update the queue with the processed data
+                setQueue(prevQueue => prevQueue.map(item => 
+                  item.queueId === nextItem.queueId 
+                    ? { 
+                        ...item, 
+                        processedData: {
+                          title: response.title,
+                          artist: response.artist,
+                          youTubeId: response.youTubeId,
+                          lrcLyrics: response.lrcLyrics,
+                          lrcRomanizedLyrics: response.lrcRomanizedLyrics,
+                          lrcTranslatedLyrics: response.lrcTranslatedLyrics,
+                          geniusMetaData: response.geniusMetaData
+                        }
+                      } 
+                    : item
+                ));
+              }).catch(err => {
+                console.error('Failed to pre-process next song:', err);
+                // Even if it fails, we keep apiRequested as true to prevent retries
+              });
+            }
+          }
         }
       }
-    }, 1); // Noticed player was falling behind, 1ms for absolute accuracy
+    }, 1000);
   };
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -172,7 +161,8 @@ const SongPlayerPage: React.FC = () => {
         title: songName,
         artist: artistName,
         lyrics: lyrics,
-        youtubeUrl: youtubeUrl
+        youtubeUrl: youtubeUrl,
+        apiRequested: false
       };
 
       setQueue(prev => [...prev, newItem]);
@@ -222,25 +212,80 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
-  const handlePlayFromQueue = (item: QueueItem) => {
-    setCurrentPlayingId(item.queueId);
-    
-    // If we have processed data, use that
-    if (item.processedData) {
-      setSong(item.processedData);
-    } 
-    // Otherwise use minimal data for playback
-    else if (item.youtubeUrl) {
+  const handlePlayFromQueue = async (item: QueueItem) => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const vidId = extractYouTubeVideoId(item.youtubeUrl);
+      
+      // Only proceed with API call if not already requested
+      if (!item.apiRequested) {
+        item.apiRequested = true;
+
+        const response = await songApi.apiSongsSearchPost({
+          fullSongRequestDto: {
+            title: item.title,
+            artist: item.artist,
+            youTubeId: vidId || '',
+            lyrics: item.lyrics || ''
+          }
+        });
+
+        // Update the current playing song with the API response
+        const processedData = {
+          title: response.title,
+          artist: response.artist,
+          youTubeId: response.youTubeId,
+          lrcLyrics: response.lrcLyrics,
+          lrcRomanizedLyrics: response.lrcRomanizedLyrics,
+          lrcTranslatedLyrics: response.lrcTranslatedLyrics,
+          geniusMetaData: response.geniusMetaData
+        };
+
+        // Update the queue item with processed data for future reference
+        setQueue(prevQueue => prevQueue.map(queueItem => 
+          queueItem.queueId === item.queueId 
+            ? { ...queueItem, processedData, apiRequested: true } 
+            : queueItem
+        ));
+
+        // Set as current song
+        setCurrentPlayingId(item.queueId);
+        setSong(processedData);
+      } else {
+        // If already requested, just use the existing processed data or basic info
+        const playbackData = item.processedData || {
+          title: item.title,
+          artist: item.artist,
+          youTubeId: vidId || '',
+          lrcLyrics: '',
+          lrcRomanizedLyrics: '',
+          lrcTranslatedLyrics: ''
+        };
+        
+        setCurrentPlayingId(item.queueId);
+        setSong(playbackData);
+      }
+
+    } catch (err) {
+      setError('Failed to load song details. Playing with basic info.');
+      
+      // Fallback to basic playback if API fails
+      const vidId = extractYouTubeVideoId(item.youtubeUrl);
+      setCurrentPlayingId(item.queueId);
       setSong({
         title: item.title,
         artist: item.artist,
-        youTubeId: extractYouTubeVideoId(youtubeUrl),
+        youTubeId: vidId || '',
         lrcLyrics: '',
         lrcRomanizedLyrics: '',
         lrcTranslatedLyrics: ''
       });
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }; 
 
   const clearQueue = () => {
     if (!currentPlayingId) {

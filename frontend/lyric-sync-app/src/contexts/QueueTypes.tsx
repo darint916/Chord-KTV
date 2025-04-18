@@ -6,7 +6,7 @@ export interface QueueItem {
   artist: string;
   youtubeUrl: string;
   lyrics: string;
+  apiRequested: boolean;
   processedData?: FullSongResponseDto; // Added when processed
-  processing?: boolean;
   error?: string;
 }

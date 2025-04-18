@@ -42,7 +42,8 @@ const YouTubePlaylistLoader: React.FC<YouTubePlaylistLoaderProps> = ({ playlistU
           title: video.title || 'Unknown',
           artist: video.artist || 'Unknown',
           youtubeUrl: video.url || '',
-          lyrics: ""
+          lyrics: "",
+          apiRequested: false
         }));
 
         setQueue(newQueue);
