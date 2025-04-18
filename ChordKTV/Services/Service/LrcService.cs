@@ -67,7 +67,7 @@ public class LrcService : ILrcService
         searchResults = searchResults
             .Where(ele => ele.Duration != null)
             .OrderByDescending(ele => CompareUtils
-            .CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration!.Value))
+                .CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration!.Value))
             .ToList();
 
         // Get the first result with time-synced lyrics

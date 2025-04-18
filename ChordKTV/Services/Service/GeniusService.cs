@@ -6,7 +6,7 @@ using ChordKTV.Models.SongData;
 using ChordKTV.Dtos;
 using System.Globalization;
 using ChordKTV.Dtos.GeniusApi;
-using FuzzySharp;
+using ChordKTV.Utils;
 
 namespace ChordKTV.Services.Service;
 
@@ -41,41 +41,41 @@ public class GeniusService : IGeniusService
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
     }
 
-    private sealed class SearchMatch
-    {
-        public GeniusResult Result { get; set; } = null!;
-        public int TitleScore { get; set; }
-        public int ArtistScore { get; set; }
-        public int TotalScore => TitleScore + ArtistScore;
-    }
+    // private sealed class SearchMatch
+    // {
+    //     public GeniusResult Result { get; set; } = null!;
+    //     public int TitleScore { get; set; }
+    //     public int ArtistScore { get; set; }
+    //     public int TotalScore => TitleScore + ArtistScore;
+    // }
 
-    private static SearchMatch ScoreMatch(GeniusResult result, string queryTitle, string? queryArtist)
-    {
-        // Calculate title score
-        string normalizedResultTitle = result.Title.ToLower(CultureInfo.CurrentCulture);
-        string normalizedQueryTitle = queryTitle.ToLower(CultureInfo.CurrentCulture);
+    // private static SearchMatch ScoreMatch(GeniusResult result, string queryTitle, string? queryArtist)
+    // {
+    //     // Calculate title score
+    //     string normalizedResultTitle = result.Title.ToLower(CultureInfo.CurrentCulture);
+    //     string normalizedQueryTitle = queryTitle.ToLower(CultureInfo.CurrentCulture);
 
-        int exactTitleScore = Fuzz.Ratio(normalizedResultTitle, normalizedQueryTitle);
-        bool containsTitle = normalizedResultTitle.Contains(normalizedQueryTitle, StringComparison.OrdinalIgnoreCase);
-        int titleScore = containsTitle ? Math.Max(exactTitleScore, 85) : exactTitleScore;
+    //     int exactTitleScore = Fuzz.Ratio(normalizedResultTitle, normalizedQueryTitle);
+    //     bool containsTitle = normalizedResultTitle.Contains(normalizedQueryTitle, StringComparison.OrdinalIgnoreCase);
+    //     int titleScore = containsTitle ? Math.Max(exactTitleScore, 85) : exactTitleScore;
 
-        // Calculate artist score only if provided (used for ranking, not filtering)
-        int artistScore = 0;
-        if (!string.IsNullOrWhiteSpace(queryArtist))
-        {
-            artistScore = Fuzz.Ratio(
-                result.PrimaryArtistNames.ToLower(CultureInfo.CurrentCulture),
-                queryArtist.ToLower(CultureInfo.CurrentCulture)
-            );
-        }
+    //     // Calculate artist score only if provided (used for ranking, not filtering)
+    //     int artistScore = 0;
+    //     if (!string.IsNullOrWhiteSpace(queryArtist))
+    //     {
+    //         artistScore = Fuzz.Ratio(
+    //             result.PrimaryArtistNames.ToLower(CultureInfo.CurrentCulture),
+    //             queryArtist.ToLower(CultureInfo.CurrentCulture)
+    //         );
+    //     }
 
-        return new SearchMatch
-        {
-            Result = result,
-            TitleScore = titleScore,
-            ArtistScore = artistScore
-        };
-    }
+    //     return new SearchMatch
+    //     {
+    //         Result = result,
+    //         TitleScore = titleScore,
+    //         ArtistScore = artistScore
+    //     };
+    // }
 
     /// <summary>
     /// Helper to query Genius using the given search query and compare results with the provided fuzzy criteria
@@ -119,28 +119,31 @@ public class GeniusService : IGeniusService
                     hit.Result.Title, hit.Result.PrimaryArtistNames);
             }
 
-            const int minTitleScore = 50;  // Renamed to follow C# naming conventions
+            // const int minTitleScore = 50;  // Renamed to follow C# naming conventions
 
             // Update the score check
-            var matches = searchResponse.Response.Hits
+            List<GeniusHit> matches = searchResponse.Response.Hits
                 .Where(h => h.Result != null)
-                .Select(h => ScoreMatch(h.Result, fuzzyTitle ?? "", fuzzyArtist))
-                .Where(m => m.TitleScore >= minTitleScore)
-                .OrderByDescending(m => m.TotalScore)
+                .OrderByDescending(h => CompareUtils
+                .CompareWeightedFuzzyScore(fuzzyTitle ?? "", h.Result.Title, fuzzyArtist ?? "", h.Result.PrimaryArtistNames, 0, 0))
                 .ToList();
 
-            SearchMatch? bestMatch = matches.FirstOrDefault();
+            //TODO: Later refactor maybe and return all the hit list to maybe be selectable options for user (to refine search query)
+            //Do a subcheck to ensure it meets min artist requirements
+            GeniusHit? bestMatch = matches
+                .FirstOrDefault(h => CompareUtils
+                    .CompareArtistFuzzyScore(fuzzyArtist, h.Result.PrimaryArtistNames) > 90);
+
             if (bestMatch?.Result == null)
             {
-                _logger.LogWarning("No matches found with minimum title score of {MinScore}", minTitleScore);
+                _logger.LogWarning("SearchGenius: No matches found for query: {SearchQuery} ; matching with Title: {FuzzyTitle} ; Artist: {FuzzyArtist}", searchQuery, fuzzyTitle, fuzzyArtist); );
                 return null;
             }
-
             return await MapGeniusResultToSongAsync(bestMatch.Result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching song from Genius API");
+            _logger.LogError(ex, "SearchGenius: Error fetching song from Genius API");
             return null;
         }
     }
