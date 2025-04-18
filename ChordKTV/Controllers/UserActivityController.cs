@@ -243,23 +243,32 @@ public class UserActivityController : Controller
         }
     }
 
-    // [HttpGet("songplays")]
-    // public async Task<IActionResult> GetUserSongPlays()
-    // {
-    //     User? user = await GetUserFromClaimsAsync();
-    //     if (user is null)
-    //     {
-    //         return Unauthorized(new { message = "User not found" });
-    //     }
+    [HttpGet("songs")]
+    public async Task<IActionResult> GetUserSongActivities()
+    {
+        try
+        {
+            User? user = await GetUserFromClaimsAsync();
+            if (user is null)
+            {
+                return Unauthorized(new { message = "User not found" });
+            }
 
-    //     IEnumerable<UserSongPlay> songPlays = await _activityRepo.GetUserSongPlaysAsync(user.Id);
-    //     return Ok(songPlays.Select(sp => new
-    //     {
-    //         sp.Id,
-    //         sp.SongId,
-    //         sp.DatePlayed
-    //     }));
-    // }
+            IEnumerable<UserSongActivity> songActivities = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
+            return Ok(songActivities.Select(sa => new
+            {
+                sa.Id,
+                sa.SongId,
+                sa.DatesPlayed,
+                sa.IsFavorite
+            }));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving song activities");
+            return StatusCode(500, new { message = "An unexpected error occurred." });
+        }
+    }
 
     [HttpPost("handwriting")]
     public async Task<IActionResult> AddHandwritingResult([FromBody] UserHandwritingResultDto dto)
