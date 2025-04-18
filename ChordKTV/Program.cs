@@ -62,7 +62,6 @@ builder.Services.AddLogging(logging =>
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.Converters.Add(new SafeEnumConverter<LanguageCode>());
     });
 

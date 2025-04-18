@@ -43,7 +43,12 @@ public class UserController : ControllerBase
                 return Unauthorized();
             }
 
-            return Ok(_mapper.Map<AuthResponseDto>(new { User = user, Token = idToken }));
+            var responseDto = new AuthResponseDto
+            {
+                User = _mapper.Map<UserDto>(user),
+                Token = idToken
+            };
+            return Ok(responseDto);
         }
         catch (Exception ex)
         {
