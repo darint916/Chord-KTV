@@ -9,7 +9,6 @@ import {
   Tooltip,
   Avatar
 } from '@mui/material';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ErrorIcon from '@mui/icons-material/Error';
 import './DraggableQueueItem.scss';
@@ -61,20 +60,21 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
   const isLoading = item.apiRequested && !item.processedData && !item.error;
   const hasError = item.error;
   const songImageUrl = item.processedData?.geniusMetaData?.songImageUrl;
+  const isCurrentSong = currentPlayingId === item.queueId;
 
   return (
-    <div ref={ref} style={{ opacity: isDragging ? 0.5 : 1 }}>
+    <div ref={ref} style={{ opacity: isDragging ? 0.5 : 1, cursor: 'move' }}>
       <ListItemButton 
         onClick={() => !hasError && onPlay(item)}
-        className={`queue-item ${currentPlayingId === item.queueId ? 'active-song' : ''} ${hasError ? 'error-item' : ''}`}
+        className={`queue-item ${isCurrentSong ? 'active-song' : ''} ${hasError ? 'error-item' : ''}`}
         sx={{
-          backgroundColor: currentPlayingId === item.queueId 
+          backgroundColor: isCurrentSong 
             ? 'rgba(25, 118, 210, 0.08)' 
             : hasError
               ? 'rgba(255, 0, 0, 0.08)'
               : 'transparent',
           '&:hover': {
-            backgroundColor: currentPlayingId === item.queueId 
+            backgroundColor: isCurrentSong 
               ? 'rgba(25, 118, 210, 0.12)' 
               : hasError
                 ? 'rgba(255, 0, 0, 0.12)'
@@ -91,7 +91,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
           </Tooltip>
         ) : null}
 
-        {songImageUrl && (
+        {songImageUrl ? (
           <Avatar 
             src={songImageUrl} 
             variant="square"
@@ -102,6 +102,8 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
               borderRadius: 1
             }}
           />
+        ) : (
+          <Box sx={{ width: 40, mr: 2 }} /> // Empty space for alignment when no image
         )}
 
         <ListItemText 
@@ -109,7 +111,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
           secondary={item.processedData?.artist || item.artist}
           primaryTypographyProps={{ 
             noWrap: true,
-            fontWeight: currentPlayingId === item.queueId ? 'bold' : 'normal',
+            fontWeight: isCurrentSong ? 'bold' : 'normal',
             color: hasError ? 'error.main' : isLoading ? 'text.disabled' : 'text.primary'
           }}
           secondaryTypographyProps={{ 
@@ -119,7 +121,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
           sx={{ flex: 1 }}
         />
 
-        {currentPlayingId === item.queueId && !hasError && (
+        {isCurrentSong && !hasError && (
           <Box sx={{ 
             width: 8, 
             height: 8, 
@@ -128,7 +130,9 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
             ml: 1
           }} />
         )}
-        {!isLoading && (
+        
+        {/* Only show delete button if not current song and not loading */}
+        {!isLoading && !isCurrentSong && (
           <IconButton
             edge="end"
             aria-label="remove"

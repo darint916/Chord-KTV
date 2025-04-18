@@ -160,7 +160,7 @@ const SongPlayerPage: React.FC = () => {
         title: songName,
         artist: artistName,
         lyrics: lyrics,
-        youtubeUrl: youtubeUrl,
+        youTubeId: youTubeId ?? "",
         apiRequested: false
       };
 

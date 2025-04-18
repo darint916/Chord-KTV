@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Typography, CircularProgress, Alert, Box } from '@mui/material';
+import { Typography, CircularProgress, Alert, Box, Button } from '@mui/material';
 import { songApi } from '../../api/apiClient';
 import { useSong } from '../../contexts/SongContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,56 +8,122 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface YouTubePlaylistLoaderProps {
   playlistUrl: string;
+  onRetry?: () => void;
 }
 
-const YouTubePlaylistLoader: React.FC<YouTubePlaylistLoaderProps> = ({ playlistUrl }) => {
-  const { setQueue, setCurrentPlayingId } = useSong();
+const YouTubePlaylistLoader: React.FC<YouTubePlaylistLoaderProps> = ({ 
+  playlistUrl,
+  onRetry 
+}) => {
+  const { setQueue, setCurrentPlayingId, setSong } = useSong();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const extractPlaylistId = (url: string) => {
+  const extractPlaylistId = (url: string): string | null => {
+    if (!url) return null;
     const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
     return match ? match[1] : null;
   };
 
-  useEffect(() => {
-    const loadPlaylist = async () => {
-      setLoading(true);
-      try {
-        const playlistId = extractPlaylistId(playlistUrl);
-        const response = await songApi.apiYoutubePlaylistsPlaylistIdGet({
-          playlistId: playlistId!,
-        });
+  const loadPlaylist = async () => {
+    setLoading(true);
+    setError(null);
 
-        const videos = response.videos || [];
-        if (videos.length === 0) {
-          setError('Playlist is empty');
-          return;
-        }
-
-        // Add all songs to queue with basic info
-        const newQueue = videos.map(video => ({
-          queueId: uuidv4(),
-          title: video.title || 'Unknown',
-          artist: video.artist || 'Unknown',
-          youtubeUrl: video.url || '',
-          lyrics: "",
-          apiRequested: false
-        }));
-
-        setQueue(newQueue);
-        setCurrentPlayingId(newQueue[0].queueId);
-        navigate('/play-song');
-      } finally {
-        setLoading(false);
+    try {
+      const playlistId = extractPlaylistId(playlistUrl);
+      if (!playlistId) {
+        throw new Error('Invalid YouTube playlist URL');
       }
-    };
 
+      const response = await songApi.apiYoutubePlaylistsPlaylistIdGet({
+        playlistId,
+      });
+
+      const videos = response.videos || [];
+      if (videos.length === 0) {
+        throw new Error('This playlist contains no videos');
+      }
+
+      // Create queue items with basic info
+      const newQueue = videos.map(video => ({
+        queueId: uuidv4(),
+        title: video.title || 'Unknown Track',
+        artist: video.artist || 'Unknown Artist',
+        youtubeUrl: video.url || '',
+        lyrics: "",
+        apiRequested: false
+      }));
+
+      // Set the queue with new songs at the start
+      setQueue(newQueue);
+      
+      // Set the first song as current and navigate to player
+      const firstSong = newQueue[0];
+      setCurrentPlayingId(firstSong.queueId);
+      setSong({
+        title: firstSong.title,
+        artist: firstSong.artist,
+        youTubeId: extractVideoId(firstSong.youtubeUrl) || '',
+        lrcLyrics: '',
+        lrcRomanizedLyrics: '',
+        lrcTranslatedLyrics: ''
+      });
+      
+      navigate('/play-song');
+    } catch (err) {
+      console.error('Failed to load playlist:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load playlist');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const extractVideoId = (url: string): string | null => {
+    if (!url) return null;
+    const match = url.match(/(?:\?v=|\/embed\/|\.be\/|\/watch\?v=|\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/);
+    return match ? match[1] : null;
+  };
+
+  useEffect(() => {
     loadPlaylist();
   }, [playlistUrl]);
 
-  return loading ? <CircularProgress /> : null;
+  const handleRetry = () => {
+    if (onRetry) {
+      onRetry();
+    } else {
+      loadPlaylist();
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100px">
+        <CircularProgress />
+        <Typography variant="body1" ml={2}>Loading playlist...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Button 
+          variant="contained" 
+          onClick={handleRetry}
+          color="primary"
+        >
+          Try Again
+        </Button>
+      </Box>
+    );
+  }
+
+  return null;
 };
 
 export default YouTubePlaylistLoader;
