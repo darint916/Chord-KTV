@@ -68,8 +68,7 @@ public class UserActivityController : Controller
                 activity.UserId = user.Id;
                 await _activityRepo.UpsertPlaylistActivityAsync(activity);
                 await _activityRepo.SaveChangesAsync();
-                var resultDto = _mapper.Map<UserPlaylistActivityDto>(activity);
-                return Ok(resultDto);
+                return Ok(_mapper.Map<UserPlaylistActivityDto>(activity));
             }
             else
             {
@@ -84,8 +83,7 @@ public class UserActivityController : Controller
                 existing.IsFavorite = dto.IsFavorite;
                 await _activityRepo.UpsertPlaylistActivityAsync(existing);
                 await _activityRepo.SaveChangesAsync();
-                var resultDto = _mapper.Map<UserPlaylistActivityDto>(existing);
-                return Ok(resultDto);
+                return Ok(_mapper.Map<UserPlaylistActivityDto>(existing));
             }
         }
         catch (Exception ex)
@@ -105,8 +103,7 @@ public class UserActivityController : Controller
         }
 
         IEnumerable<UserPlaylistActivity> activities = await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id);
-        var result = _mapper.Map<IEnumerable<UserPlaylistActivityDto>>(activities);
-        return Ok(result);
+        return Ok(_mapper.Map<IEnumerable<UserPlaylistActivityDto>>(activities));
     }
 
     [HttpPost("quiz")]
@@ -143,8 +140,7 @@ public class UserActivityController : Controller
             }
 
             await _activityRepo.SaveChangesAsync();
-            var resultDto = _mapper.Map<UserQuizResultDto>(result);
-            return Ok(resultDto);
+            return Ok(_mapper.Map<UserQuizResultDto>(result));
         }
         catch (Exception ex)
         {
@@ -163,14 +159,7 @@ public class UserActivityController : Controller
         }
 
         IEnumerable<UserQuizResult> quizResults = await _activityRepo.GetUserQuizResultsAsync(user.Id);
-        return Ok(quizResults.Select(qr => new
-        {
-            qr.Id,
-            qr.QuizId,
-            qr.Score,
-            qr.Language,
-            qr.DateCompleted
-        }));
+        return Ok(_mapper.Map<IEnumerable<UserQuizResultDto>>(quizResults));
     }
 
     [HttpPost("song")]
@@ -197,8 +186,7 @@ public class UserActivityController : Controller
                 activity.UserId = user.Id;
                 await _activityRepo.UpsertSongActivityAsync(activity);
                 await _activityRepo.SaveChangesAsync();
-                var resultDto = _mapper.Map<UserSongActivityDto>(activity);
-                return Ok(resultDto);
+                return Ok(_mapper.Map<UserSongActivityDto>(activity));
             }
             else
             {
@@ -213,8 +201,7 @@ public class UserActivityController : Controller
                 existing.IsFavorite = dto.IsFavorite;
                 await _activityRepo.UpsertSongActivityAsync(existing);
                 await _activityRepo.SaveChangesAsync();
-                var resultDto = _mapper.Map<UserSongActivityDto>(existing);
-                return Ok(resultDto);
+                return Ok(_mapper.Map<UserSongActivityDto>(existing));
             }
         }
         catch (Exception ex)
@@ -236,8 +223,7 @@ public class UserActivityController : Controller
             }
 
             IEnumerable<UserSongActivity> songActivities = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
-            var result = _mapper.Map<IEnumerable<UserSongActivityDto>>(songActivities);
-            return Ok(result);
+            return Ok(_mapper.Map<IEnumerable<UserSongActivityDto>>(songActivities));
         }
         catch (Exception ex)
         {
@@ -257,27 +243,14 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var result = new UserHandwritingResult
-            {
-                UserId = user.Id,
-                Language = dto.Language,
-                Score = dto.Score,
-                WordTested = dto.WordTested,
-                DateCompleted = dto.DateCompleted ?? DateTime.UtcNow
-            };
+            var result = _mapper.Map<UserHandwritingResult>(dto);
+            result.UserId = user.Id;
+            result.DateCompleted = dto.DateCompleted ?? DateTime.UtcNow;
 
             await _activityRepo.AddHandwritingResultAsync(result);
             await _activityRepo.SaveChangesAsync();
 
-            return Ok(new
-            {
-                result.Id,
-                result.Language,
-                result.Score,
-                result.WordTested,
-                result.DateCompleted,
-                result.UserId
-            });
+            return Ok(_mapper.Map<UserHandwritingResultDto>(result));
         }
         catch (Exception ex)
         {
@@ -296,14 +269,7 @@ public class UserActivityController : Controller
         }
 
         IEnumerable<UserHandwritingResult> results = await _activityRepo.GetUserHandwritingResultsAsync(user.Id);
-        return Ok(results.Select(hr => new
-        {
-            hr.Id,
-            hr.Language,
-            hr.Score,
-            hr.WordTested,
-            hr.DateCompleted
-        }));
+        return Ok(_mapper.Map<IEnumerable<UserHandwritingResultDto>>(results));
     }
 
     [HttpPost("favorite/song")]
@@ -363,8 +329,7 @@ public class UserActivityController : Controller
 
             IEnumerable<UserSongActivity> allSongs = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
             var favorites = allSongs.Where(sa => sa.IsFavorite).ToList();
-            var result = _mapper.Map<IEnumerable<UserSongActivityDto>>(favorites);
-            return Ok(result);
+            return Ok(_mapper.Map<IEnumerable<UserSongActivityDto>>(favorites));
         }
         catch (Exception ex)
         {
@@ -430,8 +395,7 @@ public class UserActivityController : Controller
 
             IEnumerable<UserPlaylistActivity> allPlaylists = await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id);
             var favorites = allPlaylists.Where(pa => pa.IsFavorite).ToList();
-            var result = _mapper.Map<IEnumerable<UserPlaylistActivityDto>>(favorites);
-            return Ok(result);
+            return Ok(_mapper.Map<IEnumerable<UserPlaylistActivityDto>>(favorites));
         }
         catch (Exception ex)
         {
@@ -458,8 +422,7 @@ public class UserActivityController : Controller
             await _activityRepo.AddLearnedWordAsync(learnedWord);
             await _activityRepo.SaveChangesAsync();
             // Optionally, map back to a DTO if one exists.
-            var result = _mapper.Map<LearnedWordDto>(learnedWord);
-            return Ok(result);
+            return Ok(_mapper.Map<LearnedWordDto>(learnedWord));
         }
         catch (Exception ex)
         {
@@ -478,8 +441,7 @@ public class UserActivityController : Controller
         }
 
         IEnumerable<LearnedWord> learnedWords = await _activityRepo.GetUserLearnedWordsAsync(user.Id, language);
-        var result = _mapper.Map<IEnumerable<LearnedWordDto>>(learnedWords);
-        return Ok(result);
+        return Ok(_mapper.Map<IEnumerable<LearnedWordDto>>(learnedWords));
     }
 
     [HttpGet("full")]

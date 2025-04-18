@@ -43,12 +43,7 @@ public class UserController : ControllerBase
                 return Unauthorized();
             }
 
-            // return the user and let the client continue using the Google token
-            return Ok(new
-            {
-                user = _mapper.Map<UserDto>(user),
-                token = idToken
-            });
+            return Ok(_mapper.Map<AuthResponseDto>(new { User = user, Token = idToken }));
         }
         catch (Exception ex)
         {
