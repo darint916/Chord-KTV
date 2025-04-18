@@ -62,13 +62,19 @@ public class FullSongService : IFullSongService
             Dictionary<string, VideoDetails> videoDict = await _youTubeClientService.GetVideosDetailsAsync([youtubeId]);
             if (videoDict.Count == 0)
             {
-                _logger.LogWarning("GetVideosDetailsAsync: Youtube video not found for id: {YoutubeId}", youtubeId);
+                _logger.LogError("GetVideosDetailsAsync: Youtube video not found for id: {YoutubeId}", youtubeId);
             }
             else
             {
                 videoDetails = videoDict[youtubeId];
-                title ??= videoDetails.Title;
-                artist ??= videoDetails.ChannelTitle;
+                if (string.IsNullOrWhiteSpace(title))
+                {
+                    title = videoDetails.Title;
+                }
+                if (string.IsNullOrWhiteSpace(artist))
+                {
+                    artist = videoDetails.ChannelTitle;
+                }
                 duration ??= videoDetails.Duration;
             }
         }
@@ -96,7 +102,7 @@ public class FullSongService : IFullSongService
                     foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
                     {
                         song = await _geniusService.GetSongByArtistTitleAsync(candidate.Title, candidate.Artist, lyrics);
-                        if (song is not null)
+                        if (song is not null || (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist)))
                         {
                             title = candidate.Title;
                             artist = candidate.Artist;
@@ -231,10 +237,15 @@ public class FullSongService : IFullSongService
         }
 
         // check if lyrics are translated, don't need to translate/romanize if alr english
-        if (song.GeniusMetaData.Language.Equals(LanguageCode.EN))
+        // Genius LangCode could be wrong, so we explicitly check romanization too.
+        if (song.GeniusMetaData.Language.Equals(LanguageCode.EN) && LanguageUtils.IsRomanizedText(song.LrcLyrics))
         {
             song.LrcTranslatedLyrics ??= lrcLyricsDto?.SyncedLyrics;
             song.LrcRomanizedLyrics ??= lrcLyricsDto?.SyncedLyrics;
+        }
+        else if (song.GeniusMetaData.Language.Equals(LanguageCode.EN))
+        {
+            _logger.LogError("Genius Language code is English but lyrics are not romanized as expected, for song: '{Title}' by '{Artist}'", song.Title, song.Artist);
         }
         song.LrcRomanizedLyrics ??= lrcLyricsDto?.RomanizedSyncedLyrics;
 

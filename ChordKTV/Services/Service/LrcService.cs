@@ -33,6 +33,7 @@ public class LrcService : ILrcService
         }
         else
         {
+            _logger.LogError("Error in {MethodName}: At least title be provided", nameof(GetAllLrcLibLyricsAsync));
             throw new ArgumentException($"Error in {nameof(GetAllLrcLibLyricsAsync)}: At least title be provided");
         }
         if (!string.IsNullOrEmpty(artist))
@@ -67,7 +68,7 @@ public class LrcService : ILrcService
         searchResults = searchResults
             .Where(ele => ele.Duration != null)
             .OrderByDescending(ele => CompareUtils
-            .CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration!.Value))
+                .CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration!.Value))
             .ToList();
 
         // Get the first result with time-synced lyrics
