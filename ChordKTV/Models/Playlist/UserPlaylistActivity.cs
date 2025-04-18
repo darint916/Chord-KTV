@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using ChordKTV.Models.UserData;
 
@@ -7,8 +9,8 @@ public class UserPlaylistActivity
 {
     [Key]
     public Guid Id { get; set; } = Guid.NewGuid();
-    public required string PlaylistUrl { get; set; }
-    public int PlayCount { get; set; }
-    public DateTime LastPlayed { get; set; }
     public Guid UserId { get; set; }
+    public required string PlaylistUrl { get; set; }
+    public List<DateTime> PlayDates { get; set; } = new List<DateTime>();
+    public bool IsFavorite { get; set; } = false;
 }

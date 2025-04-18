@@ -14,11 +14,15 @@ public class UserActivityProfile : Profile
         CreateMap<UserQuizResultDto, UserQuizResult>();
         CreateMap<UserQuizResult, UserQuizResultDto>();
 
-        CreateMap<UserPlaylistActivityDto, UserPlaylistActivity>();
-        CreateMap<UserPlaylistActivity, UserPlaylistActivityDto>();
+        // Map the unified song activity
+        CreateMap<UserSongActivity, UserSongActivityDto>()
+            .ForMember(dest => dest.PlayDates, opt => opt.MapFrom(src => src.PlayDates))
+            .ReverseMap();
 
-        CreateMap<UserSongPlayDto, UserSongPlay>();
-        CreateMap<UserSongPlay, UserSongPlayDto>();
+        // Map the unified playlist activity
+        CreateMap<UserPlaylistActivity, UserPlaylistActivityDto>()
+            .ForMember(dest => dest.PlayDates, opt => opt.MapFrom(src => src.PlayDates))
+            .ReverseMap();
 
         CreateMap<UserHandwritingResultDto, UserHandwritingResult>();
         CreateMap<UserHandwritingResult, UserHandwritingResultDto>();
