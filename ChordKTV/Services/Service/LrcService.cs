@@ -76,7 +76,8 @@ public class LrcService : ILrcService
         {
             lyricsDtoMatch = searchResults.FirstOrDefault(ele =>
                 !string.IsNullOrEmpty(ele.PlainLyrics) &&
-                !string.IsNullOrEmpty(ele.SyncedLyrics));
+                !string.IsNullOrEmpty(ele.SyncedLyrics) &&
+                CompareUtils.CompareArtistFuzzyScore(artist, ele.ArtistName) > 70);
         }
 
         // Collect alternate titles and artists from search results

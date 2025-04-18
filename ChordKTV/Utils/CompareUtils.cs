@@ -28,7 +28,7 @@ public static partial class CompareUtils
 
         int artistDifference = 0;
         if (!string.IsNullOrWhiteSpace(artist) && !string.IsNullOrWhiteSpace(candidateArtist))
-        {
+        { //Note that the artist diff pretty high when partial match since it is simple ratio so artist comparison required later.
             artistDifference = 100 - Fuzz.Ratio(artist.ToLowerInvariant(), candidateArtist.ToLowerInvariant());
         }
         return (int)(fuzzyScore - (durationDifference * durationDifferenceWeight) - (artistDifference * artistDifferenceWeight));
