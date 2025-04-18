@@ -18,12 +18,10 @@ public class AppDbContext : DbContext
     public DbSet<QuizOption> QuizOptions { get; set; }
 
     public DbSet<UserPlaylistActivity> UserPlaylistActivities { get; set; }
+    public DbSet<UserSongActivity> UserSongActivities { get; set; }
     public DbSet<UserQuizResult> UserQuizzesDone { get; set; }
-    public DbSet<UserSongPlay> UserSongPlays { get; set; }
     public DbSet<UserHandwritingResult> UserHandwritingResults { get; set; }
     public DbSet<LearnedWord> LearnedWords { get; set; }
-    public DbSet<UserFavoriteSong> FavoriteSongs { get; set; }
-    public DbSet<UserFavoritePlaylist> FavoritePlaylists { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> opt) : base(opt)
     {
@@ -56,15 +54,15 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<User>()
-            .HasMany(u => u.QuizResults)
+            .HasMany(u => u.SongActivities)
             .WithOne()
-            .HasForeignKey(qr => qr.UserId)
+            .HasForeignKey(sa => sa.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<User>()
-            .HasMany(u => u.SongPlays)
+            .HasMany(u => u.QuizResults)
             .WithOne()
-            .HasForeignKey(sp => sp.UserId)
+            .HasForeignKey(qr => qr.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<User>()
@@ -79,16 +77,13 @@ public class AppDbContext : DbContext
             .HasForeignKey(lw => lw.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.FavoriteSongs)
-            .WithOne()
-            .HasForeignKey(fs => fs.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.FavoritePlaylists)
-            .WithOne()
-            .HasForeignKey(fp => fp.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserSongActivity>()
+            .Property(x => x.PlayDates)
+            .HasColumnType("timestamp with time zone[]");
+
+        modelBuilder.Entity<UserPlaylistActivity>()
+            .Property(x => x.PlayDates)
+            .HasColumnType("timestamp with time zone[]");
     }
 }
 

@@ -4,26 +4,24 @@ using ChordKTV.Models.Quiz;
 using ChordKTV.Models.Playlist;
 using ChordKTV.Models.SongData;
 using ChordKTV.Models.Handwriting;
-using Microsoft.EntityFrameworkCore;
 using ChordKTV.Dtos;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ChordKTV.Data.Repo.UserData;
 
 public class UserActivityRepo : IUserActivityRepo
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<UserActivityRepo> _logger;
 
     public UserActivityRepo(AppDbContext context, ILogger<UserActivityRepo> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
-    public async Task<UserPlaylistActivity?> GetPlaylistActivityAsync(Guid userId, string playlistUrl)
-    {
-        return await _context.UserPlaylistActivities
-            .FirstOrDefaultAsync(x => x.UserId == userId && x.PlaylistUrl == playlistUrl);
-    }
-
+    // Quiz Methods
     public async Task<IEnumerable<UserQuizResult>> GetUserQuizResultsAsync(Guid userId)
     {
         return await _context.UserQuizzesDone
@@ -32,14 +30,12 @@ public class UserActivityRepo : IUserActivityRepo
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<UserSongPlay>> GetUserSongPlaysAsync(Guid userId)
+    public async Task AddQuizResultAsync(UserQuizResult result)
     {
-        return await _context.UserSongPlays
-            .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.DatePlayed)
-            .ToListAsync();
+        await _context.UserQuizzesDone.AddAsync(result);
     }
 
+    // Handwriting Methods
     public async Task<IEnumerable<UserHandwritingResult>> GetUserHandwritingResultsAsync(Guid userId)
     {
         return await _context.UserHandwritingResults
@@ -48,36 +44,20 @@ public class UserActivityRepo : IUserActivityRepo
             .ToListAsync();
     }
 
+    public async Task AddHandwritingResultAsync(UserHandwritingResult result)
+    {
+        await _context.UserHandwritingResults.AddAsync(result);
+    }
+
+    // Learned Words Methods
     public async Task<IEnumerable<LearnedWord>> GetUserLearnedWordsAsync(Guid userId, LanguageCode? language = null)
     {
         IQueryable<LearnedWord> query = _context.LearnedWords.Where(x => x.UserId == userId);
-
         if (language.HasValue)
         {
             query = query.Where(x => x.Language == language.Value);
         }
-
         return await query.OrderByDescending(x => x.DateLearned).ToListAsync();
-    }
-
-    public async Task AddPlaylistActivityAsync(UserPlaylistActivity activity)
-    {
-        await _context.UserPlaylistActivities.AddAsync(activity);
-    }
-
-    public async Task AddQuizResultAsync(UserQuizResult result)
-    {
-        await _context.UserQuizzesDone.AddAsync(result);
-    }
-
-    public async Task AddSongPlayAsync(UserSongPlay play)
-    {
-        await _context.UserSongPlays.AddAsync(play);
-    }
-
-    public async Task AddHandwritingResultAsync(UserHandwritingResult result)
-    {
-        await _context.UserHandwritingResults.AddAsync(result);
     }
 
     public async Task AddLearnedWordAsync(LearnedWord word)
@@ -85,66 +65,68 @@ public class UserActivityRepo : IUserActivityRepo
         await _context.LearnedWords.AddAsync(word);
     }
 
-    public async Task<bool> SaveChangesAsync()
+    // Song Activity Methods (Combined)
+    public async Task<UserSongActivity?> GetUserSongActivityAsync(Guid userId, Guid songId)
     {
-        return await _context.SaveChangesAsync() > 0;
-    }
-
-    public async Task<UserFavoriteSong?> GetFavoriteSongAsync(Guid userId, Guid songId)
-    {
-        return await _context.FavoriteSongs
+        return await _context.UserSongActivities
+            .Include(x => x.Song)
             .FirstOrDefaultAsync(x => x.UserId == userId && x.SongId == songId);
     }
 
-    public async Task<IEnumerable<UserFavoriteSong>> GetUserFavoriteSongsAsync(Guid userId)
+    public async Task<IEnumerable<UserSongActivity>> GetUserSongActivitiesAsync(Guid userId)
     {
-        return await _context.FavoriteSongs
+        return await _context.UserSongActivities
+            .Include(x => x.Song)
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.DateFavorited)
+            .OrderByDescending(x => x.PlayDates.Max())
             .ToListAsync();
     }
 
-    public async Task AddFavoriteSongAsync(UserFavoriteSong favoriteSong)
+    public async Task UpsertSongActivityAsync(UserSongActivity activity)
     {
-        await _context.FavoriteSongs.AddAsync(favoriteSong);
+        var existing = await GetUserSongActivityAsync(activity.UserId, activity.SongId);
+        if (existing == null)
+        {
+            await _context.UserSongActivities.AddAsync(activity);
+        }
+        else
+        {
+            existing.PlayDates = activity.PlayDates;
+            existing.IsFavorite = activity.IsFavorite;
+        }
     }
 
-    public Task RemoveFavoriteSongAsync(UserFavoriteSong favoriteSong)
+    // Playlist Activity Methods (Combined)
+    public async Task<UserPlaylistActivity?> GetUserPlaylistActivityAsync(Guid userId, string playlistUrl)
     {
-        _context.FavoriteSongs.Remove(favoriteSong);
-        return Task.CompletedTask;
+        return await _context.UserPlaylistActivities
+            .FirstOrDefaultAsync(x => x.UserId == userId && x.PlaylistUrl == playlistUrl);
     }
 
     public async Task<IEnumerable<UserPlaylistActivity>> GetUserPlaylistActivitiesAsync(Guid userId)
     {
         return await _context.UserPlaylistActivities
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.LastPlayed)
+            .OrderByDescending(x => x.PlayDates.Max())
             .ToListAsync();
     }
 
-    public async Task<UserFavoritePlaylist?> GetFavoritePlaylistAsync(Guid userId, string playlistUrl)
+    public async Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity)
     {
-        return await _context.FavoritePlaylists
-            .FirstOrDefaultAsync(x => x.UserId == userId && x.PlaylistUrl == playlistUrl);
+        var existing = await GetUserPlaylistActivityAsync(activity.UserId, activity.PlaylistUrl);
+        if (existing == null)
+        {
+            await _context.UserPlaylistActivities.AddAsync(activity);
+        }
+        else
+        {
+            existing.PlayDates = activity.PlayDates;
+            existing.IsFavorite = activity.IsFavorite;
+        }
     }
 
-    public async Task<IEnumerable<UserFavoritePlaylist>> GetUserFavoritePlaylistsAsync(Guid userId)
+    public async Task<bool> SaveChangesAsync()
     {
-        return await _context.FavoritePlaylists
-            .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.DateFavorited)
-            .ToListAsync();
-    }
-
-    public async Task AddFavoritePlaylistAsync(UserFavoritePlaylist favoritePlaylist)
-    {
-        await _context.FavoritePlaylists.AddAsync(favoritePlaylist);
-    }
-
-    public Task RemoveFavoritePlaylistAsync(UserFavoritePlaylist favoritePlaylist)
-    {
-        _context.FavoritePlaylists.Remove(favoritePlaylist);
-        return Task.CompletedTask;
+        return await _context.SaveChangesAsync() > 0;
     }
 }

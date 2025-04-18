@@ -16,6 +16,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ChordKTV.Controllers;
 
@@ -39,7 +42,7 @@ public class UserActivityController : Controller
     }
 
     [HttpPost("playlist")]
-    public async Task<IActionResult> AddPlaylistActivity([FromBody] UserPlaylistActivityDto dto)
+    public async Task<IActionResult> AddOrUpdatePlaylistActivity([FromBody] UserPlaylistActivityDto dto)
     {
         try
         {
@@ -49,31 +52,44 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            UserPlaylistActivity? existingActivity = await _activityRepo.GetPlaylistActivityAsync(user.Id, dto.PlaylistUrl);
-
-            if (existingActivity != null)
+            // Ensure at least one play date is provided
+            if (dto.PlayDates == null || !dto.PlayDates.Any())
             {
-                existingActivity.PlayCount++;
-                existingActivity.LastPlayed = dto.DatePlayed ?? DateTime.UtcNow;
+                dto.PlayDates.Add(DateTime.UtcNow);
             }
-            else
+
+            UserPlaylistActivity? existing = await _activityRepo.GetUserPlaylistActivityAsync(user.Id, dto.PlaylistUrl);
+            if (existing == null)
             {
-                existingActivity = new UserPlaylistActivity
+                var activity = new UserPlaylistActivity
                 {
                     UserId = user.Id,
                     PlaylistUrl = dto.PlaylistUrl,
-                    PlayCount = 1,
-                    LastPlayed = dto.DatePlayed ?? DateTime.UtcNow
+                    PlayDates = new List<DateTime>(dto.PlayDates),
+                    IsFavorite = dto.IsFavorite
                 };
-                await _activityRepo.AddPlaylistActivityAsync(existingActivity);
+                await _activityRepo.UpsertPlaylistActivityAsync(activity);
+            }
+            else
+            {
+                // Merge new play dates and update favorite status
+                foreach (var date in dto.PlayDates)
+                {
+                    if (!existing.PlayDates.Contains(date))
+                    {
+                        existing.PlayDates.Add(date);
+                    }
+                }
+                existing.IsFavorite = dto.IsFavorite;
+                await _activityRepo.UpsertPlaylistActivityAsync(existing);
             }
 
             await _activityRepo.SaveChangesAsync();
-            return Ok(existingActivity);
+            return Ok(new { message = "Playlist activity updated successfully." });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error adding playlist activity");
+            _logger.LogError(ex, "Error adding/updating playlist activity");
             return StatusCode(500, new { message = "An unexpected error occurred." });
         }
     }
@@ -92,8 +108,8 @@ public class UserActivityController : Controller
         {
             pa.Id,
             pa.PlaylistUrl,
-            pa.PlayCount,
-            pa.LastPlayed
+            pa.PlayDates,
+            pa.IsFavorite
         }));
     }
 
@@ -119,11 +135,10 @@ public class UserActivityController : Controller
 
             await _activityRepo.AddQuizResultAsync(result);
 
-            // Get existing learned words for this user and language
+            // Add learned words for any new correct answers
             IEnumerable<LearnedWord> existingWords = await _activityRepo.GetUserLearnedWordsAsync(user.Id, dto.Language);
             var existingWordSet = existingWords.Select(w => w.Word).ToHashSet();
 
-            // Add only new learned words from correct answers
             foreach (string word in dto.CorrectAnswers.Where(w => !existingWordSet.Contains(w)))
             {
                 await _activityRepo.AddLearnedWordAsync(new LearnedWord
@@ -175,8 +190,8 @@ public class UserActivityController : Controller
         }));
     }
 
-    [HttpPost("songplay")]
-    public async Task<IActionResult> AddSongPlay([FromBody] UserSongPlayDto dto)
+    [HttpPost("song")]
+    public async Task<IActionResult> AddOrUpdateSongActivity([FromBody] UserSongActivityDto dto)
     {
         try
         {
@@ -186,41 +201,65 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            UserSongPlay songPlay = new UserSongPlay
+            // Ensure at least one play date is provided
+            if (dto.PlayDates == null || !dto.PlayDates.Any())
             {
-                UserId = user.Id,
-                SongId = dto.SongId,
-                DatePlayed = dto.DatePlayed ?? DateTime.UtcNow
-            };
+                dto.PlayDates.Add(DateTime.UtcNow);
+            }
 
-            await _activityRepo.AddSongPlayAsync(songPlay);
+            UserSongActivity? existing = await _activityRepo.GetUserSongActivityAsync(user.Id, dto.SongId);
+            if (existing == null)
+            {
+                var activity = new UserSongActivity
+                {
+                    UserId = user.Id,
+                    SongId = dto.SongId,
+                    PlayDates = new List<DateTime>(dto.PlayDates),
+                    IsFavorite = dto.IsFavorite
+                };
+                await _activityRepo.UpsertSongActivityAsync(activity);
+            }
+            else
+            {
+                // Merge any new play dates (avoiding duplicates) and update favorite status
+                foreach (var date in dto.PlayDates)
+                {
+                    if (!existing.PlayDates.Contains(date))
+                    {
+                        existing.PlayDates.Add(date);
+                    }
+                }
+                existing.IsFavorite = dto.IsFavorite;
+                await _activityRepo.UpsertSongActivityAsync(existing);
+            }
+
             await _activityRepo.SaveChangesAsync();
-            return Ok(songPlay);
+            return Ok(new { message = "Song activity updated successfully." });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error adding song play");
+            _logger.LogError(ex, "Error adding/updating song activity");
             return StatusCode(500, new { message = "An unexpected error occurred." });
         }
     }
 
-    [HttpGet("songplays")]
-    public async Task<IActionResult> GetUserSongPlays()
-    {
-        User? user = await GetUserFromClaimsAsync();
-        if (user is null)
-        {
-            return Unauthorized(new { message = "User not found" });
-        }
+    // [HttpGet("songplays")]
+    // public async Task<IActionResult> GetUserSongPlays()
+    // {
+    //     User? user = await GetUserFromClaimsAsync();
+    //     if (user is null)
+    //     {
+    //         return Unauthorized(new { message = "User not found" });
+    //     }
 
-        IEnumerable<UserSongPlay> songPlays = await _activityRepo.GetUserSongPlaysAsync(user.Id);
-        return Ok(songPlays.Select(sp => new
-        {
-            sp.Id,
-            sp.SongId,
-            sp.DatePlayed
-        }));
-    }
+    //     IEnumerable<UserSongPlay> songPlays = await _activityRepo.GetUserSongPlaysAsync(user.Id);
+    //     return Ok(songPlays.Select(sp => new
+    //     {
+    //         sp.Id,
+    //         sp.SongId,
+    //         sp.DatePlayed
+    //     }));
+    // }
 
     [HttpPost("handwriting")]
     public async Task<IActionResult> AddHandwritingResult([FromBody] UserHandwritingResultDto dto)
@@ -293,30 +332,29 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            UserFavoriteSong? existingFavorite = await _activityRepo.GetFavoriteSongAsync(user.Id, dto.SongId);
-
-            if (dto.Favorited)
+            UserSongActivity? activity = await _activityRepo.GetUserSongActivityAsync(user.Id, dto.SongId);
+            if (activity == null)
             {
-                if (existingFavorite == null)
+                // Create a new activity record with a current timestamp if none exists
+                activity = new UserSongActivity
                 {
-                    var favorite = new UserFavoriteSong
-                    {
-                        UserId = user.Id,
-                        SongId = dto.SongId,
-                        DateFavorited = DateTime.UtcNow
-                    };
-                    await _activityRepo.AddFavoriteSongAsync(favorite);
-                }
-                else
-                {
-                    existingFavorite.DateFavorited = DateTime.UtcNow;
-                }
+                    UserId = user.Id,
+                    SongId = dto.SongId,
+                    PlayDates = new List<DateTime> { DateTime.UtcNow },
+                    IsFavorite = dto.Favorited
+                };
+                await _activityRepo.UpsertSongActivityAsync(activity);
             }
-            else if (existingFavorite != null)
+            else
             {
-                await _activityRepo.RemoveFavoriteSongAsync(existingFavorite);
+                // Update the favorite flag
+                activity.IsFavorite = dto.Favorited;
+                if (!activity.PlayDates.Any())
+                {
+                    activity.PlayDates.Add(DateTime.UtcNow);
+                }
+                await _activityRepo.UpsertSongActivityAsync(activity);
             }
-
             await _activityRepo.SaveChangesAsync();
             return Ok(new { message = dto.Favorited ? "Song favorited" : "Song unfavorited" });
         }
@@ -338,17 +376,21 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            IEnumerable<UserFavoriteSong> favorites = await _activityRepo.GetUserFavoriteSongsAsync(user.Id);
-            return Ok(favorites.Select(f => new
-            {
-                f.Id,
-                f.SongId,
-                f.DateFavorited
-            }));
+            var songActivities = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
+            var favorites = songActivities
+                .Where(sa => sa.IsFavorite)
+                .Select(sa => new
+                {
+                    sa.Id,
+                    sa.SongId,
+                    sa.PlayDates,
+                    sa.IsFavorite
+                });
+            return Ok(favorites);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting favorite songs");
+            _logger.LogError(ex, "Error retrieving favorite songs");
             return StatusCode(500, new { message = "An unexpected error occurred." });
         }
     }
@@ -364,30 +406,29 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            UserFavoritePlaylist? existingFavorite = await _activityRepo.GetFavoritePlaylistAsync(user.Id, dto.PlaylistUrl);
-
-            if (dto.Favorited)
+            UserPlaylistActivity? activity = await _activityRepo.GetUserPlaylistActivityAsync(user.Id, dto.PlaylistUrl);
+            if (activity == null)
             {
-                if (existingFavorite == null)
+                // Create a new activity record with a current timestamp if none exists
+                activity = new UserPlaylistActivity
                 {
-                    var favorite = new UserFavoritePlaylist
-                    {
-                        UserId = user.Id,
-                        PlaylistUrl = dto.PlaylistUrl,
-                        DateFavorited = DateTime.UtcNow
-                    };
-                    await _activityRepo.AddFavoritePlaylistAsync(favorite);
-                }
-                else
-                {
-                    existingFavorite.DateFavorited = DateTime.UtcNow;
-                }
+                    UserId = user.Id,
+                    PlaylistUrl = dto.PlaylistUrl,
+                    PlayDates = new List<DateTime> { DateTime.UtcNow },
+                    IsFavorite = dto.Favorited
+                };
+                await _activityRepo.UpsertPlaylistActivityAsync(activity);
             }
-            else if (existingFavorite != null)
+            else
             {
-                await _activityRepo.RemoveFavoritePlaylistAsync(existingFavorite);
+                // Update the favorite flag
+                activity.IsFavorite = dto.Favorited;
+                if (!activity.PlayDates.Any())
+                {
+                    activity.PlayDates.Add(DateTime.UtcNow);
+                }
+                await _activityRepo.UpsertPlaylistActivityAsync(activity);
             }
-
             await _activityRepo.SaveChangesAsync();
             return Ok(new { message = dto.Favorited ? "Playlist favorited" : "Playlist unfavorited" });
         }
@@ -409,17 +450,21 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            IEnumerable<UserFavoritePlaylist> favorites = await _activityRepo.GetUserFavoritePlaylistsAsync(user.Id);
-            return Ok(favorites.Select(f => new
-            {
-                f.Id,
-                f.PlaylistUrl,
-                f.DateFavorited
-            }));
+            var playlistActivities = await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id);
+            var favorites = playlistActivities
+                .Where(pa => pa.IsFavorite)
+                .Select(pa => new
+                {
+                    pa.Id,
+                    pa.PlaylistUrl,
+                    pa.PlayDates,
+                    pa.IsFavorite
+                });
+            return Ok(favorites);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting favorite playlists");
+            _logger.LogError(ex, "Error retrieving favorite playlists");
             return StatusCode(500, new { message = "An unexpected error occurred." });
         }
     }
@@ -451,7 +496,8 @@ public class UserActivityController : Controller
                 learnedWord.Id,
                 learnedWord.Word,
                 learnedWord.Language,
-                learnedWord.DateLearned
+                learnedWord.DateLearned,
+                learnedWord.UserId
             });
         }
         catch (Exception ex)
@@ -491,61 +537,48 @@ public class UserActivityController : Controller
 
         var activities = new
         {
+            SongActivities = (await _activityRepo.GetUserSongActivitiesAsync(user.Id))
+                               .Select(sa => new
+                               {
+                                   sa.Id,
+                                   sa.SongId,
+                                   sa.PlayDates,
+                                   sa.IsFavorite
+                               }),
             PlaylistActivities = (await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id))
-                .Select(pa => new
-                {
-                    pa.Id,
-                    pa.PlaylistUrl,
-                    pa.PlayCount,
-                    pa.LastPlayed
-                }),
-            QuizzesDone = (await _activityRepo.GetUserQuizResultsAsync(user.Id))
-                .Select(qr => new
-                {
-                    qr.Id,
-                    qr.QuizId,
-                    qr.Score,
-                    qr.Language,
-                    qr.DateCompleted
-                }),
-            SongPlays = (await _activityRepo.GetUserSongPlaysAsync(user.Id))
-                .Select(sp => new
-                {
-                    sp.Id,
-                    sp.SongId,
-                    sp.DatePlayed
-                }),
-            FavoriteSongs = (await _activityRepo.GetUserFavoriteSongsAsync(user.Id))
-                .Select(fs => new
-                {
-                    fs.Id,
-                    fs.SongId,
-                    fs.DateFavorited
-                }),
-            FavoritePlaylists = (await _activityRepo.GetUserFavoritePlaylistsAsync(user.Id))
-                .Select(fp => new
-                {
-                    fp.Id,
-                    fp.PlaylistUrl,
-                    fp.DateFavorited
-                }),
+                                  .Select(pa => new
+                                  {
+                                      pa.Id,
+                                      pa.PlaylistUrl,
+                                      pa.PlayDates,
+                                      pa.IsFavorite
+                                  }),
+            QuizResults = (await _activityRepo.GetUserQuizResultsAsync(user.Id))
+                          .Select(qr => new
+                          {
+                              qr.Id,
+                              qr.QuizId,
+                              qr.Score,
+                              qr.Language,
+                              qr.DateCompleted
+                          }),
             HandwritingResults = (await _activityRepo.GetUserHandwritingResultsAsync(user.Id))
-                .Select(hr => new
-                {
-                    hr.Id,
-                    hr.Language,
-                    hr.Score,
-                    hr.WordTested,
-                    hr.DateCompleted
-                }),
+                                 .Select(hr => new
+                                 {
+                                     hr.Id,
+                                     hr.Language,
+                                     hr.Score,
+                                     hr.WordTested,
+                                     hr.DateCompleted
+                                 }),
             LearnedWords = (await _activityRepo.GetUserLearnedWordsAsync(user.Id))
-                .Select(lw => new
-                {
-                    lw.Id,
-                    lw.Word,
-                    lw.Language,
-                    lw.DateLearned
-                }),
+                           .Select(lw => new
+                           {
+                               lw.Id,
+                               lw.Word,
+                               lw.Language,
+                               lw.DateLearned
+                           }),
             Message = "Activity history retrieved successfully. If lists are empty, you haven't recorded any activity yet."
         };
 
