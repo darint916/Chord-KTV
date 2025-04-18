@@ -7,9 +7,6 @@ using ChordKTV.Models.UserData;
 using ChordKTV.Dtos;
 using AutoMapper;
 using AutoMapper.Configuration;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
 namespace ChordKTV.Controllers;

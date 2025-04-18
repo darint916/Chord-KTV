@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1711
+
 namespace ChordKTV.Migrations
 {
     /// <inheritdoc />
