@@ -89,9 +89,15 @@ const HomePage: React.FC = () => {
 
       const newQueueItem: QueueItem = {
         ...response,
-        queueId: uuidv4()
+        title: response.title ?? "",
+        artist: response.artist ?? "",
+        youTubeId: response.youTubeId ?? "",
+        queueId: uuidv4(),
+        lyrics: lyrics ?? "",
+        apiRequested: true,
+        processedData: response
       };
-      setQueue([...queue, newQueueItem]);
+      setQueue([newQueueItem, ...queue]);
       setCurrentPlayingId(newQueueItem.queueId);
       setSong(response);
 

@@ -97,7 +97,7 @@ const SongPlayerPage: React.FC = () => {
                 fullSongRequestDto: {
                   title: nextItem.title,
                   artist: nextItem.artist,
-                  youTubeId: extractYouTubeVideoId(nextItem.youtubeUrl) || '',
+                  youTubeId: extractYouTubeVideoId(nextItem.youTubeId) || '',
                   lyrics: nextItem.lyrics || ''
                 }
               }).then(response => {
@@ -218,7 +218,7 @@ const SongPlayerPage: React.FC = () => {
     setError('');
 
     try {
-      const vidId = extractYouTubeVideoId(item.youtubeUrl);
+      const vidId = extractYouTubeVideoId(item.youTubeId);
       
       if (!item.apiRequested) {
         // Mark as requested immediately
@@ -279,7 +279,7 @@ const SongPlayerPage: React.FC = () => {
       ));
       
       // Fallback to basic playback
-      const vidId = extractYouTubeVideoId(item.youtubeUrl);
+      const vidId = extractYouTubeVideoId(item.youTubeId);
       setCurrentPlayingId(item.queueId);
       setSong({
         title: item.title,
