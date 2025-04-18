@@ -140,7 +140,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         }
 
         //Try parsing language code from string
-        if (Enum.TryParse(translatedSongLyrics.LanguageCode, out LanguageCode parsedLanguageCode))
+        if (Enum.TryParse(translatedSongLyrics.LanguageCode.ToUpperInvariant(), out LanguageCode parsedLanguageCode))
         {
             if (parsedLanguageCode == LanguageCode.UNK)
             {
@@ -321,7 +321,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
     public async Task<CandidateSongInfoListResponse> GetCandidateSongInfosAsync(string videoTitle, string channelName)
     {
         string prompt = $@"
-        Extract the song title and artist from the following YouTube video title and channel name.
+        Extract the song title and artist from the following YouTube video or Genius Source title and channel name.
         Input:
         Video Title: ""{videoTitle}""
         Channel Name: ""{channelName}""

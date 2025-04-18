@@ -112,6 +112,21 @@ public class FullSongService : IFullSongService
                 }
             }
         }
+        else if (!string.IsNullOrWhiteSpace(lyrics) && string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist))
+        {
+            //since there is a high chance people search with romanization, which returns like genius romanization as artist (basically unclean title), use candidate cleaning like with youtube
+            candidateSongInfoList = await _chatGptService.GetCandidateSongInfosAsync(song.Title, song.Artist);
+            foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
+            {
+                song = await _geniusService.GetSongByArtistTitleAsync(candidate.Title, candidate.Artist, lyrics);
+                if (song is not null || (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist)))
+                {
+                    title = candidate.Title;
+                    artist = candidate.Artist;
+                    break;
+                }
+            }
+        }
 
         //Gets lyrics from lrc service if not already present
         LrcLyricsDto? lrcLyricsDto = null;
@@ -143,12 +158,13 @@ public class FullSongService : IFullSongService
             lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(title, artist, null, (float?)duration?.TotalSeconds);
             if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics)) //not found anywhere
             {
-                _logger.LogWarning("2nd attempt Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}: attempting candidate gpt list", title, artist, duration);
-                if (candidateSongInfoList is null && videoDetails is not null) //genius title artist failed but youtube details are there to try again
+                if (videoDetails is not null) //genius title artist failed but youtube details are there to try again
                 {
-                    candidateSongInfoList = await _chatGptService.GetCandidateSongInfosAsync(videoDetails.Title, videoDetails.ChannelTitle);
+                    _logger.LogWarning("2nd attempt Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}: attempting candidate gpt list", title, artist, duration);
+                    candidateSongInfoList ??= await _chatGptService.GetCandidateSongInfosAsync(videoDetails.Title, videoDetails.ChannelTitle);
                     foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
                     {
+                        _logger.LogInformation("Testing Candidate for LRC Lib: '{Title}' by '{Artist}'", candidate.Title, candidate.Artist);
                         lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(candidate.Title, candidate.Artist, null, (float?)duration?.TotalSeconds);
                         if (lrcLyricsDto is not null && !string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics))
                         {
