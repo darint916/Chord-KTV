@@ -53,9 +53,9 @@ public class UserActivityController : Controller
             }
 
             // Ensure at least one play date is provided
-            if (dto.PlayDates == null || !dto.PlayDates.Any())
+            if (dto.DatesPlayed == null || !dto.DatesPlayed.Any())
             {
-                dto.PlayDates.Add(DateTime.UtcNow);
+                dto.DatesPlayed.Add(DateTime.UtcNow);
             }
 
             UserPlaylistActivity? existing = await _activityRepo.GetUserPlaylistActivityAsync(user.Id, dto.PlaylistUrl);
@@ -65,7 +65,7 @@ public class UserActivityController : Controller
                 {
                     UserId = user.Id,
                     PlaylistUrl = dto.PlaylistUrl,
-                    PlayDates = new List<DateTime>(dto.PlayDates),
+                    DatesPlayed = new List<DateTime>(dto.DatesPlayed),
                     IsFavorite = dto.IsFavorite
                 };
                 await _activityRepo.UpsertPlaylistActivityAsync(activity);
@@ -73,11 +73,11 @@ public class UserActivityController : Controller
             else
             {
                 // Merge new play dates and update favorite status
-                foreach (var date in dto.PlayDates)
+                foreach (var date in dto.DatesPlayed)
                 {
-                    if (!existing.PlayDates.Contains(date))
+                    if (!existing.DatesPlayed.Contains(date))
                     {
-                        existing.PlayDates.Add(date);
+                        existing.DatesPlayed.Add(date);
                     }
                 }
                 existing.IsFavorite = dto.IsFavorite;
@@ -108,7 +108,7 @@ public class UserActivityController : Controller
         {
             pa.Id,
             pa.PlaylistUrl,
-            pa.PlayDates,
+            pa.DatesPlayed,
             pa.IsFavorite
         }));
     }
@@ -202,9 +202,9 @@ public class UserActivityController : Controller
             }
 
             // Ensure at least one play date is provided
-            if (dto.PlayDates == null || !dto.PlayDates.Any())
+            if (dto.DatesPlayed == null || !dto.DatesPlayed.Any())
             {
-                dto.PlayDates.Add(DateTime.UtcNow);
+                dto.DatesPlayed.Add(DateTime.UtcNow);
             }
 
             UserSongActivity? existing = await _activityRepo.GetUserSongActivityAsync(user.Id, dto.SongId);
@@ -214,7 +214,7 @@ public class UserActivityController : Controller
                 {
                     UserId = user.Id,
                     SongId = dto.SongId,
-                    PlayDates = new List<DateTime>(dto.PlayDates),
+                    DatesPlayed = new List<DateTime>(dto.DatesPlayed),
                     IsFavorite = dto.IsFavorite
                 };
                 await _activityRepo.UpsertSongActivityAsync(activity);
@@ -222,11 +222,11 @@ public class UserActivityController : Controller
             else
             {
                 // Merge any new play dates (avoiding duplicates) and update favorite status
-                foreach (var date in dto.PlayDates)
+                foreach (var date in dto.DatesPlayed)
                 {
-                    if (!existing.PlayDates.Contains(date))
+                    if (!existing.DatesPlayed.Contains(date))
                     {
-                        existing.PlayDates.Add(date);
+                        existing.DatesPlayed.Add(date);
                     }
                 }
                 existing.IsFavorite = dto.IsFavorite;
@@ -340,7 +340,7 @@ public class UserActivityController : Controller
                 {
                     UserId = user.Id,
                     SongId = dto.SongId,
-                    PlayDates = new List<DateTime> { DateTime.UtcNow },
+                    DatesPlayed = new List<DateTime> { DateTime.UtcNow },
                     IsFavorite = dto.Favorited
                 };
                 await _activityRepo.UpsertSongActivityAsync(activity);
@@ -349,9 +349,9 @@ public class UserActivityController : Controller
             {
                 // Update the favorite flag
                 activity.IsFavorite = dto.Favorited;
-                if (!activity.PlayDates.Any())
+                if (!activity.DatesPlayed.Any())
                 {
-                    activity.PlayDates.Add(DateTime.UtcNow);
+                    activity.DatesPlayed.Add(DateTime.UtcNow);
                 }
                 await _activityRepo.UpsertSongActivityAsync(activity);
             }
@@ -383,7 +383,7 @@ public class UserActivityController : Controller
                 {
                     sa.Id,
                     sa.SongId,
-                    sa.PlayDates,
+                    sa.DatesPlayed,
                     sa.IsFavorite
                 });
             return Ok(favorites);
@@ -414,7 +414,7 @@ public class UserActivityController : Controller
                 {
                     UserId = user.Id,
                     PlaylistUrl = dto.PlaylistUrl,
-                    PlayDates = new List<DateTime> { DateTime.UtcNow },
+                    DatesPlayed = new List<DateTime> { DateTime.UtcNow },
                     IsFavorite = dto.Favorited
                 };
                 await _activityRepo.UpsertPlaylistActivityAsync(activity);
@@ -423,9 +423,9 @@ public class UserActivityController : Controller
             {
                 // Update the favorite flag
                 activity.IsFavorite = dto.Favorited;
-                if (!activity.PlayDates.Any())
+                if (!activity.DatesPlayed.Any())
                 {
-                    activity.PlayDates.Add(DateTime.UtcNow);
+                    activity.DatesPlayed.Add(DateTime.UtcNow);
                 }
                 await _activityRepo.UpsertPlaylistActivityAsync(activity);
             }
@@ -457,7 +457,7 @@ public class UserActivityController : Controller
                 {
                     pa.Id,
                     pa.PlaylistUrl,
-                    pa.PlayDates,
+                    pa.DatesPlayed,
                     pa.IsFavorite
                 });
             return Ok(favorites);
@@ -542,7 +542,7 @@ public class UserActivityController : Controller
                                {
                                    sa.Id,
                                    sa.SongId,
-                                   sa.PlayDates,
+                                   sa.DatesPlayed,
                                    sa.IsFavorite
                                }),
             PlaylistActivities = (await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id))
@@ -550,7 +550,7 @@ public class UserActivityController : Controller
                                   {
                                       pa.Id,
                                       pa.PlaylistUrl,
-                                      pa.PlayDates,
+                                      pa.DatesPlayed,
                                       pa.IsFavorite
                                   }),
             QuizResults = (await _activityRepo.GetUserQuizResultsAsync(user.Id))

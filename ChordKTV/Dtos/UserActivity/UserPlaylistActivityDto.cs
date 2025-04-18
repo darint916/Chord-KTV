@@ -6,5 +6,5 @@ public class UserPlaylistActivityDto
 {
     public string PlaylistUrl { get; set; } = string.Empty;
     public bool IsFavorite { get; set; }
-    public List<DateTime> PlayDates { get; set; } = new List<DateTime>();
+    public List<DateTime> DatesPlayed { get; set; } = new List<DateTime>();
 }

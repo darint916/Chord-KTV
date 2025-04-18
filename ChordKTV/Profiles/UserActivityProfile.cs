@@ -16,12 +16,12 @@ public class UserActivityProfile : Profile
 
         // Map the unified song activity
         CreateMap<UserSongActivity, UserSongActivityDto>()
-            .ForMember(dest => dest.PlayDates, opt => opt.MapFrom(src => src.PlayDates))
+            .ForMember(dest => dest.DatesPlayed, opt => opt.MapFrom(src => src.DatesPlayed))
             .ReverseMap();
 
         // Map the unified playlist activity
         CreateMap<UserPlaylistActivity, UserPlaylistActivityDto>()
-            .ForMember(dest => dest.PlayDates, opt => opt.MapFrom(src => src.PlayDates))
+            .ForMember(dest => dest.DatesPlayed, opt => opt.MapFrom(src => src.DatesPlayed))
             .ReverseMap();
 
         CreateMap<UserHandwritingResultDto, UserHandwritingResult>();

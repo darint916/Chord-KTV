@@ -78,11 +78,11 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<UserSongActivity>()
-            .Property(x => x.PlayDates)
+            .Property(x => x.DatesPlayed)
             .HasColumnType("timestamp with time zone[]");
 
         modelBuilder.Entity<UserPlaylistActivity>()
-            .Property(x => x.PlayDates)
+            .Property(x => x.DatesPlayed)
             .HasColumnType("timestamp with time zone[]");
     }
 }

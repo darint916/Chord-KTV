@@ -78,7 +78,7 @@ public class UserActivityRepo : IUserActivityRepo
         return await _context.UserSongActivities
             .Include(x => x.Song)
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.PlayDates.Max())
+            .OrderByDescending(x => x.DatesPlayed.Max())
             .ToListAsync();
     }
 
@@ -91,7 +91,7 @@ public class UserActivityRepo : IUserActivityRepo
         }
         else
         {
-            existing.PlayDates = activity.PlayDates;
+            existing.DatesPlayed = activity.DatesPlayed;
             existing.IsFavorite = activity.IsFavorite;
         }
     }
@@ -107,7 +107,7 @@ public class UserActivityRepo : IUserActivityRepo
     {
         return await _context.UserPlaylistActivities
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.PlayDates.Max())
+            .OrderByDescending(x => x.DatesPlayed.Max())
             .ToListAsync();
     }
 
@@ -120,7 +120,7 @@ public class UserActivityRepo : IUserActivityRepo
         }
         else
         {
-            existing.PlayDates = activity.PlayDates;
+            existing.DatesPlayed = activity.DatesPlayed;
             existing.IsFavorite = activity.IsFavorite;
         }
     }
