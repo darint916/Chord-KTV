@@ -64,13 +64,354 @@ dotnet ef database update
 
 ## API Documentation
 
+### Authentication
+
+Some endpoints may require authentication. The API provides a Google authentication endpoint: ```POST /api/auth/google```
+Call with Google JWT Bearer token to enable access to endpoints that require authentication.
+
+### Lyrics
+
 #### ```GET /api/lyrics/lrc/search```
 
 Returns time-synced lyrics from LRCLIB. Attempts to retrieve both original and romanized lyrics if they exist.
 We use both of LRCLIB's endpoints (https://lrclib.net/docs), performing an exact match (if at least title and artist exists), and then also a fuzzier search function. Exact searches from most strict parameters to least strict. For the batch search, it sends api requests in parallel from most strict to least (20 entries max each call), along with key word extraction. Post processing involves sorting by fuzzy matching the title and artist and duration. 
 When finding romanized lyrics, it does a more strict artist filter search, to match full words with the artist to try to get a very accurate match on the artist names.
 
-## Google Cloud for Handwriting Recognition
+**Query Parameters**:
+
+- title (string): Song title
+
+- artist (string): Song artist
+
+- albumName (string): Album name
+
+- duration (number): Song duration in seconds
+
+**Response:**
+
+- 200 OK: Search results
+
+#### ```POST /api/lyrics/lrc/translation```
+
+Translates lyrics between languages.
+
+**Request Body** (application/json):
+```json
+{
+  "originalLyrics": "string",
+  "languageCode": "LanguageCode",
+  "romanize": true,
+  "translate": true
+}
+```
+
+**Response:**
+
+- 200 OK: Search results
+
+### Songs
+
+#### ```POST /api/songs/search```
+
+Searches for songs with comprehensive details.
+
+**Request Body** (application/json):
+```json
+{
+  "title": "string",
+  "artist": "string",
+  "album": "string",
+  "duration": "date-span",
+  "lyrics": "string",
+  "youTubeId": "string"
+}
+```
+**Response:**
+
+- 200 OK: Returns song details
+
+    ```json
+    {
+        "id": "uuid",
+        "title": "string",
+        "alternateTitles": ["string"],
+        "artist": "string",
+        "featuredArtists": ["string"],
+        "albumNames": ["string"],
+        "releaseDate": "date",
+        "duration": "date-span",
+        "genre": "string",
+        "plainLyrics": "string",
+        "lrcLyrics": "string",
+        "lrcRomanizedLyrics": "string",
+        "lrcTranslatedLyrics": "string",
+        "youTubeId": "string",
+        "alternateYoutubeIds": ["string"],
+        "geniusMetaData": {
+            "geniusId": 0,
+            "headerImageUrl": "string",
+            "songImageUrl": "string",
+            "language": "LanguageCode"
+        },
+        "titleMatchScores": {
+            "lrcExactMatch": true,
+            "lrcRomanizedScore": 0,
+            "lrcOriginalScore": 0,
+            "lrcInputParamScore": 0
+        },
+        "artistMatchScores": {
+            "lrcExactMatch": true,
+            "lrcRomanizedScore": 0,
+            "lrcOriginalScore": 0,
+            "lrcInputParamScore": 0
+        }
+    }
+    ```
+- 404 Not Found: Song not found
+
+- 500 Internal Server Error: Server error
+
+- 503 Service Unavailable: Service unavailable
+
+#### ```GET /api/songs/genius/search```
+
+Searches for lyrics on Genius.
+
+**Query Parameters**:
+
+- title (string): Song title
+
+- artist (string): Song artist
+
+- lyrics (string): Lyrics text
+
+- forceRefresh (boolean, default=false): Force refresh cached results
+
+**Response:**
+
+- 200 OK: Search results
+
+#### ```POST /api/songs/genius/search/batch```
+
+Performs batch search for lyrics on Genius.
+
+**Query Parameters:**
+
+- forceRefresh (boolean, default=false): Force refresh cached results
+
+**Response:**
+
+- 200 OK: Batch search results
+
+### Album
+
+#### ```GET /api/album/{albumName}```
+
+Retrieves details about an album.
+
+**Path Parameters:**
+
+- albumName (string): Album name
+
+**Query Parameters:**
+
+- artist (string): Artist name
+
+**Response:**
+
+- 200 OK: Album details
+
+### Database Operations
+
+#### ```GET /api/database/song```
+
+Retrieves song details from the database.
+
+**Query Parameters:**
+
+- title (string, required): Song title
+
+- artist (string, required): Song artist
+
+- albumName (string): Album name
+
+**Response:**
+
+- 200 OK: Song details
+
+#### ```POST /api/database/song```
+
+Adds a song to the database.
+
+**Request Body** (application/json):
+
+```json
+{
+  "id": "uuid",
+  "title": "string",
+  "alternateTitles": ["string"],
+  "artist": "string",
+  "featuredArtists": ["string"],
+  "albums": [
+    {
+      "id": "uuid",
+      "isSingle": true,
+      "name": "string",
+      "artist": "string",
+      "songs": [Song]
+    }
+  ],
+  "releaseDate": "date",
+  "genre": "string",
+  "duration": "date-span",
+  "plainLyrics": "string",
+  "lrcLyrics": "string",
+  "lrcRomanizedLyrics": "string",
+  "lrcTranslatedLyrics": "string",
+  "lrcId": 0,
+  "romLrcId": 0,
+  "youtubeId": "string",
+  "alternateYoutubeIds": ["string"],
+  "geniusMetaData": {
+    "geniusId": 0,
+    "headerImageUrl": "string",
+    "headerImageThumbnailUrl": "string",
+    "songImageUrl": "string",
+    "songImageThumbnailUrl": "string",
+    "language": "LanguageCode"
+  }
+}
+```
+
+**Response:**
+
+- 200 OK: Song added successfully
+
+#### ```GET /api/database/users/{email}```
+
+Retrieves user details from the database.
+
+**Path Parameters:**
+
+- email (string): User email address
+
+**Response:**
+
+- 200 OK: User details
+
+### Handwriting Recognition
+
+#### ```POST /api/handwriting/ocr```
+
+Recognizes handwritten text from an image.
+
+**Request Body** (application/json):
+
+```json
+{
+  "image": "string",
+  "language": "LanguageCode",
+  "expectedMatch": "string"
+}
+```
+
+**Response:**
+
+- 200 OK: Returns recognition results
+    ```json
+    {
+        "recognizedText": "string",
+        "matchPercentage": 0.0
+    }
+    ```
+- 400 Bad Request: Invalid input
+
+- 500 Internal Server Error: Server error
+
+### Quiz
+
+#### GET /api/quiz/romanization
+
+Generates a quiz for romanizing song lyrics.
+
+**Query Parameters:**
+
+- songId (string, uuid): ID of the song
+
+- useCachedQuiz (boolean, default=false): Use cached quiz if available
+
+- difficulty (integer, default=3): Difficulty level
+
+- numQuestions (integer, default=5): Number of questions
+
+**Response:**
+
+- 200 OK: Returns quiz questions
+    ```json
+    {
+        "quizId": "uuid",
+        "songId": "uuid",
+        "difficulty": 0,
+        "timestamp": "date-time",
+        "questions": [
+            {
+            "questionNumber": 0,
+            "lyricPhrase": "string",
+            "options": ["string"],
+            "correctOptionIndex": 0
+            }
+        ]
+    }
+    ```
+- 400 Bad Request: Invalid parameters
+
+- 404 Not Found: Song not found
+
+- 500 Internal Server Error: Server error
+
+### YouTube Playlists
+
+#### ```GET /api/youtube/playlists/{playlistId}```
+
+Retrieves details about a YouTube playlist.
+
+**Path Parameters:**
+
+- playlistId (string): YouTube playlist ID
+
+**Query Parameters:**
+
+- shuffle (boolean, default=false): Shuffle the playlist order
+
+**Response:**
+
+- 200 OK: Returns playlist details
+    ```json
+    {
+        "playlistTitle": "string",
+        "videos": [
+            {
+            "title": "string",
+            "artist": "string",
+            "url": "string",
+            "duration": "date-span"
+            }
+        ]
+    }
+    ```
+- 500 Internal Server Error: Server error
+
+### Health Check
+
+#### ```GET /api/health```
+
+Checks the health status of the service.
+
+**Response:**
+
+- 200 OK: Service is healthy
+
+## Google Cloud for Handwriting Recognition Setup
 
 Make sure that you have gcloud CLI installed. Run ```gcloud auth application-default login``` before running the backend.
 This is a necessary step, since there is no way to pass API key into function call for Google Cloud Vision API.
