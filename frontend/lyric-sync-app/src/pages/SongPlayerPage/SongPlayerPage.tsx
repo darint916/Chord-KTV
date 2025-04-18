@@ -86,7 +86,6 @@ const SongPlayerPage: React.FC = () => {
           const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
           if (currentIndex >= 0 && currentIndex < queue.length - 1) {
             const nextItem = queue[currentIndex + 1];
-            console.log(nextItem);
             
             // Only proceed if we haven't already requested the API for this song
             if (!nextItem.apiRequested) {
@@ -213,15 +212,21 @@ const SongPlayerPage: React.FC = () => {
   };
 
   const handlePlayFromQueue = async (item: QueueItem) => {
+    if (item.error) return; // Don't try to play errored items
+
     setIsLoading(true);
     setError('');
 
     try {
       const vidId = extractYouTubeVideoId(item.youtubeUrl);
       
-      // Only proceed with API call if not already requested
       if (!item.apiRequested) {
-        item.apiRequested = true;
+        // Mark as requested immediately
+        setQueue(prevQueue => prevQueue.map(queueItem => 
+          queueItem.queueId === item.queueId 
+            ? { ...queueItem, apiRequested: true, error: undefined } 
+            : queueItem
+        ));
 
         const response = await songApi.apiSongsSearchPost({
           fullSongRequestDto: {
@@ -232,7 +237,6 @@ const SongPlayerPage: React.FC = () => {
           }
         });
 
-        // Update the current playing song with the API response
         const processedData = {
           title: response.title,
           artist: response.artist,
@@ -243,18 +247,15 @@ const SongPlayerPage: React.FC = () => {
           geniusMetaData: response.geniusMetaData
         };
 
-        // Update the queue item with processed data for future reference
         setQueue(prevQueue => prevQueue.map(queueItem => 
           queueItem.queueId === item.queueId 
             ? { ...queueItem, processedData, apiRequested: true } 
             : queueItem
         ));
 
-        // Set as current song
         setCurrentPlayingId(item.queueId);
         setSong(processedData);
       } else {
-        // If already requested, just use the existing processed data or basic info
         const playbackData = item.processedData || {
           title: item.title,
           artist: item.artist,
@@ -267,11 +268,17 @@ const SongPlayerPage: React.FC = () => {
         setCurrentPlayingId(item.queueId);
         setSong(playbackData);
       }
-
     } catch (err) {
-      setError('Failed to load song details. Playing with basic info.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
       
-      // Fallback to basic playback if API fails
+      // Update the queue item with error state
+      setQueue(prevQueue => prevQueue.map(queueItem => 
+        queueItem.queueId === item.queueId 
+          ? { ...queueItem, error: errorMessage } 
+          : queueItem
+      ));
+      
+      // Fallback to basic playback
       const vidId = extractYouTubeVideoId(item.youtubeUrl);
       setCurrentPlayingId(item.queueId);
       setSong({
@@ -285,7 +292,7 @@ const SongPlayerPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }; 
+  };
 
   const clearQueue = () => {
     if (!currentPlayingId) {

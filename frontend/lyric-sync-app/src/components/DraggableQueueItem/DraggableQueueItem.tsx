@@ -1,8 +1,17 @@
 import React, { useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-import { ListItemButton, ListItemText, IconButton, Box } from '@mui/material';
+import { 
+  ListItemButton, 
+  ListItemText, 
+  IconButton, 
+  Box, 
+  CircularProgress,
+  Tooltip,
+  Avatar
+} from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ErrorIcon from '@mui/icons-material/Error';
 import './DraggableQueueItem.scss';
 import { QueueItem } from '../../contexts/QueueTypes';
 
@@ -49,35 +58,68 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
 
   drag(drop(ref));
 
+  const isLoading = item.apiRequested && !item.processedData && !item.error;
+  const hasError = item.error;
+  const songImageUrl = item.processedData?.geniusMetaData?.songImageUrl;
+
   return (
     <div ref={ref} style={{ opacity: isDragging ? 0.5 : 1 }}>
       <ListItemButton 
-        onClick={() => onPlay(item)}
-        className={`queue-item ${currentPlayingId === item.queueId ? 'active-song' : ''}`}
+        onClick={() => !hasError && onPlay(item)}
+        className={`queue-item ${currentPlayingId === item.queueId ? 'active-song' : ''} ${hasError ? 'error-item' : ''}`}
         sx={{
-          backgroundColor: currentPlayingId === item.queueId ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
+          backgroundColor: currentPlayingId === item.queueId 
+            ? 'rgba(25, 118, 210, 0.08)' 
+            : hasError
+              ? 'rgba(255, 0, 0, 0.08)'
+              : 'transparent',
           '&:hover': {
             backgroundColor: currentPlayingId === item.queueId 
               ? 'rgba(25, 118, 210, 0.12)' 
-              : 'rgba(255, 255, 255, 0.1)'
+              : hasError
+                ? 'rgba(255, 0, 0, 0.12)'
+                : 'rgba(255, 255, 255, 0.1)'
           }
         }}
+        disabled={isLoading}
       >
-        <DragIndicatorIcon 
-          className="drag-handle" 
-          sx={{ cursor: 'move', mr: 1, opacity: 0.5, '&:hover': { opacity: 1 } }} 
-        />
+        {isLoading ? (
+          <CircularProgress size={20} sx={{ mr: 2 }} />
+        ) : hasError ? (
+          <Tooltip title={item.error || "Failed to load song details"}>
+            <ErrorIcon color="error" sx={{ mr: 1 }} />
+          </Tooltip>
+        ) : null}
+
+        {songImageUrl && (
+          <Avatar 
+            src={songImageUrl} 
+            variant="square"
+            sx={{ 
+              width: 40, 
+              height: 40, 
+              mr: 2,
+              borderRadius: 1
+            }}
+          />
+        )}
+
         <ListItemText 
-          primary={`${index + 1}. ${item.title}`} 
-          secondary={item.artist}
+          primary={`${index + 1}. ${item.processedData?.title || item.title}`} 
+          secondary={item.processedData?.artist || item.artist}
           primaryTypographyProps={{ 
             noWrap: true,
-            fontWeight: currentPlayingId === item.queueId ? 'bold' : 'normal'
+            fontWeight: currentPlayingId === item.queueId ? 'bold' : 'normal',
+            color: hasError ? 'error.main' : isLoading ? 'text.disabled' : 'text.primary'
           }}
-          secondaryTypographyProps={{ noWrap: true }}
+          secondaryTypographyProps={{ 
+            noWrap: true,
+            color: hasError ? 'error.main' : isLoading ? 'text.disabled' : 'text.secondary'
+          }}
           sx={{ flex: 1 }}
         />
-        {currentPlayingId === item.queueId && (
+
+        {currentPlayingId === item.queueId && !hasError && (
           <Box sx={{ 
             width: 8, 
             height: 8, 
@@ -86,7 +128,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
             ml: 1
           }} />
         )}
-        {currentPlayingId !== item.queueId && (
+        {!isLoading && (
           <IconButton
             edge="end"
             aria-label="remove"
@@ -95,7 +137,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
               onRemove(item.queueId);
             }}
             sx={{
-              color: 'error.main',
+              color: hasError ? 'error.main' : 'error.main',
               '&:hover': {
                 backgroundColor: 'rgba(255, 0, 0, 0.1)'
               }
