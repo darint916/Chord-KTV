@@ -70,7 +70,7 @@ const SongPlayerPage: React.FC = () => {
   const handlePlayerReady = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
 
-    setInterval(() => {
+    const progressCheckInterval = setInterval(() => {
       if (playerRef.current) { 
         const current = playerRef.current.getCurrentTime();
         const duration = playerRef.current.getDuration();
@@ -81,52 +81,58 @@ const SongPlayerPage: React.FC = () => {
           setShowQuizButton(true);
         }
 
-        // Check if we're at the halfway point and there's a next song in queue
+        // Check if we're at the halfway point and there's songs in queue
         if (current / duration >= 0.5 && queue.length > 1 && currentPlayingId) {
           const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
           if (currentIndex >= 0 && currentIndex < queue.length - 1) {
-            const nextItem = queue[currentIndex + 1];
+            // Get next 2 songs (or just 1 if we're at the end)
+            const nextItems = queue.slice(currentIndex + 1, currentIndex + 3);
             
-            // Only proceed if we haven't already requested the API for this song
-            if (!nextItem.apiRequested) {
-              // Mark as requested immediately to prevent duplicate calls
-              nextItem.apiRequested = true;
+            nextItems.forEach((nextItem) => {
+              // Only proceed if we haven't already requested the API for this song
+              if (!nextItem.apiRequested) {
+                // Mark as requested immediately to prevent duplicate calls
+                nextItem.apiRequested = true;
 
-              // Call the API for the next song
-              songApi.apiSongsSearchPost({
-                fullSongRequestDto: {
-                  title: nextItem.title,
-                  artist: nextItem.artist,
-                  youTubeId: extractYouTubeVideoId(nextItem.youTubeId) || '',
-                  lyrics: nextItem.lyrics || ''
-                }
-              }).then(response => {
-                // Update the queue with the processed data
-                setQueue(prevQueue => prevQueue.map(item => 
-                  item.queueId === nextItem.queueId 
-                    ? { 
-                        ...item, 
-                        processedData: {
-                          title: response.title,
-                          artist: response.artist,
-                          youTubeId: response.youTubeId,
-                          lrcLyrics: response.lrcLyrics,
-                          lrcRomanizedLyrics: response.lrcRomanizedLyrics,
-                          lrcTranslatedLyrics: response.lrcTranslatedLyrics,
-                          geniusMetaData: response.geniusMetaData
-                        }
-                      } 
-                    : item
-                ));
-              }).catch(err => {
-                console.error('Failed to pre-process next song:', err);
-                // Even if it fails, we keep apiRequested as true to prevent retries
-              });
-            }
+                // Call the API for the next song
+                songApi.apiSongsSearchPost({
+                  fullSongRequestDto: {
+                    title: nextItem.title,
+                    artist: nextItem.artist,
+                    youTubeId: extractYouTubeVideoId(nextItem.youTubeId) || '',
+                    lyrics: nextItem.lyrics || ''
+                  }
+                }).then(response => {
+                  // Update the queue with the processed data
+                  setQueue(prevQueue => prevQueue.map(item => 
+                    item.queueId === nextItem.queueId 
+                      ? { 
+                          ...item, 
+                          processedData: {
+                            title: response.title,
+                            artist: response.artist,
+                            youTubeId: response.youTubeId,
+                            lrcLyrics: response.lrcLyrics,
+                            lrcRomanizedLyrics: response.lrcRomanizedLyrics,
+                            lrcTranslatedLyrics: response.lrcTranslatedLyrics,
+                            geniusMetaData: response.geniusMetaData
+                          }
+                        } 
+                      : item
+                  ));
+                }).catch(err => {
+                  console.error(`Failed to pre-process song ${nextItem.title}:`, err);
+                  // Even if it fails, we keep apiRequested as true to prevent retries
+                });
+              }
+            });
           }
         }
       }
     }, 1000);
+
+    // Clean up interval on unmount
+    return () => clearInterval(progressCheckInterval);
   };
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -165,22 +171,6 @@ const SongPlayerPage: React.FC = () => {
       };
 
       setQueue(prev => [...prev, newItem]);
-      
-      // If nothing is currently playing, play this new item
-      if (!currentPlayingId) {
-        setCurrentPlayingId(newItem.queueId);
-        if (youTubeId) {
-          // Minimal song data for immediate playback
-          setSong({
-            title: songName,
-            artist: artistName,
-            youTubeId: youTubeId,
-            lrcLyrics: '',
-            lrcRomanizedLyrics: '',
-            lrcTranslatedLyrics: ''
-          });
-        }
-      }
 
       // Clear form
       setSongName('');

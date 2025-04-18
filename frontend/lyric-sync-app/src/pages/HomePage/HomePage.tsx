@@ -19,7 +19,6 @@ import './HomePage.scss';
 import { songApi } from '../../api/apiClient';
 import logo from '../../assets/chordktv.png';
 import { v4 as uuidv4 } from 'uuid';
-import { FullSongResponseDto } from '../../api';
 import { QueueItem } from '../../contexts/QueueTypes';
 
 const HomePage: React.FC = () => {
