@@ -69,14 +69,12 @@ public class UserActivityRepo : IUserActivityRepo
     public async Task<UserSongActivity?> GetUserSongActivityAsync(Guid userId, Guid songId)
     {
         return await _context.UserSongActivities
-            .Include(x => x.Song)
             .FirstOrDefaultAsync(x => x.UserId == userId && x.SongId == songId);
     }
 
     public async Task<IEnumerable<UserSongActivity>> GetUserSongActivitiesAsync(Guid userId)
     {
         return await _context.UserSongActivities
-            .Include(x => x.Song)
             .Where(x => x.UserId == userId)
             .OrderByDescending(x => x.DatesPlayed.Max())
             .ToListAsync();
