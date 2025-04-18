@@ -14,12 +14,12 @@ import { useNavigate } from 'react-router-dom';
 import { useSong } from '../../contexts/SongContext';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../../contexts/AuthTypes';
-import YouTubePlaylistLoader from '../../components/YouTubePlaylistLoader/YouTubePlaylistLoader';
 import './HomePage.scss';
 import { songApi } from '../../api/apiClient';
 import logo from '../../assets/chordktv.png';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
+import axios from 'axios';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
@@ -27,23 +27,97 @@ const HomePage: React.FC = () => {
   const [artistName, setArtistName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [playlistLoading, setPlaylistLoading] = useState(false);
   const navigate = useNavigate();
   const { setSong, queue, setQueue, setCurrentPlayingId } = useSong();
   const [playlistUrl, setPlaylistUrl] = useState('');
-  const [showPlaylist, setShowPlaylist] = useState(false); 
   const [lyrics, setLyrics] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
   const extractYouTubeVideoId = (url: string | null | undefined): string | null => {
-    if (!url) {return null;}
+    if (!url) return null;
     const match = url.match(/(?:\?v=|\/embed\/|\.be\/|\/watch\?v=|\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/);
     return match ? match[1] : null;
+  };
+
+  const extractPlaylistId = (url: string): string | null => {
+    if (!url) return null;
+    const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+    return match ? match[1] : null;
+  };
+
+  const handleLoadPlaylist = async () => {
+    if (!playlistUrl.trim()) {
+      setError('Please enter a valid YouTube playlist URL.');
+      return;
+    }
+
+    setPlaylistLoading(true);
+    setError('');
+
+    try {
+      const playlistId = extractPlaylistId(playlistUrl);
+      if (!playlistId) throw new Error('Invalid YouTube playlist URL');
+
+      const response = await songApi.apiYoutubePlaylistsPlaylistIdGet({ playlistId });
+      const videos = response.videos || [];
+      if (videos.length === 0) throw new Error('This playlist contains no videos');
+
+      // Create queue items with basic info
+      const newQueue = videos.map(video => ({
+        queueId: uuidv4(),
+        title: video.title || 'Unknown Track',
+        artist: video.artist || 'Unknown Artist',
+        youTubeId: extractYouTubeVideoId(video.url) || '',
+        lyrics: "",
+        apiRequested: false
+      }));
+
+      // Set the queue with new songs
+      setQueue(newQueue);
+      
+      // Immediately process the first song
+      const firstSong = newQueue[0];
+      try {
+        const processed = await songApi.apiSongsSearchPost({
+          fullSongRequestDto: {
+            title: firstSong.title,
+            artist: firstSong.artist,
+            youTubeId: firstSong.youTubeId,
+            lyrics: firstSong.lyrics
+          }
+        });
+        
+        // Update queue with processed data for first song
+        setQueue(prev => prev.map(item => 
+          item.queueId === firstSong.queueId 
+            ? { ...item, processedData: processed, apiRequested: true }
+            : item
+        ));
+        
+        // Set as current song with full data
+        setCurrentPlayingId(firstSong.queueId);
+        setSong(processed);
+      } catch (err) {
+        console.error('Failed to process first song:', err);
+        // Fallback to basic info if processing fails
+        setCurrentPlayingId(firstSong.queueId);
+        setSong({
+          title: firstSong.title,
+          artist: firstSong.artist,
+          youTubeId: firstSong.youTubeId,
+          lrcLyrics: '',
+          lrcRomanizedLyrics: '',
+          lrcTranslatedLyrics: ''
+        });
+      }
+      
+      navigate('/play-song');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load playlist');
+    } finally {
+      setPlaylistLoading(false);
+    }
   };
 
   const handleSearch = async () => {
@@ -101,19 +175,21 @@ const HomePage: React.FC = () => {
       setSong(response);
 
       navigate('/play-song');
-    } catch {
+    } catch (err) {
       setError('Search failed. Please try again.');
     } finally {
-      setIsLoading(false); // Set loading state to false when the search finishes
+      setIsLoading(false);
     }
   };
 
-  const handleLoadPlaylist = () => {
-    if (!playlistUrl.trim()) {
-      setError('Please enter a valid YouTube playlist URL.');
-      return;
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter') {
+      if (playlistUrl) {
+        handleLoadPlaylist();
+      } else {
+        handleSearch();
+      }
     }
-    setShowPlaylist(true);
   };
 
   return (
@@ -142,7 +218,7 @@ const HomePage: React.FC = () => {
                 label="Song Name"
                 variant="filled"
                 value={songName}
-                disabled={isLoading}
+                disabled={isLoading || playlistLoading}
                 onKeyDown={handleKeyDown}
                 onChange={(e) => setSongName(e.target.value)}
                 className="search-input"
@@ -152,7 +228,7 @@ const HomePage: React.FC = () => {
                 label="Artist Name"
                 variant="filled"
                 value={artistName}
-                disabled={isLoading}
+                disabled={isLoading || playlistLoading}
                 onKeyDown={handleKeyDown}
                 onChange={(e) => setArtistName(e.target.value)}
                 className="search-input"
@@ -162,7 +238,7 @@ const HomePage: React.FC = () => {
                 label="Lyrics"
                 variant="filled"
                 value={lyrics}
-                disabled={isLoading}
+                disabled={isLoading || playlistLoading}
                 onKeyDown={handleKeyDown}
                 onChange={(e) => setLyrics(e.target.value)}
                 className="search-input"
@@ -172,7 +248,7 @@ const HomePage: React.FC = () => {
                 label="YouTube URL"
                 variant="filled"
                 value={youtubeUrl}
-                disabled={isLoading}
+                disabled={isLoading || playlistLoading}
                 onKeyDown={handleKeyDown}
                 onChange={(e) => setYoutubeUrl(e.target.value)}
                 className="search-input"
@@ -182,7 +258,7 @@ const HomePage: React.FC = () => {
             <IconButton
               aria-label="search"
               onClick={handleSearch}
-              disabled={isLoading}
+              disabled={isLoading || playlistLoading}
               className={`search-button ${isLoading ? 'loading' : ''}`}
               size="large"
             >
@@ -211,22 +287,24 @@ const HomePage: React.FC = () => {
               label="Enter YouTube Playlist URL"
               variant="filled"
               value={playlistUrl}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleLoadPlaylist();
-                }
-              }}
+              disabled={isLoading || playlistLoading}
+              onKeyDown={handleKeyDown}
               onChange={(e) => setPlaylistUrl(e.target.value)}
             />
             <Button
               variant="contained"
               onClick={handleLoadPlaylist}
-              disabled={isLoading}
+              disabled={isLoading || playlistLoading}
+              startIcon={playlistLoading ? <CircularProgress size={20} /> : null}
             >
-              Load Playlist
+              {playlistLoading ? 'Loading...' : 'Load Playlist'}
             </Button>
           </div>
-          {showPlaylist && <YouTubePlaylistLoader playlistUrl={playlistUrl} />}
+          {playlistLoading && (
+            <Box display="flex" justifyContent="center" mt={2}>
+              <CircularProgress />
+            </Box>
+          )}
         </Paper>
       </Container>
     </Box>
