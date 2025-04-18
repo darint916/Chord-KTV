@@ -41,42 +41,6 @@ public class GeniusService : IGeniusService
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
     }
 
-    // private sealed class SearchMatch
-    // {
-    //     public GeniusResult Result { get; set; } = null!;
-    //     public int TitleScore { get; set; }
-    //     public int ArtistScore { get; set; }
-    //     public int TotalScore => TitleScore + ArtistScore;
-    // }
-
-    // private static SearchMatch ScoreMatch(GeniusResult result, string queryTitle, string? queryArtist)
-    // {
-    //     // Calculate title score
-    //     string normalizedResultTitle = result.Title.ToLower(CultureInfo.CurrentCulture);
-    //     string normalizedQueryTitle = queryTitle.ToLower(CultureInfo.CurrentCulture);
-
-    //     int exactTitleScore = Fuzz.Ratio(normalizedResultTitle, normalizedQueryTitle);
-    //     bool containsTitle = normalizedResultTitle.Contains(normalizedQueryTitle, StringComparison.OrdinalIgnoreCase);
-    //     int titleScore = containsTitle ? Math.Max(exactTitleScore, 85) : exactTitleScore;
-
-    //     // Calculate artist score only if provided (used for ranking, not filtering)
-    //     int artistScore = 0;
-    //     if (!string.IsNullOrWhiteSpace(queryArtist))
-    //     {
-    //         artistScore = Fuzz.Ratio(
-    //             result.PrimaryArtistNames.ToLower(CultureInfo.CurrentCulture),
-    //             queryArtist.ToLower(CultureInfo.CurrentCulture)
-    //         );
-    //     }
-
-    //     return new SearchMatch
-    //     {
-    //         Result = result,
-    //         TitleScore = titleScore,
-    //         ArtistScore = artistScore
-    //     };
-    // }
-
     /// <summary>
     /// Helper to query Genius using the given search query and compare results with the provided fuzzy criteria
     /// </summary>
