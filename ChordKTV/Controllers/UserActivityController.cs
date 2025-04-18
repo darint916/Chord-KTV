@@ -30,15 +30,18 @@ public class UserActivityController : Controller
     private readonly IUserActivityRepo _activityRepo;
     private readonly IUserRepo _userRepo;
     private readonly ILogger<UserActivityController> _logger;
+    private readonly IMapper _mapper;
 
     public UserActivityController(
         IUserActivityRepo activityRepo,
         IUserRepo userRepo,
-        ILogger<UserActivityController> logger)
+        ILogger<UserActivityController> logger,
+        IMapper mapper)
     {
         _activityRepo = activityRepo;
         _userRepo = userRepo;
         _logger = logger;
+        _mapper = mapper;
     }
 
     [HttpPost("playlist")]
@@ -61,14 +64,12 @@ public class UserActivityController : Controller
             UserPlaylistActivity? existing = await _activityRepo.GetUserPlaylistActivityAsync(user.Id, dto.PlaylistUrl);
             if (existing == null)
             {
-                var activity = new UserPlaylistActivity
-                {
-                    UserId = user.Id,
-                    PlaylistUrl = dto.PlaylistUrl,
-                    DatesPlayed = new List<DateTime>(dto.DatesPlayed),
-                    IsFavorite = dto.IsFavorite
-                };
+                var activity = _mapper.Map<UserPlaylistActivity>(dto);
+                activity.UserId = user.Id;
                 await _activityRepo.UpsertPlaylistActivityAsync(activity);
+                await _activityRepo.SaveChangesAsync();
+                var resultDto = _mapper.Map<UserPlaylistActivityDto>(activity);
+                return Ok(resultDto);
             }
             else
             {
@@ -82,10 +83,10 @@ public class UserActivityController : Controller
                 }
                 existing.IsFavorite = dto.IsFavorite;
                 await _activityRepo.UpsertPlaylistActivityAsync(existing);
+                await _activityRepo.SaveChangesAsync();
+                var resultDto = _mapper.Map<UserPlaylistActivityDto>(existing);
+                return Ok(resultDto);
             }
-
-            await _activityRepo.SaveChangesAsync();
-            return Ok(new { message = "Playlist activity updated successfully." });
         }
         catch (Exception ex)
         {
@@ -104,13 +105,8 @@ public class UserActivityController : Controller
         }
 
         IEnumerable<UserPlaylistActivity> activities = await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id);
-        return Ok(activities.Select(pa => new
-        {
-            pa.Id,
-            pa.PlaylistUrl,
-            pa.DatesPlayed,
-            pa.IsFavorite
-        }));
+        var result = _mapper.Map<IEnumerable<UserPlaylistActivityDto>>(activities);
+        return Ok(result);
     }
 
     [HttpPost("quiz")]
@@ -124,44 +120,31 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var result = new UserQuizResult
-            {
-                UserId = user.Id,
-                QuizId = dto.QuizId,
-                Score = dto.Score,
-                Language = dto.Language,
-                DateCompleted = dto.DateCompleted ?? DateTime.UtcNow
-            };
+            var result = _mapper.Map<UserQuizResult>(dto);
+            result.UserId = user.Id;
+            // Ensure DateCompleted is set
+            result.DateCompleted = dto.DateCompleted ?? DateTime.UtcNow;
 
             await _activityRepo.AddQuizResultAsync(result);
 
-            // Add learned words for any new correct answers
-            IEnumerable<LearnedWord> existingWords = await _activityRepo.GetUserLearnedWordsAsync(user.Id, dto.Language);
-            var existingWordSet = existingWords.Select(w => w.Word).ToHashSet();
-
-            foreach (string word in dto.CorrectAnswers.Where(w => !existingWordSet.Contains(w)))
+            // Optionally add learned words for any new correct answers
+            IEnumerable<LearnedWord> learnedWords = await _activityRepo.GetUserLearnedWordsAsync(user.Id, dto.Language);
+            var existingWords = new HashSet<string>(learnedWords.Select(lw => lw.Word));
+            foreach (string word in dto.CorrectAnswers.Where(w => !existingWords.Contains(w)))
             {
-                await _activityRepo.AddLearnedWordAsync(new LearnedWord
+                var lw = new LearnedWord
                 {
                     UserId = user.Id,
                     Word = word,
                     Language = dto.Language,
                     DateLearned = DateTime.UtcNow
-                });
+                };
+                await _activityRepo.AddLearnedWordAsync(lw);
             }
 
             await _activityRepo.SaveChangesAsync();
-
-            return Ok(new
-            {
-                result.Id,
-                result.QuizId,
-                result.Score,
-                result.Language,
-                result.DateCompleted,
-                result.UserId,
-                dto.CorrectAnswers
-            });
+            var resultDto = _mapper.Map<UserQuizResultDto>(result);
+            return Ok(resultDto);
         }
         catch (Exception ex)
         {
@@ -210,14 +193,12 @@ public class UserActivityController : Controller
             UserSongActivity? existing = await _activityRepo.GetUserSongActivityAsync(user.Id, dto.SongId);
             if (existing == null)
             {
-                var activity = new UserSongActivity
-                {
-                    UserId = user.Id,
-                    SongId = dto.SongId,
-                    DatesPlayed = new List<DateTime>(dto.DatesPlayed),
-                    IsFavorite = dto.IsFavorite
-                };
+                var activity = _mapper.Map<UserSongActivity>(dto);
+                activity.UserId = user.Id;
                 await _activityRepo.UpsertSongActivityAsync(activity);
+                await _activityRepo.SaveChangesAsync();
+                var resultDto = _mapper.Map<UserSongActivityDto>(activity);
+                return Ok(resultDto);
             }
             else
             {
@@ -231,10 +212,10 @@ public class UserActivityController : Controller
                 }
                 existing.IsFavorite = dto.IsFavorite;
                 await _activityRepo.UpsertSongActivityAsync(existing);
+                await _activityRepo.SaveChangesAsync();
+                var resultDto = _mapper.Map<UserSongActivityDto>(existing);
+                return Ok(resultDto);
             }
-
-            await _activityRepo.SaveChangesAsync();
-            return Ok(new { message = "Song activity updated successfully." });
         }
         catch (Exception ex)
         {
@@ -255,13 +236,8 @@ public class UserActivityController : Controller
             }
 
             IEnumerable<UserSongActivity> songActivities = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
-            return Ok(songActivities.Select(sa => new
-            {
-                sa.Id,
-                sa.SongId,
-                sa.DatesPlayed,
-                sa.IsFavorite
-            }));
+            var result = _mapper.Map<IEnumerable<UserSongActivityDto>>(songActivities);
+            return Ok(result);
         }
         catch (Exception ex)
         {
@@ -385,17 +361,10 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var songActivities = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
-            var favorites = songActivities
-                .Where(sa => sa.IsFavorite)
-                .Select(sa => new
-                {
-                    sa.Id,
-                    sa.SongId,
-                    sa.DatesPlayed,
-                    sa.IsFavorite
-                });
-            return Ok(favorites);
+            IEnumerable<UserSongActivity> allSongs = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
+            var favorites = allSongs.Where(sa => sa.IsFavorite).ToList();
+            var result = _mapper.Map<IEnumerable<UserSongActivityDto>>(favorites);
+            return Ok(result);
         }
         catch (Exception ex)
         {
@@ -459,17 +428,10 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var playlistActivities = await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id);
-            var favorites = playlistActivities
-                .Where(pa => pa.IsFavorite)
-                .Select(pa => new
-                {
-                    pa.Id,
-                    pa.PlaylistUrl,
-                    pa.DatesPlayed,
-                    pa.IsFavorite
-                });
-            return Ok(favorites);
+            IEnumerable<UserPlaylistActivity> allPlaylists = await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id);
+            var favorites = allPlaylists.Where(pa => pa.IsFavorite).ToList();
+            var result = _mapper.Map<IEnumerable<UserPlaylistActivityDto>>(favorites);
+            return Ok(result);
         }
         catch (Exception ex)
         {
@@ -489,25 +451,15 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var learnedWord = new LearnedWord
-            {
-                UserId = user.Id,
-                Word = dto.Word,
-                Language = dto.Language,
-                DateLearned = dto.DateLearned ?? DateTime.UtcNow
-            };
-
+            var learnedWord = _mapper.Map<LearnedWord>(dto);
+            learnedWord.UserId = user.Id;
+            // Ensure DateLearned is set
+            learnedWord.DateLearned = dto.DateLearned ?? DateTime.UtcNow;
             await _activityRepo.AddLearnedWordAsync(learnedWord);
             await _activityRepo.SaveChangesAsync();
-
-            return Ok(new
-            {
-                learnedWord.Id,
-                learnedWord.Word,
-                learnedWord.Language,
-                learnedWord.DateLearned,
-                learnedWord.UserId
-            });
+            // Optionally, map back to a DTO if one exists.
+            var result = _mapper.Map<LearnedWordDto>(learnedWord);
+            return Ok(result);
         }
         catch (Exception ex)
         {
@@ -526,13 +478,8 @@ public class UserActivityController : Controller
         }
 
         IEnumerable<LearnedWord> learnedWords = await _activityRepo.GetUserLearnedWordsAsync(user.Id, language);
-        return Ok(learnedWords.Select(lw => new
-        {
-            lw.Id,
-            lw.Word,
-            lw.Language,
-            lw.DateLearned
-        }));
+        var result = _mapper.Map<IEnumerable<LearnedWordDto>>(learnedWords);
+        return Ok(result);
     }
 
     [HttpGet("full")]
@@ -544,54 +491,23 @@ public class UserActivityController : Controller
             return Unauthorized(new { message = "User not found" });
         }
 
-        var activities = new
+        var songActivities = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
+        var playlistActivities = await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id);
+        var quizResults = await _activityRepo.GetUserQuizResultsAsync(user.Id);
+        var handwritingResults = await _activityRepo.GetUserHandwritingResultsAsync(user.Id);
+        var learnedWords = await _activityRepo.GetUserLearnedWordsAsync(user.Id);
+
+        var response = new
         {
-            SongActivities = (await _activityRepo.GetUserSongActivitiesAsync(user.Id))
-                               .Select(sa => new
-                               {
-                                   sa.Id,
-                                   sa.SongId,
-                                   sa.DatesPlayed,
-                                   sa.IsFavorite
-                               }),
-            PlaylistActivities = (await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id))
-                                  .Select(pa => new
-                                  {
-                                      pa.Id,
-                                      pa.PlaylistUrl,
-                                      pa.DatesPlayed,
-                                      pa.IsFavorite
-                                  }),
-            QuizResults = (await _activityRepo.GetUserQuizResultsAsync(user.Id))
-                          .Select(qr => new
-                          {
-                              qr.Id,
-                              qr.QuizId,
-                              qr.Score,
-                              qr.Language,
-                              qr.DateCompleted
-                          }),
-            HandwritingResults = (await _activityRepo.GetUserHandwritingResultsAsync(user.Id))
-                                 .Select(hr => new
-                                 {
-                                     hr.Id,
-                                     hr.Language,
-                                     hr.Score,
-                                     hr.WordTested,
-                                     hr.DateCompleted
-                                 }),
-            LearnedWords = (await _activityRepo.GetUserLearnedWordsAsync(user.Id))
-                           .Select(lw => new
-                           {
-                               lw.Id,
-                               lw.Word,
-                               lw.Language,
-                               lw.DateLearned
-                           }),
+            SongActivities = _mapper.Map<IEnumerable<UserSongActivityDto>>(songActivities),
+            PlaylistActivities = _mapper.Map<IEnumerable<UserPlaylistActivityDto>>(playlistActivities),
+            QuizResults = _mapper.Map<IEnumerable<UserQuizResultDto>>(quizResults),
+            HandwritingResults = _mapper.Map<IEnumerable<UserHandwritingResultDto>>(handwritingResults),
+            LearnedWords = _mapper.Map<IEnumerable<LearnedWordDto>>(learnedWords),
             Message = "Activity history retrieved successfully. If lists are empty, you haven't recorded any activity yet."
         };
 
-        return Ok(activities);
+        return Ok(response);
     }
 
     private async Task<User?> GetUserFromClaimsAsync()
