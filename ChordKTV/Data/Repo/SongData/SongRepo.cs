@@ -39,16 +39,13 @@ public class SongRepo : ISongRepo
         string normalizedName = name.Trim().Replace(" ", "");
 
         // Retrieve songs from the database first
-        List<Song> songs = await _context.Songs
+        return await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
-            .ToListAsync();
-
-        // Use a case-insensitive comparison with StringComparison.OrdinalIgnoreCase
-        return songs.FirstOrDefault(s =>
-            string.Equals(s.Title.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
-            s.AlternateTitles.Any(n => string.Equals(n.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase))
-        );
+            .FirstOrDefaultAsync(s =>
+                string.Equals(s.Title.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
+                s.AlternateTitles.Any(n => string.Equals(n.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase))
+            );
     }
 
     // Will null if artist isnt direct match, as we expect direct artist match (assuming this is from genius data)
@@ -60,12 +57,12 @@ public class SongRepo : ISongRepo
 
         _logger.LogDebug("Looking up song in cache. Name: {Name}, Artist: {Artist}", normalizedName, normalizedArtist);
 
-        // Retrieve songs from the database first
         List<Song> songs = await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
             .ToListAsync();
 
+        //TODO try ef query instead of in memory query (will perhaps cause scaling issues later?)
         // Use string.Equals(..., StringComparison.OrdinalIgnoreCase) and the StartsWith overload with StringComparison
         Song? result = songs.FirstOrDefault(s =>
             (string.Equals(s.Title.Trim().Replace(" ", ""), normalizedName, StringComparison.OrdinalIgnoreCase) ||
@@ -93,6 +90,14 @@ public class SongRepo : ISongRepo
         return await _context.Songs.ToListAsync();
     }
 
+    public async Task<Song?> GetSongByIdAsync(Guid id)
+    {
+        return await _context.Songs
+            .Include(s => s.GeniusMetaData)
+            .Include(s => s.Albums)
+            .FirstOrDefaultAsync(s => s.Id == id);
+    }
+
     public async Task<Song?> GetSongByGeniusIdAsync(int geniusId)
     {
         return await _context.Songs
@@ -100,11 +105,18 @@ public class SongRepo : ISongRepo
             .FirstOrDefaultAsync(s => s.GeniusMetaData.GeniusId == geniusId);
     }
 
-    public async Task<Song?> GetSongByIdAsync(Guid id)
+    public async Task<Song?> GetSongByLrcIdAsync(int lrcId)
     {
         return await _context.Songs
             .Include(s => s.GeniusMetaData)
             .Include(s => s.Albums)
-            .FirstOrDefaultAsync(s => s.Id == id);
+            .FirstOrDefaultAsync(s => s.LrcId == lrcId);
+    }
+    public async Task<Song?> GetSongByRomanizedLrcIdAsync(int romLrcId)
+    {
+        return await _context.Songs
+            .Include(s => s.GeniusMetaData)
+            .Include(s => s.Albums)
+            .FirstOrDefaultAsync(s => s.RomLrcId == romLrcId);
     }
 }

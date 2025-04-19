@@ -62,13 +62,19 @@ public class FullSongService : IFullSongService
             Dictionary<string, VideoDetails> videoDict = await _youTubeClientService.GetVideosDetailsAsync([youtubeId]);
             if (videoDict.Count == 0)
             {
-                _logger.LogWarning("GetVideosDetailsAsync: Youtube video not found for id: {YoutubeId}", youtubeId);
+                _logger.LogError("GetVideosDetailsAsync: Youtube video not found for id: {YoutubeId}", youtubeId);
             }
             else
             {
                 videoDetails = videoDict[youtubeId];
-                title ??= videoDetails.Title;
-                artist ??= videoDetails.ChannelTitle;
+                if (string.IsNullOrWhiteSpace(title))
+                {
+                    title = videoDetails.Title;
+                }
+                if (string.IsNullOrWhiteSpace(artist))
+                {
+                    artist = videoDetails.ChannelTitle;
+                }
                 duration ??= videoDetails.Duration;
             }
         }
@@ -96,13 +102,28 @@ public class FullSongService : IFullSongService
                     foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
                     {
                         song = await _geniusService.GetSongByArtistTitleAsync(candidate.Title, candidate.Artist, lyrics);
-                        if (song is not null)
+                        if (song is not null || (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist)))
                         {
                             title = candidate.Title;
                             artist = candidate.Artist;
                             break;
                         }
                     }
+                }
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(lyrics) && string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist))
+        {
+            //since there is a high chance people search with romanization, which returns like genius romanization as artist (basically unclean title), use candidate cleaning like with youtube
+            candidateSongInfoList = await _chatGptService.GetCandidateSongInfosAsync(song.Title, song.Artist);
+            foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
+            {
+                song = await _geniusService.GetSongByArtistTitleAsync(candidate.Title, candidate.Artist, lyrics);
+                if (song is not null || (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist)))
+                {
+                    title = candidate.Title;
+                    artist = candidate.Artist;
+                    break;
                 }
             }
         }
@@ -137,12 +158,13 @@ public class FullSongService : IFullSongService
             lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(title, artist, null, (float?)duration?.TotalSeconds);
             if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics)) //not found anywhere
             {
-                _logger.LogWarning("2nd attempt Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}: attempting candidate gpt list", title, artist, duration);
-                if (candidateSongInfoList is null && videoDetails is not null) //genius title artist failed but youtube details are there to try again
+                if (videoDetails is not null) //genius title artist failed but youtube details are there to try again
                 {
-                    candidateSongInfoList = await _chatGptService.GetCandidateSongInfosAsync(videoDetails.Title, videoDetails.ChannelTitle);
+                    _logger.LogWarning("2nd attempt Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}: attempting candidate gpt list", title, artist, duration);
+                    candidateSongInfoList ??= await _chatGptService.GetCandidateSongInfosAsync(videoDetails.Title, videoDetails.ChannelTitle);
                     foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
                     {
+                        _logger.LogInformation("Testing Candidate for LRC Lib: '{Title}' by '{Artist}'", candidate.Title, candidate.Artist);
                         lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(candidate.Title, candidate.Artist, null, (float?)duration?.TotalSeconds);
                         if (lrcLyricsDto is not null && !string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics))
                         {
@@ -207,11 +229,39 @@ public class FullSongService : IFullSongService
             }
         }
 
+        //Now that we have the song go through LRC + Genius, can check the DB if it matches any of the cached data based on id before we waste time processing through LLM
+        if (!songCreate)
+        {
+            Song? dbSong = null;
+            if (song.LrcId != null)
+            {
+                dbSong = await _songRepo.GetSongByLrcIdAsync(song.LrcId.Value);
+            }
+            if (dbSong is null && song.RomLrcId != null)
+            {
+                dbSong = await _songRepo.GetSongByRomanizedLrcIdAsync(song.RomLrcId.Value);
+            }
+            if (dbSong is null && song.GeniusMetaData.GeniusId != 0)
+            {
+                dbSong = await _songRepo.GetSongByGeniusIdAsync(song.GeniusMetaData.GeniusId);
+            }
+            if (dbSong is not null)
+            {
+                _logger.LogInformation("Found song in db with same LRC/Genius ID, skipping LLM processing");
+                return _mapper.Map<FullSongResponseDto>(dbSong);
+            }
+        }
+
         // check if lyrics are translated, don't need to translate/romanize if alr english
-        if (song.GeniusMetaData.Language.Equals(LanguageCode.EN))
+        // Genius LangCode could be wrong, so we explicitly check romanization too.
+        if (song.GeniusMetaData.Language.Equals(LanguageCode.EN) && LanguageUtils.IsRomanizedText(song.LrcLyrics))
         {
             song.LrcTranslatedLyrics ??= lrcLyricsDto?.SyncedLyrics;
             song.LrcRomanizedLyrics ??= lrcLyricsDto?.SyncedLyrics;
+        }
+        else if (song.GeniusMetaData.Language.Equals(LanguageCode.EN))
+        {
+            _logger.LogError("Genius Language code is English but lyrics are not romanized as expected, for song: '{Title}' by '{Artist}'", song.Title, song.Artist);
         }
         song.LrcRomanizedLyrics ??= lrcLyricsDto?.RomanizedSyncedLyrics;
 
@@ -287,16 +337,7 @@ public class FullSongService : IFullSongService
             }
         }
 
-        //Save to db, only update, assuming genius creates the resource
-        //TODO: Consider abstracting song creation out of genius service or as flag
-        if (songCreate)
-        {
-            await _songRepo.AddSongAsync(song);
-        }
-        else
-        {
-            await _songRepo.UpdateSongAsync(song);
-        }
+        await _songRepo.AddSongAsync(song);
         FullSongResponseDto? response = _mapper.Map<FullSongResponseDto>(song);
         if (lrcLyricsDto != null) //add LRC
         {

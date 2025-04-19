@@ -28,14 +28,14 @@ public static partial class CompareUtils
 
         int artistDifference = 0;
         if (!string.IsNullOrWhiteSpace(artist) && !string.IsNullOrWhiteSpace(candidateArtist))
-        {
+        { //Note that the artist diff pretty high when partial match since it is simple ratio so artist comparison required later.
             artistDifference = 100 - Fuzz.Ratio(artist.ToLowerInvariant(), candidateArtist.ToLowerInvariant());
         }
         return (int)(fuzzyScore - (durationDifference * durationDifferenceWeight) - (artistDifference * artistDifferenceWeight));
     }
 
     //3 entries, queryArtist being user inputed, candidate artist is the one to test, exactArtist is the initial match in db
-    public static int CompareArtistFuzzyScore(string? queryArtist, string? candidateArtist, string? exactArtist = null, int nullScore = 95, double bonusWeight = 2.12) //dont want null to beat out complete match
+    public static int CompareArtistFuzzyScore(string? queryArtist, string? candidateArtist, string? exactArtist = null, int nullScore = 95, double bonusWeight = 1.6) //dont want null to beat out complete match
     {
         if (string.IsNullOrWhiteSpace(candidateArtist) || (string.IsNullOrWhiteSpace(queryArtist) && string.IsNullOrWhiteSpace(exactArtist))) //need at least two to compare including candidate
         {

@@ -9,6 +9,7 @@ using ChordKTV.Services.Api;
 using ChordKTV.Dtos.OpenAI;
 using ChordKTV.Models.Quiz;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace ChordKTV.Services.Service;
 public class ChatGptService : IChatGptService
@@ -61,9 +62,8 @@ Input Lyrics:
 
 Remember if the original lyrics are already in English, no translation or romanization is needed and ignore the is needed clauses above.
 The lyrics input contains timestamps LRC Format. Do not change any timestamps or the formatting.
-Ensure that the output follows the expected JSON structure and also escape all quotation marks within the translation/romanization to be able to be json parsed.
-Make sure apostrophes in translation and romanization are escaped as well.
-Output Format:
+Ensure that the output follows the expected JSON structure.
+Output Format, keep the exact format, no extra content beyond the json. Make sure it is json parsable:
 {{
     ""romanizedLyrics"": ""<romanized lyrics in LRC format, if applicable or null>"",
     ""translatedLyrics"": ""<translated English lyrics in LRC format, if applicable or null>"",
@@ -99,6 +99,34 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         TranslatedSongLyrics? translatedSongLyrics = null;
         try //Deserializer may fail (if format wrong)
         {
+            // Process romanizedLyrics field
+            string pattern1 = @"(""romanizedLyrics""\s*:\s*"")(.+?)(""\s*,\s*""translatedLyrics"")";
+            messageContent = Regex.Replace(messageContent, pattern1, match =>
+            {
+                string prefix = match.Groups[1].Value;
+                string content = match.Groups[2].Value;
+                string suffix = match.Groups[3].Value;
+
+                // Escape any unescaped quotes in the content
+                string escapedContent = Regex.Replace(content, @"(?<!\\)""", @"\""");
+
+                return prefix + escapedContent + suffix;
+            }, RegexOptions.Singleline);
+
+            // Process translatedLyrics field
+            string pattern2 = @"(""translatedLyrics""\s*:\s*"")(.+?)(""\s*,\s*""languageCode"")";
+            messageContent = Regex.Replace(messageContent, pattern2, match =>
+            {
+                string prefix = match.Groups[1].Value;
+                string content = match.Groups[2].Value;
+                string suffix = match.Groups[3].Value;
+
+                // Escape any unescaped quotes in the content
+                string escapedContent = Regex.Replace(content, @"(?<!\\)""", @"\""");
+
+                return prefix + escapedContent + suffix;
+            }, RegexOptions.Singleline);
+
             translatedSongLyrics = JsonSerializer.Deserialize<TranslatedSongLyrics>(messageContent, _jsonOptions);
             if (translatedSongLyrics == null)
             {
@@ -112,7 +140,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         }
 
         //Try parsing language code from string
-        if (Enum.TryParse(translatedSongLyrics.LanguageCode, out LanguageCode parsedLanguageCode))
+        if (Enum.TryParse(translatedSongLyrics.LanguageCode.ToUpperInvariant(), out LanguageCode parsedLanguageCode))
         {
             if (parsedLanguageCode == LanguageCode.UNK)
             {
@@ -293,7 +321,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
     public async Task<CandidateSongInfoListResponse> GetCandidateSongInfosAsync(string videoTitle, string channelName)
     {
         string prompt = $@"
-        Extract the song title and artist from the following YouTube video title and channel name.
+        Extract the song title and artist from the following YouTube video or Genius Source title and channel name.
         Input:
         Video Title: ""{videoTitle}""
         Channel Name: ""{channelName}""
