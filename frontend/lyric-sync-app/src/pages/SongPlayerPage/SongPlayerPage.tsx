@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Container, Typography, Box, Button } from '@mui/material';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
@@ -31,11 +31,12 @@ const SongPlayerPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { playlistUrl } = location.state || {};
+  let animationFrameId: number;
 
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
   }
-  
+
   if (!song.lrcLyrics || !song.lrcLyrics.trim()) {
     return <Typography variant="h5">Error: No time-synced lyrics found for song</Typography>;
   }
@@ -44,24 +45,70 @@ const SongPlayerPage: React.FC = () => {
     return <Typography variant="h5">Error: No YouTube video found for song</Typography>;
   }
 
+  const lrcTimestamps = useMemo(() => {
+    const timestamps: number[] = [];
+    if (!song.lrcLyrics) {
+      return timestamps;
+    };
+    const timeTagRegex = /\[(\d+):(\d+)\.(\d+)\]/g;
+    const timeMatches = [...song.lrcLyrics.matchAll(timeTagRegex)];
+    timeMatches.forEach(match => {
+      const minutes = parseInt(match[1]);
+      const seconds = parseInt(match[2]);
+      const centisecond = parseInt(match[3]);
+      timestamps.push(minutes * 60 + seconds + (centisecond / 100));
+    });
+    return timestamps.sort((a, b) => a - b);
+  }, [song.lrcLyrics]);
+
+
+  const prevTimeRange = useRef({ start: Infinity, end: 0 });
+  const checkIfTimeLineChanged = (currentTime: number, timestamps: number[]) => {
+    if (timestamps.length === 0 || (currentTime >= prevTimeRange.current.start && currentTime < prevTimeRange.current.end)) {
+      return false;
+    }
+    for (let i = 0; i < timestamps.length; i++) {
+      const currentTimestamp = timestamps[i];
+      const nextTimestamp = (i < timestamps.length - 1) ? timestamps[i + 1] : Infinity;
+      if (currentTime >= currentTimestamp && currentTime < nextTimestamp) {
+        prevTimeRange.current = { start: currentTimestamp, end: nextTimestamp };
+        break;
+      }
+    }
+    return true;
+  };
+
   const allowedQuizLanguages = new Set(['AR', 'BG', 'BN', 'EL', 'FA', 'GU', 'HE', 'HI', 'JA', 'KO', 'RU', 'SR', 'TA', 'TE', 'TH', 'UK', 'ZH']);
   const isLanguageAllowedForQuiz = song.geniusMetaData?.language && allowedQuizLanguages.has(song.geniusMetaData.language);
 
-  const handlePlayerReady = (playerInstance: YouTubePlayer) => {
+  const updatePlayerTime = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
+    playerInstance.playVideo(); // Autoplay
 
-    setInterval(() => {
-      if (playerRef.current) { 
+    const updatePlayerTime = () => {
+      if (playerRef.current) {
         const current = playerRef.current.getCurrentTime();
-        setCurrentTime(current);
-
+        if (checkIfTimeLineChanged(current, lrcTimestamps)) {
+          setCurrentTime(current);
+        }
         // Check if the song is 90% complete
         if (current / playerRef.current.getDuration() >= 0.9 && isLanguageAllowedForQuiz) {
           setShowQuizButton(true); // Show the quiz button when 90% complete
         }
       }
-    }, 1); // Noticed player was falling behind, 1ms for absolute accuracy
+      animationFrameId = requestAnimationFrame(updatePlayerTime); //req next frame
+    };
+
+    updatePlayerTime();
   };
+
+  useEffect(() => { //cleanup on rerender
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId); // Cancel the animation frame when the component unmounts  (cleanup function)
+      };
+    };
+  }, []);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
@@ -83,8 +130,8 @@ const SongPlayerPage: React.FC = () => {
         </Typography>
         {showQuizButton && (
           <Box mt={3} display="flex" justifyContent="center">
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={handleQuizRedirect}
               className="quiz-button"
             >
@@ -95,7 +142,7 @@ const SongPlayerPage: React.FC = () => {
         <Grid container className="song-player-content" spacing={10} height={'480px'} display={'flex'}>
           {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
           <Grid flex={'1'} alignContent={'center'} className='grid-parent'>
-            <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={handlePlayerReady} />
+            <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={updatePlayerTime} />
           </Grid>
           <Grid className='grid-parent'>
             <Box className='tabs-grid-parent'>
@@ -107,16 +154,16 @@ const SongPlayerPage: React.FC = () => {
             </Box>
             {/* <LyricDisplay rawLrcLyrics={song.lrcLyrics} currentTime={currentTime} isPlaying={isPlaying}/> */}
             <Box className='lrc-grid-parent'>
-              <LyricDisplay 
+              <LyricDisplay
                 rawLrcLyrics={
-                  selectedTab === 0 
+                  selectedTab === 0
                     ? song.lrcLyrics ?? 'Not supported'
                     : selectedTab === 1
                       ? song.lrcRomanizedLyrics ?? 'Not supported'
                       : song.lrcTranslatedLyrics ?? 'Not supported'
-                } 
-                currentTime={currentTime} 
-                isPlaying={isPlaying} 
+                }
+                currentTime={currentTime}
+                isPlaying={isPlaying}
               />
             </Box>
           </Grid>
