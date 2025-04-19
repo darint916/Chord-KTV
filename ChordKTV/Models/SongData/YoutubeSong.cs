@@ -7,5 +7,5 @@ public class YoutubeSong
     [Key]
     public string YoutubeId { get; set; } = string.Empty;
     [Required]
-    public Guid SongId { get; set; }
+    public required Song Song { get; set; }
 }

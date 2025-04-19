@@ -20,8 +20,9 @@ public class FullSongService : IFullSongService
     private readonly IChatGptService _chatGptService;
     private readonly ILogger<FullSongService> _logger;
     private readonly IMapper _mapper;
+    private readonly IYoutubeSongRepo _youtubeSongRepo;
 
-    public FullSongService(IMapper mapper, ILrcService lrcService, IGeniusService geniusService, ISongRepo songRepo, IChatGptService chatGptService, ILogger<FullSongService> logger, IYouTubeClientService youTubeClient)
+    public FullSongService(IMapper mapper, ILrcService lrcService, IGeniusService geniusService, ISongRepo songRepo, IChatGptService chatGptService, ILogger<FullSongService> logger, IYouTubeClientService youTubeClient, IYoutubeSongRepo youtubeSongRepo)
     {
         _youTubeClientService = youTubeClient;
         _lrcService = lrcService;
@@ -30,6 +31,7 @@ public class FullSongService : IFullSongService
         _chatGptService = chatGptService;
         _logger = logger;
         _mapper = mapper;
+        _youtubeSongRepo = youtubeSongRepo;
     }
 
     //**
@@ -55,10 +57,17 @@ public class FullSongService : IFullSongService
             throw new ArgumentException("GetFullSongAsync: Title or lyrics or youtubeid must be provided");
         }
 
-        //if youtube id first supplied, we just use that to search > user input if possible
+        //if youtube id first supplied, we first query db cache or just use that to search > user input if possible
         VideoDetails? videoDetails = null;
         if (!string.IsNullOrWhiteSpace(youtubeId))
         {
+            //check if we have the video in our db cache
+            Song? cachedSong = await _youtubeSongRepo.GetSongByYoutubeId(youtubeId);
+            if (cachedSong != null)
+            {
+                return _mapper.Map<FullSongResponseDto>(cachedSong);
+            }
+
             Dictionary<string, VideoDetails> videoDict = await _youTubeClientService.GetVideosDetailsAsync([youtubeId]);
             if (videoDict.Count == 0)
             {
