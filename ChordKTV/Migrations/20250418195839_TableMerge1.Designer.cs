@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ChordKTV.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ChordKTV.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250418195839_TableMerge1")]
+    partial class TableMerge1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -360,6 +363,8 @@ namespace ChordKTV.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("SongId");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("UserSongActivities");
@@ -478,11 +483,19 @@ namespace ChordKTV.Migrations
 
             modelBuilder.Entity("ChordKTV.Models.SongData.UserSongActivity", b =>
                 {
+                    b.HasOne("ChordKTV.Models.SongData.Song", "Song")
+                        .WithMany()
+                        .HasForeignKey("SongId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ChordKTV.Models.UserData.User", null)
                         .WithMany("SongActivities")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Song");
                 });
 
             modelBuilder.Entity("ChordKTV.Models.Quiz.Quiz", b =>
