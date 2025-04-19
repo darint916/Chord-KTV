@@ -19,7 +19,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
+using ChordKTV.Utils;
 
 namespace ChordKTV.Controllers;
 
@@ -56,17 +56,14 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            // Validate the playlist URL using regex
-            var urlRegex = new Regex(
-                @"^(https?:\/\/)?([\w\-]+\.)+([a-z]{2,})(\/[\w\-?=&%\.]*)?$",
-                RegexOptions.IgnoreCase);
-            if (string.IsNullOrWhiteSpace(dto.PlaylistUrl) || !urlRegex.IsMatch(dto.PlaylistUrl))
+            if (string.IsNullOrWhiteSpace(dto.PlaylistUrl) || !UrlValidationUtils.PlaylistUrlRegex().IsMatch(dto.PlaylistUrl))
             {
                 return BadRequest(new { message = "Invalid playlist URL." });
             }
 
-            // Ensure at least one play date is provided
-            if (dto.DatesPlayed == null || !dto.DatesPlayed.Any())
+            dto.DatesPlayed ??= new List<DateTime>();
+
+            if (dto.DatesPlayed.Count == 0)
             {
                 dto.DatesPlayed.Add(DateTime.UtcNow);
             }
@@ -74,7 +71,7 @@ public class UserActivityController : Controller
             UserPlaylistActivity? existing = await _activityRepo.GetUserPlaylistActivityAsync(user.Id, dto.PlaylistUrl);
             if (existing == null)
             {
-                var activity = _mapper.Map<UserPlaylistActivity>(dto);
+                UserPlaylistActivity activity = _mapper.Map<UserPlaylistActivity>(dto);
                 activity.UserId = user.Id;
                 await _activityRepo.UpsertPlaylistActivityAsync(activity);
                 await _activityRepo.SaveChangesAsync();
@@ -82,8 +79,7 @@ public class UserActivityController : Controller
             }
             else
             {
-                // Merge new play dates and update favorite status
-                foreach (var date in dto.DatesPlayed)
+                foreach (DateTime date in dto.DatesPlayed)
                 {
                     if (!existing.DatesPlayed.Contains(date))
                     {
@@ -127,19 +123,17 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var result = _mapper.Map<UserQuizResult>(dto);
+            UserQuizResult result = _mapper.Map<UserQuizResult>(dto);
             result.UserId = user.Id;
-            // Ensure DateCompleted is set
             result.DateCompleted = dto.DateCompleted ?? DateTime.UtcNow;
 
             await _activityRepo.AddQuizResultAsync(result);
 
-            // Optionally add learned words for any new correct answers
             IEnumerable<LearnedWord> learnedWords = await _activityRepo.GetUserLearnedWordsAsync(user.Id, dto.Language);
             var existingWords = new HashSet<string>(learnedWords.Select(lw => lw.Word));
             foreach (string word in dto.CorrectAnswers.Where(w => !existingWords.Contains(w)))
             {
-                var lw = new LearnedWord
+                LearnedWord lw = new LearnedWord
                 {
                     UserId = user.Id,
                     Word = word,
@@ -183,8 +177,9 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            // Ensure at least one play date is provided
-            if (dto.DatesPlayed == null || !dto.DatesPlayed.Any())
+            dto.DatesPlayed ??= new List<DateTime>();
+
+            if (dto.DatesPlayed.Count == 0)
             {
                 dto.DatesPlayed.Add(DateTime.UtcNow);
             }
@@ -192,7 +187,7 @@ public class UserActivityController : Controller
             UserSongActivity? existing = await _activityRepo.GetUserSongActivityAsync(user.Id, dto.SongId);
             if (existing == null)
             {
-                var activity = _mapper.Map<UserSongActivity>(dto);
+                UserSongActivity activity = _mapper.Map<UserSongActivity>(dto);
                 activity.UserId = user.Id;
                 await _activityRepo.UpsertSongActivityAsync(activity);
                 await _activityRepo.SaveChangesAsync();
@@ -200,8 +195,7 @@ public class UserActivityController : Controller
             }
             else
             {
-                // Merge any new play dates (avoiding duplicates) and update favorite status
-                foreach (var date in dto.DatesPlayed)
+                foreach (DateTime date in dto.DatesPlayed)
                 {
                     if (!existing.DatesPlayed.Contains(date))
                     {
@@ -253,7 +247,7 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var result = _mapper.Map<UserHandwritingResult>(dto);
+            UserHandwritingResult result = _mapper.Map<UserHandwritingResult>(dto);
             result.UserId = user.Id;
             result.DateCompleted = dto.DateCompleted ?? DateTime.UtcNow;
 
@@ -296,7 +290,6 @@ public class UserActivityController : Controller
             UserSongActivity? activity = await _activityRepo.GetUserSongActivityAsync(user.Id, dto.SongId);
             if (activity == null)
             {
-                // Create a new activity record with a current timestamp if none exists
                 activity = new UserSongActivity
                 {
                     UserId = user.Id,
@@ -308,9 +301,8 @@ public class UserActivityController : Controller
             }
             else
             {
-                // Update the favorite flag
                 activity.IsFavorite = dto.Favorited;
-                if (!activity.DatesPlayed.Any())
+                if (activity.DatesPlayed.Count == 0)
                 {
                     activity.DatesPlayed.Add(DateTime.UtcNow);
                 }
@@ -362,7 +354,6 @@ public class UserActivityController : Controller
             UserPlaylistActivity? activity = await _activityRepo.GetUserPlaylistActivityAsync(user.Id, dto.PlaylistUrl);
             if (activity == null)
             {
-                // Create a new activity record with a current timestamp if none exists
                 activity = new UserPlaylistActivity
                 {
                     UserId = user.Id,
@@ -374,9 +365,8 @@ public class UserActivityController : Controller
             }
             else
             {
-                // Update the favorite flag
                 activity.IsFavorite = dto.Favorited;
-                if (!activity.DatesPlayed.Any())
+                if (activity.DatesPlayed.Count == 0)
                 {
                     activity.DatesPlayed.Add(DateTime.UtcNow);
                 }
@@ -404,7 +394,7 @@ public class UserActivityController : Controller
             }
 
             IEnumerable<UserPlaylistActivity> allPlaylists = await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id);
-            var favorites = allPlaylists.Where(pa => pa.IsFavorite).ToList();
+            List<UserPlaylistActivity> favorites = allPlaylists.Where(pa => pa.IsFavorite).ToList();
             return Ok(_mapper.Map<IEnumerable<UserPlaylistActivityDto>>(favorites));
         }
         catch (Exception ex)
@@ -425,13 +415,11 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var learnedWord = _mapper.Map<LearnedWord>(dto);
+            LearnedWord learnedWord = _mapper.Map<LearnedWord>(dto);
             learnedWord.UserId = user.Id;
-            // Ensure DateLearned is set
             learnedWord.DateLearned = dto.DateLearned ?? DateTime.UtcNow;
             await _activityRepo.AddLearnedWordAsync(learnedWord);
             await _activityRepo.SaveChangesAsync();
-            // Optionally, map back to a DTO if one exists.
             return Ok(_mapper.Map<LearnedWordDto>(learnedWord));
         }
         catch (Exception ex)
@@ -463,13 +451,13 @@ public class UserActivityController : Controller
             return Unauthorized(new { message = "User not found" });
         }
 
-        var songActivities = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
-        var playlistActivities = await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id);
-        var quizResults = await _activityRepo.GetUserQuizResultsAsync(user.Id);
-        var handwritingResults = await _activityRepo.GetUserHandwritingResultsAsync(user.Id);
-        var learnedWords = await _activityRepo.GetUserLearnedWordsAsync(user.Id);
+        IEnumerable<UserSongActivity> songActivities = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
+        IEnumerable<UserPlaylistActivity> playlistActivities = await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id);
+        IEnumerable<UserQuizResult> quizResults = await _activityRepo.GetUserQuizResultsAsync(user.Id);
+        IEnumerable<UserHandwritingResult> handwritingResults = await _activityRepo.GetUserHandwritingResultsAsync(user.Id);
+        IEnumerable<LearnedWord> learnedWords = await _activityRepo.GetUserLearnedWordsAsync(user.Id);
 
-        var response = new
+        object response = new
         {
             SongActivities = _mapper.Map<IEnumerable<UserSongActivityDto>>(songActivities),
             PlaylistActivities = _mapper.Map<IEnumerable<UserPlaylistActivityDto>>(playlistActivities),

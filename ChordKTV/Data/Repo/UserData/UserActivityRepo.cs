@@ -13,12 +13,10 @@ namespace ChordKTV.Data.Repo.UserData;
 public class UserActivityRepo : IUserActivityRepo
 {
     private readonly AppDbContext _context;
-    private readonly ILogger<UserActivityRepo> _logger;
 
-    public UserActivityRepo(AppDbContext context, ILogger<UserActivityRepo> logger)
+    public UserActivityRepo(AppDbContext context)
     {
         _context = context;
-        _logger = logger;
     }
 
     // Quiz Methods
@@ -82,7 +80,7 @@ public class UserActivityRepo : IUserActivityRepo
 
     public async Task UpsertSongActivityAsync(UserSongActivity activity)
     {
-        var existing = await GetUserSongActivityAsync(activity.UserId, activity.SongId);
+        UserSongActivity? existing = await GetUserSongActivityAsync(activity.UserId, activity.SongId);
         if (existing == null)
         {
             await _context.UserSongActivities.AddAsync(activity);
@@ -111,7 +109,7 @@ public class UserActivityRepo : IUserActivityRepo
 
     public async Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity)
     {
-        var existing = await GetUserPlaylistActivityAsync(activity.UserId, activity.PlaylistUrl);
+        UserPlaylistActivity? existing = await GetUserPlaylistActivityAsync(activity.UserId, activity.PlaylistUrl);
         if (existing == null)
         {
             await _context.UserPlaylistActivities.AddAsync(activity);

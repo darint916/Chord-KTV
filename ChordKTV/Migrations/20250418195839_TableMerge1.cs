@@ -34,7 +34,7 @@ namespace ChordKTV.Migrations
                 table: "UserPlaylistActivities",
                 type: "timestamp with time zone[]",
                 nullable: false,
-                defaultValue: new DateTime[0]);
+                defaultValue: Array.Empty<DateTime>());
 
             migrationBuilder.AddColumn<bool>(
                 name: "IsFavorite",
