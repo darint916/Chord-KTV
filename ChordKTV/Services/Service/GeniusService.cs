@@ -7,6 +7,7 @@ using ChordKTV.Dtos;
 using System.Globalization;
 using ChordKTV.Dtos.GeniusApi;
 using ChordKTV.Utils;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace ChordKTV.Services.Service;
 
@@ -81,6 +82,12 @@ public class GeniusService : IGeniusService
             {
                 _logger.LogDebug("Found result - Title: '{Title}', Artist: '{Artist}'",
                     hit.Result.Title, hit.Result.PrimaryArtistNames);
+            }
+
+            //lyric search assumed
+            if (string.IsNullOrWhiteSpace(fuzzyTitle) && string.IsNullOrWhiteSpace(fuzzyArtist))
+            {
+                return await MapGeniusResultToSongAsync(searchResponse.Response.Hits[0].Result);
             }
 
             // Update the score check

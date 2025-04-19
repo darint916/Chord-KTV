@@ -10,7 +10,8 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady }) => {
   const setPlayer = useState<YouTubePlayerInstance | null>(null)[1]; // Extract only the setter
 
   const opts = {
-    width: '100%'
+    width: '100%',
+    playerVars: { 'autoplay': 1 }
   };
 
   const handleReady = (event: { target: YouTubePlayerInstance }) => {
