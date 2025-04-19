@@ -13,7 +13,7 @@ public class UserActivityProfile : Profile
     {
         CreateMap<UserQuizResultDto, UserQuizResult>();
         CreateMap<UserQuizResult, UserQuizResultDto>();
-        
+
         CreateMap<UserSongActivity, UserSongActivityDto>()
             .ForMember(dest => dest.DatesPlayed, opt => opt.MapFrom(src => src.DatesPlayed))
             .ReverseMap();
