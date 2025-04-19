@@ -20,6 +20,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ChordKTV.Utils;
+using ChordKTV.Utils.Extensions;
 
 namespace ChordKTV.Controllers;
 
@@ -443,6 +444,7 @@ public class UserActivityController : Controller
     }
 
     [HttpGet("full")]
+    [DevelopmentOnly]
     public async Task<IActionResult> GetUserActivityHistory()
     {
         User? user = await GetUserFromClaimsAsync();

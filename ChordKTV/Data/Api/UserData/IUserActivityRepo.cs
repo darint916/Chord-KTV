@@ -20,17 +20,15 @@ public interface IUserActivityRepo
     Task<IEnumerable<LearnedWord>> GetUserLearnedWordsAsync(Guid userId, LanguageCode? language = null);
     Task AddLearnedWordAsync(LearnedWord word);
 
-    // Song activity methods (combined play history and favorites)
+    // Song activity methods
     Task<UserSongActivity?> GetUserSongActivityAsync(Guid userId, Guid songId);
     Task<IEnumerable<UserSongActivity>> GetUserSongActivitiesAsync(Guid userId);
     Task UpsertSongActivityAsync(UserSongActivity activity);
 
-    // Playlist activity methods (combined play history and favorites)
+    // Playlist activity methods
     Task<UserPlaylistActivity?> GetUserPlaylistActivityAsync(Guid userId, string playlistUrl);
     Task<IEnumerable<UserPlaylistActivity>> GetUserPlaylistActivitiesAsync(Guid userId);
     Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity);
 
     Task<bool> SaveChangesAsync();
-
-    // Old methods for separate favorites / plays have been removed.
 }

@@ -59,10 +59,10 @@ builder.Services.AddLogging(logging =>
     logging.AddDebug();
 });
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
+builder.Services.AddControllers().
+    AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(new SafeEnumConverter<LanguageCode>());
+        options.JsonSerializerOptions.Converters.Add(new SafeEnumConverter<LanguageCode>()); //convert enums to string and defaults to UNK if fails
     });
 
 // Add services to the container.
@@ -162,6 +162,9 @@ app.UseCors();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// Comment out HTTPS redirection for development
+app.UseHttpsRedirection();
 
 app.MapControllers();
 
