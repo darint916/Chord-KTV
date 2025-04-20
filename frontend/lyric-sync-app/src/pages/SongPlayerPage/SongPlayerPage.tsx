@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Container, Typography, Box, Button, Paper, TextField, IconButton, CircularProgress, Alert } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
 import QueueComponent from '../../components/QueueComponent/QueueComponent';
+import { songApi } from '../../api/apiClient';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -94,6 +95,56 @@ const SongPlayerPage: React.FC = () => {
     return true;
   };
 
+  const prefetchNextSongs = useCallback(async () => {
+    if (!queue.length) return;
+
+    const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
+    if (currentIndex >= 0 && currentIndex < queue.length - 1) {
+      // Get next 2 songs (or just 1 if we're at the end)
+      const nextItems = queue.slice(currentIndex + 1, currentIndex + 3);
+
+      nextItems.forEach((nextItem) => {
+        // Only proceed if we haven't already requested the API for this song
+        if (!nextItem.apiRequested) {
+          // Mark as requested immediately to prevent duplicate calls
+          nextItem.apiRequested = true;
+
+          // Call the API for the next song
+          songApi.apiSongsSearchPost({
+            fullSongRequestDto: {
+              title: nextItem.title,
+              artist: nextItem.artist,
+              youTubeId: extractYouTubeVideoId(nextItem.youTubeId) || '',
+              lyrics: nextItem.lyrics || ''
+            }
+          }).then(response => {
+            // Update the queue with the processed data
+            setQueue(prevQueue => prevQueue.map(item =>
+              item.queueId === nextItem.queueId
+                ? {
+                  ...item,
+                  processedData: {
+                    title: response.title,
+                    artist: response.artist,
+                    youTubeId: response.youTubeId,
+                    lrcLyrics: response.lrcLyrics,
+                    lrcRomanizedLyrics: response.lrcRomanizedLyrics,
+                    lrcTranslatedLyrics: response.lrcTranslatedLyrics,
+                    geniusMetaData: response.geniusMetaData
+                  }
+                }
+                : item
+            ));
+          }).catch(err => {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to process song';
+            nextItem.error = errorMessage;
+          });
+        }
+      });
+
+    }
+  }, [queue, currentPlayingId]);
+
   const allowedQuizLanguages = new Set(['AR', 'BG', 'BN', 'EL', 'FA', 'GU', 'HE', 'HI', 'JA', 'KO', 'RU', 'SR', 'TA', 'TE', 'TH', 'UK', 'ZH']);
   const isLanguageAllowedForQuiz = song.geniusMetaData?.language && allowedQuizLanguages.has(song.geniusMetaData.language);
 
@@ -104,12 +155,19 @@ const SongPlayerPage: React.FC = () => {
     const updatePlayerTime = () => {
       if (playerRef.current) {
         const current = playerRef.current.getCurrentTime();
+        const duration = playerRef.current.getDuration();
+
         if (checkIfTimeLineChanged(current, lrcTimestamps)) {
           setCurrentTime(current);
         }
         // Check if the song is 90% complete
-        if (current / playerRef.current.getDuration() >= 0.9 && isLanguageAllowedForQuiz) {
+        if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
           setShowQuizButton(true); // Show the quiz button when 90% complete
+        }
+
+        // Check if we're at the halfway point for prefetching
+        if (current / duration >= 0.5) {
+          prefetchNextSongs();
         }
       }
       animationFrameId = requestAnimationFrame(updatePlayerTime); //req next frame

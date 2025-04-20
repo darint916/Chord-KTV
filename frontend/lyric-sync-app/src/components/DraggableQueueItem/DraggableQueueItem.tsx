@@ -14,6 +14,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ErrorIcon from '@mui/icons-material/Error';
 import './DraggableQueueItem.scss';
 import { QueueItem } from '../../contexts/QueueTypes';
+import PlaceholderThumbnail from './PlaceholderThumbnail';
 
 interface DraggableQueueItemProps {
   item: QueueItem;
@@ -93,7 +94,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
         {songImageUrl ? (
           <Avatar src={songImageUrl} variant="square" />
         ) : (
-          <Box sx={{ width: 40, mr: 2 }} />
+          <PlaceholderThumbnail />
         )}
 
         <ListItemText
