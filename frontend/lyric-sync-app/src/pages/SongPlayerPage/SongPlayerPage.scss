@@ -49,22 +49,6 @@
           scrollbar-width: none; /* Firefox */
           -ms-overflow-style: none;  /* Internet Explorer 10+ */
           
-          .queue-item {
-            &.active-song {
-              background-color: rgba(25, 118, 210, 0.08);
-              // border-left: 3px solid $primary-color;
-              
-              .MuiListItemText-primary {
-                color: $text-primary;
-                font-weight: bold;
-              }
-            }
-          }
-        }
-        
-        .empty-queue {
-          padding: 16px;
-          font-style: italic;
         }
       }
       .queue-list::-webkit-scrollbar{ /* WebKit */

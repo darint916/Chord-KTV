@@ -1,30 +1,87 @@
+@use '../../variables' as *;
+@use '../../mixins' as *;
+@use 'sass:color';
+
 .draggable-queue-item {
+  opacity: 0.5;
+  cursor: move;
+
+  &.not-dragging {
+    opacity: 1;
+  }
+
   .queue-item {
-    &.loading {
-      opacity: 0.7;
-      pointer-events: none;
-      
-      .MuiListItemText-primary,
-      .MuiListItemText-secondary {
-        color: rgba(0, 0, 0, 0.38) !important;
-      }
-    }
-    
-    &.error-item {
-      border-left: 3px solid #f44336;
-      
-      .MuiListItemText-primary,
-      .MuiListItemText-secondary {
-        color: #f44336 !important;
+    background-color: transparent;
+
+    &.active-song {
+      background-color: color.scale($primary-color, $lightness: -10%);
+
+      &:hover {
+        background-color: color.scale($primary-color, $lightness: -5%);
       }
     }
 
+    &.error-item {
+      background-color: $error-color;
+      border-left: 3px solid $error-color;
+
+      &:hover {
+        background-color: rgba(255, 0, 0, 0.12);
+      }
+
+      .MuiListItemText-primary,
+      .MuiListItemText-secondary {
+        color: $error-color!important;
+      }
+    }
+
+    &:hover:not(.active-song):not(.error-item) {
+      background-color: $primary-color;
+    }
+
+    .MuiCircularProgress-root {
+      margin-right: 16px;
+    }
+
+    .MuiAvatar-root {
+      width: 40px;
+      height: 40px;
+      margin-right: 16px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
     .MuiListItemText-root {
+      flex: 1;
+
+      .MuiListItemText-primary {
+        font-weight: normal;
+        color: inherit;
+
+        &.active {
+          font-weight: bold;
+        }
+      }
+
+      .MuiListItemText-secondary {
+        color: inherit;
+      }
+    }
+
+    .now-playing-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: $secondary-color;
       margin-left: 8px;
     }
-  }
-  
-  .MuiAvatar-root {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    .MuiIconButton-root {
+      color: $error-color;
+
+      &:hover {
+        background-color: color.scale($error-color, $lightness: -5%);
+      }
+    }
   }
 }

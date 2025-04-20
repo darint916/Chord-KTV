@@ -48,7 +48,7 @@ const HomePage: React.FC = () => {
 
   const handleLoadPlaylist = async () => {
     if (!playlistUrl.trim()) {
-      setError('Please enter a valid YouTube playlist URL.');
+      setError('Invalid Playlist URL.');
       return;
     }
 

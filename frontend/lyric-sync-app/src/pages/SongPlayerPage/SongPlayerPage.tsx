@@ -40,14 +40,14 @@ const SongPlayerPage: React.FC = () => {
   const [lyrics, setLyrics] = useState('');
   const [error, setError] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
-  const { 
-    song, 
-    setQuizQuestions, 
-    setSong, 
-    queue, 
-    setQueue, 
-    currentPlayingId, 
-    setCurrentPlayingId 
+  const {
+    song,
+    setQuizQuestions,
+    setSong,
+    queue,
+    setQueue,
+    currentPlayingId,
+    setCurrentPlayingId
   } = useSong();
 
   useEffect(() => {
@@ -146,9 +146,9 @@ const SongPlayerPage: React.FC = () => {
     setQuizQuestions([]);   // Clear old song quiz questions
     navigate('/quiz');
   };
-  
+
   const extractYouTubeVideoId = (url: string | null | undefined): string | null => {
-    if (!url) {return null;}
+    if (!url) { return null; }
     const match = url.match(/(?:\?v=|\/embed\/|\.be\/|\/watch\?v=|\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/);
     return match ? match[1] : null;
   };
@@ -188,15 +188,15 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
-  const moveQueueItem: (_dragIndex: number, _hoverIndex: number) => void = 
-  (dragIndex, hoverIndex) => {
-    setQueue((prevQueue: QueueItem[]) => {
-      const newQueue = [...prevQueue];
-      const [removed] = newQueue.splice(dragIndex, 1);
-      newQueue.splice(hoverIndex, 0, removed);
-      return newQueue;
-    });
-  };
+  const moveQueueItem: (_dragIndex: number, _hoverIndex: number) => void =
+    (dragIndex, hoverIndex) => {
+      setQueue((prevQueue: QueueItem[]) => {
+        const newQueue = [...prevQueue];
+        const [removed] = newQueue.splice(dragIndex, 1);
+        newQueue.splice(hoverIndex, 0, removed);
+        return newQueue;
+      });
+    };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
@@ -205,19 +205,19 @@ const SongPlayerPage: React.FC = () => {
   };
 
   const handlePlayFromQueue = async (item: QueueItem) => {
-    if (item.error) {return;} // Don't try to play errored items
+    if (item.error) { return; } // Don't try to play errored items
 
     setIsLoading(true);
     setError('');
 
     try {
       const vidId = extractYouTubeVideoId(item.youTubeId);
-      
+
       if (!item.apiRequested) {
         // Mark as requested immediately
-        setQueue(prevQueue => prevQueue.map(queueItem => 
-          queueItem.queueId === item.queueId 
-            ? { ...queueItem, apiRequested: true, error: undefined } 
+        setQueue(prevQueue => prevQueue.map(queueItem =>
+          queueItem.queueId === item.queueId
+            ? { ...queueItem, apiRequested: true, error: undefined }
             : queueItem
         ));
 
@@ -240,9 +240,9 @@ const SongPlayerPage: React.FC = () => {
           geniusMetaData: response.geniusMetaData
         };
 
-        setQueue(prevQueue => prevQueue.map(queueItem => 
-          queueItem.queueId === item.queueId 
-            ? { ...queueItem, processedData, apiRequested: true } 
+        setQueue(prevQueue => prevQueue.map(queueItem =>
+          queueItem.queueId === item.queueId
+            ? { ...queueItem, processedData, apiRequested: true }
             : queueItem
         ));
 
@@ -257,20 +257,20 @@ const SongPlayerPage: React.FC = () => {
           lrcRomanizedLyrics: '',
           lrcTranslatedLyrics: ''
         };
-        
+
         setCurrentPlayingId(item.queueId);
         setSong(playbackData);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
-      
+
       // Update the queue item with error state
-      setQueue(prevQueue => prevQueue.map(queueItem => 
-        queueItem.queueId === item.queueId 
-          ? { ...queueItem, error: errorMessage } 
+      setQueue(prevQueue => prevQueue.map(queueItem =>
+        queueItem.queueId === item.queueId
+          ? { ...queueItem, error: errorMessage }
           : queueItem
       ));
-      
+
       // Fallback to basic playback
       const vidId = extractYouTubeVideoId(item.youTubeId);
       setCurrentPlayingId(item.queueId);
@@ -366,7 +366,7 @@ const SongPlayerPage: React.FC = () => {
               <List className="queue-list">
                 {queue.map((item, index) => (
                   <React.Fragment key={item.queueId}>
-                    <DraggableQueueItem 
+                    <DraggableQueueItem
                       item={item}
                       index={index}
                       moveItem={moveQueueItem}
@@ -379,8 +379,8 @@ const SongPlayerPage: React.FC = () => {
                 ))}
               </List>
               <Box mt={2} display="flex" gap={1}>
-                <Button 
-                  variant="outlined" 
+                <Button
+                  variant="outlined"
                   onClick={clearQueue}
                   startIcon={<ClearAll />}
                 >
@@ -395,7 +395,7 @@ const SongPlayerPage: React.FC = () => {
             {error}
           </Alert>
         )}
-          
+
         {/* Search Section */}
         <Paper elevation={3} className="search-section">
           <Typography variant="h5" className="section-title">
