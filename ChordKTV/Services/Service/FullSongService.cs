@@ -259,6 +259,19 @@ public class FullSongService : IFullSongService
             }
             if (dbSong is not null)
             {
+                if (string.IsNullOrWhiteSpace(dbSong.YoutubeId)) //no main title added, only user specific alts, so we search again
+                {
+                    dbSong.YoutubeId = await _youTubeClientService.SearchYoutubeVideoLinkAsync(dbSong.Title, dbSong.Artist, dbSong.Albums.FirstOrDefault()?.Name, dbSong.Duration);
+                    if (string.IsNullOrWhiteSpace(dbSong.YoutubeId))
+                    {
+                        _logger.LogError("FullSong dbSong: Failed to get youtube video link for '{Title}' by '{Artist}'", song.Title, song.Artist);
+                        //TODO: maybe we use alt if failed, but this saves into db, need to consider
+                    }
+                    else if (!dbSong.AlternateYoutubeIds.Remove(dbSong.YoutubeId))
+                    {   //new id needs mapping
+                        await _youtubeSongRepo.AddYoutubeSongAsync(new YoutubeSong { YoutubeId = dbSong.YoutubeId, Song = dbSong });
+                    }
+                }
                 _logger.LogInformation("Found song in db with same LRC/Genius ID, skipping LLM processing");
                 return _mapper.Map<FullSongResponseDto>(dbSong);
             }
@@ -313,11 +326,7 @@ public class FullSongService : IFullSongService
             {
                 _logger.LogError("FullSong: Failed to get youtube video link for '{Title}' by '{Artist}'", song.Title, song.Artist);
             }
-            else if (song.AlternateYoutubeIds.Contains(song.YoutubeId))
-            {
-                song.AlternateYoutubeIds.Remove(song.YoutubeId);
-            }
-            else
+            else if (!song.AlternateYoutubeIds.Remove(song.YoutubeId))
             {   //new id needs mapping
                 youtubeSong = new YoutubeSong { YoutubeId = song.YoutubeId, Song = song };
             }
