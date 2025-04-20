@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
 import QueueComponent from '../../components/QueueComponent/QueueComponent';
 import { songApi } from '../../api/apiClient';
-import { extractYouTubeVideoId } from '../HomePage/HomePage';
+import { extractYouTubeVideoId } from '../HomePage/HomePageHelpers';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -97,7 +97,7 @@ const SongPlayerPage: React.FC = () => {
   };
 
   const prefetchNextSongs = useCallback(async () => {
-    if (!queue.length) return;
+    if (!queue.length) {return;}
 
     const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
     if (currentIndex >= 0 && currentIndex < queue.length - 1) {

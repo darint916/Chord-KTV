@@ -20,12 +20,7 @@ import logo from '../../assets/chordktv.png';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
 import axios from 'axios';
-
-export const extractYouTubeVideoId = (url: string | null | undefined): string | null => {
-  if (!url) { return null; }
-  const match = url.match(/(?:\?v=|\/embed\/|\.be\/|\/watch\?v=|\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/);
-  return match ? match[1] : null;
-};
+import { extractYouTubeVideoId } from './HomePageHelpers';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
