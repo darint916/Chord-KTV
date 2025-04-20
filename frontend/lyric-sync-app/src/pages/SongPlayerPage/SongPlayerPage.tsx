@@ -114,7 +114,7 @@ const SongPlayerPage: React.FC = () => {
             fullSongRequestDto: {
               title: nextItem.title,
               artist: nextItem.artist,
-              youTubeId: extractYouTubeVideoId(nextItem.youTubeId) || '',
+              youTubeId: nextItem.youTubeId || '',
               lyrics: nextItem.lyrics || ''
             }
           }).then(response => {

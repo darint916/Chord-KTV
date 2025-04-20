@@ -295,9 +295,9 @@ const HomePage: React.FC = () => {
               variant="contained"
               onClick={handleLoadPlaylist}
               disabled={isLoading || playlistLoading}
-              startIcon={playlistLoading ? <CircularProgress size={20} /> : null}
+              // startIcon={playlistLoading ? <CircularProgress size={20} /> : null}
             >
-              {playlistLoading ? 'Loading...' : 'Load Playlist'}
+              {'Load Playlist'}
             </Button>
           </div>
           {playlistLoading && (

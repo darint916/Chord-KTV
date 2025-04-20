@@ -41,7 +41,7 @@
         flex-direction: column;
         border-radius: 8px;
         background: $gradient;
-        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+        box-shadow: $box-shadow;
         max-width: 100%;
         justify-content: center;
         
@@ -67,7 +67,7 @@
         flex-direction: column;
         border-radius: 8px;
         background: $gradient;
-        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+        box-shadow: $box-shadow;
         max-width: 100%;
         justify-content: center;
       }
@@ -80,6 +80,7 @@
       background: $secondary-color;
     }
 
+    // Keeping rgba since it's special case here
     @keyframes pulse {
       0% {
         transform: scale(1);
