@@ -199,7 +199,7 @@ public class FullSongService : IFullSongService
                 song.Artist = lrcLyricsDto.ArtistName ?? artist ?? song.Artist;
                 song.LrcLyrics = lrcLyricsDto.SyncedLyrics;
                 // Add new alternates from LRC search
-                if (lrcLyricsDto.AlternateTitles?.Count > 0)
+                if (lrcLyricsDto.AlternateTitles.Count > 0)
                 {
                     foreach (string altTitle in lrcLyricsDto.AlternateTitles)
                     {
@@ -209,7 +209,7 @@ public class FullSongService : IFullSongService
                         }
                     }
                 }
-                if (lrcLyricsDto.AlternateArtists?.Count > 0)
+                if (lrcLyricsDto.AlternateArtists.Count > 0)
                 {
                     foreach (string altArtist in lrcLyricsDto.AlternateArtists)
                     {
@@ -233,8 +233,8 @@ public class FullSongService : IFullSongService
                     LrcId = lrcLyricsDto.Id,
                     RomLrcId = lrcLyricsDto.RomanizedId,
                     LrcRomanizedLyrics = lrcLyricsDto.RomanizedSyncedLyrics,
-                    AlternateTitles = lrcLyricsDto.AlternateTitles,
-                    FeaturedArtists = lrcLyricsDto.AlternateArtists,
+                    AlternateTitles = [.. lrcLyricsDto.AlternateTitles],
+                    FeaturedArtists = [.. lrcLyricsDto.AlternateArtists],
                     GeniusMetaData = new GeniusMetaData { }
                 };
                 songCreate = true;
@@ -326,14 +326,6 @@ public class FullSongService : IFullSongService
         //Add residual information (kinda messy)
         if (lrcLyricsDto != null)
         {
-            if (!string.IsNullOrWhiteSpace(lrcLyricsDto.TrackName) && !song.AlternateTitles.Any(alt => alt.Equals(lrcLyricsDto.TrackName, StringComparison.OrdinalIgnoreCase)))
-            {
-                song.AlternateTitles.Add(lrcLyricsDto.TrackName);
-            }
-            if (!string.IsNullOrWhiteSpace(lrcLyricsDto.ArtistName) && !song.FeaturedArtists.Any(artist => artist.Equals(lrcLyricsDto.ArtistName, StringComparison.OrdinalIgnoreCase)))
-            {
-                song.FeaturedArtists.Add(lrcLyricsDto.ArtistName);
-            }
             if (lrcLyricsDto.Id != 0 && song.LrcId != lrcLyricsDto.Id)
             {
                 song.LrcId = lrcLyricsDto.Id; //assume new lyrics found??
@@ -347,7 +339,7 @@ public class FullSongService : IFullSongService
                 song.PlainLyrics = lrcLyricsDto.PlainLyrics;
             }
         }
-        if (!string.IsNullOrWhiteSpace(title) && !song.AlternateTitles.Any(alt => alt.Equals(title, StringComparison.OrdinalIgnoreCase)))
+        if (!string.IsNullOrWhiteSpace(title) && !song.AlternateTitles.Any(altTitle => string.Equals(altTitle, title, StringComparison.OrdinalIgnoreCase)))
         {
             song.AlternateTitles.Add(title);
         }
