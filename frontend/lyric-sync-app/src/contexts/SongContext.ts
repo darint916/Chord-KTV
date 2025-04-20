@@ -12,7 +12,8 @@ interface SongContextType {
   queue: QueueItem[];
   setQueue: (_queue: QueueItem[] | ((_prevQueue: QueueItem[]) => QueueItem[])) => void;
   currentPlayingId: string | null;
-  setCurrentPlayingId: (_id: string | null) => void;
+  // setCurrentPlayingId: (_id: string | null) => void;
+  setCurrentPlayingId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 // Create context

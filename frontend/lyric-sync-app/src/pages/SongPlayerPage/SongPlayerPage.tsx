@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Container, Typography, Box, Button, Paper, TextField, IconButton, CircularProgress, Alert, List, Divider } from '@mui/material';
+import { Container, Typography, Box, Button, Paper, TextField, IconButton, CircularProgress, Alert } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import ClearAll from '@mui/icons-material/Search';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import './SongPlayerPage.scss';
@@ -10,12 +9,9 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { useSong } from '../../contexts/SongContext';
 import { useNavigate } from 'react-router-dom';
-import { songApi } from '../../api/apiClient';
 import { v4 as uuidv4 } from 'uuid';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import DraggableQueueItem from '../../components/DraggableQueueItem/DraggableQueueItem';
 import { QueueItem } from '../../contexts/QueueTypes';
+import QueueComponent from '../../components/QueueComponent/QueueComponent';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -180,122 +176,10 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
-  const moveQueueItem: (_dragIndex: number, _hoverIndex: number) => void =
-    (dragIndex, hoverIndex) => {
-      setQueue((prevQueue: QueueItem[]) => {
-        const newQueue = [...prevQueue];
-        const [removed] = newQueue.splice(dragIndex, 1);
-        newQueue.splice(hoverIndex, 0, removed);
-        return newQueue;
-      });
-    };
-
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
       handleQueueAddition();
     }
-  };
-
-  const handlePlayFromQueue = async (item: QueueItem) => {
-    if (item.error) { return; } // Don't try to play errored items
-
-    setIsLoading(true);
-    setError('');
-
-    try {
-      if (!item.apiRequested) {
-        // Mark as requested immediately
-        setQueue(prevQueue => prevQueue.map(queueItem =>
-          queueItem.queueId === item.queueId
-            ? { ...queueItem, apiRequested: true, error: undefined }
-            : queueItem
-        ));
-
-        const response = await songApi.apiSongsSearchPost({
-          fullSongRequestDto: {
-            title: item.title,
-            artist: item.artist,
-            youTubeId: item.youTubeId || '',
-            lyrics: item.lyrics || ''
-          }
-        });
-
-        const processedData = {
-          title: response.title,
-          artist: response.artist,
-          youTubeId: response.youTubeId,
-          lrcLyrics: response.lrcLyrics,
-          lrcRomanizedLyrics: response.lrcRomanizedLyrics,
-          lrcTranslatedLyrics: response.lrcTranslatedLyrics,
-          geniusMetaData: response.geniusMetaData
-        };
-
-        setQueue(prevQueue => prevQueue.map(queueItem =>
-          queueItem.queueId === item.queueId
-            ? { ...queueItem, processedData, apiRequested: true }
-            : queueItem
-        ));
-
-        setCurrentPlayingId(item.queueId);
-        setSong(processedData);
-      } else {
-        const playbackData = item.processedData || {
-          title: item.title,
-          artist: item.artist,
-          youTubeId: vidId || '',
-          lrcLyrics: '',
-          lrcRomanizedLyrics: '',
-          lrcTranslatedLyrics: ''
-        };
-
-        setCurrentPlayingId(item.queueId);
-        setSong(playbackData);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
-
-      // Update the queue item with error state
-      setQueue(prevQueue => prevQueue.map(queueItem =>
-        queueItem.queueId === item.queueId
-          ? { ...queueItem, error: errorMessage }
-          : queueItem
-      ));
-
-      // Fallback to basic playback
-      const vidId = extractYouTubeVideoId(item.youTubeId);
-      setCurrentPlayingId(item.queueId);
-      setSong({
-        title: item.title,
-        artist: item.artist,
-        youTubeId: vidId || '',
-        lrcLyrics: '',
-        lrcRomanizedLyrics: '',
-        lrcTranslatedLyrics: ''
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const clearQueue = () => {
-    if (!currentPlayingId) {
-      setQueue([]);
-      setCurrentPlayingId(null);
-      return;
-    }
-
-    const currentSong = queue.find(item => item.queueId === currentPlayingId);
-    if (currentSong) {
-      setQueue([currentSong]);
-    } else {
-      setQueue([]);
-      setCurrentPlayingId(null);
-    }
-  };
-
-  const removeFromQueue = (queueId: string) => {
-    const newQueue = queue.filter(item => item.queueId !== queueId);
-    setQueue(newQueue);
   };
 
   return (
@@ -347,38 +231,14 @@ const SongPlayerPage: React.FC = () => {
             </Box>
           </Grid>
           {/* Queue Column */}
-          <DndProvider backend={HTML5Backend}>
-            <Grid className="queue-column" component={Paper}>
-              <Typography variant="h6" className="queue-title" align="center">
-                Queue
-              </Typography>
-              <Divider />
-              <List className="queue-list">
-                {queue.map((item, index) => (
-                  <React.Fragment key={item.queueId}>
-                    <DraggableQueueItem
-                      item={item}
-                      index={index}
-                      moveItem={moveQueueItem}
-                      onRemove={removeFromQueue}
-                      onPlay={handlePlayFromQueue}
-                      currentPlayingId={currentPlayingId}
-                    />
-                    {index < queue.length - 1 && <Divider />}
-                  </React.Fragment>
-                ))}
-              </List>
-              <Box mt={2} display="flex" gap={1}>
-                <Button
-                  variant="outlined"
-                  onClick={clearQueue}
-                  startIcon={<ClearAll />}
-                >
-                  Clear Queue
-                </Button>
-              </Box>
-            </Grid>
-          </DndProvider>
+          <Grid className="queue-parent">
+            <QueueComponent
+              queue={queue}
+              currentPlayingId={currentPlayingId}
+              setQueue={setQueue}
+              setCurrentPlayingId={setCurrentPlayingId}
+            />
+          </Grid>
         </Grid>
         {error && (
           <Alert severity="error" className="error-alert">

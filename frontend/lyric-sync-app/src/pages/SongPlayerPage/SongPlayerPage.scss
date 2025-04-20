@@ -25,35 +25,13 @@
       gap: 20px;
       width: 100%;
 
-      .queue-column {
+      .queue-parent {
+        width: 22%;
         padding-right: 16px;
-        background: $gradient;
-        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
-        border-radius: 8px;
         display: flex;
         flex-direction: column;
         width: 22%;
         align-items: center;
-        
-        .queue-title {
-          padding: 16px;
-          color: $text-primary;
-          font-weight: bold;
-        }
-        
-        .queue-list {
-          flex: 1;
-          padding: 0;
-          width: 100%;
-          overflow-y: scroll;
-          scrollbar-width: none; /* Firefox */
-          -ms-overflow-style: none;  /* Internet Explorer 10+ */
-          
-        }
-      }
-      .queue-list::-webkit-scrollbar{ /* WebKit */
-        width: 0;
-        height: 0;
       }
 
       .grid-parent {
