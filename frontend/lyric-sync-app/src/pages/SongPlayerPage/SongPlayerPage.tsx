@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
 import QueueComponent from '../../components/QueueComponent/QueueComponent';
 import { songApi } from '../../api/apiClient';
+import { extractYouTubeVideoId } from '../HomePage/HomePage';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -191,12 +192,6 @@ const SongPlayerPage: React.FC = () => {
   const handleQuizRedirect = () => {
     setQuizQuestions([]);   // Clear old song quiz questions
     navigate('/quiz');
-  };
-
-  const extractYouTubeVideoId = (url: string | null | undefined): string | null => {
-    if (!url) { return null; }
-    const match = url.match(/(?:\?v=|\/embed\/|\.be\/|\/watch\?v=|\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/);
-    return match ? match[1] : null;
   };
 
   const handleQueueAddition = async () => {

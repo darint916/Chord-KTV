@@ -21,6 +21,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
 import axios from 'axios';
 
+export const extractYouTubeVideoId = (url: string | null | undefined): string | null => {
+  if (!url) { return null; }
+  const match = url.match(/(?:\?v=|\/embed\/|\.be\/|\/watch\?v=|\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+};
+
 const HomePage: React.FC = () => {
   const { user } = useAuth();
   const [songName, setSongName] = useState('');
@@ -34,14 +40,9 @@ const HomePage: React.FC = () => {
   const [lyrics, setLyrics] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
 
-  const extractYouTubeVideoId = (url: string | null | undefined): string | null => {
-    if (!url) {return null;}
-    const match = url.match(/(?:\?v=|\/embed\/|\.be\/|\/watch\?v=|\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/);
-    return match ? match[1] : null;
-  };
 
   const extractPlaylistId = (url: string): string | null => {
-    if (!url) {return null;}
+    if (!url) { return null; }
     const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
     return match ? match[1] : null;
   };
@@ -57,11 +58,11 @@ const HomePage: React.FC = () => {
 
     try {
       const playlistId = extractPlaylistId(playlistUrl);
-      if (!playlistId) {throw new Error('Invalid YouTube playlist URL');}
+      if (!playlistId) { throw new Error('Invalid YouTube playlist URL'); }
 
       const response = await songApi.apiYoutubePlaylistsPlaylistIdGet({ playlistId });
       const videos = response.videos || [];
-      if (videos.length === 0) {throw new Error('This playlist contains no videos');}
+      if (videos.length === 0) { throw new Error('This playlist contains no videos'); }
 
       // Create queue items with basic info
       const newQueue = videos.map(video => ({
@@ -75,7 +76,7 @@ const HomePage: React.FC = () => {
 
       // Set the queue with new songs
       setQueue(newQueue);
-      
+
       // Immediately process the first song
       const firstSong = newQueue[0];
       try {
@@ -87,14 +88,14 @@ const HomePage: React.FC = () => {
             lyrics: firstSong.lyrics
           }
         });
-        
+
         // Update queue with processed data for first song
-        setQueue(prev => prev.map(item => 
-          item.queueId === firstSong.queueId 
+        setQueue(prev => prev.map(item =>
+          item.queueId === firstSong.queueId
             ? { ...item, processedData: processed, apiRequested: true }
             : item
         ));
-        
+
         // Set as current song with full data
         setCurrentPlayingId(firstSong.queueId);
         setSong(processed);
@@ -111,7 +112,7 @@ const HomePage: React.FC = () => {
           lrcTranslatedLyrics: ''
         });
       }
-      
+
       navigate('/play-song');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load playlist');
@@ -132,7 +133,7 @@ const HomePage: React.FC = () => {
 
     if (user) {
       try {
-        await axios.post('http://localhost:5259/api/random', 
+        await axios.post('http://localhost:5259/api/random',
           {
             songName,
             artistName,
@@ -295,7 +296,7 @@ const HomePage: React.FC = () => {
               variant="contained"
               onClick={handleLoadPlaylist}
               disabled={isLoading || playlistLoading}
-              // startIcon={playlistLoading ? <CircularProgress size={20} /> : null}
+            // startIcon={playlistLoading ? <CircularProgress size={20} /> : null}
             >
               {'Load Playlist'}
             </Button>
