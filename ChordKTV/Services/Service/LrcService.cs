@@ -112,7 +112,7 @@ public class LrcService : ILrcService
                 //Add rescoring higher if needed
                 if (!string.IsNullOrWhiteSpace(result.ArtistName))
                 {
-                    if (result.TrackName is not null)
+                    if (!string.IsNullOrWhiteSpace(result.TrackName))
                     {
                         lyricsDtoMatch.AlternateTitles.Add(result.TrackName);
                     }

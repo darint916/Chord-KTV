@@ -268,7 +268,7 @@ public class FullSongService : IFullSongService
                         //TODO: maybe we use alt if failed, but this saves into db, need to consider
                     }
                     else if (!dbSong.AlternateYoutubeIds.Remove(dbSong.YoutubeId))
-                    {   //new id needs mapping
+                    {   //new id needs mapping if not found in alts (if in alt, that means its been mapped before, thus moving it to main id)
                         await _youtubeSongRepo.AddYoutubeSongAsync(new YoutubeSong { YoutubeId = dbSong.YoutubeId, Song = dbSong });
                     }
                 }
