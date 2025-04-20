@@ -84,6 +84,9 @@ const YouTubePlaylistViewer: React.FC<YouTubePlaylistViewerProps> = ({ playlistU
           youTubeId: vidId
         }
       });
+      if (vidId && !response.youTubeId) {
+        response.youTubeId = vidId;
+      }
       setSong(response);
       navigate('/play-song', { state: { playlistUrl } });
     } catch {

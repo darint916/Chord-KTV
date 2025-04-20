@@ -13,14 +13,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useSong } from '../../contexts/SongContext';
 import SearchIcon from '@mui/icons-material/Search';
-import { useAuth } from '../../contexts/AuthTypes';
+// import { useAuth } from '../../contexts/AuthTypes';
 import YouTubePlaylistViewer from '../../components/YouTubePlaylistViewer/YouTubePlaylistViewer';
 import './HomePage.scss';
 import { songApi } from '../../api/apiClient';
 import logo from '../../assets/chordktv.png';
 
 const HomePage: React.FC = () => {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [songName, setSongName] = useState('');
   const [artistName, setArtistName] = useState('');
   const [error, setError] = useState('');
@@ -28,7 +28,7 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { setSong } = useSong();
   const [playlistUrl, setPlaylistUrl] = useState('');
-  const [showPlaylist, setShowPlaylist] = useState(false); 
+  const [showPlaylist, setShowPlaylist] = useState(false);
   const [lyrics, setLyrics] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
 
@@ -54,25 +54,6 @@ const HomePage: React.FC = () => {
 
     const youTubeId = extractYouTubeVideoId(youtubeUrl);
 
-    if (user) {
-      try {
-        await axios.post('http://localhost:5259/api/random', 
-          {
-            songName,
-            artistName,
-            timestamp: new Date()
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${user.idToken}`
-            }
-          }
-        );
-        setError('');
-      } catch {
-        setError('Failed to save search history. Please try again.');
-      }
-    }
 
     try {
       const response = await songApi.apiSongsSearchPost({
@@ -83,6 +64,9 @@ const HomePage: React.FC = () => {
           youTubeId: youTubeId || ''
         }
       });
+      if (youTubeId && !response.youTubeId) {
+        response.youTubeId = youTubeId;
+      }
       setSong(response);
       navigate('/play-song');
     } catch {
