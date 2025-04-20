@@ -10,5 +10,7 @@ public class UserSongActivity
     public Guid SongId { get; set; }
     public Guid UserId { get; set; }
     public List<DateTime> DatesPlayed { get; set; } = new List<DateTime>();
+    public DateTime LastPlayed { get; set; }
     public bool IsFavorite { get; set; }
+    public DateTime? DateFavorited { get; set; }
 }

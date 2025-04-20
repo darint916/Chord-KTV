@@ -63,7 +63,7 @@ public class UserActivityRepo : IUserActivityRepo
         await _context.LearnedWords.AddAsync(word);
     }
 
-    // Song Activity Methods (Combined)
+    // Song Activity Methods
     public async Task<UserSongActivity?> GetUserSongActivityAsync(Guid userId, Guid songId)
     {
         return await _context.UserSongActivities
@@ -74,7 +74,7 @@ public class UserActivityRepo : IUserActivityRepo
     {
         return await _context.UserSongActivities
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.DatesPlayed.Max())
+            .OrderByDescending(x => x.LastPlayed)
             .ToListAsync();
     }
 
@@ -83,16 +83,19 @@ public class UserActivityRepo : IUserActivityRepo
         UserSongActivity? existing = await GetUserSongActivityAsync(activity.UserId, activity.SongId);
         if (existing == null)
         {
+            activity.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
             await _context.UserSongActivities.AddAsync(activity);
         }
         else
         {
             existing.DatesPlayed = activity.DatesPlayed;
+            existing.LastPlayed = activity.LastPlayed;
             existing.IsFavorite = activity.IsFavorite;
+            existing.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
         }
     }
 
-    // Playlist Activity Methods (Combined)
+    // Playlist Activity Methods
     public async Task<UserPlaylistActivity?> GetUserPlaylistActivityAsync(Guid userId, string playlistUrl)
     {
         return await _context.UserPlaylistActivities
@@ -103,7 +106,7 @@ public class UserActivityRepo : IUserActivityRepo
     {
         return await _context.UserPlaylistActivities
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.DatesPlayed.Max())
+            .OrderByDescending(x => x.LastPlayed)
             .ToListAsync();
     }
 
@@ -112,12 +115,15 @@ public class UserActivityRepo : IUserActivityRepo
         UserPlaylistActivity? existing = await GetUserPlaylistActivityAsync(activity.UserId, activity.PlaylistUrl);
         if (existing == null)
         {
+            activity.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
             await _context.UserPlaylistActivities.AddAsync(activity);
         }
         else
         {
             existing.DatesPlayed = activity.DatesPlayed;
+            existing.LastPlayed = activity.LastPlayed;
             existing.IsFavorite = activity.IsFavorite;
+            existing.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
         }
     }
 

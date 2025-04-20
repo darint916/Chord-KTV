@@ -269,7 +269,7 @@ public class UserActivityController : Controller
     }
 
     [HttpPost("favorite/song")]
-    public async Task<IActionResult> ToggleFavoriteSong([FromBody] FavoriteSongDto dto)
+    public async Task<IActionResult> ToggleFavoriteSong([FromBody] UserSongActivityDto dto)
     {
         try
         {
@@ -279,29 +279,24 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
+            // Retrieve current activity (if any)
             UserSongActivity? activity = await _activityRepo.GetUserSongActivityAsync(user.Id, dto.SongId);
             if (activity == null)
             {
-                activity = new UserSongActivity
-                {
-                    UserId = user.Id,
-                    SongId = dto.SongId,
-                    DatesPlayed = new List<DateTime> { DateTime.UtcNow },
-                    IsFavorite = dto.Favorited
-                };
+                activity = _mapper.Map<UserSongActivity>(dto);
+                activity.UserId = user.Id;
+                activity.DateFavorited = dto.IsFavorite ? DateTime.UtcNow : null;
                 await _activityRepo.UpsertSongActivityAsync(activity);
             }
             else
             {
-                activity.IsFavorite = dto.Favorited;
-                if (activity.DatesPlayed.Count == 0)
-                {
-                    activity.DatesPlayed.Add(DateTime.UtcNow);
-                }
+                activity.IsFavorite = dto.IsFavorite;
+                activity.DateFavorited = dto.IsFavorite ? DateTime.UtcNow : null;
+
                 await _activityRepo.UpsertSongActivityAsync(activity);
             }
             await _activityRepo.SaveChangesAsync();
-            return Ok(new { message = dto.Favorited ? "Song favorited" : "Song unfavorited" });
+            return Ok(new { message = dto.IsFavorite ? "Song favorited" : "Song unfavorited" });
         }
         catch (Exception ex)
         {
@@ -333,7 +328,7 @@ public class UserActivityController : Controller
     }
 
     [HttpPost("favorite/playlist")]
-    public async Task<IActionResult> ToggleFavoritePlaylist([FromBody] FavoritePlaylistDto dto)
+    public async Task<IActionResult> ToggleFavoritePlaylist([FromBody] UserPlaylistActivityDto dto)
     {
         try
         {
@@ -343,29 +338,23 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
+            // Retrieve current activity (if any)
             UserPlaylistActivity? activity = await _activityRepo.GetUserPlaylistActivityAsync(user.Id, dto.PlaylistUrl);
             if (activity == null)
             {
-                activity = new UserPlaylistActivity
-                {
-                    UserId = user.Id,
-                    PlaylistUrl = dto.PlaylistUrl,
-                    DatesPlayed = new List<DateTime> { DateTime.UtcNow },
-                    IsFavorite = dto.Favorited
-                };
+                activity = _mapper.Map<UserPlaylistActivity>(dto);
+                activity.UserId = user.Id;
+                activity.DateFavorited = dto.IsFavorite ? DateTime.UtcNow : null;
                 await _activityRepo.UpsertPlaylistActivityAsync(activity);
             }
             else
             {
-                activity.IsFavorite = dto.Favorited;
-                if (activity.DatesPlayed.Count == 0)
-                {
-                    activity.DatesPlayed.Add(DateTime.UtcNow);
-                }
+                activity.IsFavorite = dto.IsFavorite;
+                activity.DateFavorited = dto.IsFavorite ? DateTime.UtcNow : null;
                 await _activityRepo.UpsertPlaylistActivityAsync(activity);
             }
             await _activityRepo.SaveChangesAsync();
-            return Ok(new { message = dto.Favorited ? "Playlist favorited" : "Playlist unfavorited" });
+            return Ok(new { message = dto.IsFavorite ? "Playlist favorited" : "Playlist unfavorited" });
         }
         catch (Exception ex)
         {
