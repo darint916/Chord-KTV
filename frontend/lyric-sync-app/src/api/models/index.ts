@@ -1,5 +1,5 @@
 /* tslint:disable */
- 
+/* eslint-disable */
 export * from './Album';
 export * from './FullSongRequestDto';
 export * from './FullSongResponseDto';
@@ -8,6 +8,7 @@ export * from './GeniusMetaDataDto';
 export * from './HandwritingCanvasRequestDto';
 export * from './HandwritingCanvasResponseDto';
 export * from './LanguageCode';
+export * from './MatchScores';
 export * from './PlaylistDetailsDto';
 export * from './ProblemDetails';
 export * from './QuizQuestionDto';

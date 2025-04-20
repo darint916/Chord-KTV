@@ -22,7 +22,6 @@
     }
 
     &.error-item {
-      background-color: $error-color;
       border-left: 3px solid $error-color;
 
       &:hover {

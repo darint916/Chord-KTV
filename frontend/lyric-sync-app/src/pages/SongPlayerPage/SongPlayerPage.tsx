@@ -65,14 +65,6 @@ const SongPlayerPage: React.FC = () => {
     return <Typography variant="h5">Error: No song selected</Typography>;
   }
 
-  if (!song.lrcLyrics || !song.lrcLyrics.trim()) {
-    return <Typography variant="h5">Error: No time-synced lyrics found for song</Typography>;
-  }
-
-  if (!song.youTubeId || !song.youTubeId.trim()) {
-    return <Typography variant="h5">Error: No YouTube video found for song</Typography>;
-  }
-
   const lrcTimestamps = useMemo(() => {
     const timestamps: number[] = [];
     if (!song.lrcLyrics) {
@@ -211,8 +203,6 @@ const SongPlayerPage: React.FC = () => {
     setError('');
 
     try {
-      const vidId = extractYouTubeVideoId(item.youTubeId);
-
       if (!item.apiRequested) {
         // Mark as requested immediately
         setQueue(prevQueue => prevQueue.map(queueItem =>
@@ -225,7 +215,7 @@ const SongPlayerPage: React.FC = () => {
           fullSongRequestDto: {
             title: item.title,
             artist: item.artist,
-            youTubeId: vidId || '',
+            youTubeId: item.youTubeId || '',
             lyrics: item.lyrics || ''
           }
         });
