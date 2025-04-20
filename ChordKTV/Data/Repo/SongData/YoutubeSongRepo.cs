@@ -30,9 +30,13 @@ public class YoutubeSongRepo : IYoutubeSongRepo
         return youtubeSong?.Song;
     }
 
-    public async Task AddYoutubeSongAsync(YoutubeSong song)
+    public async Task AddYoutubeSongAsync(YoutubeSong youtubeSong)
     {
-        _context.YoutubeSongs.Add(song);
+        if (string.IsNullOrWhiteSpace(youtubeSong.YoutubeId))
+        {
+            throw new ArgumentException("YoutubeSongRepo: YoutubeId cannot be null or whitespace.", nameof(youtubeSong));
+        }
+        _context.YoutubeSongs.Add(youtubeSong);
         await _context.SaveChangesAsync();
     }
 }

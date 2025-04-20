@@ -1,5 +1,7 @@
+using System.Security.Cryptography.X509Certificates;
 using AutoMapper;
 using ChordKTV.Data.Api.SongData;
+using ChordKTV.Data.Repo.SongData;
 using ChordKTV.Dtos;
 using ChordKTV.Dtos.FullSong;
 using ChordKTV.Dtos.OpenAI;
@@ -294,21 +296,31 @@ public class FullSongService : IFullSongService
             }
         }
 
-        //Add/Update youtube urls
+        //Add/Update youtube urls, if user supplies their own, we always add it as an alt (avoids bias)
+        YoutubeSong? youtubeSong = null;
         if (!string.IsNullOrWhiteSpace(youtubeId))
         {
-            if (string.IsNullOrWhiteSpace(song.YoutubeId))
-            {
-                song.YoutubeId = youtubeId;
-            }
-            else if (!song.AlternateYoutubeIds.Contains(youtubeId))
+            if (!song.AlternateYoutubeIds.Contains(youtubeId))
             {
                 song.AlternateYoutubeIds.Add(youtubeId);
+                youtubeSong = new YoutubeSong { YoutubeId = youtubeId, Song = song };
             }
         }
         else if (string.IsNullOrWhiteSpace(song.YoutubeId)) //query for a vid if none provided and non exist, expensive call
-        {
+        {   //We make the main youtubeId always the best one provided by youtube search itself
             song.YoutubeId = await _youTubeClientService.SearchYoutubeVideoLinkAsync(song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, song.Duration);
+            if (string.IsNullOrWhiteSpace(song.YoutubeId))
+            {
+                _logger.LogError("FullSong: Failed to get youtube video link for '{Title}' by '{Artist}'", song.Title, song.Artist);
+            }
+            else if (song.AlternateYoutubeIds.Contains(song.YoutubeId))
+            {
+                song.AlternateYoutubeIds.Remove(song.YoutubeId);
+            }
+            else
+            {   //new id needs mapping
+                youtubeSong = new YoutubeSong { YoutubeId = song.YoutubeId, Song = song };
+            }
         }
 
         //Add residual information (kinda messy)
@@ -347,7 +359,14 @@ public class FullSongService : IFullSongService
             }
         }
 
-        await _songRepo.AddSongAsync(song);
+        if (youtubeSong != null)
+        {
+            await _youtubeSongRepo.AddYoutubeSongAsync(youtubeSong); //chained save transaction
+        }
+        else
+        {
+            await _songRepo.AddSongAsync(song);
+        }
         FullSongResponseDto? response = _mapper.Map<FullSongResponseDto>(song);
         if (lrcLyricsDto != null) //add LRC
         {
