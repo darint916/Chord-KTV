@@ -13,6 +13,11 @@
   .queue-item {
     background-color: transparent;
 
+    &.not-requested {
+      opacity: 0.7; // Greyed out effect
+      color: rgba(0, 0, 0, 0.38); // MUI's disabled text color
+    }
+
     &.active-song {
       background-color: color.scale($primary-color, $lightness: -10%);
 

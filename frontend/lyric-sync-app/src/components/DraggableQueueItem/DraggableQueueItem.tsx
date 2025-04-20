@@ -63,6 +63,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
   const hasError = !!item.error;
   const songImageUrl = item.processedData?.geniusMetaData?.songImageUrl;
   const isCurrentSong = currentPlayingId === item.queueId;
+  const isPending = !item.apiRequested;
 
   return (
     <div
@@ -71,12 +72,13 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
     >
       <ListItemButton
         onClick={() => !hasError && onPlay(item)}
-        className={`queue-item ${isCurrentSong ? 'active-song' : ''} ${hasError ? 'error-item' : ''}`}
+        className={`queue-item 
+          ${isCurrentSong ? 'active-song' : ''} 
+          ${hasError ? 'error-item' : ''} 
+          ${isPending ? 'not-requested' : ''}`}
         disabled={isLoading}
       >
-        {isLoading ? (
-          <CircularProgress size={20} />
-        ) : hasError ? (
+        {hasError && (
           <Tooltip
             title={
               <Box>
@@ -89,7 +91,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
           >
             <ErrorIcon color="error" sx={{ mr: 1 }} />
           </Tooltip>
-        ) : null}
+        )}
 
         {songImageUrl ? (
           <Avatar src={songImageUrl} variant="square" />
@@ -115,17 +117,21 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
           <div className="now-playing-indicator" />
         )}
 
-        {!isLoading && !isCurrentSong && (
-          <IconButton
-            edge="end"
-            aria-label="remove"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove(item.queueId);
-            }}
-          >
-            <DeleteIcon />
-          </IconButton>
+        {isLoading ? (
+          <CircularProgress size={20} />
+        ) : (
+          !isCurrentSong && (
+            <IconButton
+              edge="end"
+              aria-label="remove"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(item.queueId);
+              }}
+            >
+              <DeleteIcon />
+            </IconButton>
+          )
         )}
       </ListItemButton>
     </div>
