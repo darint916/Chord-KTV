@@ -14,13 +14,9 @@ public class UserActivityProfile : Profile
         CreateMap<UserQuizResultDto, UserQuizResult>();
         CreateMap<UserQuizResult, UserQuizResultDto>();
 
-        CreateMap<UserSongActivity, UserSongActivityDto>()
-            .ForMember(dest => dest.DatesPlayed, opt => opt.MapFrom(src => src.DatesPlayed))
-            .ReverseMap();
+        CreateMap<UserSongActivity, UserSongActivityDto>();
 
-        CreateMap<UserPlaylistActivity, UserPlaylistActivityDto>()
-            .ForMember(dest => dest.DatesPlayed, opt => opt.MapFrom(src => src.DatesPlayed))
-            .ReverseMap();
+        CreateMap<UserPlaylistActivity, UserPlaylistActivityDto>();
 
         CreateMap<UserHandwritingResultDto, UserHandwritingResult>();
         CreateMap<UserHandwritingResult, UserHandwritingResultDto>();
