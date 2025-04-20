@@ -73,13 +73,14 @@
       border-radius: 50%;
       background-color: $secondary-color;
       margin-left: 8px;
+      margin-right: 4px;
     }
 
     .MuiIconButton-root {
       color: $error-color;
 
       &:hover {
-        background-color: color.scale($error-color, $lightness: -5%);
+        background-color: color.scale($error-color, $lightness: -60%);
       }
     }
   }

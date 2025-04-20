@@ -136,7 +136,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
         <Typography variant="h6" className="queue-title" align="center">
                     Queue
         </Typography>
-        <Divider />
+        <Divider variant="fullWidth" className="queue-divider"/>
         <List className="queue-list">
           {queue.map((item, index) => (
             <React.Fragment key={item.queueId}>

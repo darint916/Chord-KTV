@@ -3,7 +3,6 @@
 @use 'sass:color';
 
 .queue-column {
-  padding-right: 16px;
   box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
   border-radius: 8px;
   display: flex;
@@ -17,6 +16,13 @@
     padding: 16px;
     color: $text-primary;
     font-weight: bold;
+  }
+
+  .queue-divider {
+    background-color: $secondary-color;
+    height: 1px;
+    width: 100%;
+    border: none;
   }
   
   .queue-list {
