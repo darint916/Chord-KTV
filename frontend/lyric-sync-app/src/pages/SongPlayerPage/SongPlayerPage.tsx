@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Container, Typography, Box, Button, Paper, TextField, IconButton, CircularProgress, Alert, List, Divider } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearAll from '@mui/icons-material/Search';
@@ -59,81 +59,84 @@ const SongPlayerPage: React.FC = () => {
       }
     }
   }, []);
+  let animationFrameId: number;
 
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
   }
-  
+
+  if (!song.lrcLyrics || !song.lrcLyrics.trim()) {
+    return <Typography variant="h5">Error: No time-synced lyrics found for song</Typography>;
+  }
+
+  if (!song.youTubeId || !song.youTubeId.trim()) {
+    return <Typography variant="h5">Error: No YouTube video found for song</Typography>;
+  }
+
+  const lrcTimestamps = useMemo(() => {
+    const timestamps: number[] = [];
+    if (!song.lrcLyrics) {
+      return timestamps;
+    };
+    const timeTagRegex = /\[(\d+):(\d+)\.(\d+)\]/g;
+    const timeMatches = [...song.lrcLyrics.matchAll(timeTagRegex)];
+    timeMatches.forEach(match => {
+      const minutes = parseInt(match[1]);
+      const seconds = parseInt(match[2]);
+      const centisecond = parseInt(match[3]);
+      timestamps.push(minutes * 60 + seconds + (centisecond / 100));
+    });
+    return timestamps.sort((a, b) => a - b);
+  }, [song.lrcLyrics]);
+
+
+  const prevTimeRange = useRef({ start: Infinity, end: 0 });
+  const checkIfTimeLineChanged = (currentTime: number, timestamps: number[]) => {
+    if (timestamps.length === 0 || (currentTime >= prevTimeRange.current.start && currentTime < prevTimeRange.current.end)) {
+      return false;
+    }
+    for (let i = 0; i < timestamps.length; i++) {
+      const currentTimestamp = timestamps[i];
+      const nextTimestamp = (i < timestamps.length - 1) ? timestamps[i + 1] : Infinity;
+      if (currentTime >= currentTimestamp && currentTime < nextTimestamp) {
+        prevTimeRange.current = { start: currentTimestamp, end: nextTimestamp };
+        break;
+      }
+    }
+    return true;
+  };
+
   const allowedQuizLanguages = new Set(['AR', 'BG', 'BN', 'EL', 'FA', 'GU', 'HE', 'HI', 'JA', 'KO', 'RU', 'SR', 'TA', 'TE', 'TH', 'UK', 'ZH']);
   const isLanguageAllowedForQuiz = song.geniusMetaData?.language && allowedQuizLanguages.has(song.geniusMetaData.language);
 
-  const handlePlayerReady = (playerInstance: YouTubePlayer) => {
+  const updatePlayerTime = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
+    playerInstance.playVideo(); // Autoplay
 
-    const progressCheckInterval = setInterval(() => {
-      if (playerRef.current) { 
+    const updatePlayerTime = () => {
+      if (playerRef.current) {
         const current = playerRef.current.getCurrentTime();
-        const duration = playerRef.current.getDuration();
-        setCurrentTime(current);
-
-        // Check if the song is 90% complete for quiz button
-        if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
-          setShowQuizButton(true);
+        if (checkIfTimeLineChanged(current, lrcTimestamps)) {
+          setCurrentTime(current);
         }
-
-        // Check if we're at the halfway point and there's songs in queue
-        if (current / duration >= 0.5 && queue.length > 1 && currentPlayingId) {
-          const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
-          if (currentIndex >= 0 && currentIndex < queue.length - 1) {
-            // Get next 2 songs (or just 1 if we're at the end)
-            const nextItems = queue.slice(currentIndex + 1, currentIndex + 3);
-            
-            nextItems.forEach((nextItem) => {
-              // Only proceed if we haven't already requested the API for this song
-              if (!nextItem.apiRequested) {
-                // Mark as requested immediately to prevent duplicate calls
-                nextItem.apiRequested = true;
-
-                // Call the API for the next song
-                songApi.apiSongsSearchPost({
-                  fullSongRequestDto: {
-                    title: nextItem.title,
-                    artist: nextItem.artist,
-                    youTubeId: extractYouTubeVideoId(nextItem.youTubeId) || '',
-                    lyrics: nextItem.lyrics || ''
-                  }
-                }).then(response => {
-                  // Update the queue with the processed data
-                  setQueue(prevQueue => prevQueue.map(item => 
-                    item.queueId === nextItem.queueId 
-                      ? { 
-                        ...item, 
-                        processedData: {
-                          title: response.title,
-                          artist: response.artist,
-                          youTubeId: response.youTubeId,
-                          lrcLyrics: response.lrcLyrics,
-                          lrcRomanizedLyrics: response.lrcRomanizedLyrics,
-                          lrcTranslatedLyrics: response.lrcTranslatedLyrics,
-                          geniusMetaData: response.geniusMetaData
-                        }
-                      } 
-                      : item
-                  ));
-                }).catch(err => {
-                  const errorMessage = err instanceof Error ? err.message : 'Failed to process song';
-                  nextItem.error = errorMessage;
-                });
-              }
-            });
-          }
+        // Check if the song is 90% complete
+        if (current / playerRef.current.getDuration() >= 0.9 && isLanguageAllowedForQuiz) {
+          setShowQuizButton(true); // Show the quiz button when 90% complete
         }
       }
-    }, 1000);
+      animationFrameId = requestAnimationFrame(updatePlayerTime); //req next frame
+    };
 
-    // Clean up interval on unmount
-    return () => clearInterval(progressCheckInterval);
+    updatePlayerTime();
   };
+
+  useEffect(() => { //cleanup on rerender
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId); // Cancel the animation frame when the component unmounts  (cleanup function)
+      };
+    };
+  }, []);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
@@ -316,8 +319,8 @@ const SongPlayerPage: React.FC = () => {
         </Typography>
         {showQuizButton && (
           <Box mt={3} display="flex" justifyContent="center">
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={handleQuizRedirect}
               className="quiz-button"
             >
@@ -325,11 +328,10 @@ const SongPlayerPage: React.FC = () => {
             </Button>
           </Box>
         )}
-        <Grid container className="song-player-content">
-          
-          {/* Video Player Column */}
-          <Grid className='youtube-grid-parent'>
-            <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={handlePlayerReady} />
+        <Grid container className="song-player-content" spacing={10} height={'480px'} display={'flex'}>
+          {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
+          <Grid flex={'1'} alignContent={'center'} className='grid-parent'>
+            <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={updatePlayerTime} />
           </Grid>
           {/* Lyrics Column */}
           <Grid className='grid-parent'>
@@ -341,16 +343,16 @@ const SongPlayerPage: React.FC = () => {
               </Tabs>
             </Box>
             <Box className='lrc-grid-parent'>
-              <LyricDisplay 
+              <LyricDisplay
                 rawLrcLyrics={
-                  selectedTab === 0 
+                  selectedTab === 0
                     ? song.lrcLyrics ?? 'Not supported'
                     : selectedTab === 1
                       ? song.lrcRomanizedLyrics ?? 'Not supported'
                       : song.lrcTranslatedLyrics ?? 'Not supported'
-                } 
-                currentTime={currentTime} 
-                isPlaying={isPlaying} 
+                }
+                currentTime={currentTime}
+                isPlaying={isPlaying}
               />
             </Box>
           </Grid>
