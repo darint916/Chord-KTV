@@ -1,3 +1,5 @@
+using System;
+
 namespace ChordKTV.Dtos;
 
 public class LrcLyricsDto
@@ -14,8 +16,8 @@ public class LrcLyricsDto
     public string? SyncedLyrics { get; set; }
     public string? RomanizedPlainLyrics { get; set; }
     public string? RomanizedSyncedLyrics { get; set; }
-    public List<string> AlternateTitles { get; set; } = [];
-    public List<string> AlternateArtists { get; set; } = [];
+    public HashSet<string> AlternateTitles { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> AlternateArtists { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     public MatchScores TitleMatchScores { get; set; } = new();
     public MatchScores ArtistMatchScores { get; set; } = new();
 }

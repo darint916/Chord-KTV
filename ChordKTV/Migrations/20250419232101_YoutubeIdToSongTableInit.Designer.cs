@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ChordKTV.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ChordKTV.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250419232101_YoutubeIdToSongTableInit")]
+    partial class YoutubeIdToSongTableInit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -237,8 +240,6 @@ namespace ChordKTV.Migrations
 
                     b.HasKey("YoutubeId");
 
-                    b.HasIndex("SongId");
-
                     b.ToTable("YoutubeSongs");
                 });
 
@@ -331,17 +332,6 @@ namespace ChordKTV.Migrations
                         .IsRequired();
 
                     b.Navigation("GeniusMetaData");
-                });
-
-            modelBuilder.Entity("ChordKTV.Models.SongData.YoutubeSong", b =>
-                {
-                    b.HasOne("ChordKTV.Models.SongData.Song", "Song")
-                        .WithMany()
-                        .HasForeignKey("SongId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Song");
                 });
 
             modelBuilder.Entity("ChordKTV.Models.Quiz.Quiz", b =>

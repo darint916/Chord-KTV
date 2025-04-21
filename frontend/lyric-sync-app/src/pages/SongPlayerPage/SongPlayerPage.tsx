@@ -138,6 +138,9 @@ const SongPlayerPage: React.FC = () => {
             }
           }).then(response => {
             // Update the queue with the processed data
+            if (nextItem.youTubeId && !response.youTubeId) {
+              response.youTubeId = nextItem.youTubeId;
+            }
             setQueue(prevQueue => prevQueue.map(item =>
               item.queueId === nextItem.queueId
                 ? {
@@ -242,7 +245,9 @@ const SongPlayerPage: React.FC = () => {
           lyrics: lyrics.trim()
         }
       });
-
+      if (youTubeId && !response.youTubeId) {
+        response.youTubeId = youTubeId;
+      }
       const newItem: QueueItem = {
         queueId: uuidv4(),
         apiRequested: true,

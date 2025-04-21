@@ -73,7 +73,9 @@ const HomePage: React.FC = () => {
             lyrics: firstSong.lyrics
           }
         });
-
+        if (firstSong.youTubeId && !processed.youTubeId) {
+          processed.youTubeId = firstSong.youTubeId;
+        }
         // Update queue with processed data for first song
         setQueue(prev => prev.map(item =>
           item.queueId === firstSong.queueId
@@ -116,7 +118,6 @@ const HomePage: React.FC = () => {
 
     const youTubeId = extractYouTubeVideoId(youtubeUrl);
 
-    // TODO: Add search history backend call
 
     try {
       const response = await songApi.apiSongsSearchPost({
@@ -127,6 +128,9 @@ const HomePage: React.FC = () => {
           youTubeId: youTubeId || ''
         }
       });
+      if (youTubeId && !response.youTubeId) {
+        response.youTubeId = youTubeId;
+      }
 
       const newQueueItem: QueueItem = {
         ...response,

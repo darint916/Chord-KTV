@@ -14,7 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<Quiz> Quizzes { get; set; }
     public DbSet<QuizQuestion> QuizQuestions { get; set; }
     public DbSet<QuizOption> QuizOptions { get; set; }
-
+    public DbSet<YoutubeSong> YoutubeSongs { get; set; }
     public AppDbContext(DbContextOptions<AppDbContext> opt) : base(opt)
     {
     }
