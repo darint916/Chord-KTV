@@ -115,7 +115,7 @@ public class SongController : Controller
     {
         if (string.IsNullOrWhiteSpace(request.Title) && string.IsNullOrWhiteSpace(request.Lyrics) && string.IsNullOrWhiteSpace(request.YouTubeId))
         {
-            return BadRequest(new { message = "songs/search: At least one of the following fields is required: title, lyrics." });
+            return BadRequest(new { message = "songs/match: At least one of the following fields is required: title, lyrics." });
         }
         string? lyricsQuery = null;
         if (!string.IsNullOrWhiteSpace(request.Lyrics))
@@ -133,7 +133,7 @@ public class SongController : Controller
         }
         catch (HttpRequestException ex)
         {
-            return StatusCode(503, new { message = "HttpRequestException in songs/search ", error = ex.Message });
+            return StatusCode(503, new { message = "HttpRequestException in songs/match ", error = ex.Message });
         }
         catch (Exception ex)
         {
@@ -272,6 +272,33 @@ public class SongController : Controller
         catch (HttpRequestException ex)
         {
             return StatusCode(503, new { message = "Failed to fetch from Genius API.", error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
+        }
+    }
+
+    [HttpGet("songs/lrclib/search")]
+    public async Task<IActionResult> GetLrcLibSearchResults([FromQuery] string searchQuery)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                return BadRequest(new { message = "Search query is required." });
+            }
+
+            List<LrcLyricsDto>? hits = await _lrcService.GetLrcLibSearchResultsAsync(searchQuery);
+            if (hits == null || hits.Count == 0)
+            {
+                return NotFound(new { message = "No results found." });
+            }
+            return Ok(_mapper.Map<List<LrcMetaDataDto>>(hits));
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(503, new { message = "Failed to fetch from LRC API.", error = ex.Message });
         }
         catch (Exception ex)
         {

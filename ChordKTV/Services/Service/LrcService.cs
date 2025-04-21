@@ -290,7 +290,13 @@ public class LrcService : ILrcService
         return results; //note we might get dupes, but i think sample size small enough to not worry (given 20 results per call, max 80)
     }
 
-    public async Task<>
+    public async Task<List<LrcLyricsDto>?> GetLrcLibSearchResultsAsync(string searchQuery)
+    {
+        NameValueCollection keywordParams = HttpUtility.ParseQueryString(string.Empty);
+        keywordParams["q"] = searchQuery;
+        List<LrcLyricsDto>? results = await LrcLibSearchEndpointResponse(keywordParams);
+        return results;
+    }
 
     //api endpoint for LRCLib exact Get match https://lrclib.net/docs
     public async Task<LrcLyricsDto?> LrcLibGetEndpointResponse(NameValueCollection queryParams)
