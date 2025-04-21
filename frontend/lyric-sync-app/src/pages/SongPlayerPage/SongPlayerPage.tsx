@@ -82,34 +82,20 @@ const SongPlayerPage: React.FC = () => {
 
 
   const prevTimeRange = useRef({ start: Infinity, end: 0 });
-  const checkIfTimeLineChanged = useCallback((currentTime: number) => {
-    if (!lrcTimestamps.length) return false;
-
-    // if (lrcTimestamps.length === 0 || (currentTime >= prevTimeRange.current.start && currentTime < prevTimeRange.current.end)) {
-    //   return false;
-    // }
-
-    // Binary search for efficiency with large lyric files
-    let low = 0;
-    let high = lrcTimestamps.length - 1;
-
-    while (low <= high) {
-      const mid = Math.floor((low + high) / 2);
-      const currentTimestamp = lrcTimestamps[mid];
-      const nextTimestamp = lrcTimestamps[mid + 1] || Infinity;
-
+  const checkIfTimeLineChanged = (currentTime: number, timestamps: number[]) => {
+    if (timestamps.length === 0 || (currentTime >= prevTimeRange.current.start && currentTime < prevTimeRange.current.end)) {
+      return false;
+    }
+    for (let i = 0; i < timestamps.length; i++) {
+      const currentTimestamp = timestamps[i];
+      const nextTimestamp = (i < timestamps.length - 1) ? timestamps[i + 1] : Infinity;
       if (currentTime >= currentTimestamp && currentTime < nextTimestamp) {
         prevTimeRange.current = { start: currentTimestamp, end: nextTimestamp };
-        return true;
-      } else if (currentTime < currentTimestamp) {
-        high = mid - 1;
-      } else {
-        low = mid + 1;
+        break;
       }
     }
-
-    return false;
-  }, [lrcTimestamps]);
+    return true;
+  };
 
   const prefetchNextSongs = useCallback(async () => {
     if (!queue.length) { return; }
@@ -146,7 +132,8 @@ const SongPlayerPage: React.FC = () => {
                     lrcLyrics: response.lrcLyrics,
                     lrcRomanizedLyrics: response.lrcRomanizedLyrics,
                     lrcTranslatedLyrics: response.lrcTranslatedLyrics,
-                    geniusMetaData: response.geniusMetaData
+                    geniusMetaData: response.geniusMetaData,
+                    id: response.id
                   }
                 }
                 : item
@@ -167,10 +154,6 @@ const SongPlayerPage: React.FC = () => {
   const updatePlayerTime = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
     playerInstance.playVideo(); // Autoplay
-
-    // Reset tracking when new player instance is created
-    prevTimeRange.current = { start: Infinity, end: 0 };
-    setCurrentTime(0);
     setShowQuizButton(false);
 
     const updatePlayerTime = () => {
@@ -178,9 +161,10 @@ const SongPlayerPage: React.FC = () => {
         const current = playerRef.current.getCurrentTime();
         const duration = playerRef.current.getDuration();
 
-        if (checkIfTimeLineChanged(current)) {
+        if (checkIfTimeLineChanged(current, lrcTimestamps)) {
           setCurrentTime(current);
         }
+        console.log(isLanguageAllowedForQuiz);
         // Check if the song is 90% complete
         if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
           setShowQuizButton(true); // Show the quiz button when 90% complete
@@ -203,7 +187,7 @@ const SongPlayerPage: React.FC = () => {
         cancelAnimationFrame(animationFrameId); // Cancel the animation frame when the component unmounts  (cleanup function)
       };
     };
-  }, [lrcTimestamps]);
+  }, []);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);

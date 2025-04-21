@@ -82,7 +82,8 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
           lrcLyrics: response.lrcLyrics,
           lrcRomanizedLyrics: response.lrcRomanizedLyrics,
           lrcTranslatedLyrics: response.lrcTranslatedLyrics,
-          geniusMetaData: response.geniusMetaData
+          geniusMetaData: response.geniusMetaData,
+          id: response.id
         };
 
         setQueue(prevQueue => prevQueue.map(queueItem =>
