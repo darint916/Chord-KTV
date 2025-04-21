@@ -7,8 +7,8 @@ import {
   Alert,
   Paper,
   Container,
-  CircularProgress,
-  Button
+  Button,
+  Skeleton
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useSong } from '../../contexts/SongContext';
@@ -18,7 +18,7 @@ import { songApi } from '../../api/apiClient';
 import logo from '../../assets/chordktv.png';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
-import { extractYouTubeVideoId } from './HomePageHelpers';
+import { extractYouTubeVideoId, extractPlaylistId } from './HomePageHelpers';
 
 const HomePage: React.FC = () => {
   const [songName, setSongName] = useState('');
@@ -31,13 +31,6 @@ const HomePage: React.FC = () => {
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [lyrics, setLyrics] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
-
-
-  const extractPlaylistId = (url: string): string | null => {
-    if (!url) { return null; }
-    const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-    return match ? match[1] : null;
-  };
 
   const handleLoadPlaylist = async () => {
     if (!playlistUrl.trim()) {
@@ -189,46 +182,57 @@ const HomePage: React.FC = () => {
               gap={2}
               flexGrow={1}
             >
-              <TextField
-                label="Song Name"
-                variant="filled"
-                value={songName}
-                disabled={isLoading || playlistLoading}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => setSongName(e.target.value)}
-                className="search-input"
-                fullWidth
-              />
-              <TextField
-                label="Artist Name"
-                variant="filled"
-                value={artistName}
-                disabled={isLoading || playlistLoading}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => setArtistName(e.target.value)}
-                className="search-input"
-                fullWidth
-              />
-              <TextField
-                label="Lyrics"
-                variant="filled"
-                value={lyrics}
-                disabled={isLoading || playlistLoading}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => setLyrics(e.target.value)}
-                className="search-input"
-                fullWidth
-              />
-              <TextField
-                label="YouTube URL"
-                variant="filled"
-                value={youtubeUrl}
-                disabled={isLoading || playlistLoading}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                className="search-input"
-                fullWidth
-              />
+              {isLoading ? (
+                <>
+                  <Skeleton className="skeleton-input" variant="rectangular" />
+                  <Skeleton className="skeleton-input" variant="rectangular" />
+                  <Skeleton className="skeleton-input" variant="rectangular" />
+                  <Skeleton className="skeleton-input" variant="rectangular" />
+                </>
+              ) : (
+                <>
+                  <TextField
+                    label="Song Name"
+                    variant="filled"
+                    value={songName}
+                    disabled={isLoading || playlistLoading}
+                    onKeyDown={handleKeyDown}
+                    onChange={(e) => setSongName(e.target.value)}
+                    className="search-input"
+                    fullWidth
+                  />
+                  <TextField
+                    label="Artist Name"
+                    variant="filled"
+                    value={artistName}
+                    disabled={isLoading || playlistLoading}
+                    onKeyDown={handleKeyDown}
+                    onChange={(e) => setArtistName(e.target.value)}
+                    className="search-input"
+                    fullWidth
+                  />
+                  <TextField
+                    label="Lyrics"
+                    variant="filled"
+                    value={lyrics}
+                    disabled={isLoading || playlistLoading}
+                    onKeyDown={handleKeyDown}
+                    onChange={(e) => setLyrics(e.target.value)}
+                    className="search-input"
+                    fullWidth
+                  />
+                  <TextField
+                    label="YouTube URL"
+                    variant="filled"
+                    value={youtubeUrl}
+                    disabled={isLoading || playlistLoading}
+                    onKeyDown={handleKeyDown}
+                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                    className="search-input"
+                    fullWidth
+                  />
+                </>
+              )}
             </Box>
             <IconButton
               aria-label="search"
@@ -237,7 +241,7 @@ const HomePage: React.FC = () => {
               className={`search-button ${isLoading ? 'loading' : ''}`}
               size="large"
             >
-              {isLoading ? <CircularProgress size={24} /> : <SearchIcon />}
+              <SearchIcon />
             </IconButton>
           </Box>
         </Paper>
@@ -257,28 +261,32 @@ const HomePage: React.FC = () => {
             Load a YouTube Playlist
           </Typography>
           <div className='playlist-url-input'>
-            <TextField
-              fullWidth
-              label="Enter YouTube Playlist URL"
-              variant="filled"
-              value={playlistUrl}
-              disabled={isLoading || playlistLoading}
-              onKeyDown={handleKeyDown}
-              onChange={(e) => setPlaylistUrl(e.target.value)}
-            />
+            {playlistLoading ? (
+              <Skeleton 
+                className="skeleton-input" 
+                variant="rectangular" 
+                height={56} 
+                width="100%"
+              />
+            ) : (
+              <TextField
+                fullWidth
+                label="Enter YouTube Playlist URL"
+                variant="filled"
+                value={playlistUrl}
+                disabled={isLoading || playlistLoading}
+                onKeyDown={handleKeyDown}
+                onChange={(e) => setPlaylistUrl(e.target.value)}
+              />
+            )}
             <Button
               variant="contained"
               onClick={handleLoadPlaylist}
               disabled={isLoading || playlistLoading}
             >
-              {'Load Playlist'}
+             Load Playlist
             </Button>
           </div>
-          {playlistLoading && (
-            <Box display="flex" justifyContent="center" mt={2}>
-              <CircularProgress />
-            </Box>
-          )}
         </Paper>
       </Container>
     </Box>

@@ -8,7 +8,7 @@
   padding: 32px;
 
   .resized-image {
-    width: 175px; 
+    width: 175px;
     height: auto;
     display: block;
     margin: 0 auto;
@@ -32,6 +32,33 @@
     background: $gradient;
     border-radius: 8px;
 
+    .skeleton-input {
+      width: 100%;
+      height: 56px;
+      border-radius: 4px;
+
+      &.MuiSkeleton-root {
+        transform: scale(1);
+        // Gradient for shimmer loading, OK to hardcode so using rgba
+        background: linear-gradient(90deg,
+            rgba(0, 0, 0, 0.08) 0%,
+            rgba(0, 0, 0, 0.15) 50%,
+            rgba(0, 0, 0, 0.08) 100%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
     .section-title {
       margin-bottom: 16px;
       color: $text-primary;
@@ -54,10 +81,11 @@
 
     .search-button {
       &.loading {
-        background-color: transparent !important;  
-        opacity: 0.5; 
-        pointer-events: none;  
+        background-color: transparent !important;
+        opacity: 0.5;
+        pointer-events: none;
       }
+
       background-color: $secondary-color;
       color: white;
 
@@ -91,8 +119,9 @@
     display: flex;
     flex-direction: row;
     align-items: center;
+
     .MuiButton-root {
-      margin-left: 16px; 
+      margin-left: 16px;
       background-color: $secondary-color;
       height: 55px;
     }
