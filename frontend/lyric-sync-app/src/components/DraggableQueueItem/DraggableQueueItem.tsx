@@ -71,7 +71,7 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
       className={`draggable-queue-item ${!isDragging ? 'not-dragging' : ''}`}
     >
       <ListItemButton
-        onClick={() => !hasError && onPlay(item)}
+        onClick={() => onPlay(item)}
         className={`queue-item 
           ${isCurrentSong ? 'active-song' : ''} 
           ${hasError ? 'error-item' : ''} 

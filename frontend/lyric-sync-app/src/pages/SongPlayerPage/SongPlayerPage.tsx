@@ -85,9 +85,9 @@ const SongPlayerPage: React.FC = () => {
   const checkIfTimeLineChanged = useCallback((currentTime: number) => {
     if (!lrcTimestamps.length) return false;
 
-    if (lrcTimestamps.length === 0 || (currentTime >= prevTimeRange.current.start && currentTime < prevTimeRange.current.end)) {
-      return false;
-    }
+    // if (lrcTimestamps.length === 0 || (currentTime >= prevTimeRange.current.start && currentTime < prevTimeRange.current.end)) {
+    //   return false;
+    // }
 
     // Binary search for efficiency with large lyric files
     let low = 0;
@@ -171,6 +171,7 @@ const SongPlayerPage: React.FC = () => {
     // Reset tracking when new player instance is created
     prevTimeRange.current = { start: Infinity, end: 0 };
     setCurrentTime(0);
+    setShowQuizButton(false);
 
     const updatePlayerTime = () => {
       if (playerRef.current) {

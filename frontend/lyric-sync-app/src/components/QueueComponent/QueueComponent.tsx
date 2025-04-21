@@ -56,8 +56,6 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
   };
 
   const handlePlayFromQueue = async (item: QueueItem) => {
-    if (item.error) { return; }
-
     setError('');
 
     try {
