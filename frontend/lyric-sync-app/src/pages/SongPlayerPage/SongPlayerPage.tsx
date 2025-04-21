@@ -164,7 +164,6 @@ const SongPlayerPage: React.FC = () => {
         if (checkIfTimeLineChanged(current, lrcTimestamps)) {
           setCurrentTime(current);
         }
-        console.log(isLanguageAllowedForQuiz);
         // Check if the song is 90% complete
         if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
           setShowQuizButton(true); // Show the quiz button when 90% complete
@@ -177,7 +176,7 @@ const SongPlayerPage: React.FC = () => {
       }
       animationFrameId = requestAnimationFrame(updatePlayerTime); //req next frame
     };
-
+    cancelAnimationFrame(animationFrameId);
     updatePlayerTime();
   };
 
@@ -187,7 +186,7 @@ const SongPlayerPage: React.FC = () => {
         cancelAnimationFrame(animationFrameId); // Cancel the animation frame when the component unmounts  (cleanup function)
       };
     };
-  }, []);
+  }, [currentPlayingId]); // cleanup when current queue element changes
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
