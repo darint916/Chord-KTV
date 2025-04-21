@@ -29,7 +29,6 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { setSong, queue, setQueue, setCurrentPlayingId } = useSong();
   const [playlistUrl, setPlaylistUrl] = useState('');
-  const [showPlaylist, setShowPlaylist] = useState(false);
   const [lyrics, setLyrics] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
 
@@ -119,25 +118,6 @@ const HomePage: React.FC = () => {
 
     const youTubeId = extractYouTubeVideoId(youtubeUrl);
 
-    if (user) {
-      try {
-        await axios.post('http://localhost:5259/api/random',
-          {
-            songName,
-            artistName,
-            timestamp: new Date()
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${user.idToken}`
-            }
-          }
-        );
-        setError('');
-      } catch {
-        setError('Failed to save search history. Please try again.');
-      }
-    }
 
     try {
       const response = await songApi.apiSongsSearchPost({
