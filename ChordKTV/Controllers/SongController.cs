@@ -12,6 +12,7 @@ using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Data.Api.UserData;
 using ChordKTV.Models.UserData;
 using ChordKTV.Dtos.GeniusApi;
+using ChordKTV.Dtos.LrcLib;
 
 namespace ChordKTV.Controllers;
 

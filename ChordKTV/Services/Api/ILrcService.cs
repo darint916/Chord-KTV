@@ -1,4 +1,4 @@
-using ChordKTV.Dtos;
+using ChordKTV.Dtos.LrcLib;
 
 namespace ChordKTV.Services.Api;
 

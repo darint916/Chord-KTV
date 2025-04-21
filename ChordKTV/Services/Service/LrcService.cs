@@ -1,12 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ChordKTV.Services.Api;
-using ChordKTV.Dtos;
 using System.Web;
 using System.Globalization;
 using System.Collections.Specialized;
 using ChordKTV.Utils;
 using System.Net;
+using ChordKTV.Dtos.LrcLib;
 
 namespace ChordKTV.Services.Service;
 
@@ -289,6 +289,8 @@ public class LrcService : ILrcService
 
         return results; //note we might get dupes, but i think sample size small enough to not worry (given 20 results per call, max 80)
     }
+
+    public async Task<>
 
     //api endpoint for LRCLib exact Get match https://lrclib.net/docs
     public async Task<LrcLyricsDto?> LrcLibGetEndpointResponse(NameValueCollection queryParams)

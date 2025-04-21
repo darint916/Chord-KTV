@@ -4,6 +4,7 @@ using ChordKTV.Data.Api.SongData;
 using ChordKTV.Data.Repo.SongData;
 using ChordKTV.Dtos;
 using ChordKTV.Dtos.FullSong;
+using ChordKTV.Dtos.LrcLib;
 using ChordKTV.Dtos.OpenAI;
 using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Dtos.YouTubeApi;
