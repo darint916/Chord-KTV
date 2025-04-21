@@ -93,32 +93,9 @@ const SongPlayerPage: React.FC = () => {
       return false;
     }
 
-    // Start searching from the last known position
-    let i = Math.max(0, Math.min(currentLineRef.current, timestamps.length - 1));
-
-    // Search forward first
-    while (i < timestamps.length - 1 && timestamps[i + 1] <= currentTime) {
-      i++;
-    }
-
-    // If not found, search backward
-    while (i > 0 && timestamps[i] > currentTime) {
-      i--;
-    }
-
-    // Check if we found the correct range
-    if (currentTime >= timestamps[i] &&
-      (i === timestamps.length - 1 || currentTime < timestamps[i + 1])) {
-      currentLineRef.current = i;
-      prevTimeRange.current = {
-        start: timestamps[i],
-        end: i < timestamps.length - 1 ? timestamps[i + 1] : Infinity
-      };
-      return true;
-    }
-
     // Fallback to full search if something went wrong
-    for (i = 0; i < timestamps.length; i++) {
+    for (let i = currentLineRef.current + 1; i < (timestamps.length + currentLineRef.current); i++) {
+      i %= timestamps.length; // Wrap around if needed
       const currentTimestamp = timestamps[i];
       const nextTimestamp = (i < timestamps.length - 1) ? timestamps[i + 1] : Infinity;
       if (currentTime >= currentTimestamp && currentTime < nextTimestamp) {
@@ -127,8 +104,6 @@ const SongPlayerPage: React.FC = () => {
         return true;
       }
     }
-
-    return false;
   };
 
   useEffect(() => {
