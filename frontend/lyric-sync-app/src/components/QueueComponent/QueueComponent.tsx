@@ -10,10 +10,10 @@ import ClearAll from '@mui/icons-material/ClearAll';
 import './QueueComponent.scss';
 
 interface QueueComponentProps {
-    queue: QueueItem[];
-    currentPlayingId: string | null;
-    setQueue: React.Dispatch<React.SetStateAction<QueueItem[]>>;
-    setCurrentPlayingId: React.Dispatch<React.SetStateAction<string | null>>;
+  queue: QueueItem[];
+  currentPlayingId: string | null;
+  setQueue: React.Dispatch<React.SetStateAction<QueueItem[]>>;
+  setCurrentPlayingId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const QueueComponent: React.FC<QueueComponentProps> = ({
@@ -56,7 +56,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
   };
 
   const handlePlayFromQueue = async (item: QueueItem) => {
-    if (item.error) {return;}
+    if (item.error) { return; }
 
     setError('');
 
@@ -131,12 +131,13 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
   return (
     <DndProvider backend={HTML5Backend}>
       <Paper elevation={3} className="queue-column">
-        {/* {isLoading && <CircularProgress />} */}
         {error && <Alert severity="error">{error}</Alert>}
         <Typography variant="h6" className="queue-title" align="center">
-                    Queue
+          {currentPlayingId
+            ? `Queue (${queue.findIndex(item => item.queueId === currentPlayingId) + 1}/${queue.length})`
+            : `Queue (${queue.length})`}
         </Typography>
-        <Divider variant="fullWidth" className="queue-divider"/>
+        <Divider variant="fullWidth" className="queue-divider" />
         <List className="queue-list">
           {queue.map((item, index) => (
             <React.Fragment key={item.queueId}>
@@ -158,7 +159,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
             onClick={clearQueue}
             startIcon={<ClearAll />}
           >
-                        Clear Queue
+            Clear Queue
           </Button>
         </Box>
       </Paper>
