@@ -1,5 +1,6 @@
 @use '../../variables' as *;
 @use '../../mixins' as *;
+@use 'sass:color';
 
 .lyric-display-container {
   background-color: rgba(0, 0, 0, 0);
@@ -29,9 +30,12 @@
   }
 }
 
-.active
+.active-lrc
 {
-  color: $secondary-color;
+  color: color.scale($secondary-color, $lightness: -10%);
+  text-shadow: 
+    0 0 4px white, /* Soft glow */
+    0 0 10px white;
 }
 
 .lrc { //hide scroll

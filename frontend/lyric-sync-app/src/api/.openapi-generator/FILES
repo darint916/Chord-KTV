@@ -12,6 +12,7 @@ models/GeniusMetaDataDto.ts
 models/HandwritingCanvasRequestDto.ts
 models/HandwritingCanvasResponseDto.ts
 models/LanguageCode.ts
+models/MatchScores.ts
 models/PlaylistDetailsDto.ts
 models/ProblemDetails.ts
 models/QuizQuestionDto.ts

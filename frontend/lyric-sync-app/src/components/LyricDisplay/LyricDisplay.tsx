@@ -20,7 +20,7 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ rawLrcLyrics, currentTime, 
   }, [isPlaying, currentTime]);
 
   const lineRenderer = useCallback(({ active, line }: { active: boolean; line: LrcLine }) => (
-    <div className={`lyric-text ${active ? 'active' : ''}`}>
+    <div className={`lyric-text ${active ? 'active-lrc' : ''}`}>
       {line.content.trim() ? line.content : '♫ ♫'}
     </div>
   ), []
