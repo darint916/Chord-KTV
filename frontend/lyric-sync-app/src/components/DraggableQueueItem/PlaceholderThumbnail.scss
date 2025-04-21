@@ -1,0 +1,14 @@
+@use '../../variables' as *;
+@use '../../mixins' as *;
+@use 'sass:color';
+
+.placeholder-thumbnail {
+  width: 40px;
+  height: 40px;
+  background-color: #eeeeee; // MUI grey.200
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  margin-right: 16px;
+}

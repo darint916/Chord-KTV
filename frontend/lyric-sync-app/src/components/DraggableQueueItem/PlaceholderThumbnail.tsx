@@ -1,20 +1,10 @@
 import { Box } from '@mui/material';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import './PlaceholderThumbnail.scss'
 
 const PlaceholderThumbnail = () => {
   return (
-    <Box
-      sx={{
-        width: 40,
-        height: 40,
-        backgroundColor: 'grey.200',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 1,
-        marginRight: 2
-      }}
-    >
+    <Box className="placeholder-thumbnail">
       <MusicNoteIcon fontSize="medium" color="disabled" />
     </Box>
   );
