@@ -78,20 +78,45 @@ public class UserActivityRepo : IUserActivityRepo
             .ToListAsync();
     }
 
-    public async Task UpsertSongActivityAsync(UserSongActivity activity)
+    public async Task UpsertSongActivityAsync(UserSongActivity activity, bool isPlayEvent = true)
     {
         UserSongActivity? existing = await GetUserSongActivityAsync(activity.UserId, activity.SongId);
+        
         if (existing == null)
         {
+            // Handle new activity creation
+            if (isPlayEvent)
+            {
+                activity.LastPlayed = DateTime.UtcNow;
+                if (activity.DatesPlayed.Count == 0)
+                {
+                    activity.DatesPlayed.Add(activity.LastPlayed);
+                }
+            }
+            
             activity.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
             await _context.UserSongActivities.AddAsync(activity);
         }
         else
         {
-            existing.DatesPlayed = activity.DatesPlayed;
-            existing.LastPlayed = activity.LastPlayed;
-            existing.IsFavorite = activity.IsFavorite;
-            existing.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
+            // Update existing activity
+            if (isPlayEvent && activity.DatesPlayed.Count > 0)
+            {
+                foreach (var date in activity.DatesPlayed)
+                {
+                    if (!existing.DatesPlayed.Contains(date))
+                    {
+                        existing.DatesPlayed.Add(date);
+                    }
+                }
+                existing.LastPlayed = existing.DatesPlayed.Max();
+            }
+            
+            if (existing.IsFavorite != activity.IsFavorite)
+            {
+                existing.IsFavorite = activity.IsFavorite;
+                existing.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
+            }
         }
     }
 
@@ -110,20 +135,45 @@ public class UserActivityRepo : IUserActivityRepo
             .ToListAsync();
     }
 
-    public async Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity)
+    public async Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity, bool isPlayEvent = true)
     {
         UserPlaylistActivity? existing = await GetUserPlaylistActivityAsync(activity.UserId, activity.PlaylistUrl);
+        
         if (existing == null)
         {
+            // Handle new activity creation
+            if (isPlayEvent)
+            {
+                activity.LastPlayed = DateTime.UtcNow;
+                if (activity.DatesPlayed.Count == 0)
+                {
+                    activity.DatesPlayed.Add(activity.LastPlayed);
+                }
+            }
+            
             activity.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
             await _context.UserPlaylistActivities.AddAsync(activity);
         }
         else
         {
-            existing.DatesPlayed = activity.DatesPlayed;
-            existing.LastPlayed = activity.LastPlayed;
-            existing.IsFavorite = activity.IsFavorite;
-            existing.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
+            // Update existing activity
+            if (isPlayEvent && activity.DatesPlayed.Count > 0)
+            {
+                foreach (var date in activity.DatesPlayed)
+                {
+                    if (!existing.DatesPlayed.Contains(date))
+                    {
+                        existing.DatesPlayed.Add(date);
+                    }
+                }
+                existing.LastPlayed = existing.DatesPlayed.Max();
+            }
+            
+            if (existing.IsFavorite != activity.IsFavorite)
+            {
+                existing.IsFavorite = activity.IsFavorite;
+                existing.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
+            }
         }
     }
 

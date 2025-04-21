@@ -53,36 +53,13 @@ public class UserActivityController : Controller
                 return BadRequest(new { message = "Invalid playlist URL." });
             }
 
-            dto.DatesPlayed ??= new List<DateTime>();
-
-            if (dto.DatesPlayed.Count == 0)
-            {
-                dto.DatesPlayed.Add(DateTime.UtcNow);
-            }
-
-            UserPlaylistActivity? existing = await _activityRepo.GetUserPlaylistActivityAsync(user.Id, dto.PlaylistUrl);
-            if (existing == null)
-            {
-                UserPlaylistActivity activity = _mapper.Map<UserPlaylistActivity>(dto);
-                activity.UserId = user.Id;
-                await _activityRepo.UpsertPlaylistActivityAsync(activity);
-                await _activityRepo.SaveChangesAsync();
-                return Ok(_mapper.Map<UserPlaylistActivityDto>(activity));
-            }
-            else
-            {
-                foreach (DateTime date in dto.DatesPlayed)
-                {
-                    if (!existing.DatesPlayed.Contains(date))
-                    {
-                        existing.DatesPlayed.Add(date);
-                    }
-                }
-                existing.IsFavorite = dto.IsFavorite;
-                await _activityRepo.UpsertPlaylistActivityAsync(existing);
-                await _activityRepo.SaveChangesAsync();
-                return Ok(_mapper.Map<UserPlaylistActivityDto>(existing));
-            }
+            UserPlaylistActivity activity = _mapper.Map<UserPlaylistActivity>(dto);
+            activity.UserId = user.Id;
+            
+            await _activityRepo.UpsertPlaylistActivityAsync(activity);
+            await _activityRepo.SaveChangesAsync();
+            
+            return Ok(_mapper.Map<UserPlaylistActivityDto>(activity));
         }
         catch (Exception ex)
         {
@@ -169,36 +146,13 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            dto.DatesPlayed ??= new List<DateTime>();
-
-            if (dto.DatesPlayed.Count == 0)
-            {
-                dto.DatesPlayed.Add(DateTime.UtcNow);
-            }
-
-            UserSongActivity? existing = await _activityRepo.GetUserSongActivityAsync(user.Id, dto.SongId);
-            if (existing == null)
-            {
-                UserSongActivity activity = _mapper.Map<UserSongActivity>(dto);
-                activity.UserId = user.Id;
-                await _activityRepo.UpsertSongActivityAsync(activity);
-                await _activityRepo.SaveChangesAsync();
-                return Ok(_mapper.Map<UserSongActivityDto>(activity));
-            }
-            else
-            {
-                foreach (DateTime date in dto.DatesPlayed)
-                {
-                    if (!existing.DatesPlayed.Contains(date))
-                    {
-                        existing.DatesPlayed.Add(date);
-                    }
-                }
-                existing.IsFavorite = dto.IsFavorite;
-                await _activityRepo.UpsertSongActivityAsync(existing);
-                await _activityRepo.SaveChangesAsync();
-                return Ok(_mapper.Map<UserSongActivityDto>(existing));
-            }
+            UserSongActivity activity = _mapper.Map<UserSongActivity>(dto);
+            activity.UserId = user.Id;
+            
+            await _activityRepo.UpsertSongActivityAsync(activity);
+            await _activityRepo.SaveChangesAsync();
+            
+            return Ok(_mapper.Map<UserSongActivityDto>(activity));
         }
         catch (Exception ex)
         {
@@ -279,23 +233,12 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            // Retrieve current activity (if any)
-            UserSongActivity? activity = await _activityRepo.GetUserSongActivityAsync(user.Id, dto.SongId);
-            if (activity == null)
-            {
-                activity = _mapper.Map<UserSongActivity>(dto);
-                activity.UserId = user.Id;
-                activity.DateFavorited = dto.IsFavorite ? DateTime.UtcNow : null;
-                await _activityRepo.UpsertSongActivityAsync(activity);
-            }
-            else
-            {
-                activity.IsFavorite = dto.IsFavorite;
-                activity.DateFavorited = dto.IsFavorite ? DateTime.UtcNow : null;
-
-                await _activityRepo.UpsertSongActivityAsync(activity);
-            }
+            UserSongActivity activity = _mapper.Map<UserSongActivity>(dto);
+            activity.UserId = user.Id;
+            
+            await _activityRepo.UpsertSongActivityAsync(activity, isPlayEvent: false);
             await _activityRepo.SaveChangesAsync();
+            
             return Ok(new { message = dto.IsFavorite ? "Song favorited" : "Song unfavorited" });
         }
         catch (Exception ex)
@@ -338,22 +281,12 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            // Retrieve current activity (if any)
-            UserPlaylistActivity? activity = await _activityRepo.GetUserPlaylistActivityAsync(user.Id, dto.PlaylistUrl);
-            if (activity == null)
-            {
-                activity = _mapper.Map<UserPlaylistActivity>(dto);
-                activity.UserId = user.Id;
-                activity.DateFavorited = dto.IsFavorite ? DateTime.UtcNow : null;
-                await _activityRepo.UpsertPlaylistActivityAsync(activity);
-            }
-            else
-            {
-                activity.IsFavorite = dto.IsFavorite;
-                activity.DateFavorited = dto.IsFavorite ? DateTime.UtcNow : null;
-                await _activityRepo.UpsertPlaylistActivityAsync(activity);
-            }
+            UserPlaylistActivity activity = _mapper.Map<UserPlaylistActivity>(dto);
+            activity.UserId = user.Id;
+            
+            await _activityRepo.UpsertPlaylistActivityAsync(activity, isPlayEvent: false);
             await _activityRepo.SaveChangesAsync();
+            
             return Ok(new { message = dto.IsFavorite ? "Playlist favorited" : "Playlist unfavorited" });
         }
         catch (Exception ex)
