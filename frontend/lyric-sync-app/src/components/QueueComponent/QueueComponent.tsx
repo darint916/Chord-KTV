@@ -74,7 +74,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
             lyrics: item.lyrics || ''
           }
         });
-        if (item.youTubeId && !response.youTubeId) {
+        if (item.youTubeId) {
           response.youTubeId = item.youTubeId;
         }
         const processedData = {

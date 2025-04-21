@@ -259,7 +259,13 @@ public class FullSongService : IFullSongService
             }
             if (dbSong is not null)
             {
-                if (string.IsNullOrWhiteSpace(dbSong.YoutubeId)) //no main title added, only user specific alts, so we search again
+                // if it supplied with a youtube link
+                if (!string.IsNullOrWhiteSpace(youtubeId) && !dbSong.AlternateYoutubeIds.Contains(youtubeId))
+                {
+                    dbSong.AlternateYoutubeIds.Add(youtubeId);
+                    await _youtubeSongRepo.AddYoutubeSongAsync(new YoutubeSong { YoutubeId = youtubeId, Song = dbSong });
+                }
+                else if (string.IsNullOrWhiteSpace(dbSong.YoutubeId)) //no main title added, only user specific alts, so we search again
                 {
                     dbSong.YoutubeId = await _youTubeClientService.SearchYoutubeVideoLinkAsync(dbSong.Title, dbSong.Artist, dbSong.Albums.FirstOrDefault()?.Name, dbSong.Duration);
                     if (string.IsNullOrWhiteSpace(dbSong.YoutubeId))
@@ -311,13 +317,10 @@ public class FullSongService : IFullSongService
 
         //Add/Update youtube urls, if user supplies their own, we always add it as an alt (avoids bias)
         YoutubeSong? youtubeSong = null;
-        if (!string.IsNullOrWhiteSpace(youtubeId))
+        if (!string.IsNullOrWhiteSpace(youtubeId) && !song.AlternateYoutubeIds.Contains(youtubeId))
         {
-            if (!song.AlternateYoutubeIds.Contains(youtubeId))
-            {
-                song.AlternateYoutubeIds.Add(youtubeId);
-                youtubeSong = new YoutubeSong { YoutubeId = youtubeId, Song = song };
-            }
+            song.AlternateYoutubeIds.Add(youtubeId);
+            youtubeSong = new YoutubeSong { YoutubeId = youtubeId, Song = song };
         }
         else if (string.IsNullOrWhiteSpace(song.YoutubeId)) //query for a vid if none provided and non exist, expensive call
         {   //We make the main youtubeId always the best one provided by youtube search itself
