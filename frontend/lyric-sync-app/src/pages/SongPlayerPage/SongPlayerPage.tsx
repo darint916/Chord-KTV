@@ -79,12 +79,16 @@ const SongPlayerPage: React.FC = () => {
       const centisecond = parseInt(match[3]);
       timestamps.push(minutes * 60 + seconds + (centisecond / 100));
     });
-    return timestamps.sort((a, b) => a - b);
+    timestamps.sort((a, b) => a - b);
+    if (timestamps[0] > 0) {
+      timestamps.unshift(0); // Add 0 if the first timestamp is greater than 0
+    }
+    return timestamps;
   }, [song.lrcLyrics]);
 
 
   const prevTimeRange = useRef({ start: Infinity, end: 0 });
-  const currentLineRef = useRef(0); // Track current line index
+  const currentLineRef = useRef(-1); // Track current line index
 
   const checkIfTimeLineChanged = (currentTime: number, timestamps: number[]) => {
     if (timestamps.length === 0 ||
@@ -93,7 +97,6 @@ const SongPlayerPage: React.FC = () => {
       return false;
     }
 
-    // Fallback to full search if something went wrong
     for (let i = currentLineRef.current + 1; i < (timestamps.length + currentLineRef.current); i++) {
       i %= timestamps.length; // Wrap around if needed
       const currentTimestamp = timestamps[i];
@@ -107,7 +110,7 @@ const SongPlayerPage: React.FC = () => {
   };
 
   useEffect(() => {
-    currentLineRef.current = 0;
+    currentLineRef.current = -1;
     prevTimeRange.current = { start: Infinity, end: 0 };
   }, [song]); // Only runs on song change, so useEffect works
 
@@ -169,11 +172,12 @@ const SongPlayerPage: React.FC = () => {
     playerRef.current = playerInstance;
     playerInstance.playVideo(); // Autoplay
     setShowQuizButton(false);
+    const duration = playerRef.current.getDuration();
 
     const updatePlayerTime = () => {
       if (playerRef.current) {
         const current = playerRef.current.getCurrentTime();
-        const duration = playerRef.current.getDuration();
+
 
         if (checkIfTimeLineChanged(current, lrcTimestamps)) {
           setCurrentTime(current);
