@@ -82,20 +82,34 @@ const SongPlayerPage: React.FC = () => {
 
 
   const prevTimeRange = useRef({ start: Infinity, end: 0 });
-  const checkIfTimeLineChanged = (currentTime: number, timestamps: number[]) => {
-    if (timestamps.length === 0 || (currentTime >= prevTimeRange.current.start && currentTime < prevTimeRange.current.end)) {
+  const checkIfTimeLineChanged = useCallback((currentTime: number) => {
+    if (!lrcTimestamps.length) return false;
+
+    if (lrcTimestamps.length === 0 || (currentTime >= prevTimeRange.current.start && currentTime < prevTimeRange.current.end)) {
       return false;
     }
-    for (let i = 0; i < timestamps.length; i++) {
-      const currentTimestamp = timestamps[i];
-      const nextTimestamp = (i < timestamps.length - 1) ? timestamps[i + 1] : Infinity;
+
+    // Binary search for efficiency with large lyric files
+    let low = 0;
+    let high = lrcTimestamps.length - 1;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const currentTimestamp = lrcTimestamps[mid];
+      const nextTimestamp = lrcTimestamps[mid + 1] || Infinity;
+
       if (currentTime >= currentTimestamp && currentTime < nextTimestamp) {
         prevTimeRange.current = { start: currentTimestamp, end: nextTimestamp };
-        break;
+        return true;
+      } else if (currentTime < currentTimestamp) {
+        high = mid - 1;
+      } else {
+        low = mid + 1;
       }
     }
-    return true;
-  };
+
+    return false;
+  }, [lrcTimestamps]);
 
   const prefetchNextSongs = useCallback(async () => {
     if (!queue.length) { return; }
@@ -154,12 +168,16 @@ const SongPlayerPage: React.FC = () => {
     playerRef.current = playerInstance;
     playerInstance.playVideo(); // Autoplay
 
+    // Reset tracking when new player instance is created
+    prevTimeRange.current = { start: Infinity, end: 0 };
+    setCurrentTime(0);
+
     const updatePlayerTime = () => {
       if (playerRef.current) {
         const current = playerRef.current.getCurrentTime();
         const duration = playerRef.current.getDuration();
 
-        if (checkIfTimeLineChanged(current, lrcTimestamps)) {
+        if (checkIfTimeLineChanged(current)) {
           setCurrentTime(current);
         }
         // Check if the song is 90% complete
@@ -184,7 +202,7 @@ const SongPlayerPage: React.FC = () => {
         cancelAnimationFrame(animationFrameId); // Cancel the animation frame when the component unmounts  (cleanup function)
       };
     };
-  }, []);
+  }, [lrcTimestamps]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
