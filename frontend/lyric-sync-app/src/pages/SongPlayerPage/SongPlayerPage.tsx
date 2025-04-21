@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
 import QueueComponent from '../../components/QueueComponent/QueueComponent';
 import { songApi } from '../../api/apiClient';
-import { extractYouTubeVideoId } from '../HomePage/HomePageHelpers';
+import { extractYouTubeVideoId, extractPlaylistId } from '../HomePage/HomePageHelpers';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
 
@@ -39,6 +39,8 @@ const SongPlayerPage: React.FC = () => {
   const [lyrics, setLyrics] = useState('');
   const [error, setError] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [playlistUrl, setPlaylistUrl] = useState('');
+  const [playlistLoading, setPlaylistLoading] = useState(false);
   const {
     song,
     setQuizQuestions,
@@ -272,19 +274,64 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
       handleQueueAddition(true); // Add next and play on enter
     }
   };
 
+  const handleQueueAdditionPlaylist = async () => {
+    if (!playlistUrl.trim()) {
+      setError('Please enter a YouTube playlist URL');
+      return;
+    }
+
+    setPlaylistLoading(true);
+    setError('');
+
+    try {
+      // Extract playlist ID from URL
+      const playlistId = extractPlaylistId(playlistUrl);
+      if (!playlistId) {
+        throw new Error('Invalid YouTube playlist URL');
+      }
+
+      // Call API to get playlist items
+      const response = await songApi.apiYoutubePlaylistsPlaylistIdGet({ playlistId });
+
+      const videos = response.videos || [];
+      if (videos.length === 0) { throw new Error('This playlist contains no videos'); }
+
+      // Create queue items for each track
+      const newItems: QueueItem[] = videos.map(video => ({
+        queueId: uuidv4(),
+        title: video.title || 'Unknown Track',
+        artist: video.artist || 'Unknown Artist',
+        youTubeId: extractYouTubeVideoId(video.url) || '',
+        lyrics: '',
+        apiRequested: false
+      }));
+
+      // Add to end of queue
+      setQueue(prev => [...prev, ...newItems]);
+      setPlaylistUrl('');
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load playlist';
+      setError(errorMessage);
+    } finally {
+      setPlaylistLoading(false);
+    }
+  };
+
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
-        <Typography variant="h3" className="song-title" align="center">
+        <Typography variant="h4" className="song-title" align="center">
           {song.title}
         </Typography>
-        <Typography variant="h5" className="song-title" align="center">
+        <Typography variant="h6" className="song-title" align="center">
           {song.artist}
         </Typography>
         {showQuizButton && (
@@ -337,9 +384,11 @@ const SongPlayerPage: React.FC = () => {
           </Grid>
         </Grid>
         {error && (
-          <Alert severity="error" className="error-alert-lrc">
-            {error}
-          </Alert>
+          <Box mt={4}>
+            <Alert severity="error" className="error-alert-lrc">
+              {error}
+            </Alert>
+          </Box>
         )}
 
         {/* Search Section */}
@@ -415,6 +464,49 @@ const SongPlayerPage: React.FC = () => {
                   color="secondary"
                   onClick={handleAddToEnd}
                   disabled={isLoading}
+                  className="queue-button"
+                  size="large"
+                >
+                  <PlaylistAddIcon fontSize="inherit" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* YouTube Playlist Section */}
+        <Paper elevation={3} className="playlist-section">
+          <Typography variant="h5" className="section-title">
+            Load a YouTube Playlist
+          </Typography>
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box flexGrow={1}>
+              {playlistLoading ? (
+                <Skeleton
+                  className="skeleton-input"
+                  variant="rectangular"
+                  height={56}
+                  width="100%"
+                />
+              ) : (
+                <TextField
+                  fullWidth
+                  label="Enter YouTube Playlist URL"
+                  variant="filled"
+                  value={playlistUrl}
+                  disabled={isLoading || playlistLoading}
+                  onKeyDown={handleKeyDown}
+                  onChange={(e) => setPlaylistUrl(e.target.value)}
+                  className="search-input"
+                />
+              )}
+            </Box>
+            <Box display="flex" flexDirection="column" gap={1}>
+              <Tooltip title="Add playlist to queue">
+                <IconButton
+                  color="primary"
+                  onClick={handleQueueAdditionPlaylist}
+                  disabled={isLoading || playlistLoading}
                   className="queue-button"
                   size="large"
                 >
