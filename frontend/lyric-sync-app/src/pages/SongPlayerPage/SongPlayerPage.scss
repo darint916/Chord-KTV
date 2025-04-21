@@ -51,6 +51,10 @@
         max-width: 100%;
         justify-content: center;
 
+        .lrc-offset-text {
+          color: $text-primary;
+        }
+
         .lrc-grid-parent {
           display: flex;
           justify-content: center;
@@ -77,6 +81,7 @@
         box-shadow: $box-shadow;
         max-width: 100%;
         justify-content: center;
+
       }
     }
 
