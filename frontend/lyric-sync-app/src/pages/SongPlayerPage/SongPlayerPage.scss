@@ -11,11 +11,17 @@
     margin-top: 40px;
     max-width: 100% !important;
     padding: 0 16px !important;
+
     .song-player-content {
       .song-title {
         color: $text-primary;
         margin-bottom: 24px;
       }
+
+      .error-alert-lrc {
+        margin-top: 32px;
+      }
+
       margin-top: 48px;
       background-color: transparent;
       border-radius: 8px;
@@ -36,7 +42,7 @@
 
       .grid-parent {
         height: 100%;
-        width: 48%; 
+        width: 48%;
         display: flex;
         flex-direction: column;
         border-radius: 8px;
@@ -44,7 +50,7 @@
         box-shadow: $box-shadow;
         max-width: 100%;
         justify-content: center;
-        
+
         .lrc-grid-parent {
           display: flex;
           justify-content: center;
@@ -60,9 +66,10 @@
           width: 100%;
         }
       }
+
       .youtube-grid-parent {
         height: 100%;
-        width: 33%; 
+        width: 33%;
         display: flex;
         flex-direction: column;
         border-radius: 8px;
@@ -86,10 +93,12 @@
         transform: scale(1);
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
       }
+
       50% {
         transform: scale(1.01);
         box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
       }
+
       100% {
         transform: scale(1);
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
@@ -105,6 +114,50 @@
       margin-right: 20px;
       max-width: 100%;
       box-sizing: border-box;
+
+      .skeleton-input {
+        width: 100%;
+        height: 56px; 
+        border-radius: 4px;
+        
+        &.MuiSkeleton-root {
+          transform: scale(1);
+          // Gradient for shimmer loading, OK to hardcode so using rgba
+          background: linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.08) 0%,
+            rgba(0, 0, 0, 0.15) 50%,
+            rgba(0, 0, 0, 0.08) 100%
+          );
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+        }
+      }
+
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      .queue-button {
+        background-color: $secondary-color;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background-color: color.scale($secondary-color, $lightness: 10%);
+          transform: scale(1.1);
+        }
+
+        // Primary button (Add Next & Play)
+        &.MuiIconButton-colorPrimary {
+          color: $primary-color;
+        }
+
+        // Secondary button (Add to End)
+        &.MuiIconButton-colorSecondary {
+          color: $primary-color;
+        }
+      }
 
       .section-title {
         margin-bottom: 16px;
@@ -128,10 +181,11 @@
 
       .search-button {
         &.loading {
-          background-color: transparent !important;  
-          opacity: 0.5; 
-          pointer-events: none;  
+          background-color: transparent !important;
+          opacity: 0.5;
+          pointer-events: none;
         }
+
         background-color: $secondary-color;
         color: white;
 

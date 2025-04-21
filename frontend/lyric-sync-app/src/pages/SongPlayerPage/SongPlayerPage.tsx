@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Container, Typography, Box, Button, Paper, TextField, IconButton, CircularProgress, Alert } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import { Container, Typography, Box, Button, Paper, TextField, Alert, IconButton, Tooltip, Skeleton } from '@mui/material';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import './SongPlayerPage.scss';
@@ -14,6 +13,8 @@ import { QueueItem } from '../../contexts/QueueTypes';
 import QueueComponent from '../../components/QueueComponent/QueueComponent';
 import { songApi } from '../../api/apiClient';
 import { extractYouTubeVideoId } from '../HomePage/HomePageHelpers';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -97,7 +98,7 @@ const SongPlayerPage: React.FC = () => {
   };
 
   const prefetchNextSongs = useCallback(async () => {
-    if (!queue.length) {return;}
+    if (!queue.length) { return; }
 
     const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
     if (currentIndex >= 0 && currentIndex < queue.length - 1) {
@@ -189,12 +190,20 @@ const SongPlayerPage: React.FC = () => {
     setSelectedTab(newValue);
   };
 
+  const handleAddToNextAndPlay = async () => {
+    await handleQueueAddition(true);
+  };
+
+  const handleAddToEnd = async () => {
+    await handleQueueAddition(false);
+  };
+
   const handleQuizRedirect = () => {
     setQuizQuestions([]);   // Clear old song quiz questions
     navigate('/quiz');
   };
 
-  const handleQueueAddition = async () => {
+  const handleQueueAddition = async (insertAfterCurrent: boolean = false) => {
     if (!songName.trim() && !artistName.trim() && !lyrics.trim() && !youtubeUrl.trim()) {
       setError('Please enter at least one field to search.');
       return;
@@ -205,16 +214,47 @@ const SongPlayerPage: React.FC = () => {
 
     try {
       const youTubeId = extractYouTubeVideoId(youtubeUrl);
+      const response = await songApi.apiSongsSearchPost({
+        fullSongRequestDto: {
+          title: songName.trim(),
+          artist: artistName.trim(),
+          youTubeId: youTubeId ?? '',
+          lyrics: lyrics.trim()
+        }
+      });
+
       const newItem: QueueItem = {
         queueId: uuidv4(),
-        title: songName,
-        artist: artistName,
+        apiRequested: true,
+        title: response.title ?? "",
+        artist: response.artist ?? "",
+        youTubeId: response.youTubeId ?? "",
         lyrics: lyrics,
-        youTubeId: youTubeId ?? '',
-        apiRequested: false
+        processedData: response
       };
 
-      setQueue(prev => [...prev, newItem]);
+      if (!newItem.processedData?.lrcLyrics) {
+        throw new Error('Failed to process song: no LRC lyrics found');
+      }
+
+      setQueue(prev => {
+        if (insertAfterCurrent && currentPlayingId) {
+          const currentIndex = prev.findIndex(item => item.queueId === currentPlayingId);
+          if (currentIndex >= 0) {
+            const newQueue = [...prev];
+            newQueue.splice(currentIndex + 1, 0, newItem);
+            return newQueue;
+          }
+        }
+        // Default: add to end
+        return [...prev, newItem];
+      });
+
+      // Auto-play if adding to next position
+      if (insertAfterCurrent) {
+        setCurrentPlayingId(newItem.queueId);
+        setSong(newItem.processedData);
+      }
 
       // Clear form
       setSongName('');
@@ -222,8 +262,9 @@ const SongPlayerPage: React.FC = () => {
       setLyrics('');
       setYoutubeUrl('');
 
-    } catch {
-      setError('Search failed. Please try again.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to process song';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -231,7 +272,7 @@ const SongPlayerPage: React.FC = () => {
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
-      handleQueueAddition();
+      handleQueueAddition(true); // Add next and play on enter
     }
   };
 
@@ -294,7 +335,7 @@ const SongPlayerPage: React.FC = () => {
           </Grid>
         </Grid>
         {error && (
-          <Alert severity="error" className="error-alert">
+          <Alert severity="error" className="error-alert-lrc">
             {error}
           </Alert>
         )}
@@ -305,62 +346,80 @@ const SongPlayerPage: React.FC = () => {
             Add a Song to the Queue
           </Typography>
           <Box display="flex" alignItems="center" gap={2}>
-            <Box
-              display="grid"
-              gridTemplateColumns="1fr 1fr"
-              gap={2}
-              flexGrow={1}
-            >
-              <TextField
-                label="Song Name"
-                variant="filled"
-                value={songName}
-                disabled={isLoading}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => setSongName(e.target.value)}
-                className="search-input"
-                fullWidth
-              />
-              <TextField
-                label="Artist Name"
-                variant="filled"
-                value={artistName}
-                disabled={isLoading}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => setArtistName(e.target.value)}
-                className="search-input"
-                fullWidth
-              />
-              <TextField
-                label="Lyrics"
-                variant="filled"
-                value={lyrics}
-                disabled={isLoading}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => setLyrics(e.target.value)}
-                className="search-input"
-                fullWidth
-              />
-              <TextField
-                label="YouTube URL"
-                variant="filled"
-                value={youtubeUrl}
-                disabled={isLoading}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                className="search-input"
-                fullWidth
-              />
+            <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2} flexGrow={1}>
+              {isLoading ? (
+                <>
+                  <Skeleton className="skeleton-input" variant="rectangular" />
+                  <Skeleton className="skeleton-input" variant="rectangular" />
+                  <Skeleton className="skeleton-input" variant="rectangular" />
+                  <Skeleton className="skeleton-input" variant="rectangular" />
+                </>
+              ) : (
+                <>
+                  <TextField
+                    label="Song Name"
+                    variant="filled"
+                    value={songName}
+                    onKeyDown={handleKeyDown}
+                    onChange={(e) => setSongName(e.target.value)}
+                    className="search-input"
+                    fullWidth
+                  />
+                  <TextField
+                    label="Artist Name"
+                    variant="filled"
+                    value={artistName}
+                    onKeyDown={handleKeyDown}
+                    onChange={(e) => setArtistName(e.target.value)}
+                    className="search-input"
+                    fullWidth
+                  />
+                  <TextField
+                    label="Lyrics"
+                    variant="filled"
+                    value={lyrics}
+                    onKeyDown={handleKeyDown}
+                    onChange={(e) => setLyrics(e.target.value)}
+                    className="search-input"
+                    fullWidth
+                  />
+                  <TextField
+                    label="YouTube URL"
+                    variant="filled"
+                    value={youtubeUrl}
+                    onKeyDown={handleKeyDown}
+                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                    className="search-input"
+                    fullWidth
+                  />
+                </>
+              )}
             </Box>
-            <IconButton
-              aria-label="search"
-              onClick={handleQueueAddition}
-              disabled={isLoading}
-              className={`search-button ${isLoading ? 'loading' : ''}`}
-              size="large"
-            >
-              {isLoading ? <CircularProgress size={24} /> : <SearchIcon />}
-            </IconButton>
+            <Box display="flex" flexDirection="column" gap={1}>
+              <Tooltip title="Add next and play">
+                <IconButton
+                  color="primary"
+                  onClick={handleAddToNextAndPlay}
+                  disabled={isLoading}
+                  className="queue-button"
+                  size="large"
+                >
+                  <PlaylistPlayIcon fontSize="inherit" />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Add to end of queue">
+                <IconButton
+                  color="secondary"
+                  onClick={handleAddToEnd}
+                  disabled={isLoading}
+                  className="queue-button"
+                  size="large"
+                >
+                  <PlaylistAddIcon fontSize="inherit" />
+                </IconButton>
+              </Tooltip>
+            </Box>
           </Box>
         </Paper>
       </Container>
