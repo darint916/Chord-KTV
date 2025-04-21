@@ -13,17 +13,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useSong } from '../../contexts/SongContext';
 import SearchIcon from '@mui/icons-material/Search';
-import { useAuth } from '../../contexts/AuthTypes';
 import './HomePage.scss';
 import { songApi } from '../../api/apiClient';
 import logo from '../../assets/chordktv.png';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
-import axios from 'axios';
 import { extractYouTubeVideoId } from './HomePageHelpers';
 
 const HomePage: React.FC = () => {
-  const { user } = useAuth();
   const [songName, setSongName] = useState('');
   const [artistName, setArtistName] = useState('');
   const [error, setError] = useState('');
@@ -126,25 +123,7 @@ const HomePage: React.FC = () => {
 
     const youTubeId = extractYouTubeVideoId(youtubeUrl);
 
-    if (user) {
-      try {
-        await axios.post('http://localhost:5259/api/random',
-          {
-            songName,
-            artistName,
-            timestamp: new Date()
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${user.idToken}`
-            }
-          }
-        );
-        setError('');
-      } catch {
-        setError('Failed to save search history. Please try again.');
-      }
-    }
+    // TODO: Add search history backend call
 
     try {
       const response = await songApi.apiSongsSearchPost({
