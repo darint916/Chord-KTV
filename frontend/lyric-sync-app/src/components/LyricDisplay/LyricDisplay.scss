@@ -36,13 +36,6 @@
   text-shadow: 
     0 0 4px white, /* Soft glow */
     0 0 10px white;
-  font-size: 12px; // 10px * 1.2
-  @media (min-width: 600px) {
-    font-size: 22px; // 18px * ~1.22
-  }
-  @media (min-width: 1200px) {
-    font-size: 32px; // 26px * ~1.23
-  }
 }
 
 .lrc { //hide scroll
