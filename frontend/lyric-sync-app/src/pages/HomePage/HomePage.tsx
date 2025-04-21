@@ -73,7 +73,7 @@ const HomePage: React.FC = () => {
             lyrics: firstSong.lyrics
           }
         });
-        if (firstSong.youTubeId && !processed.youTubeId) {
+        if (firstSong.youTubeId) { //override with user youtube vid
           processed.youTubeId = firstSong.youTubeId;
         }
         // Update queue with processed data for first song
@@ -128,7 +128,7 @@ const HomePage: React.FC = () => {
           youTubeId: youTubeId || ''
         }
       });
-      if (youTubeId && !response.youTubeId) {
+      if (youTubeId) {
         response.youTubeId = youTubeId;
       }
 
