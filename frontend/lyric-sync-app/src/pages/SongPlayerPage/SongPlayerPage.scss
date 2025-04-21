@@ -3,39 +3,61 @@
 @use 'sass:color';
 
 .song-player-page {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+
   .song-player-container {
     margin-top: 40px;
+    max-width: 100% !important;
+    padding: 0 16px !important;
 
     .song-player-content {
       .song-title {
         color: $text-primary;
         margin-bottom: 24px;
       }
+
+      .error-alert-lrc {
+        margin-top: 32px;
+      }
+
       margin-top: 48px;
       background-color: transparent;
       border-radius: 8px;
       display: flex;
+      flex-wrap: nowrap;
+      height: 480px;
+      gap: 20px;
+      width: 100%;
+
+      .queue-parent {
+        width: 22%;
+        padding-right: 16px;
+        display: flex;
+        flex-direction: column;
+        width: 22%;
+        align-items: center;
+      }
 
       .grid-parent {
         height: 100%;
-        width: 50%;
+        width: 48%;
         display: flex;
         flex-direction: column;
-        background-color: black;
         border-radius: 8px;
         background: $gradient;
-        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+        box-shadow: $box-shadow;
         max-width: 100%;
         justify-content: center;
-        
+
         .lrc-grid-parent {
           display: flex;
           justify-content: center;
           align-items: center;
-          height: fit-content;
-          width: 100%;
           overflow: auto;
           margin-top: 2px;
+          height: 100%;
         }
 
         .tabs-grid-parent {
@@ -43,7 +65,18 @@
           flex-direction: column;
           width: 100%;
         }
-        
+      }
+
+      .youtube-grid-parent {
+        height: 100%;
+        width: 33%;
+        display: flex;
+        flex-direction: column;
+        border-radius: 8px;
+        background: $gradient;
+        box-shadow: $box-shadow;
+        max-width: 100%;
+        justify-content: center;
       }
     }
 
@@ -54,20 +87,113 @@
       background: $secondary-color;
     }
 
+    // Keeping rgba since it's special case here
     @keyframes pulse {
       0% {
         transform: scale(1);
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
       }
+
       50% {
         transform: scale(1.01);
         box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
       }
+
       100% {
         transform: scale(1);
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
       }
     }
 
+    .search-section,
+    .playlist-section {
+      padding: 20px;
+      background: $gradient;
+      border-radius: 8px;
+      margin-top: 20px;
+      width: 100%;
+      margin-right: 20px;
+      max-width: 100%;
+      box-sizing: border-box;
+
+      .skeleton-input {
+        width: 100%;
+        height: 56px; 
+        border-radius: 4px;
+        
+        &.MuiSkeleton-root {
+          transform: scale(1);
+          // Gradient for shimmer loading, OK to hardcode so using rgba
+          background: linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.08) 0%,
+            rgba(0, 0, 0, 0.15) 50%,
+            rgba(0, 0, 0, 0.08) 100%
+          );
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+        }
+      }
+
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      .queue-button {
+        background-color: $secondary-color;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background-color: color.scale($secondary-color, $lightness: 10%);
+          transform: scale(1.1);
+        }
+
+        // Primary button (Add Next & Play)
+        &.MuiIconButton-colorPrimary {
+          color: $primary-color;
+        }
+
+        // Secondary button (Add to End)
+        &.MuiIconButton-colorSecondary {
+          color: $primary-color;
+        }
+      }
+
+      .section-title {
+        margin-bottom: 16px;
+        color: $text-primary;
+        font-weight: bold;
+      }
+
+      .section-subtitle {
+        margin-bottom: 24px;
+        color: $text-secondary;
+      }
+
+      .search-input {
+        background-color: white;
+        border-radius: 8px;
+
+        .MuiFilledInput-root {
+          background-color: white;
+        }
+      }
+
+      .search-button {
+        &.loading {
+          background-color: transparent !important;
+          opacity: 0.5;
+          pointer-events: none;
+        }
+
+        background-color: $secondary-color;
+        color: white;
+
+        &:hover {
+          background-color: color.scale($secondary-color, $lightness: -10%);
+        }
+      }
+    }
   }
 }

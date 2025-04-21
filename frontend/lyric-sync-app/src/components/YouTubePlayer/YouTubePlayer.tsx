@@ -22,7 +22,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady }) => {
 
   return (
     <div>
-      <YouTube videoId={videoId} opts={opts} onReady={handleReady} />
+      <YouTube videoId={videoId} className="youtube-player" opts={opts} onReady={handleReady} />
     </div>
   );
 };

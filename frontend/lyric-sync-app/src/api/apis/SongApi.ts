@@ -52,6 +52,10 @@ export interface ApiDatabaseSongPostRequest {
     song?: Song;
 }
 
+export interface ApiDatabaseUsersEmailGetRequest {
+    email: string;
+}
+
 export interface ApiLyricsLrcSearchGetRequest {
     title?: string;
     artist?: string;
@@ -196,6 +200,36 @@ export class SongApi extends runtime.BaseAPI {
      */
     async apiDatabaseSongPost(requestParameters: ApiDatabaseSongPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiDatabaseSongPostRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
+    async apiDatabaseUsersEmailGetRaw(requestParameters: ApiDatabaseUsersEmailGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['email'] == null) {
+            throw new runtime.RequiredError(
+                'email',
+                'Required parameter "email" was null or undefined when calling apiDatabaseUsersEmailGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/database/users/{email}`.replace(`{${"email"}}`, encodeURIComponent(String(requestParameters['email']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async apiDatabaseUsersEmailGet(requestParameters: ApiDatabaseUsersEmailGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiDatabaseUsersEmailGetRaw(requestParameters, initOverrides);
     }
 
     /**
