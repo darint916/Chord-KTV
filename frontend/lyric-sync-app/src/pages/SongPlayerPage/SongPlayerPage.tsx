@@ -84,20 +84,57 @@ const SongPlayerPage: React.FC = () => {
 
 
   const prevTimeRange = useRef({ start: Infinity, end: 0 });
+  const currentLineRef = useRef(0); // Track current line index
+
   const checkIfTimeLineChanged = (currentTime: number, timestamps: number[]) => {
-    if (timestamps.length === 0 || (currentTime >= prevTimeRange.current.start && currentTime < prevTimeRange.current.end)) {
+    if (timestamps.length === 0 ||
+      (currentTime >= prevTimeRange.current.start &&
+        currentTime < prevTimeRange.current.end)) {
       return false;
     }
-    for (let i = 0; i < timestamps.length; i++) {
+
+    // Start searching from the last known position
+    let i = Math.max(0, Math.min(currentLineRef.current, timestamps.length - 1));
+
+    // Search forward first
+    while (i < timestamps.length - 1 && timestamps[i + 1] <= currentTime) {
+      i++;
+    }
+
+    // If not found, search backward
+    while (i > 0 && timestamps[i] > currentTime) {
+      i--;
+    }
+
+    // Check if we found the correct range
+    if (currentTime >= timestamps[i] &&
+      (i === timestamps.length - 1 || currentTime < timestamps[i + 1])) {
+      currentLineRef.current = i;
+      prevTimeRange.current = {
+        start: timestamps[i],
+        end: i < timestamps.length - 1 ? timestamps[i + 1] : Infinity
+      };
+      return true;
+    }
+
+    // Fallback to full search if something went wrong
+    for (i = 0; i < timestamps.length; i++) {
       const currentTimestamp = timestamps[i];
       const nextTimestamp = (i < timestamps.length - 1) ? timestamps[i + 1] : Infinity;
       if (currentTime >= currentTimestamp && currentTime < nextTimestamp) {
+        currentLineRef.current = i;
         prevTimeRange.current = { start: currentTimestamp, end: nextTimestamp };
-        break;
+        return true;
       }
     }
-    return true;
+
+    return false;
   };
+
+  useEffect(() => {
+    currentLineRef.current = 0;
+    prevTimeRange.current = { start: Infinity, end: 0 };
+  }, [song]); // Only runs on song change, so useEffect works
 
   const prefetchNextSongs = useCallback(async () => {
     if (!queue.length) { return; }
