@@ -11,6 +11,7 @@ using ChordKTV.Dtos.FullSong;
 using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Data.Api.UserData;
 using ChordKTV.Models.UserData;
+using ChordKTV.Dtos.GeniusApi;
 
 namespace ChordKTV.Controllers;
 
@@ -68,7 +69,7 @@ public class SongController : Controller
         return Ok(result);
     }
 
-    [HttpGet("lyrics/lrc/search")]
+    [HttpGet("lyrics/lrc/match")]
     public async Task<IActionResult> GetLrcLibLyrics([FromQuery] string? title,
                                     [FromQuery] string? artist, [FromQuery] string? albumName,
                                     [FromQuery] float? duration)
@@ -104,7 +105,7 @@ public class SongController : Controller
         return Ok(lyricsDto);
     }
 
-    [HttpPost("songs/search")]
+    [HttpPost("songs/match")]
     [ProducesResponseType(typeof(FullSongResponseDto), 200)]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]
@@ -140,7 +141,7 @@ public class SongController : Controller
     }
 
 
-    [HttpGet("songs/genius/search")]
+    [HttpGet("songs/genius/match")]
     public async Task<IActionResult> GetSongByArtistTitle(
         [FromQuery] string? title,
         [FromQuery] string? artist,
@@ -176,7 +177,7 @@ public class SongController : Controller
         }
     }
 
-    [HttpPost("songs/genius/search/batch")]
+    [HttpPost("songs/genius/match/batch")]
     public async Task<IActionResult> GetSongsByArtistTitle(
         [FromBody] JsonElement request,
         [FromQuery] bool forceRefresh = false)
@@ -249,6 +250,34 @@ public class SongController : Controller
             return StatusCode(500, new { message = "An unexpected error occurred." });
         }
     }
+
+    [HttpGet("songs/genius/search")]
+    public async Task<IActionResult> GetGeniusSearchResults([FromQuery] string searchQuery)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                return BadRequest(new { message = "Search query is required." });
+            }
+
+            List<GeniusHit>? hits = await _geniusService.GetGeniusSearchResultsAsync(searchQuery);
+            if (hits == null || hits.Count == 0)
+            {
+                return NotFound(new { message = "No results found." });
+            }
+            return Ok(hits);
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(503, new { message = "Failed to fetch from Genius API.", error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
+        }
+    }
+
 
     [HttpGet("health")]
     public IActionResult HealthCheck()
