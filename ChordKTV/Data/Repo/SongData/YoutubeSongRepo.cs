@@ -12,7 +12,7 @@ public class YoutubeSongRepo : IYoutubeSongRepo
         _context = context;
     }
 
-    public async Task<YoutubeSong?> GetYoutubeSongByYoutubeId(string id)
+    public async Task<YoutubeSong?> GetYoutubeSongByYoutubeIdAsync(string id)
     {
         return await _context.YoutubeSongs
             .Include(s => s.Song)
@@ -20,7 +20,7 @@ public class YoutubeSongRepo : IYoutubeSongRepo
             .Include(s => s.Song.Albums)
             .FirstOrDefaultAsync(s => s.YoutubeId == id);
     }
-    public async Task<Song?> GetSongByYoutubeId(string id)
+    public async Task<Song?> GetSongByYoutubeIdAsync(string id)
     {
         YoutubeSong? youtubeSong = await _context.YoutubeSongs
             .Include(s => s.Song)
@@ -34,7 +34,7 @@ public class YoutubeSongRepo : IYoutubeSongRepo
     {
         if (string.IsNullOrWhiteSpace(youtubeSong.YoutubeId))
         {
-            throw new ArgumentException("YoutubeSongRepo: YoutubeId cannot be null or whitespace.", nameof(youtubeSong));
+            throw new ArgumentException("YoutubeSongRepo: YoutubeId cannot be null or whitespace.");
         }
         _context.YoutubeSongs.Add(youtubeSong);
         await _context.SaveChangesAsync();

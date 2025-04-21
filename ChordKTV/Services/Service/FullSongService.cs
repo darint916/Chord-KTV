@@ -64,7 +64,7 @@ public class FullSongService : IFullSongService
         if (!string.IsNullOrWhiteSpace(youtubeId))
         {
             //check if we have the video in our db cache
-            Song? cachedSong = await _youtubeSongRepo.GetSongByYoutubeId(youtubeId);
+            Song? cachedSong = await _youtubeSongRepo.GetSongByYoutubeIdAsync(youtubeId);
             if (cachedSong != null)
             {
                 return _mapper.Map<FullSongResponseDto>(cachedSong);

@@ -4,7 +4,7 @@ namespace ChordKTV.Data.Api.SongData;
 
 public interface IYoutubeSongRepo
 {
-    public Task<YoutubeSong?> GetYoutubeSongByYoutubeId(string id);
-    public Task<Song?> GetSongByYoutubeId(string id);
+    public Task<YoutubeSong?> GetYoutubeSongByYoutubeIdAsync(string id);
+    public Task<Song?> GetSongByYoutubeIdAsync(string id);
     public Task AddYoutubeSongAsync(YoutubeSong youtubeSong);
 }
