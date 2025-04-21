@@ -77,12 +77,6 @@ public class GeniusService : IGeniusService
 
             _logger.LogInformation("Retrieved {Count} hits from Genius", searchResponse.Response.Hits.Count);
 
-            // Log all results before scoring
-            foreach (GeniusHit hit in searchResponse.Response.Hits)
-            {
-                _logger.LogDebug("Found result - Title: '{Title}', Artist: '{Artist}'",
-                    hit.Result.Title, hit.Result.PrimaryArtistNames);
-            }
 
             //lyric search assumed
             if (string.IsNullOrWhiteSpace(fuzzyTitle) && string.IsNullOrWhiteSpace(fuzzyArtist))
@@ -95,7 +89,7 @@ public class GeniusService : IGeniusService
                 .Where(h => h.Result != null)
                 .ToDictionary(
                     h => h,
-                    h => CompareUtils.CompareWeightedFuzzyScore(fuzzyTitle ?? "", h.Result.Title, fuzzyArtist ?? "", h.Result.PrimaryArtistNames, 0, 0)
+                    h => CompareUtils.CompareWeightedFuzzyScore(fuzzyTitle ?? "", h.Result.Title, fuzzyArtist ?? "", h.Result.PrimaryArtistNames, 0, 0, artistDifferenceWeight: 0.3f)
                 );
 
             //Order and filter titles
