@@ -262,10 +262,10 @@ const HomePage: React.FC = () => {
           </Typography>
           <div className='playlist-url-input'>
             {playlistLoading ? (
-              <Skeleton 
-                className="skeleton-input" 
-                variant="rectangular" 
-                height={56} 
+              <Skeleton
+                className="skeleton-input"
+                variant="rectangular"
+                height={56}
                 width="100%"
               />
             ) : (
@@ -284,7 +284,7 @@ const HomePage: React.FC = () => {
               onClick={handleLoadPlaylist}
               disabled={isLoading || playlistLoading}
             >
-             Load Playlist
+              Load Playlist
             </Button>
           </div>
         </Paper>
