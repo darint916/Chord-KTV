@@ -230,9 +230,9 @@ const SongPlayerPage: React.FC = () => {
       const newItem: QueueItem = {
         queueId: uuidv4(),
         apiRequested: true,
-        title: response.title ?? "",
-        artist: response.artist ?? "",
-        youTubeId: response.youTubeId ?? "",
+        title: response.title ?? '',
+        artist: response.artist ?? '',
+        youTubeId: response.youTubeId ?? '',
         lyrics: lyrics,
         processedData: response
       };

@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
-import './PlaceholderThumbnail.scss'
+import './PlaceholderThumbnail.scss';
 
 const PlaceholderThumbnail = () => {
   return (
