@@ -23,12 +23,12 @@ public class UserActivityRepo : IUserActivityRepo
     public async Task<IEnumerable<UserQuizResult>> GetUserQuizResultsAsync(Guid userId, LanguageCode? language = null)
     {
         IQueryable<UserQuizResult> query = _context.UserQuizzesDone.Where(x => x.UserId == userId);
-        
+
         if (language.HasValue)
         {
             query = query.Where(x => x.Language == language.Value);
         }
-        
+
         return await query
             .OrderByDescending(x => x.DateCompleted)
             .ToListAsync();
