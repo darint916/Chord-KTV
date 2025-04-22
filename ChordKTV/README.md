@@ -111,7 +111,7 @@ Translates lyrics between languages.
 
 ### Songs
 
-#### ```POST /api/songs/search```
+#### ```POST /api/songs/match```
 
 Searches for songs with comprehensive details.
 

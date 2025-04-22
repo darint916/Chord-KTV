@@ -325,7 +325,7 @@
         }
       }
     },
-    "/api/songs/search": {
+    "/api/songs/match": {
       "post": {
         "tags": [
           "Song"
@@ -399,7 +399,7 @@
         }
       }
     },
-    "/api/songs/genius/search": {
+    "/api/songs/genius/match": {
       "get": {
         "tags": [
           "Song"
@@ -442,7 +442,7 @@
         }
       }
     },
-    "/api/songs/genius/search/batch": {
+    "/api/songs/genius/match/batch": {
       "post": {
         "tags": [
           "Song"

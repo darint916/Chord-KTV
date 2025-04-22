@@ -187,7 +187,6 @@ public class GeniusService : IGeniusService
         {
             _logger.LogWarning("GeniusService: GetSongByArtistTitleAsync: No matching song found after all search attempts");
         }
-
         return result;
     }
 
@@ -322,6 +321,37 @@ public class GeniusService : IGeniusService
         {
             _logger.LogError(ex, "Error enriching song details from Genius API");
             return song;
+        }
+    }
+
+    public async Task<List<GeniusHit>?> GetGeniusSearchResultsAsync(string searchQuery)
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            return null;
+        }
+        string requestUrl = $"/search?q={Uri.EscapeDataString(searchQuery)}";
+        try
+        {
+            _logger.LogDebug("Sending request to: {Url}", requestUrl);
+            HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Genius API error: {StatusCode}", response.StatusCode);
+                return null;
+            }
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            GeniusSearchResponse? searchResponse = JsonSerializer.Deserialize<GeniusSearchResponse>(responseContent, _jsonOptions);
+
+            return searchResponse?.Response?.Hits;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetGeniusSearchResult: Error fetching songs from Genius API");
+            return null;
         }
     }
 }
