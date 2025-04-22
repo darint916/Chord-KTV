@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Container, Typography, Box, Button, Paper, TextField, Alert, IconButton, Tooltip, Skeleton } from '@mui/material';
+import { Container, Typography, Box, Button, Paper, TextField, Alert, IconButton, Tooltip, Skeleton, Slider } from '@mui/material';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import './SongPlayerPage.scss';
@@ -41,6 +41,7 @@ const SongPlayerPage: React.FC = () => {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [playlistLoading, setPlaylistLoading] = useState(false);
+  const [lyricsOffset, setLyricsOffset] = useState<number>(0); // in seconds
   const {
     song,
     setQuizQuestions,
@@ -370,6 +371,25 @@ const SongPlayerPage: React.FC = () => {
           {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
           <Grid flex={'1'} alignContent={'center'} className='grid-parent'>
             <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={updatePlayerTime} />
+            <Box mt={2} px={2}>
+              <Typography variant="body2" gutterBottom className='lrc-offset-text'>
+                Lyrics Sync Adjustment: {lyricsOffset > 0 ? `+${lyricsOffset.toFixed(1)}s` : `${lyricsOffset.toFixed(1)}s`}
+              </Typography>
+              <Slider
+                value={lyricsOffset}
+                onChange={(_, value) => setLyricsOffset(value as number)}
+                min={-5}
+                max={5}
+                step={0.1}
+                valueLabelDisplay="auto"
+                valueLabelFormat={(value) => `${value > 0 ? '+' : ''}${value}s`}
+                marks={[
+                  { value: -5, label: '-5s' },
+                  { value: 0, label: '0' },
+                  { value: 5, label: '+5s' },
+                ]}
+              />
+            </Box>
           </Grid>
           {/* Lyrics Column */}
           <Grid className='grid-parent'>
@@ -389,7 +409,7 @@ const SongPlayerPage: React.FC = () => {
                       ? song.lrcRomanizedLyrics ?? 'Not supported'
                       : song.lrcTranslatedLyrics ?? 'Not supported'
                 }
-                currentTime={currentTime}
+                currentTime={currentTime + lyricsOffset}
                 isPlaying={isPlaying}
               />
             </Box>
