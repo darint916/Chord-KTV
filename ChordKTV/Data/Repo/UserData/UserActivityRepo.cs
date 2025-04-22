@@ -45,6 +45,7 @@ public class UserActivityRepo : IUserActivityRepo
     public async Task AddHandwritingResultAsync(UserHandwritingResult result)
     {
         await _context.UserHandwritingResults.AddAsync(result);
+        await _context.SaveChangesAsync();
     }
 
     // Learned Words Methods
@@ -61,6 +62,7 @@ public class UserActivityRepo : IUserActivityRepo
     public async Task AddLearnedWordAsync(LearnedWord word)
     {
         await _context.LearnedWords.AddAsync(word);
+        await _context.SaveChangesAsync();
     }
 
     // Song Activity Methods
@@ -118,6 +120,8 @@ public class UserActivityRepo : IUserActivityRepo
                 existing.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
             }
         }
+        
+        await _context.SaveChangesAsync();
     }
 
     // Playlist Activity Methods
@@ -175,10 +179,47 @@ public class UserActivityRepo : IUserActivityRepo
                 existing.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
             }
         }
+        
+        await _context.SaveChangesAsync();
     }
 
-    public async Task<bool> SaveChangesAsync()
+    public async Task ProcessQuizResultAsync(UserQuizResult result, IEnumerable<string> correctAnswers, LanguageCode language)
     {
-        return await _context.SaveChangesAsync() > 0;
+        // Add quiz result
+        await AddQuizResultAsync(result);
+
+        // Process learned words
+        var existingWords = await GetUserLearnedWordsAsync(result.UserId, language);
+        var existingWordsSet = new HashSet<string>(existingWords.Select(lw => lw.Word));
+
+        foreach (string word in correctAnswers.Where(w => !existingWordsSet.Contains(w)))
+        {
+            LearnedWord lw = new LearnedWord
+            {
+                UserId = result.UserId,
+                Word = word,
+                Language = language,
+                DateLearned = DateTime.UtcNow
+            };
+            await AddLearnedWordAsync(lw);
+        }
+        
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<UserSongActivity>> GetFavoriteSongActivitiesAsync(Guid userId)
+    {
+        return await _context.UserSongActivities
+            .Where(x => x.UserId == userId && x.IsFavorite)
+            .OrderByDescending(x => x.LastPlayed)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<UserPlaylistActivity>> GetFavoritePlaylistActivitiesAsync(Guid userId)
+    {
+        return await _context.UserPlaylistActivities
+            .Where(x => x.UserId == userId && x.IsFavorite)
+            .OrderByDescending(x => x.LastPlayed)
+            .ToListAsync();
     }
 }

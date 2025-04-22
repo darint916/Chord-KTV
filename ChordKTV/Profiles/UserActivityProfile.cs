@@ -11,16 +11,10 @@ public class UserActivityProfile : Profile
 {
     public UserActivityProfile()
     {
-        CreateMap<UserQuizResultDto, UserQuizResult>();
-        CreateMap<UserQuizResult, UserQuizResultDto>();
-
-        CreateMap<UserSongActivity, UserSongActivityDto>();
-
-        CreateMap<UserPlaylistActivity, UserPlaylistActivityDto>();
-
-        CreateMap<UserHandwritingResultDto, UserHandwritingResult>();
-        CreateMap<UserHandwritingResult, UserHandwritingResultDto>();
-
+        CreateMap<UserQuizResultDto, UserQuizResult>().ReverseMap();
+        CreateMap<UserSongActivity, UserSongActivityDto>().ReverseMap();
+        CreateMap<UserPlaylistActivity, UserPlaylistActivityDto>().ReverseMap();
+        CreateMap<UserHandwritingResultDto, UserHandwritingResult>().ReverseMap();
         CreateMap<LearnedWord, LearnedWordDto>().ReverseMap();
     }
 }

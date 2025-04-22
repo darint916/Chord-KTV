@@ -11,6 +11,7 @@ public interface IUserActivityRepo
     // Quiz related methods
     Task<IEnumerable<UserQuizResult>> GetUserQuizResultsAsync(Guid userId);
     Task AddQuizResultAsync(UserQuizResult result);
+    Task ProcessQuizResultAsync(UserQuizResult result, IEnumerable<string> correctAnswers, LanguageCode language);
 
     // Handwriting related methods
     Task<IEnumerable<UserHandwritingResult>> GetUserHandwritingResultsAsync(Guid userId);
@@ -24,11 +25,12 @@ public interface IUserActivityRepo
     Task<UserSongActivity?> GetUserSongActivityAsync(Guid userId, Guid songId);
     Task<IEnumerable<UserSongActivity>> GetUserSongActivitiesAsync(Guid userId);
     Task UpsertSongActivityAsync(UserSongActivity activity, bool isPlayEvent = true);
+    Task<IEnumerable<UserSongActivity>> GetFavoriteSongActivitiesAsync(Guid userId);
 
     // Playlist activity methods
     Task<UserPlaylistActivity?> GetUserPlaylistActivityAsync(Guid userId, string playlistUrl);
     Task<IEnumerable<UserPlaylistActivity>> GetUserPlaylistActivitiesAsync(Guid userId);
     Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity, bool isPlayEvent = true);
+    Task<IEnumerable<UserPlaylistActivity>> GetFavoritePlaylistActivitiesAsync(Guid userId);
 
-    Task<bool> SaveChangesAsync();
 }

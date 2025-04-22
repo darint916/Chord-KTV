@@ -61,7 +61,6 @@ public class UserActivityController : Controller
             activity.UserId = user.Id;
             
             await _activityRepo.UpsertPlaylistActivityAsync(activity);
-            await _activityRepo.SaveChangesAsync();
             
             return CreatedAtAction(nameof(GetUserPlaylistActivities), new { id = activity.Id }, _mapper.Map<UserPlaylistActivityDto>(activity));
         }
@@ -100,23 +99,8 @@ public class UserActivityController : Controller
             result.UserId = user.Id;
             result.DateCompleted = dto.DateCompleted ?? DateTime.UtcNow;
 
-            await _activityRepo.AddQuizResultAsync(result);
-
-            IEnumerable<LearnedWord> learnedWords = await _activityRepo.GetUserLearnedWordsAsync(user.Id, dto.Language);
-            var existingWords = new HashSet<string>(learnedWords.Select(lw => lw.Word));
-            foreach (string word in dto.CorrectAnswers.Where(w => !existingWords.Contains(w)))
-            {
-                LearnedWord lw = new LearnedWord
-                {
-                    UserId = user.Id,
-                    Word = word,
-                    Language = dto.Language,
-                    DateLearned = DateTime.UtcNow
-                };
-                await _activityRepo.AddLearnedWordAsync(lw);
-            }
-
-            await _activityRepo.SaveChangesAsync();
+            await _activityRepo.ProcessQuizResultAsync(result, dto.CorrectAnswers, dto.Language);
+            
             return CreatedAtAction(nameof(GetUserQuizResults), new { id = result.Id }, _mapper.Map<UserQuizResultDto>(result));
         }
         catch (Exception ex)
@@ -154,7 +138,6 @@ public class UserActivityController : Controller
             activity.UserId = user.Id;
             
             await _activityRepo.UpsertSongActivityAsync(activity);
-            await _activityRepo.SaveChangesAsync();
             
             return CreatedAtAction(nameof(GetUserSongActivities), new { id = activity.Id }, _mapper.Map<UserSongActivityDto>(activity));
         }
@@ -202,7 +185,6 @@ public class UserActivityController : Controller
             result.DateCompleted = dto.DateCompleted ?? DateTime.UtcNow;
 
             await _activityRepo.AddHandwritingResultAsync(result);
-            await _activityRepo.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetUserHandwritingResults), new { id = result.Id }, _mapper.Map<UserHandwritingResultDto>(result));
         }
@@ -241,7 +223,6 @@ public class UserActivityController : Controller
             activity.UserId = user.Id;
             
             await _activityRepo.UpsertSongActivityAsync(activity, isPlayEvent: false);
-            await _activityRepo.SaveChangesAsync();
             
             return Ok(new { message = dto.IsFavorite ? "Song favorited" : "Song unfavorited" });
         }
@@ -263,8 +244,7 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            IEnumerable<UserSongActivity> allSongs = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
-            var favorites = allSongs.Where(sa => sa.IsFavorite).ToList();
+            var favorites = await _activityRepo.GetFavoriteSongActivitiesAsync(user.Id);
             return Ok(_mapper.Map<IEnumerable<UserSongActivityDto>>(favorites));
         }
         catch (Exception ex)
@@ -289,7 +269,6 @@ public class UserActivityController : Controller
             activity.UserId = user.Id;
             
             await _activityRepo.UpsertPlaylistActivityAsync(activity, isPlayEvent: false);
-            await _activityRepo.SaveChangesAsync();
             
             return Ok(new { message = dto.IsFavorite ? "Playlist favorited" : "Playlist unfavorited" });
         }
@@ -311,8 +290,7 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            IEnumerable<UserPlaylistActivity> allPlaylists = await _activityRepo.GetUserPlaylistActivitiesAsync(user.Id);
-            List<UserPlaylistActivity> favorites = allPlaylists.Where(pa => pa.IsFavorite).ToList();
+            var favorites = await _activityRepo.GetFavoritePlaylistActivitiesAsync(user.Id);
             return Ok(_mapper.Map<IEnumerable<UserPlaylistActivityDto>>(favorites));
         }
         catch (Exception ex)
@@ -337,7 +315,6 @@ public class UserActivityController : Controller
             learnedWord.UserId = user.Id;
             learnedWord.DateLearned = dto.DateLearned ?? DateTime.UtcNow;
             await _activityRepo.AddLearnedWordAsync(learnedWord);
-            await _activityRepo.SaveChangesAsync();
             return CreatedAtAction(nameof(GetUserLearnedWords), new { id = learnedWord.Id }, _mapper.Map<LearnedWordDto>(learnedWord));
         }
         catch (Exception ex)
