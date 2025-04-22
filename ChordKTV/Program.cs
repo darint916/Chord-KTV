@@ -177,9 +177,9 @@ app.MapControllers();
 // Run from static build files on deployment
 if (!app.Environment.IsDevelopment())
 {
-  app.UseDefaultFiles();
-  app.UseStaticFiles();
-  app.MapFallbackToFile("index.html");
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+    app.MapFallbackToFile("index.html");
 }
 
 PrepDb.Prep(app, app.Environment);
