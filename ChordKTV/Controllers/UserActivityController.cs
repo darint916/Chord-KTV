@@ -103,11 +103,6 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            if (!await _quizRepo.QuizExistsAsync(dto.QuizId))
-            {
-                return BadRequest(new { message = "Invalid quiz ID." });
-            }
-
             UserQuizResult result = _mapper.Map<UserQuizResult>(dto);
             result.UserId = user.Id;
             result.DateCompleted = dto.DateCompleted ?? DateTime.UtcNow;
@@ -115,6 +110,11 @@ public class UserActivityController : Controller
             await _activityRepo.ProcessQuizResultAsync(result, dto.CorrectAnswers, dto.Language);
 
             return CreatedAtAction(nameof(GetUserQuizResults), new { id = result.Id }, _mapper.Map<UserQuizResultDto>(result));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogError(ex, "Quiz ID not found or invalid");
+            return BadRequest(new { message = ex.Message });
         }
         catch (Exception ex)
         {
@@ -227,7 +227,7 @@ public class UserActivityController : Controller
         return Ok(_mapper.Map<IEnumerable<UserHandwritingResultDto>>(results));
     }
 
-    [HttpPost("favorite/song")]
+    [HttpPatch("favorite/song")]
     public async Task<IActionResult> ToggleFavoriteSong([FromBody] UserSongActivityDto dto)
     {
         try
@@ -279,7 +279,7 @@ public class UserActivityController : Controller
         }
     }
 
-    [HttpPost("favorite/playlist")]
+    [HttpPatch("favorite/playlist")]
     public async Task<IActionResult> ToggleFavoritePlaylist([FromBody] UserPlaylistActivityDto dto)
     {
         try

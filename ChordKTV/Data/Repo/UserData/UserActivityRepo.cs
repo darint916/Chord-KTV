@@ -36,7 +36,13 @@ public class UserActivityRepo : IUserActivityRepo
 
     public async Task AddQuizResultAsync(UserQuizResult result)
     {
+        if (!await _context.Quizzes.AnyAsync(q => q.Id == result.QuizId))
+        {
+            throw new KeyNotFoundException($"Invalid quiz ID {result.QuizId}.");
+        }
+
         await _context.UserQuizzesDone.AddAsync(result);
+        await _context.SaveChangesAsync();
     }
 
     // Handwriting Methods
