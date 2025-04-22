@@ -67,9 +67,9 @@ public class UserActivityController : Controller
 
             UserPlaylistActivity activity = _mapper.Map<UserPlaylistActivity>(dto);
             activity.UserId = user.Id;
-            
+
             await _activityRepo.UpsertPlaylistActivityAsync(activity);
-            
+
             return CreatedAtAction(nameof(GetUserPlaylistActivities), new { id = activity.Id }, _mapper.Map<UserPlaylistActivityDto>(activity));
         }
         catch (Exception ex)
@@ -113,7 +113,7 @@ public class UserActivityController : Controller
             result.DateCompleted = dto.DateCompleted ?? DateTime.UtcNow;
 
             await _activityRepo.ProcessQuizResultAsync(result, dto.CorrectAnswers, dto.Language);
-            
+
             return CreatedAtAction(nameof(GetUserQuizResults), new { id = result.Id }, _mapper.Map<UserQuizResultDto>(result));
         }
         catch (Exception ex)
@@ -149,9 +149,9 @@ public class UserActivityController : Controller
 
             UserSongActivity activity = _mapper.Map<UserSongActivity>(dto);
             activity.UserId = user.Id;
-            
+
             await _activityRepo.UpsertSongActivityAsync(activity);
-            
+
             return CreatedAtAction(nameof(GetUserSongActivities), new { id = activity.Id }, _mapper.Map<UserSongActivityDto>(activity));
         }
         catch (Exception ex)
@@ -232,7 +232,7 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var song = await _songRepo.GetSongByIdAsync(dto.SongId);
+            Song? song = await _songRepo.GetSongByIdAsync(dto.SongId);
             if (song == null)
             {
                 return NotFound(new { message = "Song not found." });
@@ -240,9 +240,9 @@ public class UserActivityController : Controller
 
             UserSongActivity activity = _mapper.Map<UserSongActivity>(dto);
             activity.UserId = user.Id;
-            
+
             await _activityRepo.UpsertSongActivityAsync(activity, isPlayEvent: false);
-            
+
             return Ok(new { message = dto.IsFavorite ? "Song favorited" : "Song unfavorited" });
         }
         catch (Exception ex)
@@ -263,7 +263,7 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var favorites = await _activityRepo.GetFavoriteSongActivitiesAsync(user.Id);
+            IEnumerable<UserSongActivity> favorites = await _activityRepo.GetFavoriteSongActivitiesAsync(user.Id);
             return Ok(_mapper.Map<IEnumerable<UserSongActivityDto>>(favorites));
         }
         catch (Exception ex)
@@ -291,9 +291,9 @@ public class UserActivityController : Controller
 
             UserPlaylistActivity activity = _mapper.Map<UserPlaylistActivity>(dto);
             activity.UserId = user.Id;
-            
+
             await _activityRepo.UpsertPlaylistActivityAsync(activity, isPlayEvent: false);
-            
+
             return Ok(new { message = dto.IsFavorite ? "Playlist favorited" : "Playlist unfavorited" });
         }
         catch (Exception ex)
@@ -314,7 +314,7 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var favorites = await _activityRepo.GetFavoritePlaylistActivitiesAsync(user.Id);
+            IEnumerable<UserPlaylistActivity> favorites = await _activityRepo.GetFavoritePlaylistActivitiesAsync(user.Id);
             return Ok(_mapper.Map<IEnumerable<UserPlaylistActivityDto>>(favorites));
         }
         catch (Exception ex)

@@ -37,12 +37,12 @@ public class UserActivityRepo : IUserActivityRepo
     public async Task<IEnumerable<UserHandwritingResult>> GetUserHandwritingResultsAsync(Guid userId, LanguageCode? language = null)
     {
         IQueryable<UserHandwritingResult> query = _context.UserHandwritingResults.Where(x => x.UserId == userId);
-        
+
         if (language.HasValue)
         {
             query = query.Where(x => x.Language == language.Value);
         }
-        
+
         return await query
             .OrderByDescending(x => x.DateCompleted)
             .ToListAsync();
@@ -89,7 +89,7 @@ public class UserActivityRepo : IUserActivityRepo
     public async Task UpsertSongActivityAsync(UserSongActivity activity, bool isPlayEvent = true)
     {
         UserSongActivity? existing = await GetUserSongActivityAsync(activity.UserId, activity.SongId);
-        
+
         if (existing == null)
         {
             if (isPlayEvent)
@@ -100,7 +100,7 @@ public class UserActivityRepo : IUserActivityRepo
                     activity.DatesPlayed.Add(activity.LastPlayed);
                 }
             }
-            
+
             activity.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
             await _context.UserSongActivities.AddAsync(activity);
         }
@@ -112,14 +112,14 @@ public class UserActivityRepo : IUserActivityRepo
                 existing.DatesPlayed.Add(now);
                 existing.LastPlayed = now;
             }
-            
+
             if (existing.IsFavorite != activity.IsFavorite)
             {
                 existing.IsFavorite = activity.IsFavorite;
                 existing.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
             }
         }
-        
+
         await _context.SaveChangesAsync();
     }
 
@@ -141,7 +141,7 @@ public class UserActivityRepo : IUserActivityRepo
     public async Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity, bool isPlayEvent = true)
     {
         UserPlaylistActivity? existing = await GetUserPlaylistActivityAsync(activity.UserId, activity.PlaylistUrl);
-        
+
         if (existing == null)
         {
             if (isPlayEvent)
@@ -152,7 +152,7 @@ public class UserActivityRepo : IUserActivityRepo
                     activity.DatesPlayed.Add(activity.LastPlayed);
                 }
             }
-            
+
             activity.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
             await _context.UserPlaylistActivities.AddAsync(activity);
         }
@@ -164,14 +164,14 @@ public class UserActivityRepo : IUserActivityRepo
                 existing.DatesPlayed.Add(now);
                 existing.LastPlayed = now;
             }
-            
+
             if (existing.IsFavorite != activity.IsFavorite)
             {
                 existing.IsFavorite = activity.IsFavorite;
                 existing.DateFavorited = activity.IsFavorite ? DateTime.UtcNow : null;
             }
         }
-        
+
         await _context.SaveChangesAsync();
     }
 
@@ -181,8 +181,8 @@ public class UserActivityRepo : IUserActivityRepo
         await AddQuizResultAsync(result);
 
         // Process learned words
-        var existingWords = await GetUserLearnedWordsAsync(result.UserId, language);
-        var existingWordsSet = new HashSet<string>(existingWords.Select(lw => lw.Word));
+        IEnumerable<LearnedWord> existingWords = await GetUserLearnedWordsAsync(result.UserId, language);
+        HashSet<string> existingWordsSet = new HashSet<string>(existingWords.Select(lw => lw.Word));
 
         foreach (string word in correctAnswers.Where(w => !existingWordsSet.Contains(w)))
         {
@@ -195,7 +195,7 @@ public class UserActivityRepo : IUserActivityRepo
             };
             await AddLearnedWordAsync(lw);
         }
-        
+
         await _context.SaveChangesAsync();
     }
 

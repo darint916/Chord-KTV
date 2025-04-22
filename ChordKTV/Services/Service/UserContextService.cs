@@ -28,7 +28,7 @@ public class UserContextService : IUserContextService
             throw new ArgumentNullException(nameof(configuration), "Google Client ID is not configured");
         _logger = logger;
         _userRepo = userRepo;
-        _httpContextAccessor = httpContextAccessor; 
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<User?> AuthenticateGoogleUserAsync(string idToken)
@@ -79,7 +79,7 @@ public class UserContextService : IUserContextService
 
     public async Task<User?> GetCurrentUserAsync()
     {
-        var userClaims = _httpContextAccessor.HttpContext?.User;
+        ClaimsPrincipal? userClaims = _httpContextAccessor.HttpContext?.User;
         if (userClaims == null)
         {
             _logger.LogWarning("No user claims available in HttpContext");
