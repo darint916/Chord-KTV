@@ -11,6 +11,7 @@ using ChordKTV.Models.UserData;
 using ChordKTV.Dtos;
 using System.Security.Claims;
 using ChordKTV.Utils;
+using ChordKTV.Services.Api;
 using ChordKTV.Utils.Extensions;
 
 namespace ChordKTV.Controllers;
@@ -24,17 +25,20 @@ public class UserActivityController : Controller
     private readonly IUserRepo _userRepo;
     private readonly ILogger<UserActivityController> _logger;
     private readonly IMapper _mapper;
+    private readonly IUserContextService _userContextService;
 
     public UserActivityController(
         IUserActivityRepo activityRepo,
         IUserRepo userRepo,
         ILogger<UserActivityController> logger,
-        IMapper mapper)
+        IMapper mapper,
+        IUserContextService userContextService)
     {
         _activityRepo = activityRepo;
         _userRepo = userRepo;
         _logger = logger;
         _mapper = mapper;
+        _userContextService = userContextService;
     }
 
     [HttpPost("playlist")]
@@ -42,7 +46,7 @@ public class UserActivityController : Controller
     {
         try
         {
-            User? user = await GetUserFromClaimsAsync();
+            User? user = await _userContextService.GetCurrentUserAsync();
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
@@ -59,7 +63,7 @@ public class UserActivityController : Controller
             await _activityRepo.UpsertPlaylistActivityAsync(activity);
             await _activityRepo.SaveChangesAsync();
             
-            return Ok(_mapper.Map<UserPlaylistActivityDto>(activity));
+            return CreatedAtAction(nameof(GetUserPlaylistActivities), new { id = activity.Id }, _mapper.Map<UserPlaylistActivityDto>(activity));
         }
         catch (Exception ex)
         {
@@ -71,7 +75,7 @@ public class UserActivityController : Controller
     [HttpGet("playlists")]
     public async Task<IActionResult> GetUserPlaylistActivities()
     {
-        User? user = await GetUserFromClaimsAsync();
+        User? user = await _userContextService.GetCurrentUserAsync();
         if (user is null)
         {
             return Unauthorized(new { message = "User not found" });
@@ -86,7 +90,7 @@ public class UserActivityController : Controller
     {
         try
         {
-            User? user = await GetUserFromClaimsAsync();
+            User? user = await _userContextService.GetCurrentUserAsync();
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
@@ -113,7 +117,7 @@ public class UserActivityController : Controller
             }
 
             await _activityRepo.SaveChangesAsync();
-            return Ok(_mapper.Map<UserQuizResultDto>(result));
+            return CreatedAtAction(nameof(GetUserQuizResults), new { id = result.Id }, _mapper.Map<UserQuizResultDto>(result));
         }
         catch (Exception ex)
         {
@@ -125,7 +129,7 @@ public class UserActivityController : Controller
     [HttpGet("quizzes")]
     public async Task<IActionResult> GetUserQuizResults()
     {
-        User? user = await GetUserFromClaimsAsync();
+        User? user = await _userContextService.GetCurrentUserAsync();
         if (user is null)
         {
             return Unauthorized(new { message = "User not found" });
@@ -140,7 +144,7 @@ public class UserActivityController : Controller
     {
         try
         {
-            User? user = await GetUserFromClaimsAsync();
+            User? user = await _userContextService.GetCurrentUserAsync();
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
@@ -152,7 +156,7 @@ public class UserActivityController : Controller
             await _activityRepo.UpsertSongActivityAsync(activity);
             await _activityRepo.SaveChangesAsync();
             
-            return Ok(_mapper.Map<UserSongActivityDto>(activity));
+            return CreatedAtAction(nameof(GetUserSongActivities), new { id = activity.Id }, _mapper.Map<UserSongActivityDto>(activity));
         }
         catch (Exception ex)
         {
@@ -166,7 +170,7 @@ public class UserActivityController : Controller
     {
         try
         {
-            User? user = await GetUserFromClaimsAsync();
+            User? user = await _userContextService.GetCurrentUserAsync();
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
@@ -187,7 +191,7 @@ public class UserActivityController : Controller
     {
         try
         {
-            User? user = await GetUserFromClaimsAsync();
+            User? user = await _userContextService.GetCurrentUserAsync();
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
@@ -200,7 +204,7 @@ public class UserActivityController : Controller
             await _activityRepo.AddHandwritingResultAsync(result);
             await _activityRepo.SaveChangesAsync();
 
-            return Ok(_mapper.Map<UserHandwritingResultDto>(result));
+            return CreatedAtAction(nameof(GetUserHandwritingResults), new { id = result.Id }, _mapper.Map<UserHandwritingResultDto>(result));
         }
         catch (Exception ex)
         {
@@ -212,7 +216,7 @@ public class UserActivityController : Controller
     [HttpGet("handwriting")]
     public async Task<IActionResult> GetUserHandwritingResults()
     {
-        User? user = await GetUserFromClaimsAsync();
+        User? user = await _userContextService.GetCurrentUserAsync();
         if (user is null)
         {
             return Unauthorized(new { message = "User not found" });
@@ -227,7 +231,7 @@ public class UserActivityController : Controller
     {
         try
         {
-            User? user = await GetUserFromClaimsAsync();
+            User? user = await _userContextService.GetCurrentUserAsync();
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
@@ -253,7 +257,7 @@ public class UserActivityController : Controller
     {
         try
         {
-            User? user = await GetUserFromClaimsAsync();
+            User? user = await _userContextService.GetCurrentUserAsync();
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
@@ -275,7 +279,7 @@ public class UserActivityController : Controller
     {
         try
         {
-            User? user = await GetUserFromClaimsAsync();
+            User? user = await _userContextService.GetCurrentUserAsync();
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
@@ -301,7 +305,7 @@ public class UserActivityController : Controller
     {
         try
         {
-            User? user = await GetUserFromClaimsAsync();
+            User? user = await _userContextService.GetCurrentUserAsync();
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
@@ -323,7 +327,7 @@ public class UserActivityController : Controller
     {
         try
         {
-            User? user = await GetUserFromClaimsAsync();
+            User? user = await _userContextService.GetCurrentUserAsync();
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
@@ -334,7 +338,7 @@ public class UserActivityController : Controller
             learnedWord.DateLearned = dto.DateLearned ?? DateTime.UtcNow;
             await _activityRepo.AddLearnedWordAsync(learnedWord);
             await _activityRepo.SaveChangesAsync();
-            return Ok(_mapper.Map<LearnedWordDto>(learnedWord));
+            return CreatedAtAction(nameof(GetUserLearnedWords), new { id = learnedWord.Id }, _mapper.Map<LearnedWordDto>(learnedWord));
         }
         catch (Exception ex)
         {
@@ -346,7 +350,7 @@ public class UserActivityController : Controller
     [HttpGet("learned-words")]
     public async Task<IActionResult> GetUserLearnedWords([FromQuery] LanguageCode? language = null)
     {
-        User? user = await GetUserFromClaimsAsync();
+        User? user = await _userContextService.GetCurrentUserAsync();
         if (user is null)
         {
             return Unauthorized(new { message = "User not found" });
@@ -360,7 +364,7 @@ public class UserActivityController : Controller
     [DevelopmentOnly]
     public async Task<IActionResult> GetUserActivityHistory()
     {
-        User? user = await GetUserFromClaimsAsync();
+        User? user = await _userContextService.GetCurrentUserAsync();
         if (user is null)
         {
             return Unauthorized(new { message = "User not found" });
@@ -383,26 +387,5 @@ public class UserActivityController : Controller
         };
 
         return Ok(response);
-    }
-
-    private async Task<User?> GetUserFromClaimsAsync()
-    {
-        _logger.LogInformation("Claims present: {Claims}",
-            string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}")));
-
-        string? email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-        if (string.IsNullOrEmpty(email))
-        {
-            _logger.LogWarning("No email claim found in token");
-            return null;
-        }
-
-        User? user = await _userRepo.GetUserByEmailAsync(email);
-        if (user == null)
-        {
-            _logger.LogWarning("User not found for email: {Email}", email);
-        }
-
-        return user;
     }
 }

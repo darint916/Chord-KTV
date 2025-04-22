@@ -23,12 +23,12 @@ public interface IUserActivityRepo
     // Song activity methods
     Task<UserSongActivity?> GetUserSongActivityAsync(Guid userId, Guid songId);
     Task<IEnumerable<UserSongActivity>> GetUserSongActivitiesAsync(Guid userId);
-    Task UpsertSongActivityAsync(UserSongActivity activity);
+    Task UpsertSongActivityAsync(UserSongActivity activity, bool isPlayEvent = true);
 
     // Playlist activity methods
     Task<UserPlaylistActivity?> GetUserPlaylistActivityAsync(Guid userId, string playlistUrl);
     Task<IEnumerable<UserPlaylistActivity>> GetUserPlaylistActivitiesAsync(Guid userId);
-    Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity);
+    Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity, bool isPlayEvent = true);
 
     Task<bool> SaveChangesAsync();
 }

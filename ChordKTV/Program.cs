@@ -77,7 +77,7 @@ builder.Services.AddScoped<IQuizRepo, QuizRepo>();
 builder.Services.AddScoped<IFullSongService, FullSongService>();
 builder.Services.AddScoped<IHandwritingService, HandwritingService>();
 builder.Services.AddScoped<IUserRepo, UserRepo>();
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IGeniusMetaDataRepo, GeniusMetaDataRepo>();
 builder.Services.AddScoped<IUserActivityRepo, UserActivityRepo>();

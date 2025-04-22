@@ -17,16 +17,16 @@ namespace ChordKTV.Controllers;
 public class UserController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
-    private readonly IUserService _userService;
+    private readonly IUserContextService _userContextService;
     private readonly IMapper _mapper;
 
     public UserController(
         ILogger<UserController> logger,
-        IUserService userService,
+        IUserContextService userContextService,
         IMapper mapper)
     {
         _logger = logger;
-        _userService = userService;
+        _userContextService = userContextService;
         _mapper = mapper;
     }
 
@@ -36,7 +36,7 @@ public class UserController : ControllerBase
         try
         {
             string idToken = authorization.Replace("Bearer ", "");
-            User? user = await _userService.AuthenticateGoogleUserAsync(idToken);
+            User? user = await _userContextService.AuthenticateGoogleUserAsync(idToken);
 
             if (user == null)
             {
