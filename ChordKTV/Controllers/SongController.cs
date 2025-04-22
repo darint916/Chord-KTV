@@ -253,7 +253,7 @@ public class SongController : Controller
     }
 
     [HttpGet("songs/genius/search")]
-    public async Task<IActionResult> GetGeniusSearchResults([FromQuery] string searchQuery)
+    public async Task<IActionResult> GetGeniusSearchResults([FromQuery, Required, MaxLength(200)] string searchQuery)
     {
         try
         {
@@ -271,16 +271,18 @@ public class SongController : Controller
         }
         catch (HttpRequestException ex)
         {
+            _logger.LogError(ex, "Failed to fetch from Genius API for search query: {SearchQuery}", searchQuery);
             return StatusCode(503, new { message = "Failed to fetch from Genius API.", error = ex.Message });
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error occurred while searching Genius API. Search query: {SearchQuery}", searchQuery);
             return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
         }
     }
 
     [HttpGet("songs/lrclib/search")]
-    public async Task<IActionResult> GetLrcLibSearchResults([FromQuery] string searchQuery)
+    public async Task<IActionResult> GetLrcLibSearchResults([FromQuery, Required, MaxLength(200)] string searchQuery)
     {
         try
         {
@@ -298,10 +300,12 @@ public class SongController : Controller
         }
         catch (HttpRequestException ex)
         {
+            _logger.LogError(ex, "Failed to fetch from LRC API for search query: {SearchQuery}", searchQuery);
             return StatusCode(503, new { message = "Failed to fetch from LRC API.", error = ex.Message });
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Unexpected error occurred while searching LRC API. Search query: {SearchQuery}", searchQuery);
             return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
         }
     }
