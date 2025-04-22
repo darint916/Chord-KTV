@@ -14,7 +14,7 @@ public interface IUserActivityRepo
     Task ProcessQuizResultAsync(UserQuizResult result, IEnumerable<string> correctAnswers, LanguageCode language);
 
     // Handwriting related methods
-    Task<IEnumerable<UserHandwritingResult>> GetUserHandwritingResultsAsync(Guid userId);
+    Task<IEnumerable<UserHandwritingResult>> GetUserHandwritingResultsAsync(Guid userId, LanguageCode? language = null);
     Task AddHandwritingResultAsync(UserHandwritingResult result);
 
     // Learned words related methods

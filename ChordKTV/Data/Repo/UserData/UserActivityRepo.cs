@@ -34,10 +34,16 @@ public class UserActivityRepo : IUserActivityRepo
     }
 
     // Handwriting Methods
-    public async Task<IEnumerable<UserHandwritingResult>> GetUserHandwritingResultsAsync(Guid userId)
+    public async Task<IEnumerable<UserHandwritingResult>> GetUserHandwritingResultsAsync(Guid userId, LanguageCode? language = null)
     {
-        return await _context.UserHandwritingResults
-            .Where(x => x.UserId == userId)
+        IQueryable<UserHandwritingResult> query = _context.UserHandwritingResults.Where(x => x.UserId == userId);
+        
+        if (language.HasValue)
+        {
+            query = query.Where(x => x.Language == language.Value);
+        }
+        
+        return await query
             .OrderByDescending(x => x.DateCompleted)
             .ToListAsync();
     }
@@ -86,7 +92,6 @@ public class UserActivityRepo : IUserActivityRepo
         
         if (existing == null)
         {
-            // Handle new activity creation
             if (isPlayEvent)
             {
                 activity.LastPlayed = DateTime.UtcNow;
@@ -101,17 +106,11 @@ public class UserActivityRepo : IUserActivityRepo
         }
         else
         {
-            // Update existing activity
-            if (isPlayEvent && activity.DatesPlayed.Count > 0)
+            if (isPlayEvent)
             {
-                foreach (var date in activity.DatesPlayed)
-                {
-                    if (!existing.DatesPlayed.Contains(date))
-                    {
-                        existing.DatesPlayed.Add(date);
-                    }
-                }
-                existing.LastPlayed = existing.DatesPlayed.Max();
+                DateTime now = DateTime.UtcNow;
+                existing.DatesPlayed.Add(now);
+                existing.LastPlayed = now;
             }
             
             if (existing.IsFavorite != activity.IsFavorite)
@@ -145,7 +144,6 @@ public class UserActivityRepo : IUserActivityRepo
         
         if (existing == null)
         {
-            // Handle new activity creation
             if (isPlayEvent)
             {
                 activity.LastPlayed = DateTime.UtcNow;
@@ -160,17 +158,11 @@ public class UserActivityRepo : IUserActivityRepo
         }
         else
         {
-            // Update existing activity
-            if (isPlayEvent && activity.DatesPlayed.Count > 0)
+            if (isPlayEvent)
             {
-                foreach (var date in activity.DatesPlayed)
-                {
-                    if (!existing.DatesPlayed.Contains(date))
-                    {
-                        existing.DatesPlayed.Add(date);
-                    }
-                }
-                existing.LastPlayed = existing.DatesPlayed.Max();
+                DateTime now = DateTime.UtcNow;
+                existing.DatesPlayed.Add(now);
+                existing.LastPlayed = now;
             }
             
             if (existing.IsFavorite != activity.IsFavorite)

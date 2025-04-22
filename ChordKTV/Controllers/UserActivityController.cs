@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using ChordKTV.Data.Api.UserData;
+using ChordKTV.Data.Api.SongData;
 using ChordKTV.Dtos.UserActivity;
 using ChordKTV.Models.Quiz;
 using ChordKTV.Models.Playlist;
@@ -13,6 +14,7 @@ using System.Security.Claims;
 using ChordKTV.Utils;
 using ChordKTV.Services.Api;
 using ChordKTV.Utils.Extensions;
+using ChordKTV.Data.Api.QuizData;
 
 namespace ChordKTV.Controllers;
 
@@ -26,19 +28,25 @@ public class UserActivityController : Controller
     private readonly ILogger<UserActivityController> _logger;
     private readonly IMapper _mapper;
     private readonly IUserContextService _userContextService;
+    private readonly ISongRepo _songRepo;
+    private readonly IQuizRepo _quizRepo;
 
     public UserActivityController(
         IUserActivityRepo activityRepo,
         IUserRepo userRepo,
         ILogger<UserActivityController> logger,
         IMapper mapper,
-        IUserContextService userContextService)
+        IUserContextService userContextService,
+        ISongRepo songRepo,
+        IQuizRepo quizRepo)
     {
         _activityRepo = activityRepo;
         _userRepo = userRepo;
         _logger = logger;
         _mapper = mapper;
         _userContextService = userContextService;
+        _songRepo = songRepo;
+        _quizRepo = quizRepo;
     }
 
     [HttpPost("playlist")]
@@ -93,6 +101,11 @@ public class UserActivityController : Controller
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
+            }
+
+            if (!await _quizRepo.QuizExistsAsync(dto.QuizId))
+            {
+                return BadRequest(new { message = "Invalid quiz ID." });
             }
 
             UserQuizResult result = _mapper.Map<UserQuizResult>(dto);
@@ -196,7 +209,7 @@ public class UserActivityController : Controller
     }
 
     [HttpGet("handwriting")]
-    public async Task<IActionResult> GetUserHandwritingResults()
+    public async Task<IActionResult> GetUserHandwritingResults([FromQuery] LanguageCode? language = null)
     {
         User? user = await _userContextService.GetCurrentUserAsync();
         if (user is null)
@@ -204,7 +217,7 @@ public class UserActivityController : Controller
             return Unauthorized(new { message = "User not found" });
         }
 
-        IEnumerable<UserHandwritingResult> results = await _activityRepo.GetUserHandwritingResultsAsync(user.Id);
+        IEnumerable<UserHandwritingResult> results = await _activityRepo.GetUserHandwritingResultsAsync(user.Id, language);
         return Ok(_mapper.Map<IEnumerable<UserHandwritingResultDto>>(results));
     }
 
@@ -217,6 +230,12 @@ public class UserActivityController : Controller
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
+            }
+
+            var song = await _songRepo.GetSongByIdAsync(dto.SongId);
+            if (song == null)
+            {
+                return NotFound(new { message = "Song not found." });
             }
 
             UserSongActivity activity = _mapper.Map<UserSongActivity>(dto);
@@ -263,6 +282,11 @@ public class UserActivityController : Controller
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.PlaylistUrl) || !UrlValidationUtils.PlaylistUrlRegex().IsMatch(dto.PlaylistUrl))
+            {
+                return BadRequest(new { message = "Invalid playlist URL." });
             }
 
             UserPlaylistActivity activity = _mapper.Map<UserPlaylistActivity>(dto);
