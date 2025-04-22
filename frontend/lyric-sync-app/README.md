@@ -5,6 +5,16 @@ To launch frontend:
 
 `npm install`
 
+Create a `.env` file in the frontend/lyric-sync-app directory using `.env.example` as a template:
+
+`cp .env.example .env`
+
+Update the `.env` file with your configuration:
+- `VITE_GOOGLE_CLIENT_ID`: Your Google OAuth client ID for authentication
+- `VITE_API_BASE_URL`: Backend API URL (default: http://localhost:5259 for local development)
+
+Then build and run:
+
 `npm run build`
 
 To pass PR + syntax checks:
