@@ -2,7 +2,8 @@ import React from 'react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../contexts/AuthTypes';
-import { AuthApi, Configuration } from '../../api';
+import { Configuration } from '../../api';
+import { AuthApi } from '../../api/apis/AuthApi';
 
 // Initialize API client
 const authApi = new AuthApi(

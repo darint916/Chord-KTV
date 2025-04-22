@@ -65,7 +65,7 @@ const HomePage: React.FC = () => {
       // Immediately process the first song
       const firstSong = newQueue[0];
       try {
-        const processed = await songApi.apiSongsSearchPost({
+        const processed = await songApi.apiSongsMatchPost({
           fullSongRequestDto: {
             title: firstSong.title,
             artist: firstSong.artist,
@@ -120,7 +120,7 @@ const HomePage: React.FC = () => {
 
 
     try {
-      const response = await songApi.apiSongsSearchPost({
+      const response = await songApi.apiSongsMatchPost({
         fullSongRequestDto: {
           title: songName,
           artist: artistName,

@@ -129,7 +129,7 @@ const SongPlayerPage: React.FC = () => {
           nextItem.apiRequested = true;
 
           // Call the API for the next song
-          songApi.apiSongsSearchPost({
+          songApi.apiSongsMatchPost({
             fullSongRequestDto: {
               title: nextItem.title,
               artist: nextItem.artist,
@@ -237,7 +237,7 @@ const SongPlayerPage: React.FC = () => {
 
     try {
       const youTubeId = extractYouTubeVideoId(youtubeUrl);
-      const response = await songApi.apiSongsSearchPost({
+      const response = await songApi.apiSongsMatchPost({
         fullSongRequestDto: {
           title: songName.trim(),
           artist: artistName.trim(),

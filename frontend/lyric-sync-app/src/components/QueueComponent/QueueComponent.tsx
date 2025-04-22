@@ -66,7 +66,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
             : queueItem
         ));
 
-        const response = await songApi.apiSongsSearchPost({
+        const response = await songApi.apiSongsMatchPost({
           fullSongRequestDto: {
             title: item.title,
             artist: item.artist,
