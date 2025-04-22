@@ -70,17 +70,21 @@ builder.Services.AddHttpClient<ILrcService, LrcService>();
 builder.Services.AddHttpClient<IGeniusService, GeniusService>();
 builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
 
-builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
+//db repos
 builder.Services.AddScoped<ISongRepo, SongRepo>();
 builder.Services.AddScoped<IAlbumRepo, AlbumRepo>();
 builder.Services.AddScoped<IQuizRepo, QuizRepo>();
-builder.Services.AddScoped<IFullSongService, FullSongService>();
-builder.Services.AddScoped<IHandwritingService, HandwritingService>();
 builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IUserActivityRepo, UserActivityRepo>();
+builder.Services.AddScoped<IGeniusMetaDataRepo, GeniusMetaDataRepo>();
+builder.Services.AddScoped<IYoutubeSongRepo, YoutubeSongRepo>();
+
+//scoped services
+builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
+builder.Services.AddScoped<IHandwritingService, HandwritingService>();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
-builder.Services.AddScoped<IGeniusMetaDataRepo, GeniusMetaDataRepo>();
-builder.Services.AddScoped<IUserActivityRepo, UserActivityRepo>();
+builder.Services.AddScoped<IFullSongService, FullSongService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

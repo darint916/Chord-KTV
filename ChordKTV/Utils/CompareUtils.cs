@@ -19,6 +19,8 @@ public static partial class CompareUtils
     //gets fuzzy matched score for song title and duration, order dont matter
     public static int CompareWeightedFuzzyScore(string queryTitle, string candidateTitle, string? artist, string? candidateArtist, float? queryDuration, float candidateDuration, float durationDifferenceWeight = 0.8f, float artistDifferenceWeight = 0.7f)
     {
+        queryTitle = KeywordExtractorUtils.ExtractSongKeywords(queryTitle) ?? queryTitle;
+        candidateTitle = KeywordExtractorUtils.ExtractSongKeywords(candidateTitle) ?? candidateTitle;
         int fuzzyScore = Math.Max(
             Fuzz.TokenSortRatio(queryTitle.ToLowerInvariant(), candidateTitle?.ToLowerInvariant()),
             Fuzz.TokenSetRatio(queryTitle.ToLowerInvariant(), candidateTitle?.ToLowerInvariant())
@@ -27,6 +29,8 @@ public static partial class CompareUtils
         float durationDifference = MathF.Abs((queryDuration ?? candidateDuration) - candidateDuration);
 
         int artistDifference = 0;
+        artist = KeywordExtractorUtils.ExtractSongKeywords(artist) ?? artist;
+        candidateArtist = KeywordExtractorUtils.ExtractSongKeywords(candidateArtist) ?? candidateArtist;
         if (!string.IsNullOrWhiteSpace(artist) && !string.IsNullOrWhiteSpace(candidateArtist))
         { //Note that the artist diff pretty high when partial match since it is simple ratio so artist comparison required later.
             artistDifference = 100 - Fuzz.Ratio(artist.ToLowerInvariant(), candidateArtist.ToLowerInvariant());

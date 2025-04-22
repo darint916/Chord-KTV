@@ -7,6 +7,7 @@ using ChordKTV.Dtos;
 using System.Globalization;
 using ChordKTV.Dtos.GeniusApi;
 using ChordKTV.Utils;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace ChordKTV.Services.Service;
 
@@ -76,11 +77,11 @@ public class GeniusService : IGeniusService
 
             _logger.LogInformation("Retrieved {Count} hits from Genius", searchResponse.Response.Hits.Count);
 
-            // Log all results before scoring
-            foreach (GeniusHit hit in searchResponse.Response.Hits)
+
+            //lyric search assumed
+            if (string.IsNullOrWhiteSpace(fuzzyTitle) && string.IsNullOrWhiteSpace(fuzzyArtist))
             {
-                _logger.LogDebug("Found result - Title: '{Title}', Artist: '{Artist}'",
-                    hit.Result.Title, hit.Result.PrimaryArtistNames);
+                return await MapGeniusResultToSongAsync(searchResponse.Response.Hits[0].Result);
             }
 
             // Update the score check
@@ -88,7 +89,7 @@ public class GeniusService : IGeniusService
                 .Where(h => h.Result != null)
                 .ToDictionary(
                     h => h,
-                    h => CompareUtils.CompareWeightedFuzzyScore(fuzzyTitle ?? "", h.Result.Title, fuzzyArtist ?? "", h.Result.PrimaryArtistNames, 0, 0)
+                    h => CompareUtils.CompareWeightedFuzzyScore(fuzzyTitle ?? "", h.Result.Title, fuzzyArtist ?? "", h.Result.PrimaryArtistNames, 0, 0, artistDifferenceWeight: 0.3f)
                 );
 
             //Order and filter titles
@@ -186,7 +187,6 @@ public class GeniusService : IGeniusService
         {
             _logger.LogWarning("GeniusService: GetSongByArtistTitleAsync: No matching song found after all search attempts");
         }
-
         return result;
     }
 
@@ -321,6 +321,37 @@ public class GeniusService : IGeniusService
         {
             _logger.LogError(ex, "Error enriching song details from Genius API");
             return song;
+        }
+    }
+
+    public async Task<List<GeniusHit>?> GetGeniusSearchResultsAsync(string searchQuery)
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            return null;
+        }
+        string requestUrl = $"/search?q={Uri.EscapeDataString(searchQuery)}";
+        try
+        {
+            _logger.LogDebug("Sending request to: {Url}", requestUrl);
+            HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Genius API error: {StatusCode}", response.StatusCode);
+                return null;
+            }
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            GeniusSearchResponse? searchResponse = JsonSerializer.Deserialize<GeniusSearchResponse>(responseContent, _jsonOptions);
+
+            return searchResponse?.Response?.Hits;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetGeniusSearchResult: Error fetching songs from Genius API");
+            return null;
         }
     }
 }

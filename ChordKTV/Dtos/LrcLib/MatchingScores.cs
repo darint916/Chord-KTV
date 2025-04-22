@@ -1,4 +1,4 @@
-namespace ChordKTV.Dtos;
+namespace ChordKTV.Dtos.LrcLib;
 
 public class MatchScores
 {

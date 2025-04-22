@@ -325,7 +325,7 @@
         }
       }
     },
-    "/api/songs/search": {
+    "/api/songs/match": {
       "post": {
         "tags": [
           "Song"
@@ -399,7 +399,7 @@
         }
       }
     },
-    "/api/songs/genius/search": {
+    "/api/songs/genius/match": {
       "get": {
         "tags": [
           "Song"
@@ -442,7 +442,7 @@
         }
       }
     },
-    "/api/songs/genius/search/batch": {
+    "/api/songs/genius/match/batch": {
       "post": {
         "tags": [
           "Song"
@@ -577,6 +577,40 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/database/users/{email}": {
+      "get": {
+        "tags": [
+          "Song"
+        ],
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/google": {
+      "post": {
+        "tags": [
+          "User"
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -725,6 +759,12 @@
           },
           "geniusMetaData": {
             "$ref": "#/components/schemas/GeniusMetaDataDto"
+          },
+          "titleMatchScores": {
+            "$ref": "#/components/schemas/MatchScores"
+          },
+          "artistMatchScores": {
+            "$ref": "#/components/schemas/MatchScores"
           }
         },
         "additionalProperties": false
@@ -859,6 +899,30 @@
           "ZH"
         ],
         "type": "string"
+      },
+      "MatchScores": {
+        "type": "object",
+        "properties": {
+          "lrcExactMatch": {
+            "type": "boolean"
+          },
+          "lrcRomanizedScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "lrcOriginalScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "lrcInputParamScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "PlaylistDetailsDto": {
         "type": "object",

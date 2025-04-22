@@ -52,6 +52,10 @@ export interface ApiDatabaseSongPostRequest {
     song?: Song;
 }
 
+export interface ApiDatabaseUsersEmailGetRequest {
+    email: string;
+}
+
 export interface ApiLyricsLrcSearchGetRequest {
     title?: string;
     artist?: string;
@@ -63,19 +67,19 @@ export interface ApiLyricsLrcTranslationPostRequest {
     translationRequestDto?: TranslationRequestDto;
 }
 
-export interface ApiSongsGeniusSearchBatchPostRequest {
+export interface ApiSongsGeniusMatchBatchPostRequest {
     forceRefresh?: boolean;
     body?: any | null;
 }
 
-export interface ApiSongsGeniusSearchGetRequest {
+export interface ApiSongsGeniusMatchGetRequest {
     title?: string;
     artist?: string;
     lyrics?: string;
     forceRefresh?: boolean;
 }
 
-export interface ApiSongsSearchPostRequest {
+export interface ApiSongsMatchPostRequest {
     fullSongRequestDto?: FullSongRequestDto;
 }
 
@@ -200,6 +204,36 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
+    async apiDatabaseUsersEmailGetRaw(requestParameters: ApiDatabaseUsersEmailGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['email'] == null) {
+            throw new runtime.RequiredError(
+                'email',
+                'Required parameter "email" was null or undefined when calling apiDatabaseUsersEmailGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/database/users/{email}`.replace(`{${"email"}}`, encodeURIComponent(String(requestParameters['email']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async apiDatabaseUsersEmailGet(requestParameters: ApiDatabaseUsersEmailGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiDatabaseUsersEmailGetRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
     async apiHealthGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
@@ -288,7 +322,7 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiSongsGeniusSearchBatchPostRaw(requestParameters: ApiSongsGeniusSearchBatchPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiSongsGeniusMatchBatchPostRaw(requestParameters: ApiSongsGeniusMatchBatchPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters['forceRefresh'] != null) {
@@ -300,7 +334,7 @@ export class SongApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/api/songs/genius/search/batch`,
+            path: `/api/songs/genius/match/batch`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -312,13 +346,13 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiSongsGeniusSearchBatchPost(requestParameters: ApiSongsGeniusSearchBatchPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiSongsGeniusSearchBatchPostRaw(requestParameters, initOverrides);
+    async apiSongsGeniusMatchBatchPost(requestParameters: ApiSongsGeniusMatchBatchPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiSongsGeniusMatchBatchPostRaw(requestParameters, initOverrides);
     }
 
     /**
      */
-    async apiSongsGeniusSearchGetRaw(requestParameters: ApiSongsGeniusSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiSongsGeniusMatchGetRaw(requestParameters: ApiSongsGeniusMatchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters['title'] != null) {
@@ -340,7 +374,7 @@ export class SongApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/songs/genius/search`,
+            path: `/api/songs/genius/match`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -351,13 +385,13 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiSongsGeniusSearchGet(requestParameters: ApiSongsGeniusSearchGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiSongsGeniusSearchGetRaw(requestParameters, initOverrides);
+    async apiSongsGeniusMatchGet(requestParameters: ApiSongsGeniusMatchGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiSongsGeniusMatchGetRaw(requestParameters, initOverrides);
     }
 
     /**
      */
-    async apiSongsSearchPostRaw(requestParameters: ApiSongsSearchPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullSongResponseDto>> {
+    async apiSongsMatchPostRaw(requestParameters: ApiSongsMatchPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FullSongResponseDto>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -365,7 +399,7 @@ export class SongApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/api/songs/search`,
+            path: `/api/songs/match`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -377,8 +411,8 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiSongsSearchPost(requestParameters: ApiSongsSearchPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullSongResponseDto> {
-        const response = await this.apiSongsSearchPostRaw(requestParameters, initOverrides);
+    async apiSongsMatchPost(requestParameters: ApiSongsMatchPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FullSongResponseDto> {
+        const response = await this.apiSongsMatchPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

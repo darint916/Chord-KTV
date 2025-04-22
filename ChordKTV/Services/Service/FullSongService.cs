@@ -1,7 +1,10 @@
+using System.Security.Cryptography.X509Certificates;
 using AutoMapper;
 using ChordKTV.Data.Api.SongData;
+using ChordKTV.Data.Repo.SongData;
 using ChordKTV.Dtos;
 using ChordKTV.Dtos.FullSong;
+using ChordKTV.Dtos.LrcLib;
 using ChordKTV.Dtos.OpenAI;
 using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Dtos.YouTubeApi;
@@ -20,8 +23,9 @@ public class FullSongService : IFullSongService
     private readonly IChatGptService _chatGptService;
     private readonly ILogger<FullSongService> _logger;
     private readonly IMapper _mapper;
+    private readonly IYoutubeSongRepo _youtubeSongRepo;
 
-    public FullSongService(IMapper mapper, ILrcService lrcService, IGeniusService geniusService, ISongRepo songRepo, IChatGptService chatGptService, ILogger<FullSongService> logger, IYouTubeClientService youTubeClient)
+    public FullSongService(IMapper mapper, ILrcService lrcService, IGeniusService geniusService, ISongRepo songRepo, IChatGptService chatGptService, ILogger<FullSongService> logger, IYouTubeClientService youTubeClient, IYoutubeSongRepo youtubeSongRepo)
     {
         _youTubeClientService = youTubeClient;
         _lrcService = lrcService;
@@ -30,6 +34,7 @@ public class FullSongService : IFullSongService
         _chatGptService = chatGptService;
         _logger = logger;
         _mapper = mapper;
+        _youtubeSongRepo = youtubeSongRepo;
     }
 
     //**
@@ -55,10 +60,17 @@ public class FullSongService : IFullSongService
             throw new ArgumentException("GetFullSongAsync: Title or lyrics or youtubeid must be provided");
         }
 
-        //if youtube id first supplied, we just use that to search > user input if possible
+        //if youtube id first supplied, we first query db cache or just use that to search > user input if possible
         VideoDetails? videoDetails = null;
         if (!string.IsNullOrWhiteSpace(youtubeId))
         {
+            //check if we have the video in our db cache
+            Song? cachedSong = await _youtubeSongRepo.GetSongByYoutubeIdAsync(youtubeId);
+            if (cachedSong != null)
+            {
+                return _mapper.Map<FullSongResponseDto>(cachedSong);
+            }
+
             Dictionary<string, VideoDetails> videoDict = await _youTubeClientService.GetVideosDetailsAsync([youtubeId]);
             if (videoDict.Count == 0)
             {
@@ -176,6 +188,7 @@ public class FullSongService : IFullSongService
                 }
                 if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics)) //recheck if we still dont find it with candidate list
                 {
+                    _logger.LogWarning("PostGPT Attempt: Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}", title, artist, duration);
                     return _mapper.Map<FullSongResponseDto>(song); //return empty song
                 }
             }
@@ -187,7 +200,7 @@ public class FullSongService : IFullSongService
                 song.Artist = lrcLyricsDto.ArtistName ?? artist ?? song.Artist;
                 song.LrcLyrics = lrcLyricsDto.SyncedLyrics;
                 // Add new alternates from LRC search
-                if (lrcLyricsDto.AlternateTitles?.Count > 0)
+                if (lrcLyricsDto.AlternateTitles.Count > 0)
                 {
                     foreach (string altTitle in lrcLyricsDto.AlternateTitles)
                     {
@@ -197,7 +210,7 @@ public class FullSongService : IFullSongService
                         }
                     }
                 }
-                if (lrcLyricsDto.AlternateArtists?.Count > 0)
+                if (lrcLyricsDto.AlternateArtists.Count > 0)
                 {
                     foreach (string altArtist in lrcLyricsDto.AlternateArtists)
                     {
@@ -221,8 +234,8 @@ public class FullSongService : IFullSongService
                     LrcId = lrcLyricsDto.Id,
                     RomLrcId = lrcLyricsDto.RomanizedId,
                     LrcRomanizedLyrics = lrcLyricsDto.RomanizedSyncedLyrics,
-                    AlternateTitles = lrcLyricsDto.AlternateTitles,
-                    FeaturedArtists = lrcLyricsDto.AlternateArtists,
+                    AlternateTitles = [.. lrcLyricsDto.AlternateTitles],
+                    FeaturedArtists = [.. lrcLyricsDto.AlternateArtists],
                     GeniusMetaData = new GeniusMetaData { }
                 };
                 songCreate = true;
@@ -247,6 +260,25 @@ public class FullSongService : IFullSongService
             }
             if (dbSong is not null)
             {
+                // if it supplied with a youtube link
+                if (!string.IsNullOrWhiteSpace(youtubeId) && !dbSong.AlternateYoutubeIds.Contains(youtubeId))
+                {
+                    dbSong.AlternateYoutubeIds.Add(youtubeId);
+                    await _youtubeSongRepo.AddYoutubeSongAsync(new YoutubeSong { YoutubeId = youtubeId, Song = dbSong });
+                }
+                else if (string.IsNullOrWhiteSpace(dbSong.YoutubeId)) //no main title added, only user specific alts, so we search again
+                {
+                    dbSong.YoutubeId = await _youTubeClientService.SearchYoutubeVideoLinkAsync(dbSong.Title, dbSong.Artist, dbSong.Albums.FirstOrDefault()?.Name, dbSong.Duration);
+                    if (string.IsNullOrWhiteSpace(dbSong.YoutubeId))
+                    {
+                        _logger.LogError("FullSong dbSong: Failed to get youtube video link for '{Title}' by '{Artist}'", song.Title, song.Artist);
+                        //TODO: maybe we use alt if failed, but this saves into db, need to consider
+                    }
+                    else if (!dbSong.AlternateYoutubeIds.Remove(dbSong.YoutubeId))
+                    {   //new id needs mapping if not found in alts (if in alt, that means its been mapped before, thus moving it to main id)
+                        await _youtubeSongRepo.AddYoutubeSongAsync(new YoutubeSong { YoutubeId = dbSong.YoutubeId, Song = dbSong });
+                    }
+                }
                 _logger.LogInformation("Found song in db with same LRC/Genius ID, skipping LLM processing");
                 return _mapper.Map<FullSongResponseDto>(dbSong);
             }
@@ -284,34 +316,29 @@ public class FullSongService : IFullSongService
             }
         }
 
-        //Add/Update youtube urls
-        if (!string.IsNullOrWhiteSpace(youtubeId))
+        //Add/Update youtube urls, if user supplies their own, we always add it as an alt (avoids bias)
+        YoutubeSong? youtubeSong = null;
+        if (!string.IsNullOrWhiteSpace(youtubeId) && !song.AlternateYoutubeIds.Contains(youtubeId))
         {
-            if (string.IsNullOrWhiteSpace(song.YoutubeId))
-            {
-                song.YoutubeId = youtubeId;
-            }
-            else if (!song.AlternateYoutubeIds.Contains(youtubeId))
-            {
-                song.AlternateYoutubeIds.Add(youtubeId);
-            }
+            song.AlternateYoutubeIds.Add(youtubeId);
+            youtubeSong = new YoutubeSong { YoutubeId = youtubeId, Song = song };
         }
         else if (string.IsNullOrWhiteSpace(song.YoutubeId)) //query for a vid if none provided and non exist, expensive call
-        {
+        {   //We make the main youtubeId always the best one provided by youtube search itself
             song.YoutubeId = await _youTubeClientService.SearchYoutubeVideoLinkAsync(song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, song.Duration);
+            if (string.IsNullOrWhiteSpace(song.YoutubeId))
+            {
+                _logger.LogError("FullSong: Failed to get youtube video link for '{Title}' by '{Artist}'", song.Title, song.Artist);
+            }
+            else if (!song.AlternateYoutubeIds.Remove(song.YoutubeId))
+            {   //new id needs mapping
+                youtubeSong = new YoutubeSong { YoutubeId = song.YoutubeId, Song = song };
+            }
         }
 
         //Add residual information (kinda messy)
         if (lrcLyricsDto != null)
         {
-            if (!string.IsNullOrWhiteSpace(lrcLyricsDto.TrackName) && !song.AlternateTitles.Any(alt => alt.Equals(lrcLyricsDto.TrackName, StringComparison.OrdinalIgnoreCase)))
-            {
-                song.AlternateTitles.Add(lrcLyricsDto.TrackName);
-            }
-            if (!string.IsNullOrWhiteSpace(lrcLyricsDto.ArtistName) && !song.FeaturedArtists.Any(artist => artist.Equals(lrcLyricsDto.ArtistName, StringComparison.OrdinalIgnoreCase)))
-            {
-                song.FeaturedArtists.Add(lrcLyricsDto.ArtistName);
-            }
             if (lrcLyricsDto.Id != 0 && song.LrcId != lrcLyricsDto.Id)
             {
                 song.LrcId = lrcLyricsDto.Id; //assume new lyrics found??
@@ -325,7 +352,7 @@ public class FullSongService : IFullSongService
                 song.PlainLyrics = lrcLyricsDto.PlainLyrics;
             }
         }
-        if (!string.IsNullOrWhiteSpace(title) && !song.AlternateTitles.Any(alt => alt.Equals(title, StringComparison.OrdinalIgnoreCase)))
+        if (!string.IsNullOrWhiteSpace(title) && !song.AlternateTitles.Any(altTitle => string.Equals(altTitle, title, StringComparison.OrdinalIgnoreCase)))
         {
             song.AlternateTitles.Add(title);
         }
@@ -337,7 +364,14 @@ public class FullSongService : IFullSongService
             }
         }
 
-        await _songRepo.AddSongAsync(song);
+        if (youtubeSong != null)
+        {
+            await _youtubeSongRepo.AddYoutubeSongAsync(youtubeSong); //chained save transaction
+        }
+        else
+        {
+            await _songRepo.AddSongAsync(song);
+        }
         FullSongResponseDto? response = _mapper.Map<FullSongResponseDto>(song);
         if (lrcLyricsDto != null) //add LRC
         {

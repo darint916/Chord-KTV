@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { MatchScores } from './MatchScores';
+import {
+    MatchScoresFromJSON,
+    MatchScoresFromJSONTyped,
+    MatchScoresToJSON,
+    MatchScoresToJSONTyped,
+} from './MatchScores';
 import type { GeniusMetaDataDto } from './GeniusMetaDataDto';
 import {
     GeniusMetaDataDtoFromJSON,
@@ -123,6 +130,18 @@ export interface FullSongResponseDto {
      * @memberof FullSongResponseDto
      */
     geniusMetaData?: GeniusMetaDataDto;
+    /**
+     * 
+     * @type {MatchScores}
+     * @memberof FullSongResponseDto
+     */
+    titleMatchScores?: MatchScores;
+    /**
+     * 
+     * @type {MatchScores}
+     * @memberof FullSongResponseDto
+     */
+    artistMatchScores?: MatchScores;
 }
 
 /**
@@ -158,6 +177,8 @@ export function FullSongResponseDtoFromJSONTyped(json: any, ignoreDiscriminator:
         'youTubeId': json['youTubeId'] == null ? undefined : json['youTubeId'],
         'alternateYoutubeIds': json['alternateYoutubeIds'] == null ? undefined : json['alternateYoutubeIds'],
         'geniusMetaData': json['geniusMetaData'] == null ? undefined : GeniusMetaDataDtoFromJSON(json['geniusMetaData']),
+        'titleMatchScores': json['titleMatchScores'] == null ? undefined : MatchScoresFromJSON(json['titleMatchScores']),
+        'artistMatchScores': json['artistMatchScores'] == null ? undefined : MatchScoresFromJSON(json['artistMatchScores']),
     };
 }
 
@@ -188,6 +209,8 @@ export function FullSongResponseDtoToJSONTyped(value?: FullSongResponseDto | nul
         'youTubeId': value['youTubeId'],
         'alternateYoutubeIds': value['alternateYoutubeIds'],
         'geniusMetaData': GeniusMetaDataDtoToJSON(value['geniusMetaData']),
+        'titleMatchScores': MatchScoresToJSON(value['titleMatchScores']),
+        'artistMatchScores': MatchScoresToJSON(value['artistMatchScores']),
     };
 }
 

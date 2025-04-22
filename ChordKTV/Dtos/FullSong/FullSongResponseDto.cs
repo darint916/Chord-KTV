@@ -1,4 +1,5 @@
 using ChordKTV.Dtos.GeniusApi;
+using ChordKTV.Dtos.LrcLib;
 
 namespace ChordKTV.Dtos.FullSong;
 

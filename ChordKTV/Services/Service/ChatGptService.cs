@@ -330,6 +330,7 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         - Identify potential combinations of the song title and artist. If multiple valid versions exist (e.g., native and English), list them as candidates.
         - Format the output as a JSON object with a ""candidates"" array, where each candidate is an object with ""title"" and ""artist"" fields.
         - Use your knowledge of songs to put the most well known title and artist as first candidate. If the channel name is not the artist, ignore it and have the most likely artist as some videos are made by fans or other channels.
+        - Have an additional last entry for keeping the channel name as the artist but with an unnoisy title.
         Output Format:
         {{
         ""candidates"": [
@@ -348,6 +349,20 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         ""candidates"": [
             {{ ""title"": ""如果可以"", ""artist"": ""韋禮安"" }},
             {{ ""title"": ""Red Scarf"", ""artist"": ""WeiBird"" }}
+            {{ ""title"": ""如果可以"" , ""artist"": ""韋禮安 WeiBird"" }}
+        ]
+        }}
+
+        Example:
+        Input:
+        Title: ""テトリス / 重音テトSV""
+        Channel Name: ""柊マグネタイト""
+        Expected Output:
+        {{
+        ""candidates"": [
+            {{ ""title"": ""テトリス"", ""artist"": ""重音テトSV"" }},
+            {{ ""title"": ""Tetris"", ""artist"": ""Kasane Teto"" }},
+            {{ ""title"": ""テトリス"", ""artist"": ""柊マグネタイト"" }}
         ]
         }}
         ";

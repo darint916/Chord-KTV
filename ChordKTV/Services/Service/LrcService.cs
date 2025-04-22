@@ -1,12 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ChordKTV.Services.Api;
-using ChordKTV.Dtos;
 using System.Web;
 using System.Globalization;
 using System.Collections.Specialized;
 using ChordKTV.Utils;
 using System.Net;
+using ChordKTV.Dtos.LrcLib;
 
 namespace ChordKTV.Services.Service;
 
@@ -65,49 +65,57 @@ public class LrcService : ILrcService
         }
 
         //We fuzzy order to add layer of confidence
-        searchResults = searchResults
+        Dictionary<LrcLyricsDto, int> lrcScores = searchResults
             .Where(ele => ele.Duration != null)
-            .OrderByDescending(ele => CompareUtils
-                .CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration!.Value))
-            .ToList();
+            .ToDictionary(
+                ele => ele,
+                ele => CompareUtils.CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration!.Value)
+            );
+
+        List<LrcLyricsDto> candidateResults = [];
 
         // Get the first result with time-synced lyrics
         if (string.IsNullOrWhiteSpace(lyricsDtoMatch?.SyncedLyrics))
         {
             if (!string.IsNullOrWhiteSpace(artist))
             {
-                lyricsDtoMatch = searchResults.FirstOrDefault(ele =>
+                candidateResults = lrcScores
+                    .Where(ele => CompareUtils.CompareArtistFuzzyScore(artist, ele.Key.ArtistName) > 70)
+                    .OrderByDescending(ele => ele.Value)
+                    .Select(ele => ele.Key)
+                    .ToList();
+
+                lyricsDtoMatch = candidateResults.FirstOrDefault(ele =>
                     !string.IsNullOrEmpty(ele.PlainLyrics) &&
-                    !string.IsNullOrEmpty(ele.SyncedLyrics) &&
-                    CompareUtils.CompareArtistFuzzyScore(artist, ele.ArtistName) > 70);
+                    !string.IsNullOrEmpty(ele.SyncedLyrics));
             }
             else
             { //the case where title only search without artist, want a more strict title match instead
-                lyricsDtoMatch = searchResults.FirstOrDefault(ele =>
+                candidateResults = lrcScores
+                    .Where(ele => ele.Value > 80)
+                    .OrderByDescending(ele => ele.Value)
+                    .Select(ele => ele.Key)
+                    .ToList();
+
+                lyricsDtoMatch = candidateResults.FirstOrDefault(ele =>
                     !string.IsNullOrEmpty(ele.PlainLyrics) &&
-                    !string.IsNullOrEmpty(ele.SyncedLyrics) &&
-                    CompareUtils.CompareWeightedFuzzyScore(title, ele.TrackName ?? "", artist, ele.ArtistName, duration, ele.Duration!.Value) > 80);
+                    !string.IsNullOrEmpty(ele.SyncedLyrics));
             }
         }
 
         // Collect alternate titles and artists from search results
-        if (lyricsDtoMatch != null && searchResults.Count > 0)
+        if (lyricsDtoMatch != null && candidateResults.Count > 0)
         {
             // Get unique titles and artists that meet minimum similarity threshold
-            foreach (LrcLyricsDto result in searchResults.Take(5)) // Limit to top 5 results
+            foreach (LrcLyricsDto result in candidateResults.Take(5)) // Limit to top 5 results
             {
-                // Only add titles if the artists match with high confidence
-                if (!string.IsNullOrWhiteSpace(result.TrackName) &&
-                    !lyricsDtoMatch.AlternateTitles.Contains(result.TrackName) &&
-                    CompareUtils.CompareArtistFuzzyScore(artist, result.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80)
+                //Add rescoring higher if needed
+                if (!string.IsNullOrWhiteSpace(result.ArtistName))
                 {
-                    lyricsDtoMatch.AlternateTitles.Add(result.TrackName);
-                }
-
-                // For artists, keep the existing high threshold check
-                if (!string.IsNullOrWhiteSpace(result.ArtistName) &&
-                    CompareUtils.CompareArtistFuzzyScore(artist, result.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80)
-                {
+                    if (!string.IsNullOrWhiteSpace(result.TrackName))
+                    {
+                        lyricsDtoMatch.AlternateTitles.Add(result.TrackName);
+                    }
                     lyricsDtoMatch.AlternateArtists.Add(result.ArtistName);
                 }
             }
@@ -280,6 +288,14 @@ public class LrcService : ILrcService
             .ToList();
 
         return results; //note we might get dupes, but i think sample size small enough to not worry (given 20 results per call, max 80)
+    }
+
+    public async Task<List<LrcLyricsDto>?> GetLrcLibSearchResultsAsync(string searchQuery)
+    {
+        NameValueCollection keywordParams = HttpUtility.ParseQueryString(string.Empty);
+        keywordParams["q"] = searchQuery;
+        List<LrcLyricsDto>? results = await LrcLibSearchEndpointResponse(keywordParams);
+        return results;
     }
 
     //api endpoint for LRCLib exact Get match https://lrclib.net/docs

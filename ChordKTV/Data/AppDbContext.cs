@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<UserHandwritingResult> UserHandwritingResults { get; set; }
     public DbSet<LearnedWord> LearnedWords { get; set; }
 
+    public DbSet<YoutubeSong> YoutubeSongs { get; set; }
     public AppDbContext(DbContextOptions<AppDbContext> opt) : base(opt)
     {
     }

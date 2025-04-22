@@ -11,6 +11,8 @@ using ChordKTV.Dtos.FullSong;
 using ChordKTV.Dtos.TranslationGptApi;
 using ChordKTV.Data.Api.UserData;
 using ChordKTV.Models.UserData;
+using ChordKTV.Dtos.GeniusApi;
+using ChordKTV.Dtos.LrcLib;
 
 namespace ChordKTV.Controllers;
 
@@ -68,7 +70,7 @@ public class SongController : Controller
         return Ok(result);
     }
 
-    [HttpGet("lyrics/lrc/search")]
+    [HttpGet("lyrics/lrc/match")]
     public async Task<IActionResult> GetLrcLibLyrics([FromQuery] string? title,
                                     [FromQuery] string? artist, [FromQuery] string? albumName,
                                     [FromQuery] float? duration)
@@ -104,7 +106,7 @@ public class SongController : Controller
         return Ok(lyricsDto);
     }
 
-    [HttpPost("songs/search")]
+    [HttpPost("songs/match")]
     [ProducesResponseType(typeof(FullSongResponseDto), 200)]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]
@@ -113,7 +115,7 @@ public class SongController : Controller
     {
         if (string.IsNullOrWhiteSpace(request.Title) && string.IsNullOrWhiteSpace(request.Lyrics) && string.IsNullOrWhiteSpace(request.YouTubeId))
         {
-            return BadRequest(new { message = "songs/search: At least one of the following fields is required: title, lyrics." });
+            return BadRequest(new { message = "songs/match: At least one of the following fields is required: title, lyrics." });
         }
         string? lyricsQuery = null;
         if (!string.IsNullOrWhiteSpace(request.Lyrics))
@@ -131,7 +133,7 @@ public class SongController : Controller
         }
         catch (HttpRequestException ex)
         {
-            return StatusCode(503, new { message = "HttpRequestException in songs/search ", error = ex.Message });
+            return StatusCode(503, new { message = "HttpRequestException in songs/match ", error = ex.Message });
         }
         catch (Exception ex)
         {
@@ -140,7 +142,7 @@ public class SongController : Controller
     }
 
 
-    [HttpGet("songs/genius/search")]
+    [HttpGet("songs/genius/match")]
     public async Task<IActionResult> GetSongByArtistTitle(
         [FromQuery] string? title,
         [FromQuery] string? artist,
@@ -176,7 +178,7 @@ public class SongController : Controller
         }
     }
 
-    [HttpPost("songs/genius/search/batch")]
+    [HttpPost("songs/genius/match/batch")]
     public async Task<IActionResult> GetSongsByArtistTitle(
         [FromBody] JsonElement request,
         [FromQuery] bool forceRefresh = false)
@@ -249,6 +251,65 @@ public class SongController : Controller
             return StatusCode(500, new { message = "An unexpected error occurred." });
         }
     }
+
+    [HttpGet("songs/genius/search")]
+    public async Task<IActionResult> GetGeniusSearchResults([FromQuery, Required, MaxLength(200)] string searchQuery)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                return BadRequest(new { message = "Search query is required." });
+            }
+
+            List<GeniusHit>? hits = await _geniusService.GetGeniusSearchResultsAsync(searchQuery);
+            if (hits == null || hits.Count == 0)
+            {
+                return NotFound(new { message = "No results found." });
+            }
+            return Ok(hits);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to fetch from Genius API for search query: {SearchQuery}", searchQuery);
+            return StatusCode(503, new { message = "Failed to fetch from Genius API.", error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while searching Genius API. Search query: {SearchQuery}", searchQuery);
+            return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
+        }
+    }
+
+    [HttpGet("songs/lrclib/search")]
+    public async Task<IActionResult> GetLrcLibSearchResults([FromQuery, Required, MaxLength(200)] string searchQuery)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                return BadRequest(new { message = "Search query is required." });
+            }
+
+            List<LrcLyricsDto>? hits = await _lrcService.GetLrcLibSearchResultsAsync(searchQuery);
+            if (hits == null || hits.Count == 0)
+            {
+                return NotFound(new { message = "No results found." });
+            }
+            return Ok(_mapper.Map<List<LrcMetaDataDto>>(hits));
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to fetch from LRC API for search query: {SearchQuery}", searchQuery);
+            return StatusCode(503, new { message = "Failed to fetch from LRC API.", error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while searching LRC API. Search query: {SearchQuery}", searchQuery);
+            return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
+        }
+    }
+
 
     [HttpGet("health")]
     public IActionResult HealthCheck()
