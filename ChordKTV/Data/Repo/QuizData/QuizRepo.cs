@@ -63,5 +63,10 @@ namespace ChordKTV.Data.Repo.QuizData
                 throw;
             }
         }
+
+        public async Task<bool> QuizExistsAsync(Guid quizId)
+        {
+            return await _context.Quizzes.AnyAsync(q => q.Id == quizId);
+        }
     }
 }
