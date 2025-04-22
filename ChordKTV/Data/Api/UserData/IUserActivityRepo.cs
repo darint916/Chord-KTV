@@ -9,7 +9,7 @@ namespace ChordKTV.Data.Api.UserData;
 public interface IUserActivityRepo
 {
     // Quiz related methods
-    Task<IEnumerable<UserQuizResult>> GetUserQuizResultsAsync(Guid userId);
+    Task<IEnumerable<UserQuizResult>> GetUserQuizResultsAsync(Guid userId, LanguageCode? language = null);
     Task AddQuizResultAsync(UserQuizResult result);
     Task ProcessQuizResultAsync(UserQuizResult result, IEnumerable<string> correctAnswers, LanguageCode language);
 

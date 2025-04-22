@@ -124,7 +124,7 @@ public class UserActivityController : Controller
     }
 
     [HttpGet("quizzes")]
-    public async Task<IActionResult> GetUserQuizResults()
+    public async Task<IActionResult> GetUserQuizResults([FromQuery] LanguageCode? language = null)
     {
         User? user = await _userContextService.GetCurrentUserAsync();
         if (user is null)
@@ -132,7 +132,7 @@ public class UserActivityController : Controller
             return Unauthorized(new { message = "User not found" });
         }
 
-        IEnumerable<UserQuizResult> quizResults = await _activityRepo.GetUserQuizResultsAsync(user.Id);
+        IEnumerable<UserQuizResult> quizResults = await _activityRepo.GetUserQuizResultsAsync(user.Id, language);
         return Ok(_mapper.Map<IEnumerable<UserQuizResultDto>>(quizResults));
     }
 
@@ -145,6 +145,12 @@ public class UserActivityController : Controller
             if (user is null)
             {
                 return Unauthorized(new { message = "User not found" });
+            }
+
+            Song? song = await _songRepo.GetSongByIdAsync(dto.SongId);
+            if (song == null)
+            {
+                return NotFound(new { message = "Song not found." });
             }
 
             UserSongActivity activity = _mapper.Map<UserSongActivity>(dto);
