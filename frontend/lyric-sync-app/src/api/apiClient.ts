@@ -1,9 +1,8 @@
 import { SongApi, Configuration, QuizApi, HandwritingApi } from './';
 
-
-const apiConfig = new Configuration({
-  basePath: import.meta.env.VITE_API_URL || 'http://localhost:5259',
-});
+// Use environment variable or fallback to window.location.origin
+const basePath = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+const apiConfig = new Configuration({ basePath });
 
 export const songApi = new SongApi(apiConfig);
 export const quizApi = new QuizApi(apiConfig);

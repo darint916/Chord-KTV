@@ -168,9 +168,19 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 // Comment out HTTPS redirection for development
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.MapControllers();
+// Run from static build files on deployment
+if (!app.Environment.IsDevelopment())
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+    app.MapFallbackToFile("index.html");
+}
 
 PrepDb.Prep(app, app.Environment);
 

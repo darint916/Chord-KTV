@@ -13,7 +13,6 @@ namespace ChordKTV.Controllers;
 
 [ApiController]
 [Route("api")]
-[DevelopmentOnly]
 public class UserController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
