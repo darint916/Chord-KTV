@@ -17,13 +17,14 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
     private readonly ILogger<YouTubeApiClientService> _logger;
     private readonly YouTubeService _youTubeService;
     private readonly YouTubeService _youTubeSearchService;
-
+    private readonly IYoutubeSongRepo _youtubeSongRepo;
     private readonly ISongRepo _songRepo;
     private bool _disposed;
-    public YouTubeApiClientService(IConfiguration configuration, ILogger<YouTubeApiClientService> logger, ISongRepo songRepo)
+    public YouTubeApiClientService(IConfiguration configuration, ILogger<YouTubeApiClientService> logger, ISongRepo songRepo, IYoutubeSongRepo youtubeSongRepo)
     {
         _logger = logger;
         _songRepo = songRepo;
+        _youtubeSongRepo = youtubeSongRepo;
         _youtubeApiKey = configuration["YouTube:ApiKey"];
         if (string.IsNullOrEmpty(_youtubeApiKey))
         {
@@ -219,7 +220,10 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         }
 
         Song? song = await _songRepo.GetSongByIdAsync(songId) ?? throw new KeyNotFoundException($"Song with ID {songId} not found.");
-
+        if (string.IsNullOrWhiteSpace(song.YoutubeInstrumentalId))
+        {
+            return song.YoutubeInstrumentalId;
+        }
         //reference https://developers.google.com/youtube/v3/docs/search/list#.net
         SearchResource.ListRequest searchRequest = _youTubeSearchService.Search.List("snippet");
         searchRequest.Q = $"{song.Title}  instrumental"; //no album for now, as youtube search api is kinda lobotomized, will return no result
@@ -237,6 +241,7 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
 
         Dictionary<string, VideoDetails> videoDetailsDict = await GetVideosDetailsAsync(videoIds);
         TimeSpan? duration = song.Duration;
+        string? keymatch = null;
         if (duration.HasValue)
         {
             string? withinDurationId = videoIds.FirstOrDefault(id =>
@@ -244,14 +249,28 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
                 Math.Abs((details.Duration - duration.Value).TotalSeconds) <= 3.5);
             if (withinDurationId != null)
             {
-                return withinDurationId;
+                keymatch = withinDurationId;
             }
-            //return closest duration match
-            return videoIds.MinBy(id => videoDetailsDict.TryGetValue(id, out VideoDetails? details)
-                ? Math.Abs((details.Duration - duration.Value).TotalSeconds)
-                : double.MaxValue);
+            else
+            {
+                keymatch = videoIds.MinBy(id => videoDetailsDict.TryGetValue(id, out VideoDetails? details)
+                    ? Math.Abs((details.Duration - duration.Value).TotalSeconds)
+                    : double.MaxValue);
+            }
         }
-        return videoIds.FirstOrDefault();
+        else
+        {
+            keymatch = videoIds.FirstOrDefault();
+        }
+        if (keymatch != null)
+        {
+            song.YoutubeInstrumentalId = keymatch;
+            if (!song.AlternateTitles.Remove(keymatch))
+            {
+                await _youtubeSongRepo.AddYoutubeSongAsync(new YoutubeSong { YoutubeId = keymatch, Song = song });
+            }
+        }
+        return keymatch;
     }
 
     //Below is the youtube service dispose stuff, needed as we abstracted the instances out, basically so they can be shared, these get handled by DI automatically

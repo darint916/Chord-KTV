@@ -21,7 +21,7 @@ namespace ChordKTV.Controllers;
 public class SongController : Controller
 {
     private readonly ISongRepo _songRepo;
-    private readonly IYouTubeClientService _youTubeService;
+    private readonly IYouTubeClientService _youTubeClientService;
     private readonly ILrcService _lrcService;
     private readonly IGeniusService _geniusService;
     private readonly IAlbumRepo _albumRepo;
@@ -33,7 +33,7 @@ public class SongController : Controller
 
     public SongController(
         IMapper mapper,
-        IYouTubeClientService youTubeService,
+        IYouTubeClientService youTubeClientService,
         ILrcService lrcService,
         ISongRepo songRepo,
         IGeniusService geniusService,
@@ -46,7 +46,7 @@ public class SongController : Controller
     {
         _mapper = mapper;
         _songRepo = songRepo;
-        _youTubeService = youTubeService;
+        _youTubeClientService = youTubeClientService;
         _lrcService = lrcService;
         _geniusService = geniusService;
         _albumRepo = albumRepo;
@@ -61,7 +61,7 @@ public class SongController : Controller
     [ProducesResponseType(500)]
     public async Task<IActionResult> GetYouTubePlaylist(string playlistId, [FromQuery] bool shuffle = false)
     {
-        PlaylistDetailsDto? result = await _youTubeService.GetPlaylistDetailsAsync(playlistId, shuffle);
+        PlaylistDetailsDto? result = await _youTubeClientService.GetPlaylistDetailsAsync(playlistId, shuffle);
         if (result == null)
         {
             return StatusCode(500, new { message = "Server error: YouTube API key is missing." });
@@ -310,6 +310,32 @@ public class SongController : Controller
         }
     }
 
+    [HttpPut("songs/{songId}/video/instrumental")]
+    public async Task<IActionResult> PutSongVideoInstrumental(string songId, [FromBody] bool isInstrumental)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(songId))
+            {
+                return BadRequest(new { message = "Song ID is required." });
+            }
+            if (!Guid.TryParse(songId, out Guid songGuid))
+            {
+                return BadRequest(new { message = "Invalid Song ID format." });
+            }
+            string? youtubeId = await _youTubeClientService.PutYoutubeInstrumentalIdFromSongIdAsync(songGuid);
+            if (youtubeId == null)
+            {
+                return NotFound(new { message = "Instrumental Song not found." });
+            }
+            return Ok(new { message = "Song video instrumental status updated and found." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating song video instrumental status for song ID: {SongId}", songId);
+            return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
+        }
+    }
 
     [HttpGet("health")]
     public IActionResult HealthCheck()
