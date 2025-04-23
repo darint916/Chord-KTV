@@ -328,7 +328,7 @@ public class SongController : Controller
             {
                 return NotFound(new { message = "Instrumental Song not found." });
             }
-            return Ok(new { message = "Song video instrumental status updated and found." });
+            return Ok(youtubeId);
         }
         catch (Exception ex)
         {

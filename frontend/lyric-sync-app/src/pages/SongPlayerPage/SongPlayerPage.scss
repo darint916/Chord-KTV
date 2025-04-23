@@ -8,21 +8,12 @@
   padding: 0;
 
   .song-player-container {
-    margin-top: 40px;
+    margin-top: 25px;
     max-width: 100% !important;
     padding: 0 16px !important;
 
     .song-player-content {
-      .song-title {
-        color: $text-primary;
-        margin-bottom: 24px;
-      }
-
-      .error-alert-lrc {
-        margin-top: 32px;
-      }
-
-      margin-top: 48px;
+      margin-top: 25px;
       background-color: transparent;
       border-radius: 8px;
       display: flex;
@@ -30,6 +21,16 @@
       height: 480px;
       gap: 20px;
       width: 100%;
+      
+      .song-title {
+        color: $text-primary;
+        font-weight: bold;
+      }
+
+      .error-alert-lrc {
+        margin-top: 32px;
+      }
+
 
       .queue-parent {
         width: 22%;
@@ -41,14 +42,14 @@
       }
 
       .grid-parent {
-        height: 100%;
-        width: 48%;
+        // height: 100%;
+        // width: 48%;
         display: flex;
         flex-direction: column;
         border-radius: 8px;
         background: $gradient;
         box-shadow: $box-shadow;
-        max-width: 100%;
+        // max-width: 100%;
         justify-content: center;
 
         .lrc-offset-text {
@@ -115,7 +116,7 @@
       padding: 20px;
       background: $gradient;
       border-radius: 8px;
-      margin-top: 20px;
+      margin-bottom: 20px;
       width: 100%;
       margin-right: 20px;
       max-width: 100%;
@@ -123,9 +124,9 @@
 
       .skeleton-input {
         width: 100%;
-        height: 56px; 
+        height: 56px;
         border-radius: 4px;
-        
+
         &.MuiSkeleton-root {
           transform: scale(1);
           // Gradient for shimmer loading, OK to hardcode so using rgba
@@ -201,4 +202,12 @@
       }
     }
   }
+}
+
+.bottom-grid {
+  padding-top: 30px;
+}
+
+.queue-component {
+  // max-height: 100%;
 }
