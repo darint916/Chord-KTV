@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Container, Typography, Box, Button, Paper, TextField, Alert, IconButton, Tooltip, Skeleton, Slider } from '@mui/material';
+import { Container, Typography, Box, Button, Paper, TextField, Alert, IconButton, Tooltip, Skeleton, Slider, ToggleButton } from '@mui/material';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import './SongPlayerPage.scss';
@@ -15,6 +15,8 @@ import { songApi } from '../../api/apiClient';
 import { extractYouTubeVideoId, extractPlaylistId } from '../HomePage/HomePageHelpers';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
+import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -66,6 +68,8 @@ const SongPlayerPage: React.FC = () => {
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
   }
+
+  const [instrumental, setInstrumental] = useState(false); // Track if instrumental is selected
 
   const lrcTimestamps = useMemo(() => {
     const timestamps: number[] = [];
@@ -371,25 +375,77 @@ const SongPlayerPage: React.FC = () => {
           {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
           <Grid size={6} alignContent={'center'} className='grid-parent'>
             <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={updatePlayerTime} />
-            <Box mt={2} px={2}>
-              <Typography variant="body2" gutterBottom className='lrc-offset-text'>
-                Lyrics Time Offset: {lyricsOffset > 0 ? `+${lyricsOffset.toFixed(1)}s` : `${lyricsOffset.toFixed(1)}s`}
-              </Typography>
-              <Slider
-                value={lyricsOffset}
-                onChange={(_, value) => setLyricsOffset(value as number)}
-                min={-5}
-                max={5}
-                step={0.1}
-                valueLabelDisplay="auto"
-                valueLabelFormat={(value) => `${value > 0 ? '+' : ''}${value}s`}
-                marks={[
-                  { value: -5, label: '-5s' },
-                  { value: 0, label: '0' },
-                  { value: 5, label: '+5s' },
-                ]}
-              />
-            </Box>
+            <Grid container spacing={2} className="controls-grid">
+              <Grid size={1} alignContent={'center'}>
+                <ToggleButton
+                  value="check"
+                  selected={instrumental}
+                  onChange={() => setInstrumental(!instrumental)}
+                  className="ktv-toggle"
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    '&.Mui-selected': {
+                      // green with 60% opacity
+                      bgcolor: 'rgba(76, 175, 80, 0.6)',
+                      '&:hover': {
+                        // same green a bit more transparent on hover
+                        bgcolor: 'rgba(56, 173, 60, 0.5)',
+                      },
+                      fontWeight: 'bold',
+                      color: 'white',
+                    },
+                    // optional padding tweak
+                    margin: '0 auto',
+                    // px: 2,
+                    // py: 2,
+                  }}
+                >
+                  KTV
+                </ToggleButton>
+              </Grid>
+              <Grid size={1} alignContent={'center'}>
+                <IconButton
+                  className="queue-nav-button"
+                  // onClick={handlePrevTrack}
+                  // disabled={isFirst}
+                  size="large"
+                >
+                  <SkipPreviousIcon />
+                </IconButton>
+              </Grid>
+              <Grid size={1} alignContent={'center'}>
+                <IconButton
+                  className="queue-nav-button"
+                  // onClick={handleNextTrack}
+                  // disabled={isLast}
+                  size="large"
+                >
+                  <SkipNextIcon />
+                </IconButton>
+              </Grid>
+              <Grid size={9}>
+                <Box mt={2} px={2}>
+                  <Typography variant="body2" gutterBottom className='lrc-offset-text' align="center">
+                    Lyrics Time Offset: {lyricsOffset > 0 ? `+${lyricsOffset.toFixed(1)}s` : `${lyricsOffset.toFixed(1)}s`}
+                  </Typography>
+                  <Slider
+                    value={lyricsOffset}
+                    onChange={(_, value) => setLyricsOffset(value as number)}
+                    min={-5}
+                    max={5}
+                    step={0.1}
+                    valueLabelDisplay="auto"
+                    valueLabelFormat={(value) => `${value > 0 ? '+' : ''}${value}s`}
+                    marks={[
+                      { value: -5, label: '-5s' },
+                      { value: 0, label: '0' },
+                      { value: 5, label: '+5s' },
+                    ]}
+                  />
+                </Box>
+              </Grid>
+            </Grid>
           </Grid>
           {/* Lyrics Column */}
           <Grid size={6} className='grid-parent'>
