@@ -220,13 +220,13 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         }
 
         Song? song = await _songRepo.GetSongByIdAsync(songId) ?? throw new KeyNotFoundException($"Song with ID {songId} not found.");
-        if (string.IsNullOrWhiteSpace(song.YoutubeInstrumentalId))
+        if (!string.IsNullOrWhiteSpace(song.YoutubeInstrumentalId))
         {
             return song.YoutubeInstrumentalId;
         }
         //reference https://developers.google.com/youtube/v3/docs/search/list#.net
         SearchResource.ListRequest searchRequest = _youTubeSearchService.Search.List("snippet");
-        searchRequest.Q = $"{song.Title}  instrumental"; //no album for now, as youtube search api is kinda lobotomized, will return no result
+        searchRequest.Q = $"{song.Title} {song.Artist} instrumental"; //no album for now, as youtube search api is kinda lobotomized, will return no result
         searchRequest.Type = "video";
         searchRequest.MaxResults = 3; //more simple, maybe expand in future to allow users to choose, 2 groups based on relevancy sort
         searchRequest.VideoEmbeddable = SearchResource.ListRequest.VideoEmbeddableEnum.True__;
@@ -242,26 +242,29 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         Dictionary<string, VideoDetails> videoDetailsDict = await GetVideosDetailsAsync(videoIds);
         TimeSpan? duration = song.Duration;
         string? keymatch = null;
-        if (duration.HasValue)
-        {
-            string? withinDurationId = videoIds.FirstOrDefault(id =>
-                videoDetailsDict.TryGetValue(id, out VideoDetails? details) &&
-                Math.Abs((details.Duration - duration.Value).TotalSeconds) <= 3.5);
-            if (withinDurationId != null)
-            {
-                keymatch = withinDurationId;
-            }
-            else
-            {
-                keymatch = videoIds.MinBy(id => videoDetailsDict.TryGetValue(id, out VideoDetails? details)
-                    ? Math.Abs((details.Duration - duration.Value).TotalSeconds)
-                    : double.MaxValue);
-            }
-        }
-        else
-        {
-            keymatch = videoIds.FirstOrDefault();
-        }
+
+        //TOGGLE IF NEEDED, DISABLING DURATION FOR NOW UNTIL WE FIND ISSUE CASE WITH NON MATCHING DURATION
+
+        // if (duration.HasValue)
+        // {
+        //     string? withinDurationId = videoIds.FirstOrDefault(id =>
+        //         videoDetailsDict.TryGetValue(id, out VideoDetails? details) &&
+        //         Math.Abs((details.Duration - duration.Value).TotalSeconds) <= 3.5);
+        //     if (withinDurationId != null)
+        //     {
+        //         keymatch = withinDurationId;
+        //     }
+        //     else
+        //     {
+        //         keymatch = videoIds.MinBy(id => videoDetailsDict.TryGetValue(id, out VideoDetails? details)
+        //             ? Math.Abs((details.Duration - duration.Value).TotalSeconds)
+        //             : double.MaxValue);
+        //     }
+        // }
+        // else
+        // {
+        keymatch = videoIds.FirstOrDefault();
+        // }
         if (keymatch != null)
         {
             song.YoutubeInstrumentalId = keymatch;

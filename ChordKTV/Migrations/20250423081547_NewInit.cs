@@ -91,6 +91,7 @@ namespace ChordKTV.Migrations
                     LrcId = table.Column<int>(type: "integer", nullable: true),
                     RomLrcId = table.Column<int>(type: "integer", nullable: true),
                     YoutubeId = table.Column<string>(type: "text", nullable: true),
+                    YoutubeInstrumentalId = table.Column<string>(type: "text", nullable: true),
                     AlternateYoutubeIds = table.Column<List<string>>(type: "text[]", nullable: false),
                     GeniusMetaDataGeniusId = table.Column<int>(type: "integer", nullable: false)
                 },
