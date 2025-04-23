@@ -8,7 +8,7 @@ import { AuthApi } from '../../api/apis/AuthApi';
 // Initialize API client
 const authApi = new AuthApi(
   new Configuration({
-    basePath: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5259',
+    basePath: import.meta.env.VITE_API_BASE_URL,
   })
 );
 
