@@ -125,9 +125,9 @@ const SongPlayerPage: React.FC = () => {
 
       nextItems.forEach((nextItem) => {
         // Only proceed if we haven't already requested the API for this song
-        if (!nextItem.apiRequested) {
+        if (nextItem.status === 'pending') {
           // Mark as requested immediately to prevent duplicate calls
-          nextItem.apiRequested = true;
+          nextItem.status = 'loading';
 
           // Call the API for the next song
           songApi.apiSongsMatchPost({
@@ -142,22 +142,18 @@ const SongPlayerPage: React.FC = () => {
             if (nextItem.youTubeId) {
               response.youTubeId = nextItem.youTubeId;
             }
-            setQueue(prevQueue => prevQueue.map(item =>
-              item.queueId === nextItem.queueId
-                ? {
-                  ...item,
-                  processedData: {
-                    title: response.title,
-                    artist: response.artist,
-                    youTubeId: response.youTubeId,
-                    lrcLyrics: response.lrcLyrics,
-                    lrcRomanizedLyrics: response.lrcRomanizedLyrics,
-                    lrcTranslatedLyrics: response.lrcTranslatedLyrics,
-                    geniusMetaData: response.geniusMetaData,
-                    id: response.id
-                  }
+
+            setQueue(prevQueue => prevQueue.map(queueItem =>
+              queueItem.queueId === nextItem.queueId
+                ? { 
+                  ...queueItem,
+                  title: response.title || nextItem.title,
+                  artist: response.artist || nextItem.artist,
+                  lyrics: nextItem.lyrics || '',
+                  status: 'loaded' as const,
+                  imageUrl: response.geniusMetaData?.songImageUrl ?? ''
                 }
-                : item
+                : queueItem
             ));
           }).catch(err => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to process song';
@@ -251,15 +247,15 @@ const SongPlayerPage: React.FC = () => {
       }
       const newItem: QueueItem = {
         queueId: uuidv4(),
-        apiRequested: true,
+        status: 'loaded',
         title: response.title ?? '',
         artist: response.artist ?? '',
         youTubeId: response.youTubeId ?? '',
         lyrics: lyrics,
-        processedData: response
+        imageUrl: response.geniusMetaData?.songImageUrl ?? ''
       };
 
-      if (!newItem.processedData?.lrcLyrics) {
+      if (!response.lrcLyrics) {
         throw new Error('Failed to process song: no LRC lyrics found');
       }
 
@@ -279,7 +275,7 @@ const SongPlayerPage: React.FC = () => {
       // Auto-play if adding to next position
       if (insertAfterCurrent) {
         setCurrentPlayingId(newItem.queueId);
-        setSong(newItem.processedData);
+        setSong(response);
       }
 
       // Clear form
@@ -332,7 +328,7 @@ const SongPlayerPage: React.FC = () => {
         artist: video.artist || 'Unknown Artist',
         youTubeId: extractYouTubeVideoId(video.url) || '',
         lyrics: '',
-        apiRequested: false
+        status: 'pending'
       }));
 
       // Add to end of queue

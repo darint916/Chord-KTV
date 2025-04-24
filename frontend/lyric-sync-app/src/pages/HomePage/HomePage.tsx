@@ -56,7 +56,7 @@ const HomePage: React.FC = () => {
         artist: video.artist || 'Unknown Artist',
         youTubeId: extractYouTubeVideoId(video.url) || '',
         lyrics: '',
-        apiRequested: false
+        status: 'pending' as const
       }));
 
       // Set the queue with new songs
@@ -79,7 +79,7 @@ const HomePage: React.FC = () => {
         // Update queue with processed data for first song
         setQueue(prev => prev.map(item =>
           item.queueId === firstSong.queueId
-            ? { ...item, processedData: processed, apiRequested: true }
+            ? { ...item, processedData: processed, status: 'loaded' as const, imageUrl: processed.geniusMetaData?.songImageUrl ?? '' }
             : item
         ));
 
@@ -139,8 +139,8 @@ const HomePage: React.FC = () => {
         youTubeId: response.youTubeId ?? '',
         queueId: uuidv4(),
         lyrics: lyrics ?? '',
-        apiRequested: true,
-        processedData: response
+        status: 'loaded',
+        imageUrl: response.geniusMetaData?.songImageUrl ?? ''
       };
       setQueue([newQueueItem, ...queue]);
       setCurrentPlayingId(newQueueItem.queueId);

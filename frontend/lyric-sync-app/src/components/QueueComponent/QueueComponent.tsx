@@ -61,56 +61,40 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
     setError('');
 
     try {
-      if (!item.apiRequested) {
-        setQueue(prevQueue => prevQueue.map(queueItem =>
-          queueItem.queueId === item.queueId
-            ? { ...queueItem, apiRequested: true, error: undefined }
-            : queueItem
-        ));
+      setQueue(prevQueue => prevQueue.map(queueItem =>
+        queueItem.queueId === item.queueId
+          ? { ...queueItem, status: 'loading', error: undefined }
+          : queueItem
+      ));
 
-        const response = await songApi.apiSongsMatchPost({
-          fullSongRequestDto: {
-            title: item.title,
-            artist: item.artist,
-            youTubeId: item.youTubeId || '',
-            lyrics: item.lyrics || ''
-          }
-        });
-        if (item.youTubeId) {
-          response.youTubeId = item.youTubeId;
-        }
-        const processedData = {
-          title: response.title,
-          artist: response.artist,
-          youTubeId: response.youTubeId,
-          lrcLyrics: response.lrcLyrics,
-          lrcRomanizedLyrics: response.lrcRomanizedLyrics,
-          lrcTranslatedLyrics: response.lrcTranslatedLyrics,
-          geniusMetaData: response.geniusMetaData,
-          id: response.id
-        };
-
-        setQueue(prevQueue => prevQueue.map(queueItem =>
-          queueItem.queueId === item.queueId
-            ? { ...queueItem, processedData, apiRequested: true }
-            : queueItem
-        ));
-
-        setCurrentPlayingId(item.queueId);
-        setSong(processedData);
-      } else {
-        const playbackData = item.processedData || {
+      const response = await songApi.apiSongsMatchPost({
+        fullSongRequestDto: {
           title: item.title,
           artist: item.artist,
           youTubeId: item.youTubeId || '',
-          lrcLyrics: '',
-          lrcRomanizedLyrics: '',
-          lrcTranslatedLyrics: ''
-        };
-
-        setCurrentPlayingId(item.queueId);
-        setSong(playbackData);
+          lyrics: item.lyrics || ''
+        }
+      });
+      if (item.youTubeId) {
+        response.youTubeId = item.youTubeId;
       }
+
+      setQueue(prevQueue => prevQueue.map(queueItem =>
+        queueItem.queueId === item.queueId
+          ? { 
+            ...queueItem,
+            title: response.title || item.title,
+            artist: response.artist || item.artist,
+            lyrics: item.lyrics || '',
+            status: 'loaded' as const,
+            imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+          }
+          : queueItem
+      ));
+
+      setCurrentPlayingId(item.queueId);
+      setSong(response);
+     
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
       setQueue(prevQueue => prevQueue.map(queueItem =>
