@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ChordKTV.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250413222008_UpdateUserOneMoreTimeFinal")]
-    partial class UpdateUserOneMoreTimeFinal
+    [Migration("20250423235217_Ummidk")]
+    partial class Ummidk
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -47,12 +47,11 @@ namespace ChordKTV.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("LearnedOn")
+                    b.Property<DateTime>("DateLearned")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Language")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -74,15 +73,14 @@ namespace ChordKTV.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CompletedAt")
+                    b.Property<DateTime>("DateCompleted")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Language")
+                        .HasColumnType("integer");
 
-                    b.Property<decimal>("Score")
-                        .HasColumnType("numeric");
+                    b.Property<float>("Score")
+                        .HasColumnType("real");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -98,40 +96,24 @@ namespace ChordKTV.Migrations
                     b.ToTable("UserHandwritingResults");
                 });
 
-            modelBuilder.Entity("ChordKTV.Models.Playlist.UserFavoritePlaylist", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("FavoritedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PlaylistUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("FavoritePlaylists");
-                });
-
             modelBuilder.Entity("ChordKTV.Models.Playlist.UserPlaylistActivity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("LastPlayed")
+                    b.Property<DateTime?>("DateFavorited")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("PlayCount")
-                        .HasColumnType("integer");
+                    b.PrimitiveCollection<List<DateTime>>("DatesPlayed")
+                        .IsRequired()
+                        .HasColumnType("timestamp with time zone[]");
+
+                    b.Property<bool>("IsFavorite")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastPlayed")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PlaylistUrl")
                         .IsRequired()
@@ -226,18 +208,17 @@ namespace ChordKTV.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CompletedAt")
+                    b.Property<DateTime>("DateCompleted")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Language")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("QuizId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("Score")
-                        .HasColumnType("numeric");
+                    b.Property<float>("Score")
+                        .HasColumnType("real");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -367,13 +348,23 @@ namespace ChordKTV.Migrations
                     b.ToTable("Songs");
                 });
 
-            modelBuilder.Entity("ChordKTV.Models.SongData.UserFavoriteSong", b =>
+            modelBuilder.Entity("ChordKTV.Models.SongData.UserSongActivity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("FavoritedAt")
+                    b.Property<DateTime?>("DateFavorited")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.PrimitiveCollection<List<DateTime>>("DatesPlayed")
+                        .IsRequired()
+                        .HasColumnType("timestamp with time zone[]");
+
+                    b.Property<bool>("IsFavorite")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastPlayed")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("SongId")
@@ -386,31 +377,22 @@ namespace ChordKTV.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("FavoriteSongs");
+                    b.ToTable("UserSongActivities");
                 });
 
-            modelBuilder.Entity("ChordKTV.Models.SongData.UserSongPlay", b =>
+            modelBuilder.Entity("ChordKTV.Models.SongData.YoutubeSong", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("PlayedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("YoutubeId")
+                        .HasColumnType("text");
 
                     b.Property<Guid>("SongId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
+                    b.HasKey("YoutubeId");
 
                     b.HasIndex("SongId");
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserSongPlays");
+                    b.ToTable("YoutubeSongs");
                 });
 
             modelBuilder.Entity("ChordKTV.Models.UserData.User", b =>
@@ -460,15 +442,6 @@ namespace ChordKTV.Migrations
                 {
                     b.HasOne("ChordKTV.Models.UserData.User", null)
                         .WithMany("HandwritingResults")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ChordKTV.Models.Playlist.UserFavoritePlaylist", b =>
-                {
-                    b.HasOne("ChordKTV.Models.UserData.User", null)
-                        .WithMany("FavoritePlaylists")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -533,26 +506,20 @@ namespace ChordKTV.Migrations
                     b.Navigation("GeniusMetaData");
                 });
 
-            modelBuilder.Entity("ChordKTV.Models.SongData.UserFavoriteSong", b =>
+            modelBuilder.Entity("ChordKTV.Models.SongData.UserSongActivity", b =>
                 {
                     b.HasOne("ChordKTV.Models.UserData.User", null)
-                        .WithMany("FavoriteSongs")
+                        .WithMany("SongActivities")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ChordKTV.Models.SongData.UserSongPlay", b =>
+            modelBuilder.Entity("ChordKTV.Models.SongData.YoutubeSong", b =>
                 {
                     b.HasOne("ChordKTV.Models.SongData.Song", "Song")
                         .WithMany()
                         .HasForeignKey("SongId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ChordKTV.Models.UserData.User", null)
-                        .WithMany("SongPlays")
-                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -571,10 +538,6 @@ namespace ChordKTV.Migrations
 
             modelBuilder.Entity("ChordKTV.Models.UserData.User", b =>
                 {
-                    b.Navigation("FavoritePlaylists");
-
-                    b.Navigation("FavoriteSongs");
-
                     b.Navigation("HandwritingResults");
 
                     b.Navigation("LearnedWords");
@@ -583,7 +546,7 @@ namespace ChordKTV.Migrations
 
                     b.Navigation("QuizResults");
 
-                    b.Navigation("SongPlays");
+                    b.Navigation("SongActivities");
                 });
 #pragma warning restore 612, 618
         }
