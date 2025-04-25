@@ -59,11 +59,11 @@ const QuizResultsSection: React.FC<QuizResultsSectionProps> = ({ quizzes }) => {
   };
 
   return (
-    <Paper sx={{ position: 'relative', overflow: 'hidden', p: 2 }}>
+    <Paper sx={{ position: 'relative', overflow: 'hidden', p: 3 }}>
       <Typography variant="h6" gutterBottom>
         Recent&nbsp;Scores
       </Typography>
-
+      <Box component="hr" sx={{ border: 0, borderTop: '1px solid lightgray', my: 2 }} />
       {sortedQuizzes.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           No quizzes taken yet.
@@ -77,7 +77,7 @@ const QuizResultsSection: React.FC<QuizResultsSectionProps> = ({ quizzes }) => {
             sx={{
               overflowY: 'auto',
               // Fixed height showing roughly 5 full items (adjust as needed)
-              height: 5 * 72, // assuming each quiz item is ~72px tall
+              height: 7 * 72, // assuming each quiz item is ~72px tall
               pr: 1,
             }}
           >

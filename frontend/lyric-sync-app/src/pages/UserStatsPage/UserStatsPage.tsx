@@ -149,7 +149,7 @@ const UserStatsPage: React.FC = () => {
 
   /* top-3 lists */
   const topSongs = useMemo(() => {
-    return getTopAggregatedItems(songs, (s) => s.songId, (s) => s.datesPlayed.length, 5)
+    return getTopAggregatedItems(songs, (s) => s.songId, (s) => s.datesPlayed.length, 7)
       .map(({ id, plays }) => {
         const song = songs.find(s => s.songId === id);
         return { id, title: song?.title || id, plays };
@@ -157,7 +157,7 @@ const UserStatsPage: React.FC = () => {
   }, [songs]);
 
   const topPls = useMemo(() => {
-    return getTopAggregatedItems(playlists, (p) => p.playlistUrl, (p) => p.datesPlayed.length, 5);
+    return getTopAggregatedItems(playlists, (p) => p.playlistUrl, (p) => p.datesPlayed.length, 7);
   }, [playlists]);
 
   const recentWords = useMemo(
@@ -200,9 +200,10 @@ const UserStatsPage: React.FC = () => {
   /* render */
   return (
     <ThemeProvider theme={dashboardTheme}>
-      <div className="user-stats-page" style={{ paddingBottom: '64px' }}>
+      <div className="user-stats-page" style={{ paddingBottom: 64 }}>
 
-        <Container maxWidth="xl" sx={{ mt: 4 }}>
+        {/* 40 px side-gutter at every width */}
+        <Container maxWidth="xl" sx={{ mt: 4, px: { xs: 5 } }}>
 
           {/* Header for Usage Statistics */}
           <Typography
@@ -250,24 +251,29 @@ const UserStatsPage: React.FC = () => {
             </Box>
           </Box>
 
-          {/* grid sections */}
-          <Grid container spacing={3}>
-            <Grid xs={12} lg={4}>
+          {/* ─────────────── 2) 4 stats panels ─────────────── */}
+          <Grid
+            container
+            spacing={3}
+            alignItems="stretch"      /* stretch children to equal height   */
+            columns={12}
+          >
+            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
               <QuizResultsSection quizzes={quizzesForDisplay} />
             </Grid>
-            <Grid xs={12} lg={8}>
+
+            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
               <TopSongsChart data={topSongs} />
             </Grid>
-            <Grid xs={12} lg={8}>
+
+            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
               <TopPlaylists data={topPls} />
             </Grid>
-            <Grid xs={12} lg={4}>
+
+            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
               <LearnedWords recent={recentWords} />
             </Grid>
           </Grid>
-
-          
-
         </Container>
       </div>
     </ThemeProvider>
