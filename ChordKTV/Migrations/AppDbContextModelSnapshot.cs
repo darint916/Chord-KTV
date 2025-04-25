@@ -338,6 +338,9 @@ namespace ChordKTV.Migrations
                     b.Property<string>("YoutubeId")
                         .HasColumnType("text");
 
+                    b.Property<string>("YoutubeInstrumentalId")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("GeniusMetaDataGeniusId");

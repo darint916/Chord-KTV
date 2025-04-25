@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
-import { Paper, Typography, Divider, Box, Button, Alert } from '@mui/material';
+import React from 'react';
+import { Paper, Typography, Divider, Box, Button } from '@mui/material';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import DraggableQueueItem from '../../components/DraggableQueueItem/DraggableQueueItem';
 import { QueueItem } from '../../contexts/QueueTypes';
-import { useSong } from '../../contexts/SongContext';
-import { songApi } from '../../api/apiClient';
 import ClearAll from '@mui/icons-material/ClearAll';
 import './QueueComponent.scss';
 import { FixedSizeList as List } from 'react-window';
@@ -16,6 +14,7 @@ interface QueueComponentProps {
   currentPlayingId: string | null;
   setQueue: React.Dispatch<React.SetStateAction<QueueItem[]>>;
   setCurrentPlayingId: React.Dispatch<React.SetStateAction<string | null>>;
+  handlePlayFromQueue: (_item: QueueItem) => Promise<void>;
 }
 
 const QueueComponent: React.FC<QueueComponentProps> = ({
@@ -23,9 +22,8 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
   currentPlayingId,
   setQueue,
   setCurrentPlayingId,
+  handlePlayFromQueue
 }) => {
-  const [error, setError] = useState('');
-  const { setSong } = useSong();
 
   const moveQueueItem = (dragIndex: number, hoverIndex: number) => {
     setQueue((prevQueue: QueueItem[]) => {
@@ -57,68 +55,9 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
     }
   };
 
-  const handlePlayFromQueue = async (item: QueueItem) => {
-    setError('');
-
-    try {
-      setQueue(prevQueue => prevQueue.map(queueItem =>
-        queueItem.queueId === item.queueId
-          ? { ...queueItem, status: 'loading', error: undefined }
-          : queueItem
-      ));
-
-      const response = await songApi.apiSongsMatchPost({
-        fullSongRequestDto: {
-          title: item.title,
-          artist: item.artist,
-          youTubeId: item.youTubeId || '',
-          lyrics: item.lyrics || ''
-        }
-      });
-      if (item.youTubeId) {
-        response.youTubeId = item.youTubeId;
-      }
-
-      setQueue(prevQueue => prevQueue.map(queueItem =>
-        queueItem.queueId === item.queueId
-          ? { 
-            ...queueItem,
-            title: response.title || item.title,
-            artist: response.artist || item.artist,
-            lyrics: item.lyrics || '',
-            status: 'loaded' as const,
-            imageUrl: response.geniusMetaData?.songImageUrl ?? ''
-          }
-          : queueItem
-      ));
-
-      setCurrentPlayingId(item.queueId);
-      setSong(response);
-     
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
-      setQueue(prevQueue => prevQueue.map(queueItem =>
-        queueItem.queueId === item.queueId
-          ? { ...queueItem, error: errorMessage }
-          : queueItem
-      ));
-
-      setCurrentPlayingId(item.queueId);
-      setSong({
-        title: item.title,
-        artist: item.artist,
-        youTubeId: item.youTubeId || '',
-        lrcLyrics: '',
-        lrcRomanizedLyrics: '',
-        lrcTranslatedLyrics: ''
-      });
-    }
-  };
-  
   return (
     <DndProvider backend={HTML5Backend}>
       <Paper elevation={3} className="queue-column">
-        {error && <Alert severity="error">{error}</Alert>}
         <Typography variant="h6" className="queue-title" align="center">
           {currentPlayingId
             ? `Queue (${queue.findIndex(item => item.queueId === currentPlayingId) + 1}/${queue.length})`

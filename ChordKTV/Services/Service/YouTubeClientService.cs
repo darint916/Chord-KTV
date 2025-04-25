@@ -5,6 +5,8 @@ using ChordKTV.Services.Api;
 using ChordKTV.Dtos;
 using ChordKTV.Utils;
 using ChordKTV.Dtos.YouTubeApi;
+using ChordKTV.Data.Api.SongData;
+using ChordKTV.Models.SongData;
 
 namespace ChordKTV.Services.Service;
 
@@ -15,10 +17,14 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
     private readonly ILogger<YouTubeApiClientService> _logger;
     private readonly YouTubeService _youTubeService;
     private readonly YouTubeService _youTubeSearchService;
+    private readonly IYoutubeSongRepo _youtubeSongRepo;
+    private readonly ISongRepo _songRepo;
     private bool _disposed;
-    public YouTubeApiClientService(IConfiguration configuration, ILogger<YouTubeApiClientService> logger)
+    public YouTubeApiClientService(IConfiguration configuration, ILogger<YouTubeApiClientService> logger, ISongRepo songRepo, IYoutubeSongRepo youtubeSongRepo)
     {
         _logger = logger;
+        _songRepo = songRepo;
+        _youtubeSongRepo = youtubeSongRepo;
         _youtubeApiKey = configuration["YouTube:ApiKey"];
         if (string.IsNullOrEmpty(_youtubeApiKey))
         {
@@ -170,7 +176,7 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         SearchResource.ListRequest searchRequest = _youTubeSearchService.Search.List("snippet");
         searchRequest.Q = $"{title} {artist}"; //no album for now, as youtube search api is kinda lobotomized, will return no result
         searchRequest.Type = "video";
-        searchRequest.MaxResults = 10; //more simple, maybe expand in future to allow users to choose, 2 groups based on relevancy sort
+        searchRequest.MaxResults = 6; //more simple, maybe expand in future to allow users to choose, 2 groups based on relevancy sort
         searchRequest.VideoEmbeddable = SearchResource.ListRequest.VideoEmbeddableEnum.True__;
 
         //https://stackoverflow.com/a/17738994/17621099 category type 10 is music for all regions where allowed
@@ -204,6 +210,70 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
                 : double.MaxValue);
         }
         return videoIds.FirstOrDefault();
+    }
+
+    public async Task<string?> PutYoutubeInstrumentalIdFromSongIdAsync(Guid songId)
+    {
+        if (string.IsNullOrEmpty(_youtubeSearchApiKey))
+        {
+            throw new InvalidOperationException("YouTube Search API key is not set in youtubeservice.");
+        }
+
+        Song? song = await _songRepo.GetSongByIdAsync(songId) ?? throw new KeyNotFoundException($"Song with ID {songId} not found.");
+        if (!string.IsNullOrWhiteSpace(song.YoutubeInstrumentalId))
+        {
+            return song.YoutubeInstrumentalId;
+        }
+        //reference https://developers.google.com/youtube/v3/docs/search/list#.net
+        SearchResource.ListRequest searchRequest = _youTubeSearchService.Search.List("snippet");
+        searchRequest.Q = $"{song.Title} {song.Artist} instrumental"; //no album for now, as youtube search api is kinda lobotomized, will return no result
+        searchRequest.Type = "video";
+        searchRequest.MaxResults = 3; //more simple, maybe expand in future to allow users to choose, 2 groups based on relevancy sort
+        searchRequest.VideoEmbeddable = SearchResource.ListRequest.VideoEmbeddableEnum.True__;
+
+        SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
+
+        //first search response item that has video id
+        List<string> videoIds = searchResponse.Items
+            .Where(item => item.Id.Kind == "youtube#video")
+            .Select(item => item.Id.VideoId)
+            .ToList();
+
+        Dictionary<string, VideoDetails> videoDetailsDict = await GetVideosDetailsAsync(videoIds);
+        TimeSpan? duration = song.Duration;
+        string? keymatch = null;
+
+        //TOGGLE IF NEEDED, DISABLING DURATION FOR NOW UNTIL WE FIND ISSUE CASE WITH NON MATCHING DURATION
+
+        // if (duration.HasValue)
+        // {
+        //     string? withinDurationId = videoIds.FirstOrDefault(id =>
+        //         videoDetailsDict.TryGetValue(id, out VideoDetails? details) &&
+        //         Math.Abs((details.Duration - duration.Value).TotalSeconds) <= 3.5);
+        //     if (withinDurationId != null)
+        //     {
+        //         keymatch = withinDurationId;
+        //     }
+        //     else
+        //     {
+        //         keymatch = videoIds.MinBy(id => videoDetailsDict.TryGetValue(id, out VideoDetails? details)
+        //             ? Math.Abs((details.Duration - duration.Value).TotalSeconds)
+        //             : double.MaxValue);
+        //     }
+        // }
+        // else
+        // {
+        keymatch = videoIds.FirstOrDefault();
+        // }
+        if (keymatch != null)
+        {
+            song.YoutubeInstrumentalId = keymatch;
+            if (!song.AlternateTitles.Remove(keymatch))
+            {
+                await _youtubeSongRepo.AddYoutubeSongAsync(new YoutubeSong { YoutubeId = keymatch, Song = song });
+            }
+        }
+        return keymatch;
     }
 
     //Below is the youtube service dispose stuff, needed as we abstracted the instances out, basically so they can be shared, these get handled by DI automatically

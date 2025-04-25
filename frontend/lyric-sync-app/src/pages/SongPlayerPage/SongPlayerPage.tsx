@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Container, Typography, Box, Button, Paper, TextField, Alert, IconButton, Tooltip, Skeleton, Slider } from '@mui/material';
+import { Container, Typography, Box, Button, Paper, TextField, Alert, IconButton, Tooltip, Skeleton, Slider, ToggleButton } from '@mui/material';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import './SongPlayerPage.scss';
@@ -15,6 +15,8 @@ import { songApi } from '../../api/apiClient';
 import { extractYouTubeVideoId, extractPlaylistId } from '../HomePage/HomePageHelpers';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
+import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -66,6 +68,47 @@ const SongPlayerPage: React.FC = () => {
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
   }
+
+  const [instrumental, setInstrumental] = useState(false); // Track if instrumental is selected
+  const [lastTimestamp, setLastTimestamp] = useState<number>(0); // Track last timestamp for KTV switch
+
+  const currentQueueItem = useMemo(() => {
+    return queue.find(item => item.queueId === currentPlayingId);
+  }, [queue, currentPlayingId]);
+
+  const handleKTVToggle = async () => {
+    if (!song.id) { return; } // No song ID available
+
+    // Store current timestamp before switching
+    if (playerRef.current) {
+      setLastTimestamp(playerRef.current.getCurrentTime());
+    }
+
+    try {
+      if (!instrumental && !currentQueueItem?.ktvYouTubeId) {
+        const response = await songApi.apiSongsSongIdVideoInstrumentalPut({
+          songId: song.id
+        });
+
+        // Update the current song in the queue with the instrumental ID
+        setQueue(prevQueue => prevQueue.map(item =>
+          item.queueId === currentPlayingId
+            ? {
+              ...item,
+              ktvYouTubeId: response
+            }
+            : item
+        ));
+      }
+
+      setInstrumental(!instrumental);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get instrumental version';
+      setError(errorMessage);
+      setInstrumental(false); // Revert toggle if error
+    }
+
+  };
 
   const lrcTimestamps = useMemo(() => {
     const timestamps: number[] = [];
@@ -145,7 +188,7 @@ const SongPlayerPage: React.FC = () => {
 
             setQueue(prevQueue => prevQueue.map(queueItem =>
               queueItem.queueId === nextItem.queueId
-                ? { 
+                ? {
                   ...queueItem,
                   title: response.title || nextItem.title,
                   artist: response.artist || nextItem.artist,
@@ -212,6 +255,7 @@ const SongPlayerPage: React.FC = () => {
 
   const handleAddToNextAndPlay = async () => {
     await handleQueueAddition(true);
+    setInstrumental(false); // Set KTV to unselected if new song
   };
 
   const handleAddToEnd = async () => {
@@ -343,13 +387,115 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
+  const handlePlayFromQueue = async (item: QueueItem) => {
+    setError('');
+
+    try {
+      if (item.status === 'pending') {
+        item.status = 'loading';
+      }
+      setQueue(prevQueue => prevQueue.map(queueItem =>
+        queueItem.queueId === item.queueId
+          ? { ...queueItem, apiRequested: true, error: undefined }
+          : queueItem
+      ));
+
+      const response = await songApi.apiSongsMatchPost({
+        fullSongRequestDto: {
+          title: item.title,
+          artist: item.artist,
+          youTubeId: item.youTubeId || '',
+          lyrics: item.lyrics || ''
+        }
+      });
+      if (item.youTubeId) {
+        response.youTubeId = item.youTubeId;
+      }
+
+      setQueue(prevQueue => prevQueue.map(queueItem =>
+        queueItem.queueId === item.queueId
+          ? {
+            ...queueItem,
+            title: response.title || item.title,
+            artist: response.artist || item.artist,
+            lyrics: item.lyrics || '',
+            status: 'loaded' as const,
+            imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+          }
+          : queueItem
+      ));
+
+      setCurrentPlayingId(item.queueId);
+      item.status = 'loaded';
+      setSong(response);
+      setInstrumental(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
+      setQueue(prevQueue => prevQueue.map(queueItem =>
+        queueItem.queueId === item.queueId
+          ? { ...queueItem, error: errorMessage }
+          : queueItem
+      ));
+
+      setCurrentPlayingId(item.queueId);
+      setSong({
+        title: item.title,
+        artist: item.artist,
+        youTubeId: item.youTubeId || '',
+        lrcLyrics: '',
+        lrcRomanizedLyrics: '',
+        lrcTranslatedLyrics: ''
+      });
+    }
+  };
+
+  const [isFirst, setIsFirst] = useState(true);
+  const [isLast, setIsLast] = useState(true);
+
+  // Update first/last status when queue or currentPlayingId changes
+  useEffect(() => {
+    if (queue.length === 0) {
+      setIsFirst(true);
+      setIsLast(true);
+      return;
+    }
+
+    const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
+    setIsFirst(currentIndex <= 0);
+    setIsLast(currentIndex >= queue.length - 1);
+  }, [queue, currentPlayingId]);
+
+  const handleTrackNavigation = (direction: 'prev' | 'next') => {
+    if (queue.length === 0) { return; }
+
+    const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
+    if (currentIndex === -1) { return; }
+
+    let newIndex;
+    if (direction === 'prev') {
+      newIndex = Math.max(0, currentIndex - 1);
+    } else {
+      newIndex = Math.min(queue.length - 1, currentIndex + 1);
+    }
+
+    const newItem = queue[newIndex];
+
+    handlePlayFromQueue(newItem);
+
+    // Reset KTV mode when changing tracks
+    setInstrumental(false);
+  };
+
+  const handlePrevTrack = () => handleTrackNavigation('prev');
+  const handleNextTrack = () => handleTrackNavigation('next');
+
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
-        <Typography variant="h4" className="song-title" align="center">
+        <Typography variant="h4" className="song-title" align="center" fontWeight="bold">
           {song.title}
         </Typography>
-        <Typography variant="h6" className="song-title" align="center">
+        <Typography variant="h6" className="song-title" align="center" fontWeight="bold">
           {song.artist}
         </Typography>
         {showQuizButton && (
@@ -363,32 +509,76 @@ const SongPlayerPage: React.FC = () => {
             </Button>
           </Box>
         )}
-        <Grid container className="song-player-content" spacing={10} height={'480px'} display={'flex'}>
+        <Grid container className="song-player-content">
           {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
-          <Grid flex={'1'} alignContent={'center'} className='grid-parent'>
-            <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={updatePlayerTime} />
-            <Box mt={2} px={2}>
-              <Typography variant="body2" gutterBottom className='lrc-offset-text'>
-                Lyrics Sync Adjustment: {lyricsOffset > 0 ? `+${lyricsOffset.toFixed(1)}s` : `${lyricsOffset.toFixed(1)}s`}
-              </Typography>
-              <Slider
-                value={lyricsOffset}
-                onChange={(_, value) => setLyricsOffset(value as number)}
-                min={-5}
-                max={5}
-                step={0.1}
-                valueLabelDisplay="auto"
-                valueLabelFormat={(value) => `${value > 0 ? '+' : ''}${value}s`}
-                marks={[
-                  { value: -5, label: '-5s' },
-                  { value: 0, label: '0' },
-                  { value: 5, label: '+5s' },
-                ]}
-              />
-            </Box>
+          <Grid size={6} alignContent={'center'} className='grid-parent'>
+            <YouTubePlayer
+              videoId={instrumental && currentQueueItem?.ktvYouTubeId ? currentQueueItem.ktvYouTubeId : song.youTubeId ?? ''}
+              onReady={(playerInstance) => {
+                updatePlayerTime(playerInstance);
+                // Seek to last known timestamp when player is ready
+                if (lastTimestamp > 0) {
+                  playerInstance.seekTo(lastTimestamp, true);
+                }
+              }}
+              key={instrumental ? 'ktv' : 'regular'} // Force re-render when switching
+            />
+            <Grid container spacing={2} className="controls-grid">
+              <Grid size={1} alignContent={'center'}>
+                <ToggleButton
+                  value="check"
+                  selected={instrumental}
+                  onChange={handleKTVToggle}
+                  className="ktv-toggle"
+                >
+                  KTV
+                </ToggleButton>
+              </Grid>
+              <Grid size={1} alignContent={'center'}>
+                <IconButton
+                  className="queue-nav-button"
+                  onClick={handlePrevTrack}
+                  disabled={isFirst}
+                  size="large"
+                >
+                  <SkipPreviousIcon />
+                </IconButton>
+              </Grid>
+              <Grid size={1} alignContent={'center'}>
+                <IconButton
+                  className="queue-nav-button"
+                  onClick={handleNextTrack}
+                  disabled={isLast}
+                  size="large"
+                >
+                  <SkipNextIcon />
+                </IconButton>
+              </Grid>
+              <Grid size={9}>
+                <Box mt={2} px={2}>
+                  <Typography variant="body2" gutterBottom className='lrc-offset-text' align="center">
+                    Lyrics Time Offset: {lyricsOffset > 0 ? `+${lyricsOffset.toFixed(1)}s` : `${lyricsOffset.toFixed(1)}s`}
+                  </Typography>
+                  <Slider
+                    value={lyricsOffset}
+                    onChange={(_, value) => setLyricsOffset(value as number)}
+                    min={-5}
+                    max={5}
+                    step={0.1}
+                    valueLabelDisplay="auto"
+                    valueLabelFormat={(value) => `${value > 0 ? '+' : ''}${value}s`}
+                    marks={[
+                      { value: -5, label: '-5s' },
+                      { value: 0, label: '0' },
+                      { value: 5, label: '+5s' },
+                    ]}
+                  />
+                </Box>
+              </Grid>
+            </Grid>
           </Grid>
           {/* Lyrics Column */}
-          <Grid className='grid-parent'>
+          <Grid size={6} className='grid-parent'>
             <Box className='tabs-grid-parent'>
               <Tabs value={selectedTab} onChange={handleTabChange} aria-label="lyric-tabs" variant="fullWidth">
                 <Tab label="Original Lyrics" />
@@ -410,15 +600,6 @@ const SongPlayerPage: React.FC = () => {
               />
             </Box>
           </Grid>
-          {/* Queue Column */}
-          <Grid className="queue-parent">
-            <QueueComponent
-              queue={queue}
-              currentPlayingId={currentPlayingId}
-              setQueue={setQueue}
-              setCurrentPlayingId={setCurrentPlayingId}
-            />
-          </Grid>
         </Grid>
         {error && (
           <Box mt={4}>
@@ -427,132 +608,144 @@ const SongPlayerPage: React.FC = () => {
             </Alert>
           </Box>
         )}
+        <Grid container spacing={3} className="bottom-grid">
+          <Grid size={8}>
+            <Paper elevation={3} className="search-section">
+              <Typography variant="h5" className="section-title">
+                Add a Song to the Queue
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2} flexGrow={1}>
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="skeleton-input" variant="rectangular" />
+                      <Skeleton className="skeleton-input" variant="rectangular" />
+                      <Skeleton className="skeleton-input" variant="rectangular" />
+                      <Skeleton className="skeleton-input" variant="rectangular" />
+                    </>
+                  ) : (
+                    <>
+                      <TextField
+                        label="Song Name"
+                        variant="filled"
+                        value={songName}
+                        onKeyDown={handleKeyDown}
+                        onChange={(e) => setSongName(e.target.value)}
+                        className="search-input"
+                        fullWidth
+                      />
+                      <TextField
+                        label="Artist Name"
+                        variant="filled"
+                        value={artistName}
+                        onKeyDown={handleKeyDown}
+                        onChange={(e) => setArtistName(e.target.value)}
+                        className="search-input"
+                        fullWidth
+                      />
+                      <TextField
+                        label="Lyrics"
+                        variant="filled"
+                        value={lyrics}
+                        onKeyDown={handleKeyDown}
+                        onChange={(e) => setLyrics(e.target.value)}
+                        className="search-input"
+                        fullWidth
+                      />
+                      <TextField
+                        label="YouTube URL"
+                        variant="filled"
+                        value={youtubeUrl}
+                        onKeyDown={handleKeyDown}
+                        onChange={(e) => setYoutubeUrl(e.target.value)}
+                        className="search-input"
+                        fullWidth
+                      />
+                    </>
+                  )}
+                </Box>
+                <Box display="flex" flexDirection="column" gap={1}>
+                  <Tooltip title="Add next and play">
+                    <IconButton
+                      color="primary"
+                      onClick={handleAddToNextAndPlay}
+                      disabled={isLoading}
+                      className="queue-button"
+                      size="large"
+                    >
+                      <PlaylistPlayIcon fontSize="inherit" />
+                    </IconButton>
+                  </Tooltip>
 
+                  <Tooltip title="Add to end of queue">
+                    <IconButton
+                      color="secondary"
+                      onClick={handleAddToEnd}
+                      disabled={isLoading}
+                      className="queue-button"
+                      size="large"
+                    >
+                      <PlaylistAddIcon fontSize="inherit" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
+            </Paper>
+
+            {/* YouTube Playlist Section */}
+            <Paper elevation={3} className="playlist-section">
+              <Typography variant="h5" className="section-title">
+                Load a YouTube Playlist
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Box flexGrow={1}>
+                  {playlistLoading ? (
+                    <Skeleton
+                      className="skeleton-input"
+                      variant="rectangular"
+                      height={56}
+                      width="100%"
+                    />
+                  ) : (
+                    <TextField
+                      fullWidth
+                      label="Enter YouTube Playlist URL"
+                      variant="filled"
+                      value={playlistUrl}
+                      disabled={isLoading || playlistLoading}
+                      onKeyDown={handleKeyDown}
+                      onChange={(e) => setPlaylistUrl(e.target.value)}
+                      className="search-input"
+                    />
+                  )}
+                </Box>
+                <Box display="flex" flexDirection="column" gap={1}>
+                  <Tooltip title="Add playlist to queue">
+                    <IconButton
+                      color="primary"
+                      onClick={handleQueueAdditionPlaylist}
+                      disabled={isLoading || playlistLoading}
+                      className="queue-button"
+                      size="large"
+                    >
+                      <PlaylistAddIcon fontSize="inherit" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+          <Grid size={4} className="queue-grid">
+            <QueueComponent
+              queue={queue}
+              currentPlayingId={currentPlayingId}
+              setQueue={setQueue}
+              setCurrentPlayingId={setCurrentPlayingId}
+              handlePlayFromQueue={handlePlayFromQueue}
+            />
+          </Grid>
+        </Grid>
         {/* Search Section */}
-        <Paper elevation={3} className="search-section">
-          <Typography variant="h5" className="section-title">
-            Add a Song to the Queue
-          </Typography>
-          <Box display="flex" alignItems="center" gap={2}>
-            <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2} flexGrow={1}>
-              {isLoading ? (
-                <>
-                  <Skeleton className="skeleton-input" variant="rectangular" />
-                  <Skeleton className="skeleton-input" variant="rectangular" />
-                  <Skeleton className="skeleton-input" variant="rectangular" />
-                  <Skeleton className="skeleton-input" variant="rectangular" />
-                </>
-              ) : (
-                <>
-                  <TextField
-                    label="Song Name"
-                    variant="filled"
-                    value={songName}
-                    onKeyDown={handleKeyDown}
-                    onChange={(e) => setSongName(e.target.value)}
-                    className="search-input"
-                    fullWidth
-                  />
-                  <TextField
-                    label="Artist Name"
-                    variant="filled"
-                    value={artistName}
-                    onKeyDown={handleKeyDown}
-                    onChange={(e) => setArtistName(e.target.value)}
-                    className="search-input"
-                    fullWidth
-                  />
-                  <TextField
-                    label="Lyrics"
-                    variant="filled"
-                    value={lyrics}
-                    onKeyDown={handleKeyDown}
-                    onChange={(e) => setLyrics(e.target.value)}
-                    className="search-input"
-                    fullWidth
-                  />
-                  <TextField
-                    label="YouTube URL"
-                    variant="filled"
-                    value={youtubeUrl}
-                    onKeyDown={handleKeyDown}
-                    onChange={(e) => setYoutubeUrl(e.target.value)}
-                    className="search-input"
-                    fullWidth
-                  />
-                </>
-              )}
-            </Box>
-            <Box display="flex" flexDirection="column" gap={1}>
-              <Tooltip title="Add next and play">
-                <IconButton
-                  color="primary"
-                  onClick={handleAddToNextAndPlay}
-                  disabled={isLoading}
-                  className="queue-button"
-                  size="large"
-                >
-                  <PlaylistPlayIcon fontSize="inherit" />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="Add to end of queue">
-                <IconButton
-                  color="secondary"
-                  onClick={handleAddToEnd}
-                  disabled={isLoading}
-                  className="queue-button"
-                  size="large"
-                >
-                  <PlaylistAddIcon fontSize="inherit" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Box>
-        </Paper>
-
-        {/* YouTube Playlist Section */}
-        <Paper elevation={3} className="playlist-section">
-          <Typography variant="h5" className="section-title">
-            Load a YouTube Playlist
-          </Typography>
-          <Box display="flex" alignItems="center" gap={2}>
-            <Box flexGrow={1}>
-              {playlistLoading ? (
-                <Skeleton
-                  className="skeleton-input"
-                  variant="rectangular"
-                  height={56}
-                  width="100%"
-                />
-              ) : (
-                <TextField
-                  fullWidth
-                  label="Enter YouTube Playlist URL"
-                  variant="filled"
-                  value={playlistUrl}
-                  disabled={isLoading || playlistLoading}
-                  onKeyDown={handleKeyDown}
-                  onChange={(e) => setPlaylistUrl(e.target.value)}
-                  className="search-input"
-                />
-              )}
-            </Box>
-            <Box display="flex" flexDirection="column" gap={1}>
-              <Tooltip title="Add playlist to queue">
-                <IconButton
-                  color="primary"
-                  onClick={handleQueueAdditionPlaylist}
-                  disabled={isLoading || playlistLoading}
-                  className="queue-button"
-                  size="large"
-                >
-                  <PlaylistAddIcon fontSize="inherit" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Box>
-        </Paper>
       </Container>
     </div>
   );

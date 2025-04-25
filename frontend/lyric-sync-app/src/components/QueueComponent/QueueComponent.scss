@@ -9,8 +9,7 @@
   flex-direction: column;
   background: $gradient !important;
   width: 100%;
-  height: 100%;
-  position: relative; // Needed for absolute positioning of children
+  height: 380px;
   
   .queue-title {
     padding: 16px;
