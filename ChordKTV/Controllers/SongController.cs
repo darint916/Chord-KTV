@@ -311,7 +311,7 @@ public class SongController : Controller
     }
 
     [HttpPut("songs/{songId}/video/instrumental")]
-    public async Task<IActionResult> PutSongVideoInstrumental(string songId, [FromBody] bool isInstrumental)
+    public async Task<IActionResult> PutSongVideoInstrumental(string songId)
     {
         try
         {
