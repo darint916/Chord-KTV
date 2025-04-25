@@ -221,7 +221,7 @@
 .controls-grid {
   justify-content: center;
   height: 70px;
-  padding-top: 0px;
+  padding-top: 25px;
   padding-left: 7px;
   .ktv-toggle {
     display: flex;
@@ -245,6 +245,8 @@
   padding-right: 10px;
   padding-bottom: 0px;
   height: 10px;
+  padding-top: 5px;
+  display: flex;
 }
 .slider-grid-parent {
   height: 10px;
@@ -259,3 +261,12 @@
   padding-right: 0px;
 }
 
+.lyric-set-offset {
+  display: flex;
+  padding-left: 40px;
+  .MuiTextField-root {
+    .MuiInputLabel-root {
+      font-size: 0.75rem;
+    }
+  }
+}

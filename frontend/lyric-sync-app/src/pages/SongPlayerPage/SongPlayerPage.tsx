@@ -482,10 +482,10 @@ const SongPlayerPage: React.FC = () => {
   }, [queue, currentPlayingId]);
 
   const handleTrackNavigation = (direction: 'prev' | 'next') => {
-    if (queue.length === 0) {return;}
+    if (queue.length === 0) { return; }
 
     const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
-    if (currentIndex === -1) {return;}
+    if (currentIndex === -1) { return; }
 
     let newIndex;
     if (direction === 'prev') {
@@ -581,7 +581,7 @@ const SongPlayerPage: React.FC = () => {
                   <SkipNextIcon />
                 </IconButton>
               </Grid>
-              <Grid size={9} className='slider-grid-parent'>
+              <Grid size={8} className='slider-grid-parent'>
                 <Grid container spacing={0} alignItems="center" justifyContent="center" className='slider-grid'>
                   <Grid size={2}>
                     <CompactInput
@@ -605,7 +605,7 @@ const SongPlayerPage: React.FC = () => {
                       }}
                     />
                   </Grid>
-                  <Grid size={9} className='slider'>
+                  <Grid size={6} className='slider'>
                     <Slider
                       value={lyricsOffset}
                       onChange={(_, value) => setLyricsOffset(value as number)}
@@ -617,21 +617,6 @@ const SongPlayerPage: React.FC = () => {
                       valueLabelFormat={(value) => `${value > 0 ? '+' : ''}${value}s`}
                     />
                   </Grid>
-                  {/* <Grid size={4}>
-                    <TextField
-                      label="Lyric Offset"
-                      type="number"
-                      size="small"
-                      value={lyricsOffset}
-                      onChange={(e) => {
-                        const newValue = Number(e.target.value);
-                        if (newValue >= minLyricOffset && newValue <= maxLyricOffset) {
-                          setLyricsOffset(newValue);
-                        }
-                      }}
-                      className='slider-boxes'
-                    />
-                  </Grid> */}
                   <Grid size={1} className="slider-label-box">
                     <CompactInput
                       value={maxLyricOffset}
@@ -651,6 +636,24 @@ const SongPlayerPage: React.FC = () => {
                         min: 0,
                         max: 99,
                         type: 'number',
+                      }}
+                    />
+                  </Grid>
+                  <Grid size={3} className="lyric-set-offset">
+                    <TextField
+                      label="Lyric Offset"
+                      type="number"
+                      size="small"
+                      value={lyricsOffset}
+                      onChange={(e) => {
+                        const newValue = Number(e.target.value);
+                        if (newValue >= minLyricOffset && newValue <= maxLyricOffset) {
+                          setLyricsOffset(newValue);
+                        }
+                      }}
+                      className='slider-boxes'
+                      inputProps={{
+                        style: { textAlign: 'center' },
                       }}
                     />
                   </Grid>
