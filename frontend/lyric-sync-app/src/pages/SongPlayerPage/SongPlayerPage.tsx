@@ -76,13 +76,13 @@ const SongPlayerPage: React.FC = () => {
   }, [queue, currentPlayingId]);
 
   const handleKTVToggle = async () => {
-    if (!song.id) return; // No song ID available
+    if (!song.id) {return;} // No song ID available
 
     try {
       if (!instrumental && !currentQueueItem?.ktvYouTubeId) {
         const response = await songApi.apiSongsSongIdVideoInstrumentalPut({
           songId: song.id
-        })
+        });
 
         // Update the current song in the queue with the instrumental ID
         setQueue(prevQueue => prevQueue.map(item =>
@@ -102,7 +102,7 @@ const SongPlayerPage: React.FC = () => {
       setInstrumental(false); // Revert toggle if error
     }
 
-  }
+  };
 
   const lrcTimestamps = useMemo(() => {
     const timestamps: number[] = [];
