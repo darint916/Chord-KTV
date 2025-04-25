@@ -1,0 +1,277 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, Box, CircularProgress, Container, ThemeProvider, Typography, } from '@mui/material';
+import Grid from '@mui/material/Grid2';
+import { useAuth } from '../../contexts/AuthTypes';
+import { userActivityApi } from '../../api/apiClient';
+import KPIStrip from '../../components/UserStats/KPIStrip';
+import FavoriteSongsCarousel from '../../components/UserStats/FavoriteSongsCarousel';
+import FavoritePlaylistsCarousel from '../../components/UserStats/FavoritePlaylistsCarousel';
+import TopSongsChart from '../../components/UserStats/TopSongsChart';
+import TopPlaylists from '../../components/UserStats/TopPlaylists';
+import QuizResultsSection from '../../components/UserStats/QuizResultsSection';
+import LearnedWords from '../../components/UserStats/LearnedWords';
+import dashboardTheme from '../../theme/dashboardTheme';
+import { MediaItem } from '../../components/UserStats/MediaCarousel';
+import { getTopAggregatedItems, safeFetch, getMergedQuizResults } from './statsHelpers';
+
+/* DTOs */
+interface SongActivityDto {
+  songId: string;
+  title: string;
+  coverUrl: string;
+  isFavorite: boolean;
+  datesPlayed: string[];
+}
+
+interface PlaylistActivityDto {
+  playlistUrl: string;
+  title: string;
+  coverUrl: string;
+  isFavorite: boolean;
+  datesPlayed: string[];
+}
+
+interface UserQuizResultDto {
+  quizId: string;
+  score: number;
+  language: string;
+  dateCompleted?: string | null;
+}
+
+interface UserHandwritingResultDto {
+  wordTested: string;
+  language: string;
+  score: number;
+  dateCompleted?: string | null;
+}
+
+interface LearnedWordDto {
+  word: string;
+  language: string;
+  dateLearned?: string | null;
+}
+
+const UserStatsPage: React.FC = () => {
+  const { user, logout } = useAuth();
+
+  /* state */
+  const [songs, setSongs] = useState<SongActivityDto[]>([]);
+  const [playlists, setPlaylists] = useState<PlaylistActivityDto[]>([]);
+  const [favoriteSongs, setFavoriteSongs] = useState<SongActivityDto[]>([]);
+  const [favoritePlaylists, setFavoritePlaylists] = useState<PlaylistActivityDto[]>([]);
+  const [quizzes, setQuizzes] = useState<UserQuizResultDto[]>([]);
+  const [handwriting, setHandwriting] = useState<UserHandwritingResultDto[]>([]);
+  const [words, setWords] = useState<LearnedWordDto[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /* data fetch */
+  useEffect(() => {
+    if (!user) return;
+    const ctrl = new AbortController();
+    (async () => {
+      try {
+        setLoading(true);
+        const [s, p, favS, favP, q, w, h] = await Promise.all([
+          safeFetch(userActivityApi.apiUserActivitySongsGet({ signal: ctrl.signal }), logout),
+          safeFetch(userActivityApi.apiUserActivityPlaylistsGet({ signal: ctrl.signal }), logout),
+          safeFetch(userActivityApi.apiUserActivityFavoriteSongsGet({ signal: ctrl.signal }), logout),
+          safeFetch(userActivityApi.apiUserActivityFavoritePlaylistsGet({ signal: ctrl.signal }), logout),
+          safeFetch(userActivityApi.apiUserActivityQuizzesGet({ signal: ctrl.signal }), logout),
+          safeFetch(userActivityApi.apiUserActivityLearnedWordsGet({ signal: ctrl.signal }), logout),
+          safeFetch(userActivityApi.apiUserActivityHandwritingGet({ signal: ctrl.signal }), logout),
+        ]);
+        setSongs(s);
+        setPlaylists(p);
+        setFavoriteSongs(favS);
+        setFavoritePlaylists(favP);
+        setQuizzes(q);
+        setWords(w);
+        setHandwriting(h);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        setError(msg);
+      } finally {
+        setLoading(false);
+      }
+    })();
+    return () => ctrl.abort();
+  }, [user]);
+
+  /* KPI numbers */
+  const kpis = useMemo(() => {
+    const totalPlays = songs.reduce((acc, s) => acc + s.datesPlayed.length, 0);
+    return [
+      { label: 'Unique Songs', value: new Set(songs.map((s) => s.songId)).size },
+      { label: 'Song Plays', value: totalPlays },
+      { label: 'Playlists', value: playlists.length },
+      { label: 'Romanization Quizzes', value: quizzes.length },
+      { label: 'Handwriting Attempts', value: handwriting.length },
+      { label: 'Words Learned', value: words.length },
+    ];
+  }, [songs, playlists, quizzes, words, handwriting]);
+
+  /* favourite carousels */
+  // Define fake image arrays for songs and playlists
+  const fakeImages = [
+    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F2203120764ee7832f4868d1424e0afc4.1000x1000x1.png",
+    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F0ece8d46f100b7f4ab2d1680e0b501ca.1000x1000x1.png",
+    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F96fab843dc59f3be9ec6e577de8552fa.1000x1000x1.png",
+    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2Fe91d26e761bbb91681df74d537c320f3.1000x1000x1.png",
+    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F439f4edc54e1cf83079026369628cf39.1000x1000x1.png",
+    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F3e947d45997532b243ccd37bde484492.800x800x1.png",
+    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2Fb09caf77e18e2a94510f2f95bfbc6752.1000x1000x1.png",
+  ];
+
+  // Compute carousel data for favorite songs using the dedicated favoriteSongs state
+  const favSongs: MediaItem[] = useMemo(
+    () =>
+      favoriteSongs.map(({ songId, datesPlayed }, index) => ({
+        id: songId,
+        title: songId, // use the song id as the title
+        coverUrl: fakeImages[index % fakeImages.length], // assign a fake image
+        plays: datesPlayed.length,
+      })),
+    [favoriteSongs],
+  );
+
+  // Compute carousel data for favorite playlists using the dedicated favoritePlaylists state
+  const favPlaylists: MediaItem[] = useMemo(
+    () =>
+      favoritePlaylists.map(({ playlistUrl, datesPlayed }, index) => ({
+        id: playlistUrl,
+        title: playlistUrl, // use the playlist url as the title
+        coverUrl: fakeImages[index % fakeImages.length], // assign a fake image
+        plays: datesPlayed.length,
+      })),
+    [favoritePlaylists],
+  );
+
+  /* top-3 lists */
+  const topSongs = useMemo(() => {
+    return getTopAggregatedItems(songs, (s) => s.songId, (s) => s.datesPlayed.length, 5)
+      .map(({ id, plays }) => {
+        const song = songs.find(s => s.songId === id);
+        return { id, title: song?.title || id, plays };
+      });
+  }, [songs]);
+
+  const topPls = useMemo(() => {
+    return getTopAggregatedItems(playlists, (p) => p.playlistUrl, (p) => p.datesPlayed.length, 5);
+  }, [playlists]);
+
+  const recentWords = useMemo(
+    () =>
+      [...words]
+        .sort(
+          (a, b) =>
+            new Date(b.dateLearned ?? 0).getTime() -
+            new Date(a.dateLearned ?? 0).getTime(),
+        )
+        .slice(0, 50),
+    [words],
+  );
+
+  const quizzesForDisplay = useMemo(
+    () => getMergedQuizResults(quizzes, handwriting),
+    [quizzes, handwriting]
+  );
+
+  /* guards */
+  if (!user)
+    return (
+      <Box mt={6} textAlign="center">
+        <Typography sx={{ color: 'black' }}>Please log in to view your dashboard.</Typography>
+      </Box>
+    );
+  if (loading)
+    return (
+      <Box display="flex" justifyContent="center" mt={6}>
+        <CircularProgress />
+      </Box>
+    );
+  if (error)
+    return (
+      <Alert severity="error" sx={{ mt: 4 }}>
+        {error}
+      </Alert>
+    );
+
+  /* render */
+  return (
+    <ThemeProvider theme={dashboardTheme}>
+      <div className="user-stats-page" style={{ paddingBottom: '64px' }}>
+
+        <Container maxWidth="xl" sx={{ mt: 4 }}>
+
+          {/* Header for Usage Statistics */}
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 'bold',
+              fontFamily: '"Montserrat", sans-serif',
+              textAlign: 'center',
+              mb: 2,
+            }}
+          >
+            Usage Stats
+          </Typography>
+
+          {/* KPI strip */}
+          <KPIStrip data={kpis} />
+
+          {/* Spacer between the KPI strip and the carousels */}
+          <Box sx={{ mb: 8 }} /> 
+
+          {/* two carousels side-by-side */}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              gap: 3,  // gap between carousels
+              mb: 4,
+              width: '100%', // ensure full width
+            }}
+          >
+            <Box 
+              sx={{ 
+                width: '50%', // exactly half the container
+                minWidth: 0,  // allows flex child to shrink below content size
+              }}
+            >
+              <FavoriteSongsCarousel songs={favSongs} />
+            </Box>
+            <Box 
+              sx={{ 
+                width: '50%', // exactly half the container
+                minWidth: 0,  // allows flex child to shrink below content size
+              }}
+            >
+              <FavoritePlaylistsCarousel playlists={favPlaylists} />
+            </Box>
+          </Box>
+
+          {/* grid sections */}
+          <Grid container spacing={3}>
+            <Grid xs={12} lg={4}>
+              <QuizResultsSection quizzes={quizzesForDisplay} />
+            </Grid>
+            <Grid xs={12} lg={8}>
+              <TopSongsChart data={topSongs} />
+            </Grid>
+            <Grid xs={12} lg={8}>
+              <TopPlaylists data={topPls} />
+            </Grid>
+            <Grid xs={12} lg={4}>
+              <LearnedWords recent={recentWords} />
+            </Grid>
+          </Grid>
+
+          
+
+        </Container>
+      </div>
+    </ThemeProvider>
+  );
+};
+
+export default UserStatsPage;

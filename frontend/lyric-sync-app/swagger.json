@@ -617,6 +617,188 @@
           }
         }
       }
+    },
+    "/api/user/activity/songs": {
+      "get": {
+        "tags": [
+          "User Activity"
+        ],
+        "summary": "Get user's song activity",
+        "responses": {
+          "200": {
+            "description": "List of user song activities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSongActivityDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/user/activity/playlists": {
+      "get": {
+        "tags": [
+          "User Activity"
+        ],
+        "summary": "Get user's playlist activity",
+        "responses": {
+          "200": {
+            "description": "List of user playlist activities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserPlaylistActivityDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/user/activity/quizzes": {
+      "get": {
+        "tags": [
+          "User Activity"
+        ],
+        "summary": "Get user's quiz results",
+        "responses": {
+          "200": {
+            "description": "List of user quiz results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserQuizResultDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/user/activity/handwriting": {
+      "get": {
+        "tags": [
+          "User Activity"
+        ],
+        "summary": "Get user's handwriting results",
+        "responses": {
+          "200": {
+            "description": "List of user handwriting results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserHandwritingResultDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/user/activity/learned-words": {
+      "get": {
+        "tags": [
+          "User Activity"
+        ],
+        "summary": "Get user's learned words",
+        "responses": {
+          "200": {
+            "description": "List of learned words",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LearnedWordDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/user/activity/favorite/songs": {
+      "get": {
+        "tags": [
+          "User Activity"
+        ],
+        "summary": "Get user's favorite songs",
+        "responses": {
+          "200": {
+            "description": "List of user favorite songs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSongActivityDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/user/activity/favorite/playlists": {
+      "get": {
+        "tags": [
+          "User Activity"
+        ],
+        "summary": "Get user's favorite playlists",
+        "responses": {
+          "200": {
+            "description": "List of user favorite playlists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserPlaylistActivityDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -848,6 +1030,114 @@
             "format": "double"
           }
         },
+        "additionalProperties": false
+      },
+      "UserSongActivityDto": {
+        "type": "object",
+        "description": "DTO for user's song activity. Define properties as per backend specification.",
+        "additionalProperties": true
+      },
+      "UserPlaylistActivityDto": {
+        "type": "object",
+        "description": "DTO for user's playlist activity. Define properties as per backend specification.",
+        "additionalProperties": true
+      },
+      "UserQuizResultDto": {
+        "type": "object",
+        "properties": {
+          "quizId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "score": {
+            "type": "number",
+            "format": "float"
+          },
+          "language": {
+            "$ref": "#/components/schemas/LanguageCode"
+          },
+          "dateCompleted": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "correctAnswers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserHandwritingResultDto": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "$ref": "#/components/schemas/LanguageCode"
+          },
+          "score": {
+            "type": "number",
+            "format": "float"
+          },
+          "wordTested": {
+            "type": "string"
+          },
+          "dateCompleted": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LearnedWordDto": {
+        "type": "object",
+        "properties": {
+          "word": {
+            "type": "string"
+          },
+          "language": {
+            "$ref": "#/components/schemas/LanguageCode"
+          },
+          "dateLearned": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserDto"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user",
+          "token"
+        ],
         "additionalProperties": false
       },
       "LanguageCode": {
