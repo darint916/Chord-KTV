@@ -546,7 +546,7 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiSongsSongIdVideoInstrumentalPutRaw(requestParameters: ApiSongsSongIdVideoInstrumentalPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiSongsSongIdVideoInstrumentalPutRaw(requestParameters: ApiSongsSongIdVideoInstrumentalPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
         if (requestParameters['songId'] == null) {
             throw new runtime.RequiredError(
                 'songId',
@@ -569,13 +569,18 @@ export class SongApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<string>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
     }
 
     /**
      */
-    async apiSongsSongIdVideoInstrumentalPut(requestParameters: ApiSongsSongIdVideoInstrumentalPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiSongsSongIdVideoInstrumentalPutRaw(requestParameters, initOverrides);
+    async apiSongsSongIdVideoInstrumentalPut(requestParameters: ApiSongsSongIdVideoInstrumentalPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+        const response = await this.apiSongsSongIdVideoInstrumentalPutRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
