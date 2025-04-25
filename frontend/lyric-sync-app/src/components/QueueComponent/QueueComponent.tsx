@@ -14,6 +14,7 @@ interface QueueComponentProps {
   currentPlayingId: string | null;
   setQueue: React.Dispatch<React.SetStateAction<QueueItem[]>>;
   setCurrentPlayingId: React.Dispatch<React.SetStateAction<string | null>>;
+  setInstrumental: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const QueueComponent: React.FC<QueueComponentProps> = ({
@@ -21,6 +22,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
   currentPlayingId,
   setQueue,
   setCurrentPlayingId,
+  setInstrumental
 }) => {
   const [error, setError] = useState('');
   const { setSong } = useSong();
@@ -109,6 +111,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
         setCurrentPlayingId(item.queueId);
         setSong(playbackData);
       }
+      setInstrumental(false);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
       setQueue(prevQueue => prevQueue.map(queueItem =>

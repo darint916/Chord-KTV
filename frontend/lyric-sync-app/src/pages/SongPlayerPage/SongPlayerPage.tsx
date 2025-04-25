@@ -253,6 +253,7 @@ const SongPlayerPage: React.FC = () => {
 
   const handleAddToNextAndPlay = async () => {
     await handleQueueAddition(true);
+    setInstrumental(false); // Set KTV to unselected if new song
   };
 
   const handleAddToEnd = async () => {
@@ -649,6 +650,7 @@ const SongPlayerPage: React.FC = () => {
               currentPlayingId={currentPlayingId}
               setQueue={setQueue}
               setCurrentPlayingId={setCurrentPlayingId}
+              setInstrumental={setInstrumental}
             />
           </Grid>
         </Grid>
