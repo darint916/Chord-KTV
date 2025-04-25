@@ -21,7 +21,7 @@
       height: 480px;
       gap: 20px;
       width: 100%;
-      
+
       .song-title {
         color: $text-primary;
         font-weight: bold;
@@ -130,20 +130,23 @@
         &.MuiSkeleton-root {
           transform: scale(1);
           // Gradient for shimmer loading, OK to hardcode so using rgba
-          background: linear-gradient(
-            90deg,
-            rgba(0, 0, 0, 0.08) 0%,
-            rgba(0, 0, 0, 0.15) 50%,
-            rgba(0, 0, 0, 0.08) 100%
-          );
+          background: linear-gradient(90deg,
+              rgba(0, 0, 0, 0.08) 0%,
+              rgba(0, 0, 0, 0.15) 50%,
+              rgba(0, 0, 0, 0.08) 100%);
           background-size: 200% 100%;
           animation: shimmer 1.5s infinite;
         }
       }
 
       @keyframes shimmer {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
+        0% {
+          background-position: 200% 0;
+        }
+
+        100% {
+          background-position: -200% 0;
+        }
       }
 
       .queue-button {
@@ -206,10 +209,30 @@
 
 .bottom-grid {
   padding-top: 30px;
+  padding-bottom: 30px;
+  display: flex;
+
+  .queue-grid {
+    display: flex;
+  }
 }
 
-// .controls-grid {
-//   justify-content: center;
-// }
+.controls-grid {
+  justify-content: center;
 
-.ktv-toggle {}
+  .ktv-toggle {
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+
+    &.Mui-selected {
+      background-color: rgba(76, 175, 80, 0.6);
+      font-weight: bold;
+      color: white;
+
+      &:hover {
+        background-color: rgba(56, 173, 60, 0.5);
+      }
+    }
+  }
+}

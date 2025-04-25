@@ -421,24 +421,6 @@ const SongPlayerPage: React.FC = () => {
                   // onChange={() => setInstrumental(!instrumental)}
                   onChange={handleKTVToggle}
                   className="ktv-toggle"
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    '&.Mui-selected': {
-                      // green with 60% opacity
-                      bgcolor: 'rgba(76, 175, 80, 0.6)',
-                      '&:hover': {
-                        // same green a bit more transparent on hover
-                        bgcolor: 'rgba(56, 173, 60, 0.5)',
-                      },
-                      fontWeight: 'bold',
-                      color: 'white',
-                    },
-                    // optional padding tweak
-                    margin: '0 auto',
-                    // px: 2,
-                    // py: 2,
-                  }}
                 >
                   KTV
                 </ToggleButton>
@@ -644,7 +626,7 @@ const SongPlayerPage: React.FC = () => {
               </Box>
             </Paper>
           </Grid>
-          <Grid size={4}>
+          <Grid size={4} className="queue-grid">
             <QueueComponent
               queue={queue}
               currentPlayingId={currentPlayingId}
