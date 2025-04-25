@@ -391,6 +391,127 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
+  const handlePlayFromQueue = async (item: QueueItem) => {
+    setError('');
+
+    try {
+      if (!item.apiRequested) {
+        setQueue(prevQueue => prevQueue.map(queueItem =>
+          queueItem.queueId === item.queueId
+            ? { ...queueItem, apiRequested: true, error: undefined }
+            : queueItem
+        ));
+
+        const response = await songApi.apiSongsMatchPost({
+          fullSongRequestDto: {
+            title: item.title,
+            artist: item.artist,
+            youTubeId: item.youTubeId || '',
+            lyrics: item.lyrics || ''
+          }
+        });
+        if (item.youTubeId) {
+          response.youTubeId = item.youTubeId;
+        }
+        const processedData = {
+          title: response.title,
+          artist: response.artist,
+          youTubeId: response.youTubeId,
+          lrcLyrics: response.lrcLyrics,
+          lrcRomanizedLyrics: response.lrcRomanizedLyrics,
+          lrcTranslatedLyrics: response.lrcTranslatedLyrics,
+          geniusMetaData: response.geniusMetaData,
+          id: response.id
+        };
+
+        setQueue(prevQueue => prevQueue.map(queueItem =>
+          queueItem.queueId === item.queueId
+            ? { ...queueItem, processedData, apiRequested: true }
+            : queueItem
+        ));
+
+        setCurrentPlayingId(item.queueId);
+        setSong(processedData);
+      } else {
+        const playbackData = item.processedData || {
+          title: item.title,
+          artist: item.artist,
+          youTubeId: item.youTubeId || '',
+          lrcLyrics: '',
+          lrcRomanizedLyrics: '',
+          lrcTranslatedLyrics: ''
+        };
+
+        setCurrentPlayingId(item.queueId);
+        setSong(playbackData);
+      }
+      setInstrumental(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
+      setQueue(prevQueue => prevQueue.map(queueItem =>
+        queueItem.queueId === item.queueId
+          ? { ...queueItem, error: errorMessage }
+          : queueItem
+      ));
+
+      setCurrentPlayingId(item.queueId);
+      setSong({
+        title: item.title,
+        artist: item.artist,
+        youTubeId: item.youTubeId || '',
+        lrcLyrics: '',
+        lrcRomanizedLyrics: '',
+        lrcTranslatedLyrics: ''
+      });
+    }
+  };
+
+  const [isFirst, setIsFirst] = useState(true);
+  const [isLast, setIsLast] = useState(true);
+
+  // Update first/last status when queue or currentPlayingId changes
+  useEffect(() => {
+    if (queue.length === 0) {
+      setIsFirst(true);
+      setIsLast(true);
+      return;
+    }
+
+    const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
+    setIsFirst(currentIndex <= 0);
+    setIsLast(currentIndex >= queue.length - 1);
+  }, [queue, currentPlayingId]);
+
+  const handleTrackNavigation = (direction: 'prev' | 'next') => {
+    if (queue.length === 0) {return;}
+
+    const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
+    if (currentIndex === -1) {return;}
+
+    let newIndex;
+    if (direction === 'prev') {
+      newIndex = Math.max(0, currentIndex - 1);
+    } else {
+      newIndex = Math.min(queue.length - 1, currentIndex + 1);
+    }
+
+    const newItem = queue[newIndex];
+    setCurrentPlayingId(newItem.queueId);
+
+    if (newItem.processedData) {
+      setSong(newItem.processedData);
+    }
+    else {
+      handlePlayFromQueue(newItem);
+    }
+
+    // Reset KTV mode when changing tracks
+    setInstrumental(false);
+  };
+
+  const handlePrevTrack = () => handleTrackNavigation('prev');
+  const handleNextTrack = () => handleTrackNavigation('next');
+
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
@@ -430,7 +551,6 @@ const SongPlayerPage: React.FC = () => {
                 <ToggleButton
                   value="check"
                   selected={instrumental}
-                  // onChange={() => setInstrumental(!instrumental)}
                   onChange={handleKTVToggle}
                   className="ktv-toggle"
                 >
@@ -440,8 +560,8 @@ const SongPlayerPage: React.FC = () => {
               <Grid size={1} alignContent={'center'}>
                 <IconButton
                   className="queue-nav-button"
-                  // onClick={handlePrevTrack}
-                  // disabled={isFirst}
+                  onClick={handlePrevTrack}
+                  disabled={isFirst}
                   size="large"
                 >
                   <SkipPreviousIcon />
@@ -450,8 +570,8 @@ const SongPlayerPage: React.FC = () => {
               <Grid size={1} alignContent={'center'}>
                 <IconButton
                   className="queue-nav-button"
-                  // onClick={handleNextTrack}
-                  // disabled={isLast}
+                  onClick={handleNextTrack}
+                  disabled={isLast}
                   size="large"
                 >
                   <SkipNextIcon />
@@ -644,7 +764,7 @@ const SongPlayerPage: React.FC = () => {
               currentPlayingId={currentPlayingId}
               setQueue={setQueue}
               setCurrentPlayingId={setCurrentPlayingId}
-              setInstrumental={setInstrumental}
+              handlePlayFromQueue={handlePlayFromQueue}
             />
           </Grid>
         </Grid>
