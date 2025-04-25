@@ -93,7 +93,6 @@ export interface ApiSongsMatchPostRequest {
 
 export interface ApiSongsSongIdVideoInstrumentalPutRequest {
     songId: string;
-    body?: boolean;
 }
 
 export interface ApiYoutubePlaylistsPlaylistIdGetRequest {
@@ -559,8 +558,6 @@ export class SongApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        headerParameters['Content-Type'] = 'application/json';
-
         if (this.configuration && this.configuration.apiKey) {
             headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // Bearer authentication
         }
@@ -570,7 +567,6 @@ export class SongApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['body'] as any,
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
