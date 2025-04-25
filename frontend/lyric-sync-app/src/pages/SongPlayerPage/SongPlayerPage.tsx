@@ -71,6 +71,39 @@ const SongPlayerPage: React.FC = () => {
 
   const [instrumental, setInstrumental] = useState(false); // Track if instrumental is selected
 
+  const currentQueueItem = useMemo(() => {
+    return queue.find(item => item.queueId === currentPlayingId);
+  }, [queue, currentPlayingId]);
+
+  const handleKTVToggle = async () => {
+    if (!song.id) return; // No song ID available
+
+    try {
+      if (!instrumental && !currentQueueItem?.ktvYouTubeId) {
+        const response = await songApi.apiSongsSongIdVideoInstrumentalPut({
+          songId: song.id
+        })
+
+        // Update the current song in the queue with the instrumental ID
+        setQueue(prevQueue => prevQueue.map(item =>
+          item.queueId === currentPlayingId
+            ? {
+              ...item,
+              ktvYouTubeId: response
+            }
+            : item
+        ));
+      }
+
+      setInstrumental(!instrumental);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get instrumental version';
+      setError(errorMessage);
+      setInstrumental(false); // Revert toggle if error
+    }
+
+  }
+
   const lrcTimestamps = useMemo(() => {
     const timestamps: number[] = [];
     if (!song.lrcLyrics) {
@@ -374,13 +407,18 @@ const SongPlayerPage: React.FC = () => {
         <Grid container className="song-player-content">
           {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
           <Grid size={6} alignContent={'center'} className='grid-parent'>
-            <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={updatePlayerTime} />
+            {/* <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={updatePlayerTime} /> */}
+            <YouTubePlayer
+              videoId={instrumental && currentQueueItem?.ktvYouTubeId ? currentQueueItem.ktvYouTubeId : song.youTubeId ?? ''}
+              onReady={updatePlayerTime}
+            />
             <Grid container spacing={2} className="controls-grid">
               <Grid size={1} alignContent={'center'}>
                 <ToggleButton
                   value="check"
                   selected={instrumental}
-                  onChange={() => setInstrumental(!instrumental)}
+                  // onChange={() => setInstrumental(!instrumental)}
+                  onChange={handleKTVToggle}
                   className="ktv-toggle"
                   sx={{
                     display: 'flex',
