@@ -70,13 +70,19 @@ const SongPlayerPage: React.FC = () => {
   }
 
   const [instrumental, setInstrumental] = useState(false); // Track if instrumental is selected
+  const [lastTimestamp, setLastTimestamp] = useState<number>(0); // Track last timestamp for KTV switch
 
   const currentQueueItem = useMemo(() => {
     return queue.find(item => item.queueId === currentPlayingId);
   }, [queue, currentPlayingId]);
 
   const handleKTVToggle = async () => {
-    if (!song.id) {return;} // No song ID available
+    if (!song.id) { return; } // No song ID available
+
+    // Store current timestamp before switching
+    if (playerRef.current) {
+      setLastTimestamp(playerRef.current.getCurrentTime());
+    }
 
     try {
       if (!instrumental && !currentQueueItem?.ktvYouTubeId) {
@@ -408,10 +414,16 @@ const SongPlayerPage: React.FC = () => {
         <Grid container className="song-player-content">
           {/* we use grid now as later plan to add additional column additions, change spacing if needed*/}
           <Grid size={6} alignContent={'center'} className='grid-parent'>
-            {/* <YouTubePlayer videoId={song.youTubeId ?? ''} onReady={updatePlayerTime} /> */}
             <YouTubePlayer
               videoId={instrumental && currentQueueItem?.ktvYouTubeId ? currentQueueItem.ktvYouTubeId : song.youTubeId ?? ''}
-              onReady={updatePlayerTime}
+              onReady={(playerInstance) => {
+                updatePlayerTime(playerInstance);
+                // Seek to last known timestamp when player is ready
+                if (lastTimestamp > 0) {
+                  playerInstance.seekTo(lastTimestamp, true);
+                }
+              }}
+              key={instrumental ? 'ktv' : 'regular'} // Force re-render when switching
             />
             <Grid container spacing={2} className="controls-grid">
               <Grid size={1} alignContent={'center'}>
