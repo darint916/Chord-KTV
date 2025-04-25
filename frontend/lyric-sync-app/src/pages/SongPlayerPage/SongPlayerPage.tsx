@@ -44,6 +44,7 @@ const SongPlayerPage: React.FC = () => {
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [playlistLoading, setPlaylistLoading] = useState(false);
   const [lyricsOffset, setLyricsOffset] = useState<number>(0); // in seconds
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
   const {
     song,
     setQuizQuestions,
@@ -89,7 +90,6 @@ const SongPlayerPage: React.FC = () => {
         const response = await songApi.apiSongsSongIdVideoInstrumentalPut({
           songId: song.id
         });
-
         // Update the current song in the queue with the instrumental ID
         setQueue(prevQueue => prevQueue.map(item =>
           item.queueId === currentPlayingId
@@ -134,17 +134,17 @@ const SongPlayerPage: React.FC = () => {
   const prevTimeRange = useRef({ start: Infinity, end: 0 });
   const currentLineRef = useRef(-1); // Track current line index
 
-  const checkIfTimeLineChanged = (currentTime: number, timestamps: number[]) => {
-    if (timestamps.length === 0 ||
+  const checkIfTimeLineChanged = (currentTime: number) => {
+    if (lrcTimestamps.length === 0 ||
       (currentTime >= prevTimeRange.current.start &&
         currentTime < prevTimeRange.current.end)) {
       return false;
     }
 
-    for (let i = currentLineRef.current + 1; i < (timestamps.length + currentLineRef.current); i++) {
-      i %= timestamps.length; // Wrap around if needed
-      const currentTimestamp = timestamps[i];
-      const nextTimestamp = (i < timestamps.length - 1) ? timestamps[i + 1] : Infinity;
+    for (let i = currentLineRef.current + 1; i < (lrcTimestamps.length + currentLineRef.current); i++) {
+      i %= lrcTimestamps.length; // Wrap around if needed
+      const currentTimestamp = lrcTimestamps[i];
+      const nextTimestamp = (i < lrcTimestamps.length - 1) ? lrcTimestamps[i + 1] : Infinity;
       if (currentTime >= currentTimestamp && currentTime < nextTimestamp) {
         currentLineRef.current = i;
         prevTimeRange.current = { start: currentTimestamp, end: nextTimestamp };
@@ -211,6 +211,20 @@ const SongPlayerPage: React.FC = () => {
   const allowedQuizLanguages = new Set(['AR', 'BG', 'BN', 'EL', 'FA', 'GU', 'HE', 'HI', 'JA', 'KO', 'RU', 'SR', 'TA', 'TE', 'TH', 'UK', 'ZH']);
   const isLanguageAllowedForQuiz = song.geniusMetaData?.language && allowedQuizLanguages.has(song.geniusMetaData.language);
 
+  useEffect(() => {
+    if (!playerRef.current) { return; }
+    let rafId: number;
+    const updateLoop = () => {
+      if (!playerRef.current) { return; }
+      const current = playerRef.current.getCurrentTime();
+      setCurrentTime(current);
+      rafId = requestAnimationFrame(updateLoop);
+    };
+    updateLoop();
+    return () => {
+      cancelAnimationFrame(rafId); // Cleanup on unmount
+    };
+  }, [isPlayerReady]);
   const updatePlayerTime = (playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
     playerInstance.playVideo(); // Autoplay
@@ -222,9 +236,9 @@ const SongPlayerPage: React.FC = () => {
         const current = playerRef.current.getCurrentTime();
 
 
-        if (checkIfTimeLineChanged(current, lrcTimestamps)) {
-          setCurrentTime(current);
-        }
+        // if (checkIfTimeLineChanged(current)) {
+        setCurrentTime(current);
+        // }
         // Check if the song is 90% complete
         if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
           setShowQuizButton(true); // Show the quiz button when 90% complete
@@ -463,7 +477,7 @@ const SongPlayerPage: React.FC = () => {
     const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
     setIsFirst(currentIndex <= 0);
     setIsLast(currentIndex >= queue.length - 1);
-  }, [queue, currentPlayingId]);
+  }, [currentPlayingId]);
 
   const handleTrackNavigation = (direction: 'prev' | 'next') => {
     if (queue.length === 0) { return; }
@@ -515,7 +529,9 @@ const SongPlayerPage: React.FC = () => {
             <YouTubePlayer
               videoId={instrumental && currentQueueItem?.ktvYouTubeId ? currentQueueItem.ktvYouTubeId : song.youTubeId ?? ''}
               onReady={(playerInstance) => {
-                updatePlayerTime(playerInstance);
+                // updatePlayerTime(playerInstance);
+                playerRef.current = playerInstance;
+                setIsPlayerReady(true);
                 // Seek to last known timestamp when player is ready
                 if (lastTimestamp > 0) {
                   playerInstance.seekTo(lastTimestamp, true);
