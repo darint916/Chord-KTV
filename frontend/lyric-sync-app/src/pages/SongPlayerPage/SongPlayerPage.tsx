@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Container, Typography, Box, Button, Paper, TextField, Alert, IconButton, Tooltip, Skeleton, Slider, ToggleButton, Stack, styled } from '@mui/material';
+import { Container, Typography, Box, Button, Paper, TextField, Alert, IconButton, Tooltip, Skeleton, Slider, ToggleButton, styled } from '@mui/material';
 import YouTubePlayer from '../../components/YouTubePlayer/YouTubePlayer';
 import LyricDisplay from '../../components/LyricDisplay/LyricDisplay';
 import './SongPlayerPage.scss';
