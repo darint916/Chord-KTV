@@ -10,7 +10,7 @@ namespace ChordKTV.Migrations
     /// <inheritdoc />
     public partial class Ummidk : Migration
     {
-        private static readonly string[] columns = ["QuestionId", "OrderIndex"];
+        private static readonly string[] _columns = ["QuestionId", "OrderIndex"];
 
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
