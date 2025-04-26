@@ -46,7 +46,7 @@ const GoogleAuth: React.FC = () => {
         picture: decoded.picture,
         idToken: jwt,
       });
-    } catch (error) {
+    } catch {
       handleLoginError();
     }
   };

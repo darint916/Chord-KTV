@@ -67,7 +67,7 @@ const UserStatsPage: React.FC = () => {
 
   /* data fetch */
   useEffect(() => {
-    if (!user) return;
+    if (!user) {return;}
     const ctrl = new AbortController();
     (async () => {
       try {
@@ -114,13 +114,13 @@ const UserStatsPage: React.FC = () => {
   /* favourite carousels */
   // Define fake image arrays for songs and playlists
   const fakeImages = [
-    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F2203120764ee7832f4868d1424e0afc4.1000x1000x1.png",
-    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F0ece8d46f100b7f4ab2d1680e0b501ca.1000x1000x1.png",
-    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F96fab843dc59f3be9ec6e577de8552fa.1000x1000x1.png",
-    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2Fe91d26e761bbb91681df74d537c320f3.1000x1000x1.png",
-    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F439f4edc54e1cf83079026369628cf39.1000x1000x1.png",
-    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F3e947d45997532b243ccd37bde484492.800x800x1.png",
-    "https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2Fb09caf77e18e2a94510f2f95bfbc6752.1000x1000x1.png",
+    'https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F2203120764ee7832f4868d1424e0afc4.1000x1000x1.png',
+    'https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F0ece8d46f100b7f4ab2d1680e0b501ca.1000x1000x1.png',
+    'https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F96fab843dc59f3be9ec6e577de8552fa.1000x1000x1.png',
+    'https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2Fe91d26e761bbb91681df74d537c320f3.1000x1000x1.png',
+    'https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F439f4edc54e1cf83079026369628cf39.1000x1000x1.png',
+    'https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F3e947d45997532b243ccd37bde484492.800x800x1.png',
+    'https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2Fb09caf77e18e2a94510f2f95bfbc6752.1000x1000x1.png',
   ];
 
   // Compute carousel data for favorite songs using the dedicated favoriteSongs state
@@ -179,23 +179,23 @@ const UserStatsPage: React.FC = () => {
 
   /* guards */
   if (!user)
-    return (
-      <Box mt={6} textAlign="center">
-        <Typography sx={{ color: 'black' }}>Please log in to view your dashboard.</Typography>
-      </Box>
-    );
+  {return (
+    <Box mt={6} textAlign="center">
+      <Typography sx={{ color: 'black' }}>Please log in to view your dashboard.</Typography>
+    </Box>
+  );}
   if (loading)
-    return (
-      <Box display="flex" justifyContent="center" mt={6}>
-        <CircularProgress />
-      </Box>
-    );
+  {return (
+    <Box display="flex" justifyContent="center" mt={6}>
+      <CircularProgress />
+    </Box>
+  );}
   if (error)
-    return (
-      <Alert severity="error" sx={{ mt: 4 }}>
-        {error}
-      </Alert>
-    );
+  {return (
+    <Alert severity="error" sx={{ mt: 4 }}>
+      {error}
+    </Alert>
+  );}
 
   /* render */
   return (

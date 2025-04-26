@@ -7,8 +7,8 @@
  */
 export const getTopAggregatedItems = <T>(
   arr: T[],
-  keyExtractor: (item: T) => string,
-  metricExtractor: (item: T) => number,
+  keyExtractor: (_item: T) => string,
+  metricExtractor: (_item: T) => number,
   top: number = 3
 ): { id: string; plays: number }[] => {
   // Group and aggregate metric by key
@@ -35,10 +35,10 @@ export const getMergedQuizResults = <
   Q extends { quizType?: string },
   H extends { quizType?: string }
 >(
-  quizzes: Q[],
-  handwriting: H[],
-  limit: number = 10
-) => {
+    quizzes: Q[],
+    handwriting: H[],
+    limit: number = 10
+  ) => {
   return quizzes
     .map((q) => ({
       ...q,
@@ -60,40 +60,21 @@ export const getMergedQuizResults = <
  * @returns The payload from the API response, or an empty array if an error occurs.
  */
 
-export const safeFetch = async <T>(promise: Promise<T>, logout: () => void): Promise<T> => {
+export const safeFetch = async <T>(
+  promise: Promise<T>,
+  logout: () => void
+): Promise<T> => {
   try {
-    const res: any = await promise;        // whatever the client returned
+    return await promise;
+  } catch (error: unknown) {
+    // Narrow to the minimal shape you expect
+    const err = error as { response?: { status: number }; status?: number };
 
-    /* ---------- unwrap / normalise ---------- */
-    const status: number =
-      res && typeof res === 'object' && 'status' in res ? res.status : 200;
-
-    // Some clients wrap the body in `data`, others return the body directly.
-    const payload: any =
-      res && typeof res === 'object' && 'data' in res ? res.data : res;
-
-    /* ---------- special cases ---------- */
-    if (status === 401) {
-      console.warn('Token expired – logging out');
-      logout();
-      return [] as unknown as T;            // keep the component code happy
-    }
-
-    if (status === 204 || payload == null) {
-      // "No Content" – treat as an empty collection
-      return [] as unknown as T;
-    }
-
-    /* ---------- happy path ---------- */
-    return payload as T;
-  } catch (err: any) {
-    /* network / parse errors land here */
-    if (err?.response?.status === 401 || err?.status === 401) {
-      console.warn('Token expired (thrown path) – logging out');
+    if (err.response?.status === 401 || err.status === 401) {
       logout();
     }
 
-    // Anything else → return the neutral "empty" value
+    // Any other error → empty value
     return [] as unknown as T;
   }
 };

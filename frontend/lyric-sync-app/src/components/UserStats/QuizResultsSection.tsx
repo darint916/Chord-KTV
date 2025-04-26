@@ -38,7 +38,7 @@ const QuizResultsSection: React.FC<QuizResultsSectionProps> = ({ quizzes }) => {
     [quizzes]
   );
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+  const handleScroll = () => {
     const container = scrollContainerRef.current;
     if (container) {
       const scrollTop = container.scrollTop;
@@ -52,9 +52,9 @@ const QuizResultsSection: React.FC<QuizResultsSectionProps> = ({ quizzes }) => {
 
   const getColor = (score: number) => {
     const pct = (score / 5) * 100;
-    if (pct >= 100) return theme.palette.success.dark;
-    if (pct >= 80) return theme.palette.success.light;
-    if (pct >= 60) return theme.palette.warning.main;
+    if (pct >= 100) {return theme.palette.success.dark;}
+    if (pct >= 80) {return theme.palette.success.light;}
+    if (pct >= 60) {return theme.palette.warning.main;}
     return theme.palette.error.main;
   };
 
@@ -140,7 +140,7 @@ const QuizResultsSection: React.FC<QuizResultsSectionProps> = ({ quizzes }) => {
               left: 0,
               right: 0,
               height: theme.spacing(4), // adjust fade height as needed
-              background: `linear-gradient(to bottom, white, transparent)`,
+              background: 'linear-gradient(to bottom, white, transparent)',
               opacity: scrollPercentage,
             })}
           />
@@ -154,7 +154,7 @@ const QuizResultsSection: React.FC<QuizResultsSectionProps> = ({ quizzes }) => {
               left: 0,
               right: 0,
               height: theme.spacing(4), // adjust fade height as needed
-              background: `linear-gradient(to top, white, transparent)`,
+              background: 'linear-gradient(to top, white, transparent)',
               opacity: 1 - scrollPercentage,
             })}
           />

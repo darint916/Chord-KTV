@@ -25,7 +25,7 @@ interface MediaCarouselProps {
 const MediaCarousel: React.FC<MediaCarouselProps> = ({ 
   title, 
   items,
-  emptyStateMessage = "Nothing here yet!"
+  emptyStateMessage = 'Nothing here yet!'
 }) => {
   // Add state and ref for scroll tracking
   const [scrollPercentage, setScrollPercentage] = React.useState(0);
@@ -34,8 +34,8 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
   // Generate skeleton items if the array is empty
   const displayItems = items.length > 0 ? items : Array(6).fill(null).map((_, index) => ({
     id: `empty-${index}`,
-    title: index === 0 ? emptyStateMessage : "---",
-    coverUrl: "", 
+    title: index === 0 ? emptyStateMessage : '---',
+    coverUrl: '', 
     isEmptyState: true, // Custom property to identify skeleton items
   }));
 

@@ -5,19 +5,19 @@ import { getAuthToken } from '../utils/auth';
 const basePath = import.meta.env.VITE_API_BASE_URL || window.location.origin;
 
 const apiConfig = new Configuration({
-    basePath,
-    fetchApi: (input, init = {}) => {
-      const token = getAuthToken();
-      const headers = new Headers(init.headers);
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return fetch(input, {
-        ...init,
-        headers,
-      });
-    },
-  });
+  basePath,
+  fetchApi: (input, init = {}) => {
+    const token = getAuthToken();
+    const headers = new Headers(init.headers);
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+    return fetch(input, {
+      ...init,
+      headers,
+    });
+  },
+});
 
 export const songApi = new SongApi(apiConfig);
 export const quizApi = new QuizApi(apiConfig);

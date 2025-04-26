@@ -9,7 +9,7 @@ import './AppBarComponent.scss';
 import logo from '../../assets/chordktv.png';
 
 const AppBarComponent: React.FC = () => {
-  const { user, setUser, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [bugMenuAnchorEl, setBugMenuAnchorEl] = React.useState<null | HTMLElement>(null);
   const [modalOpen, setModalOpen] = useState(false);

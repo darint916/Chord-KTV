@@ -17,7 +17,8 @@ export function getLanguageColor(languageCode: string): LangColour {
 
   /* 2.2 quick return if colour was already issued */
   if (langHueMap.has(code)) {
-    return hueToColour(langHueMap.get(code)!);
+    const hue = langHueMap.get(code);
+    return hueToColour(hue ?? 'defaultHue'); // Provide a fallback hue
   }
 
   /* 2.3 reproducible starting hue  (32-bit Fowler-Noll hash variant) */
@@ -31,7 +32,7 @@ export function getLanguageColor(languageCode: string): LangColour {
   /* 2.4 collision–avoidance loop  (golden-angle jumps) */
   const limit = Math.floor(360 / MIN_HUE_GAP);
   for (let attempts = 0; attempts < limit; attempts++) {
-    if (isHueDistinct(hue)) break;
+    if (isHueDistinct(hue)) {break;}
     hue = (hue + GOLDEN_ANGLE) % 360;
   }
 
@@ -75,8 +76,8 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const f = (n: number) => {
     const t = k(n);
     return p + (q - p) * (6 * t < 1 ? 6 * t :
-                          2 * t < 1 ? 1 :
-                          3 * t < 2 ? (2 / 3 - t) * 6 : 0);
+      2 * t < 1 ? 1 :
+        3 * t < 2 ? (2 / 3 - t) * 6 : 0);
   };
   return [f(1 / 3), f(0), f(-1 / 3)];
 }

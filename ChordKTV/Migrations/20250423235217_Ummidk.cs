@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -10,6 +10,8 @@ namespace ChordKTV.Migrations
     /// <inheritdoc />
     public partial class Ummidk : Migration
     {
+        private static readonly string[] columns = ["QuestionId", "OrderIndex"];
+
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -318,7 +320,7 @@ namespace ChordKTV.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_QuizOptions_QuestionId_OrderIndex",
                 table: "QuizOptions",
-                columns: new[] { "QuestionId", "OrderIndex" },
+                columns: columns,
                 unique: true);
 
             migrationBuilder.CreateIndex(

@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Avatar,
   Box,
-  Button,
   List,
   ListItem,
   ListItemAvatar,
@@ -27,7 +26,7 @@ const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data }) => {
   const [scrollPercentage, setScrollPercentage] = React.useState(0);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+  const handleScroll = () => {
     const container = scrollContainerRef.current;
     if (container) {
       const scrollTop = container.scrollTop;
@@ -94,7 +93,7 @@ const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data }) => {
               left: 0,
               right: 0,
               height: theme.spacing(4),
-              background: `linear-gradient(to bottom, white, transparent)`,
+              background: 'linear-gradient(to bottom, white, transparent)',
               opacity: scrollPercentage,
             }}
           />
@@ -108,7 +107,7 @@ const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data }) => {
               left: 0,
               right: 0,
               height: theme.spacing(4),
-              background: `linear-gradient(to top, white, transparent)`,
+              background: 'linear-gradient(to top, white, transparent)',
               opacity: 1 - scrollPercentage,
             }}
           />
