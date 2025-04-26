@@ -8,6 +8,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { getLanguageColor } from '../../utils/languageColorUtils';
+import styles from './QuizResultsSection.module.scss';
 
 interface QuizDto {
   quizId: string;
@@ -59,52 +60,44 @@ const QuizResultsSection: React.FC<QuizResultsSectionProps> = ({ quizzes }) => {
   };
 
   return (
-    <Paper sx={{ position: 'relative', overflow: 'hidden', p: 3 }}>
-      <Typography variant="h6" gutterBottom>
+    <Paper className={styles.quizResultsPaper}>
+      <Typography variant="h6" gutterBottom className={styles.sectionTitle}>
         Recent&nbsp;Scores
       </Typography>
-      <Box component="hr" sx={{ border: 0, borderTop: '1px solid lightgray', my: 2 }} />
+      <Box component="hr" className={styles.hr} />
       {sortedQuizzes.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           No quizzes taken yet.
         </Typography>
       ) : (
-        <Box sx={{ position: 'relative' }}>
+        <Box style={{ position: 'relative' }}>
           {/* Scrollable container for all quizzes */}
           <Box
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            sx={{
-              overflowY: 'auto',
-              // Fixed height showing roughly 5 full items (adjust as needed)
-              height: 7 * 72, // assuming each quiz item is ~72px tall
-              pr: 1,
-            }}
+            className={styles.scrollContainer}
           >
             {sortedQuizzes.map((q) => (
               <Box
                 key={q.quizId}
-                display="flex"
-                alignItems="center"
-                gap={2}
-                mb={2}
+                className={styles.quizItem}
               >
                 <Chip
                   label={q.language.toUpperCase()}
                   size="small"
                   sx={{ minWidth: 64, ...getLanguageColor(q.language) }}
                 />
-                <Box sx={{ flexGrow: 1, lineHeight: 0.0 }}>
-                  <Typography variant="body2" sx={{ mb: -0.2 }}>
+                <Box className={styles.quizInfo}>
+                  <Typography variant="body2" className={styles.quizDate}>
                     {q.dateCompleted
                       ? new Date(q.dateCompleted).toLocaleDateString()
                       : '—'}
                   </Typography>
-                  <Typography variant="caption" color="text.disabled">
+                  <Typography variant="caption" className={styles.quizType}>
                     {q.quizType ? q.quizType : 'quiz'}
                   </Typography>
                 </Box>
-                <Box position="relative" display="inline-flex">
+                <Box className={styles.progressCircle}>
                   <CircularProgress
                     variant="determinate"
                     value={(q.score / 5) * 100}
@@ -112,16 +105,7 @@ const QuizResultsSection: React.FC<QuizResultsSectionProps> = ({ quizzes }) => {
                     size={40}
                     sx={{ color: getColor(q.score) }}
                   />
-                  <Box
-                    position="absolute"
-                    top={0}
-                    left={0}
-                    bottom={0}
-                    right={0}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
+                  <Box className={styles.progressLabel}>
                     <Typography variant="caption" component="div">
                       {q.score}/5
                     </Typography>
@@ -133,30 +117,14 @@ const QuizResultsSection: React.FC<QuizResultsSectionProps> = ({ quizzes }) => {
 
           {/* Top fade overlay (appears as you scroll down) */}
           <Box
-            sx={(theme) => ({
-              pointerEvents: 'none',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: theme.spacing(4), // adjust fade height as needed
-              background: 'linear-gradient(to bottom, white, transparent)',
-              opacity: scrollPercentage,
-            })}
+            className={styles.fadeTop}
+            sx={{ opacity: scrollPercentage }}
           />
 
           {/* Bottom fade overlay (visible initially when scrolled to top) */}
           <Box
-            sx={(theme) => ({
-              pointerEvents: 'none',
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: theme.spacing(4), // adjust fade height as needed
-              background: 'linear-gradient(to top, white, transparent)',
-              opacity: 1 - scrollPercentage,
-            })}
+            className={styles.fadeBottom}
+            sx={{ opacity: 1 - scrollPercentage }}
           />
         </Box>
       )}

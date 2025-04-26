@@ -10,6 +10,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { getLanguageColor } from '../../utils/languageColorUtils';
+import styles from './LearnedWords.module.scss';
 
 interface WordDto {
   word: string;
@@ -41,21 +42,9 @@ const LearnedWords: React.FC<LearnedWordsProps> = ({ recent }) => {
   return (
     <Paper
       elevation={3}
-      sx={{
-        flex: 1,
-        p: 3,
-        display: 'flex',
-        flexDirection: 'column',
-        minWidth: 260,
-      }}
+      className={styles.learnedWordsPaper}
     >
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        flexWrap="wrap"
-        gap={1}
-      >
+      <Box className={styles.headerRow}>
         <Typography variant="h6">Learned&nbsp;Words</Typography>
         
         <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
@@ -77,18 +66,16 @@ const LearnedWords: React.FC<LearnedWordsProps> = ({ recent }) => {
             ))}
           </Select>
         </FormControl>
-        <Box component="hr" sx={{ border: 0, borderTop: '1px solid', borderColor: 'grey.300', width: '100%', my: 1 }} />
-      
+        <Box component="hr" className={styles.divider} />
       </Box>
 
       {filteredWords.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        <Typography variant="body2" className={styles.emptyState}>
           {recent.length === 0 ? 'No words recorded yet.' : 'No words for selected language.'}
         </Typography>
       ) : (
-        // Scrollable container that holds the chips
-        <Box sx={{ flex: 1, mt: 1, overflowY: 'auto' }}>
-          <Box display="flex" flexWrap="wrap" gap={1}>
+        <Box className={styles.scrollContainer}>
+          <Box className={styles.chipRow}>
             {filteredWords.map((w) => {
               const langColorProps = getLanguageColor(w.language);
               return (

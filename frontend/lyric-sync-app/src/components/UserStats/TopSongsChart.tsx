@@ -5,9 +5,9 @@ import {
   Paper,
   Typography,
   LinearProgress,
-  useTheme,
 } from '@mui/material';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import styles from './TopSongsChart.module.scss';
 
 interface SongDatum {
   id: string;
@@ -20,7 +20,6 @@ interface TopSongsChartProps {
 }
 
 const TopSongsChart: React.FC<TopSongsChartProps> = ({ data }) => {
-  const theme = useTheme();
   const maxPlays = Math.max(1, ...data.map((d) => d.plays));
 
   // Manage scroll state for fade overlays
@@ -40,11 +39,11 @@ const TopSongsChart: React.FC<TopSongsChartProps> = ({ data }) => {
   };
 
   return (
-    <Paper sx={{ position: 'relative', p: 3, display: 'flex', flexDirection: 'column', flex: 1 }}>
+    <Paper className={styles.topSongsPaper}>
       <Typography variant="h6" gutterBottom>
         Top Songs
       </Typography>
-      <Box component="hr" sx={{ border: 0, borderTop: '1px solid', borderColor: 'grey.300', width: '100%', my: 1 }} />
+      <Box component="hr" className={styles.divider} />
       
 
       {data.length === 0 ? (
@@ -52,25 +51,25 @@ const TopSongsChart: React.FC<TopSongsChartProps> = ({ data }) => {
           No song activity yet.
         </Typography>
       ) : (
-        <Box sx={{ position: 'relative' }}>
+        <Box style={{ position: 'relative' }}>
           {/* Scrollable container for the top songs */}
           <Box
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            sx={{ overflowY: 'auto', flex: 1, pr: 1 }}
+            className={styles.scrollContainer}
           >
             {data.map((s) => (
-              <Box key={s.id} mb={2}>
-                <Box display="flex" alignItems="center" gap={2} mb={1}>
+              <Box key={s.id} className={styles.songBox}>
+                <Box className={styles.songRow}>
                   <Avatar variant="rounded">
                     <MusicNoteIcon fontSize="small" />
                   </Avatar>
-                  <Typography variant="subtitle2" noWrap>
+                  <Typography variant="subtitle2" className={styles.songTitle}>
                     {s.title ?? s.id}
                   </Typography>
                   <Typography
                     variant="caption"
-                    sx={{ ml: 'auto', color: 'text.secondary' }}
+                    className={styles.songPlays}
                   >
                     {s.plays} plays
                   </Typography>
@@ -78,7 +77,7 @@ const TopSongsChart: React.FC<TopSongsChartProps> = ({ data }) => {
                 <LinearProgress
                   variant="determinate"
                   value={(s.plays / maxPlays) * 100}
-                  sx={{ height: 10, borderRadius: 5 }}
+                  className={styles.progressBar}
                 />
               </Box>
             ))}
@@ -86,30 +85,14 @@ const TopSongsChart: React.FC<TopSongsChartProps> = ({ data }) => {
 
           {/* Top fade overlay (appears as you scroll down) */}
           <Box
-            sx={{
-              pointerEvents: 'none',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: theme.spacing(4),
-              background: 'linear-gradient(to bottom, white, transparent)',
-              opacity: scrollPercentage,
-            }}
+            className={styles.fadeTop}
+            style={{ opacity: scrollPercentage }}
           />
 
           {/* Bottom fade overlay (visible initially when at the top) */}
           <Box
-            sx={{
-              pointerEvents: 'none',
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: theme.spacing(4),
-              background: 'linear-gradient(to top, white, transparent)',
-              opacity: 1 - scrollPercentage,
-            }}
+            className={styles.fadeBottom}
+            style={{ opacity: 1 - scrollPercentage }}
           />
         </Box>
       )}

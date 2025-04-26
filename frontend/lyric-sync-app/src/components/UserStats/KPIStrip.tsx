@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import { Box, Typography, Paper } from '@mui/material';
+import styles from './KPIStrip.module.scss';
 
 interface KPI {
   label: string;
@@ -12,11 +12,8 @@ interface KPIStripProps {
 }
 
 const StatPaper: React.FC<KPI> = ({ label, value }) => (
-  <Paper sx={{ textAlign: 'center' }}>
-    <Typography
-      variant="h4"
-      sx={{ fontWeight: 600, fontFamily: '"Montserrat", sans-serif' }}
-    >
+  <Paper className={styles.statPaper}>
+    <Typography variant="h4" className={styles.statValue}>
       {value}
     </Typography>
     <Typography variant="body2" color="text.secondary">
@@ -27,42 +24,23 @@ const StatPaper: React.FC<KPI> = ({ label, value }) => (
 
 const KPIStrip: React.FC<KPIStripProps> = ({ data }) => (
   <>
-    {/* xs: horizontal scroll  */}
-    <Stack
-      direction="row"
-      spacing={3}
-      sx={{
-        display: { xs: 'flex', md: 'none' },
-        mb: 3,
-        overflowX: 'auto',
-        pb: 1,
-        px: 1,
-        justifyContent: 'center',
-      }}
-    >
+    {/* Mobile view: horizontal scroll container */}
+    <Box className={styles.mobileContainer}>
       {data.map((k) => (
-        <Box key={k.label} sx={{ minWidth: 160 }}>
+        <Box key={k.label} className={styles.mobileItem}>
           <StatPaper {...k} />
         </Box>
       ))}
-    </Stack>
+    </Box>
 
-    {/* md+: grid */}
-    <Grid
-      container
-      spacing={3}
-      sx={{ 
-        display: { xs: 'none', md: 'flex' }, 
-        mb: 3,
-        justifyContent: 'center'
-      }}
-    >
+    {/* Desktop view: flex container with wrapping */}
+    <Box className={styles.desktopContainer}>
       {data.map((k) => (
-        <Grid key={k.label} xs={6} md="auto">
+        <Box key={k.label} className={styles.desktopItem}>
           <StatPaper {...k} />
-        </Grid>
+        </Box>
       ))}
-    </Grid>
+    </Box>
   </>
 );
 

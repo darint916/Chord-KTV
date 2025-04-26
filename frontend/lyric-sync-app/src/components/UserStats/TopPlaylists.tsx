@@ -8,9 +8,9 @@ import {
   ListItemText,
   Paper,
   Typography,
-  useTheme,
 } from '@mui/material';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
+import styles from './TopPlaylists.module.scss';
 
 interface PlaylistDatum {
   id: string;
@@ -22,7 +22,6 @@ interface TopPlaylistsProps {
 }
 
 const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data }) => {
-  const theme = useTheme();
   const [scrollPercentage, setScrollPercentage] = React.useState(0);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -39,32 +38,23 @@ const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data }) => {
   };
 
   return (
-    <Paper
-      sx={{
-        position: 'relative',
-        p: 3,
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        minWidth: 260,
-      }}
-    >
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+    <Paper className={styles.topPlaylistsPaper}>
+      <Box className={styles.headerRow}>
         <Typography variant="h6">Top&nbsp;Playlists</Typography>
       </Box>
-      <Box component="hr" sx={{ border: 0, borderTop: '1px solid', borderColor: 'grey.300', width: '100%', my: 1 }} />
+      <Box component="hr" className={styles.divider} />
       
       {data.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           No playlist activity yet.
         </Typography>
       ) : (
-        <Box sx={{ position: 'relative' }}>
+        <Box style={{ position: 'relative' }}>
           {/* Scrollable container with exact height */}
           <Box
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            sx={{ overflowY: 'auto', flex: 1, pr: 1 }}
+            className={styles.scrollContainer}
           >
             <List dense disablePadding>
               {data.map((p) => (
@@ -86,30 +76,14 @@ const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data }) => {
 
           {/* Top fade overlay */}
           <Box
-            sx={{
-              pointerEvents: 'none',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: theme.spacing(4),
-              background: 'linear-gradient(to bottom, white, transparent)',
-              opacity: scrollPercentage,
-            }}
+            className={styles.fadeTop}
+            style={{ opacity: scrollPercentage }}
           />
 
           {/* Bottom fade overlay */}
           <Box
-            sx={{
-              pointerEvents: 'none',
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: theme.spacing(4),
-              background: 'linear-gradient(to top, white, transparent)',
-              opacity: 1 - scrollPercentage,
-            }}
+            className={styles.fadeBottom}
+            style={{ opacity: 1 - scrollPercentage }}
           />
         </Box>
       )}

@@ -13,6 +13,7 @@ import LearnedWords from '../../components/UserStats/LearnedWords';
 import dashboardTheme from '../../theme/dashboardTheme';
 import { MediaItem } from '../../components/UserStats/MediaCarousel';
 import { getTopAggregatedItems, safeFetch, getMergedQuizResults } from './statsHelpers';
+import styles from './UserStatsPage.module.scss';
 
 /* DTOs */
 interface SongActivityDto {
@@ -113,7 +114,7 @@ const UserStatsPage: React.FC = () => {
 
   /* favourite carousels */
   // Define fake image arrays for songs and playlists
-  const fakeImages = [
+  const placeholderImages = [
     'https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F2203120764ee7832f4868d1424e0afc4.1000x1000x1.png',
     'https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F0ece8d46f100b7f4ab2d1680e0b501ca.1000x1000x1.png',
     'https://t2.genius.com/unsafe/544x544/https%3A%2F%2Fimages.genius.com%2F96fab843dc59f3be9ec6e577de8552fa.1000x1000x1.png',
@@ -129,7 +130,7 @@ const UserStatsPage: React.FC = () => {
       favoriteSongs.map(({ songId, datesPlayed }, index) => ({
         id: songId,
         title: songId, // use the song id as the title
-        coverUrl: fakeImages[index % fakeImages.length], // assign a fake image
+        coverUrl: placeholderImages[index % placeholderImages.length], // assign a fake image
         plays: datesPlayed.length,
       })),
     [favoriteSongs],
@@ -141,7 +142,7 @@ const UserStatsPage: React.FC = () => {
       favoritePlaylists.map(({ playlistUrl, datesPlayed }, index) => ({
         id: playlistUrl,
         title: playlistUrl, // use the playlist url as the title
-        coverUrl: fakeImages[index % fakeImages.length], // assign a fake image
+        coverUrl: placeholderImages[index % placeholderImages.length], // assign a fake image
         plays: datesPlayed.length,
       })),
     [favoritePlaylists],
@@ -200,53 +201,24 @@ const UserStatsPage: React.FC = () => {
   /* render */
   return (
     <ThemeProvider theme={dashboardTheme}>
-      <div className="user-stats-page" style={{ paddingBottom: 64 }}>
-
-        {/* 40 px side-gutter at every width */}
-        <Container maxWidth="xl" sx={{ mt: 4, px: { xs: 5 } }}>
-
-          {/* Header for Usage Statistics */}
+      <div className={styles.userStatsPage}>
+        <Container maxWidth="xl" className={styles.container}>
           <Typography
             variant="h4"
-            sx={{
-              fontWeight: 'bold',
-              fontFamily: '"Montserrat", sans-serif',
-              textAlign: 'center',
-              mb: 2,
-            }}
+            className={styles.header}
           >
             Usage Stats
           </Typography>
 
-          {/* KPI strip */}
           <KPIStrip data={kpis} />
 
-          {/* Spacer between the KPI strip and the carousels */}
-          <Box sx={{ mb: 8 }} /> 
+          <Box className={styles.kpiSpacer} />
 
-          {/* two carousels side-by-side */}
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              gap: 3,  // gap between carousels
-              mb: 4,
-              width: '100%', // ensure full width
-            }}
-          >
-            <Box 
-              sx={{ 
-                width: '50%', // exactly half the container
-                minWidth: 0,  // allows flex child to shrink below content size
-              }}
-            >
+          <Box className={styles.carouselRow}>
+            <Box className={styles.carouselCol}>
               <FavoriteSongsCarousel songs={favSongs} />
             </Box>
-            <Box 
-              sx={{ 
-                width: '50%', // exactly half the container
-                minWidth: 0,  // allows flex child to shrink below content size
-              }}
-            >
+            <Box className={styles.carouselCol}>
               <FavoritePlaylistsCarousel playlists={favPlaylists} />
             </Box>
           </Box>
@@ -255,7 +227,7 @@ const UserStatsPage: React.FC = () => {
           <Grid
             container
             spacing={3}
-            alignItems="stretch"      /* stretch children to equal height   */
+            alignItems="stretch"
             columns={12}
           >
             <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
