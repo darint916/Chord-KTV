@@ -11,7 +11,8 @@ export interface User {
 
 export interface AuthContextType {
   user: User | null;
-  setUser: (_user: User | null) => void;
+  setUser: (_u: User | null) => void;
+  logout: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

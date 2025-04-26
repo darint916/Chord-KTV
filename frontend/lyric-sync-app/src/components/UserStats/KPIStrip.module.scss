@@ -1,0 +1,53 @@
+/* Mobile layout – shown on extra small screens */
+.mobileContainer {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;               /* Equivalent to spacing={3} (3 * 8px) */
+    margin-bottom: 24px;      /* mb: 3 = 24px */
+    overflow-x: auto;
+    padding-left: 8px;        /* px: 1 = 8px */
+    padding-right: 8px;
+    padding-bottom: 8px;      /* pb: 1 = 8px */
+    justify-content: center;
+  }
+  
+  .mobileItem {
+    min-width: 160px;
+  }
+  
+  /* Hide the mobile container on medium and up */
+  @media (min-width: 960px) {
+    .mobileContainer {
+      display: none;
+    }
+  }
+  
+  /* Desktop layout – shown only on medium and larger screens */
+  .desktopContainer {
+    display: none;
+    margin-bottom: 24px;      /* mb: 3 = 24px */
+    justify-content: center;
+    gap: 24px;                /* spacing={3} = 24px gap */
+  }
+  
+  @media (min-width: 960px) {
+    .desktopContainer {
+      display: flex;
+      flex-wrap: wrap;        /* Allow wrapping instead of squishing items */
+    }
+  }
+  
+  /* Ensure KPI boxes on desktop won’t shrink too much */
+  .desktopItem {
+    min-width: 160px;
+  }
+  
+  /* StatPaper styles */
+  .statPaper {
+    text-align: center;
+  }
+  
+  .statValue {
+    font-weight: 600;
+    font-family: "Montserrat", sans-serif;
+  }

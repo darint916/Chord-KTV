@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, AuthContext } from './AuthTypes';
+import { clearAuthToken } from '../utils/auth';
+import { googleLogout } from '@react-oauth/google';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
@@ -7,6 +9,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
+
+  const logout = () => {
+    clearAuthToken();      // remove JWT
+    setUser(null);         // clear user state
+    googleLogout();        // revoke Google session
+  };
 
   // Update localStorage whenever user state changes
   useEffect(() => {
@@ -18,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
+    <AuthContext.Provider value={{ user, setUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

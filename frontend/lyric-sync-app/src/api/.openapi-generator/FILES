@@ -6,6 +6,7 @@ apis/UserApi.ts
 apis/index.ts
 index.ts
 models/Album.ts
+models/AuthResponseDto.ts
 models/FullSongRequestDto.ts
 models/FullSongResponseDto.ts
 models/GeniusMetaData.ts
@@ -21,10 +22,9 @@ models/QuizQuestionDto.ts
 models/QuizResponseDto.ts
 models/Song.ts
 models/TranslationRequestDto.ts
+models/UserDto.ts
 models/UserHandwritingResultDto.ts
-models/UserPlaylistActivityDto.ts
 models/UserQuizResultDto.ts
-models/UserSongActivityDto.ts
 models/VideoInfo.ts
 models/index.ts
 runtime.ts

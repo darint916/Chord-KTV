@@ -1,0 +1,32 @@
+.userStatsPage {
+  padding-bottom: 64px;
+}
+
+.container {
+  margin-top: 32px;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+.header {
+  font-weight: bold;
+  font-family: "Montserrat", sans-serif;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.kpiSpacer {
+  margin-bottom: 64px;
+}
+
+.carouselRow {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+  width: 100%;
+}
+
+.carouselCol {
+  width: 50%;
+  min-width: 0;
+} 

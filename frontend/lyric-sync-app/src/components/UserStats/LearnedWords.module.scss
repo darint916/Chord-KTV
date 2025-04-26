@@ -1,0 +1,40 @@
+.learnedWordsPaper {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  min-width: 260px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid;
+  border-color: #e0e0e0; // matches 'grey.300'
+  width: 100%;
+  margin: 8px 0;
+}
+
+.emptyState {
+  margin-top: 8px;
+  color: #757575; // matches 'text.secondary'
+}
+
+.scrollContainer {
+  flex: 1;
+  margin-top: 8px;
+  overflow-y: auto;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+} 
