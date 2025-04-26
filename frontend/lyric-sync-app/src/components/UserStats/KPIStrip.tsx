@@ -1,17 +1,17 @@
 import React from 'react';
 import { Box, Typography, Paper } from '@mui/material';
-import styles from './KPIStrip.module.scss';
+import styles from './KpiStrip.module.scss';
 
-interface KPI {
+interface Kpi {
   label: string;
   value: number;
 }
 
-interface KPIStripProps {
-  data: KPI[];
+interface KpiStripProps {
+  data: Kpi[];
 }
 
-const StatPaper: React.FC<KPI> = ({ label, value }) => (
+const StatPaper: React.FC<Kpi> = ({ label, value }) => (
   <Paper className={styles.statPaper}>
     <Typography variant="h4" className={styles.statValue}>
       {value}
@@ -22,7 +22,7 @@ const StatPaper: React.FC<KPI> = ({ label, value }) => (
   </Paper>
 );
 
-const KPIStrip: React.FC<KPIStripProps> = ({ data }) => (
+const KpiStrip: React.FC<KpiStripProps> = ({ data }) => (
   <>
     {/* Mobile view: horizontal scroll container */}
     <Box className={styles.mobileContainer}>
@@ -44,4 +44,4 @@ const KPIStrip: React.FC<KPIStripProps> = ({ data }) => (
   </>
 );
 
-export default KPIStrip;
+export default KpiStrip;

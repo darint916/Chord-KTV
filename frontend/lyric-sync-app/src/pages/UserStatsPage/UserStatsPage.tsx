@@ -3,7 +3,7 @@ import { Alert, Box, CircularProgress, Container, ThemeProvider, Typography, } f
 import Grid from '@mui/material/Grid2';
 import { useAuth } from '../../contexts/AuthTypes';
 import { userActivityApi } from '../../api/apiClient';
-import KPIStrip from '../../components/UserStats/KPIStrip';
+import KpiStrip from '../../components/UserStats/KpiStrip';
 import FavoriteSongsCarousel from '../../components/UserStats/FavoriteSongsCarousel';
 import FavoritePlaylistsCarousel from '../../components/UserStats/FavoritePlaylistsCarousel';
 import TopSongsChart from '../../components/UserStats/TopSongsChart';
@@ -210,7 +210,7 @@ const UserStatsPage: React.FC = () => {
             Usage Stats
           </Typography>
 
-          <KPIStrip data={kpis} />
+          <KpiStrip data={kpis} />
 
           <Box className={styles.kpiSpacer} />
 
