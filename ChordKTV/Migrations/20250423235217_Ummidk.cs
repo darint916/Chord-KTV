@@ -4,13 +4,14 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
+#pragma warning disable IDE1006
 
 namespace ChordKTV.Migrations
 {
     /// <inheritdoc />
     public partial class Ummidk : Migration
     {
-        private static readonly string[] _columns = ["QuestionId", "OrderIndex"];
+        private static readonly string[] columns = ["QuestionId", "OrderIndex"];
 
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
