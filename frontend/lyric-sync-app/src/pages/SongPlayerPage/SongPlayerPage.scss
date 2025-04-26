@@ -8,21 +8,12 @@
   padding: 0;
 
   .song-player-container {
-    margin-top: 40px;
+    margin-top: 25px;
     max-width: 100% !important;
     padding: 0 16px !important;
 
     .song-player-content {
-      .song-title {
-        color: $text-primary;
-        margin-bottom: 24px;
-      }
-
-      .error-alert-lrc {
-        margin-top: 32px;
-      }
-
-      margin-top: 48px;
+      margin-top: 25px;
       background-color: transparent;
       border-radius: 8px;
       display: flex;
@@ -30,6 +21,16 @@
       height: 480px;
       gap: 20px;
       width: 100%;
+
+      .song-title {
+        color: $text-primary;
+        font-weight: bold;
+      }
+
+      .error-alert-lrc {
+        margin-top: 32px;
+      }
+
 
       .queue-parent {
         width: 22%;
@@ -41,14 +42,11 @@
       }
 
       .grid-parent {
-        height: 100%;
-        width: 48%;
         display: flex;
         flex-direction: column;
         border-radius: 8px;
         background: $gradient;
         box-shadow: $box-shadow;
-        max-width: 100%;
         justify-content: center;
 
         .lrc-offset-text {
@@ -115,7 +113,7 @@
       padding: 20px;
       background: $gradient;
       border-radius: 8px;
-      margin-top: 20px;
+      margin-bottom: 20px;
       width: 100%;
       margin-right: 20px;
       max-width: 100%;
@@ -123,26 +121,29 @@
 
       .skeleton-input {
         width: 100%;
-        height: 56px; 
+        height: 56px;
         border-radius: 4px;
-        
+
         &.MuiSkeleton-root {
           transform: scale(1);
           // Gradient for shimmer loading, OK to hardcode so using rgba
-          background: linear-gradient(
-            90deg,
-            rgba(0, 0, 0, 0.08) 0%,
-            rgba(0, 0, 0, 0.15) 50%,
-            rgba(0, 0, 0, 0.08) 100%
-          );
+          background: linear-gradient(90deg,
+              rgba(0, 0, 0, 0.08) 0%,
+              rgba(0, 0, 0, 0.15) 50%,
+              rgba(0, 0, 0, 0.08) 100%);
           background-size: 200% 100%;
           animation: shimmer 1.5s infinite;
         }
       }
 
       @keyframes shimmer {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
+        0% {
+          background-position: 200% 0;
+        }
+
+        100% {
+          background-position: -200% 0;
+        }
       }
 
       .queue-button {
@@ -199,6 +200,73 @@
           background-color: color.scale($secondary-color, $lightness: -10%);
         }
       }
+    }
+  }
+}
+
+.bottom-grid {
+  padding-top: 30px;
+  padding-bottom: 30px;
+  display: flex;
+  height: 100%;
+
+  .queue-grid {
+    display: flex;
+    height: 100%;
+  }
+  
+}
+
+
+.controls-grid {
+  justify-content: center;
+  height: 70px;
+  padding-top: 25px;
+  padding-left: 7px;
+  .ktv-toggle {
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+    
+    &.Mui-selected {
+      background-color: rgba(27, 177, 32, 0.6);
+      font-weight: bold;
+      color: white;
+      
+      &:hover {
+        background-color: rgba(87, 199, 90, 0.5);
+      }
+    }
+  }
+}
+
+.slider-grid {
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 0px;
+  height: 10px;
+  padding-top: 5px;
+  display: flex;
+}
+.slider-grid-parent {
+  height: 10px;
+}
+.slider-label {
+  color: $text-primary;
+  font-weight: bold;
+  padding-bottom: 5px;
+}
+
+.slider {
+  padding-right: 0px;
+}
+
+.lyric-set-offset {
+  display: flex;
+  padding-left: 40px;
+  .MuiTextField-root {
+    .MuiInputLabel-root {
+      font-size: 0.75rem;
     }
   }
 }

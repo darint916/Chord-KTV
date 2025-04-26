@@ -23,6 +23,7 @@ public class Song
     public int? LrcId { get; set; }
     public int? RomLrcId { get; set; }
     public string? YoutubeId { get; set; }
+    public string? YoutubeInstrumentalId { get; set; }
     public List<string> AlternateYoutubeIds { get; set; } = [];
     public GeniusMetaData GeniusMetaData { get; set; } = new GeniusMetaData();
 }

@@ -1,6 +1,7 @@
 apis/HandwritingApi.ts
 apis/QuizApi.ts
 apis/SongApi.ts
+apis/UserActivityApi.ts
 apis/UserApi.ts
 apis/index.ts
 index.ts
@@ -12,6 +13,7 @@ models/GeniusMetaDataDto.ts
 models/HandwritingCanvasRequestDto.ts
 models/HandwritingCanvasResponseDto.ts
 models/LanguageCode.ts
+models/LearnedWordDto.ts
 models/MatchScores.ts
 models/PlaylistDetailsDto.ts
 models/ProblemDetails.ts
@@ -19,6 +21,10 @@ models/QuizQuestionDto.ts
 models/QuizResponseDto.ts
 models/Song.ts
 models/TranslationRequestDto.ts
+models/UserHandwritingResultDto.ts
+models/UserPlaylistActivityDto.ts
+models/UserQuizResultDto.ts
+models/UserSongActivityDto.ts
 models/VideoInfo.ts
 models/index.ts
 runtime.ts
