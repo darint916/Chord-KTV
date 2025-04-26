@@ -460,13 +460,13 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": { }
+              "schema": {}
             },
             "text/json": {
-              "schema": { }
+              "schema": {}
             },
             "application/*+json": {
-              "schema": { }
+              "schema": {}
             }
           }
         },
@@ -732,7 +732,7 @@
     "/api/user/activity/playlist": {
       "post": {
         "tags": [
-          "UserActivity"
+          "User Activity"
         ],
         "requestBody": {
           "content": {
@@ -789,7 +789,7 @@
     "/api/user/activity/quiz": {
       "post": {
         "tags": [
-          "UserActivity"
+          "User Activity"
         ],
         "requestBody": {
           "content": {
@@ -855,7 +855,7 @@
     "/api/user/activity/song": {
       "post": {
         "tags": [
-          "UserActivity"
+          "User Activity"
         ],
         "requestBody": {
           "content": {
@@ -886,7 +886,7 @@
     "/api/user/activity/handwriting": {
       "post": {
         "tags": [
-          "UserActivity"
+          "User Activity"
         ],
         "requestBody": {
           "content": {
@@ -985,7 +985,7 @@
     "/api/user/activity/favorite/song": {
       "patch": {
         "tags": [
-          "UserActivity"
+          "User Activity"
         ],
         "requestBody": {
           "content": {
@@ -1042,7 +1042,7 @@
     "/api/user/activity/favorite/playlist": {
       "patch": {
         "tags": [
-          "UserActivity"
+          "User Activity"
         ],
         "requestBody": {
           "content": {
@@ -1073,7 +1073,7 @@
     "/api/user/activity/learned-word": {
       "post": {
         "tags": [
-          "UserActivity"
+          "User Activity"
         ],
         "requestBody": {
           "content": {
@@ -1104,7 +1104,7 @@
     "/api/user/activity/full": {
       "get": {
         "tags": [
-          "UserActivity"
+          "User Activity"
         ],
         "responses": {
           "200": {
