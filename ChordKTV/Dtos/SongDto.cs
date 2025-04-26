@@ -20,6 +20,7 @@ public record SongDto
     int? LrcId,
     int? RomLrcId,
     string? YouTubeId,
+    string? YouTubeInstrumentalId,
     List<string> AlternateYoutubeIds,
     GeniusMetaDataDto GeniusMetaData
 );

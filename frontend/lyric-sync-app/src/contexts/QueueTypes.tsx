@@ -5,6 +5,7 @@ export interface QueueItem {
   title: string;
   artist: string;
   youTubeId: string;
+  ktvYouTubeId?: string;
   lyrics: string;
   apiRequested: boolean;
   processedData?: FullSongResponseDto; // Added when processed
