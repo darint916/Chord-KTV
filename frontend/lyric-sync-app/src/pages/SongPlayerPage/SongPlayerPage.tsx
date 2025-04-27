@@ -44,7 +44,7 @@ const SongPlayerPage: React.FC = () => {
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [playlistLoading, setPlaylistLoading] = useState(false);
   const [lyricsOffset, setLyricsOffset] = useState<number>(0); // in seconds
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
+
   const {
     song,
     setQuizQuestions,
@@ -56,6 +56,11 @@ const SongPlayerPage: React.FC = () => {
   } = useSong();
 
   useEffect(() => {
+    currentLineRef.current = -1;
+    prevTimeRange.current = { start: Infinity, end: 0 };
+  }, [song]); // Only runs on song change, so useEffect works
+
+  useEffect(() => {
     // Restore current song if needed
     if (currentPlayingId && !song) {
       const savedSong = queue.find(item => item.queueId === currentPlayingId);
@@ -64,7 +69,6 @@ const SongPlayerPage: React.FC = () => {
       }
     }
   }, []);
-  let animationFrameId: number;
 
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
@@ -153,11 +157,6 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    currentLineRef.current = -1;
-    prevTimeRange.current = { start: Infinity, end: 0 };
-  }, [song]); // Only runs on song change, so useEffect works
-
   const prefetchNextSongs = useCallback(async () => {
     if (!queue.length) { return; }
 
@@ -211,57 +210,66 @@ const SongPlayerPage: React.FC = () => {
   const allowedQuizLanguages = new Set(['AR', 'BG', 'BN', 'EL', 'FA', 'GU', 'HE', 'HI', 'JA', 'KO', 'RU', 'SR', 'TA', 'TE', 'TH', 'UK', 'ZH']);
   const isLanguageAllowedForQuiz = song.geniusMetaData?.language && allowedQuizLanguages.has(song.geniusMetaData.language);
 
-  useEffect(() => {
-    if (!playerRef.current) { return; }
-    let rafId: number;
-    const updateLoop = () => {
-      if (!playerRef.current) { return; }
-      const current = playerRef.current.getCurrentTime();
-      setCurrentTime(current);
-      rafId = requestAnimationFrame(updateLoop);
-    };
-    updateLoop();
-    return () => {
-      cancelAnimationFrame(rafId); // Cleanup on unmount
-    };
-  }, [isPlayerReady]);
-  const updatePlayerTime = (playerInstance: YouTubePlayer) => {
+  const animationFrameRef = useRef<number | null>(null);
+
+  // Cleanup function for the animation frame
+  const stopAnimationFrame = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+  }, []);
+
+  const updatePlayerTime = useCallback((playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
-    playerInstance.playVideo(); // Autoplay
-    setShowQuizButton(false);
-    const duration = playerRef.current.getDuration();
+    stopAnimationFrame(); // Clean up any existing loop
 
-    const updatePlayerTime = () => {
-      if (playerRef.current) {
-        const current = playerRef.current.getCurrentTime();
-
-
-        // if (checkIfTimeLineChanged(current)) {
-        setCurrentTime(current);
-        // }
-        // Check if the song is 90% complete
-        if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
-          setShowQuizButton(true); // Show the quiz button when 90% complete
-        }
-
-        // Check if we're at the halfway point for prefetching
-        if (current / duration >= 0.5) {
-          prefetchNextSongs();
-        }
+    const updateLoop = () => {
+      if (!playerRef.current) {
+        return;
       }
-      animationFrameId = requestAnimationFrame(updatePlayerTime); //req next frame
-    };
-    cancelAnimationFrame(animationFrameId);
-    updatePlayerTime();
-  };
 
-  useEffect(() => { //cleanup on rerender
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId); // Cancel the animation frame when the component unmounts  (cleanup function)
-      };
+      const current = playerRef.current.getCurrentTime();
+      const duration = playerRef.current.getDuration();
+
+      if (checkIfTimeLineChanged(current)) {
+        setCurrentTime(current);
+      }
+
+      // Check for quiz button show condition
+      if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
+        setShowQuizButton(true);
+      }
+
+      // Check for prefetch condition
+      if (current / duration >= 0.5) {
+        prefetchNextSongs();
+      }
+
+      animationFrameRef.current = requestAnimationFrame(updateLoop);
     };
-  }, [currentPlayingId]); // cleanup when current queue element changes
+
+    updateLoop();
+  }, [stopAnimationFrame, prefetchNextSongs, isLanguageAllowedForQuiz]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      stopAnimationFrame();
+    };
+  }, [stopAnimationFrame]);
+
+  // Reset function when song changes
+  const resetLyricState = useCallback(() => {
+    currentLineRef.current = -1;
+    prevTimeRange.current = { start: Infinity, end: 0 };
+    setCurrentTime(0);
+    setShowQuizButton(false);
+  }, [song]);
+
+  // Call resetLyricState when song changes
+  useEffect(() => {
+    resetLyricState();
+  }, [song, resetLyricState]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
@@ -401,8 +409,11 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
-  const handlePlayFromQueue = async (item: QueueItem) => {
+  // const handlePlayFromQueue = async (item: QueueItem) => {
+  const handlePlayFromQueue = useCallback(async (item: QueueItem) => {
     setError('');
+    stopAnimationFrame(); // Stop any current animation frame
+    resetLyricState(); // Reset lyric state
 
     try {
       if (item.status === 'pending') {
@@ -461,7 +472,8 @@ const SongPlayerPage: React.FC = () => {
         lrcTranslatedLyrics: ''
       });
     }
-  };
+    // };
+  }, [currentPlayingId, queue]);
 
   const [isFirst, setIsFirst] = useState(true);
   const [isLast, setIsLast] = useState(true);
@@ -529,9 +541,7 @@ const SongPlayerPage: React.FC = () => {
             <YouTubePlayer
               videoId={instrumental && currentQueueItem?.ktvYouTubeId ? currentQueueItem.ktvYouTubeId : song.youTubeId ?? ''}
               onReady={(playerInstance) => {
-                // updatePlayerTime(playerInstance);
-                playerRef.current = playerInstance;
-                setIsPlayerReady(true);
+                updatePlayerTime(playerInstance);
                 // Seek to last known timestamp when player is ready
                 if (lastTimestamp > 0) {
                   playerInstance.seekTo(lastTimestamp, true);
