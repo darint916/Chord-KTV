@@ -62,7 +62,7 @@ Input Lyrics:
 
 Remember if the original lyrics are already in English, no translation or romanization is needed and ignore the is needed clauses above.
 The lyrics input contains timestamps LRC Format. Do not change any timestamps or the formatting. Do not add ``` ticks or the word json
-Ensure that the output follows the expected JSON structure.
+Ensure that the output follows the expected JSON structure. Make sure romanization matches standard dictionary reading. Do not infer romanization, and preserve conjugated forms.
 Output Format, keep the exact format, no extra content beyond the json. Make sure it is json deserializable in C#:
 {{
     ""romanizedLyrics"": ""<romanized lyrics in LRC format, if applicable or null>"",
@@ -81,8 +81,8 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
                     new { role = "system", content = systemPrompt },
                     new { role = "user", content = prompt }
             },
-            temperature = 0.2,
-            top_p = .95
+            temperature = .175,
+            top_p = 1
         };
 
         var sw = new Stopwatch();
