@@ -254,7 +254,7 @@ const SongPlayerPage: React.FC = () => {
     };
 
     updateLoop();
-  }, [stopAnimationFrame, prefetchNextSongs, isLanguageAllowedForQuiz]);
+  }, [stopAnimationFrame, prefetchNextSongs, isLanguageAllowedForQuiz, lyricsOffset]);
 
   // Cleanup effect
   useEffect(() => {
