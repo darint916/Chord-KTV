@@ -306,6 +306,7 @@ public class FullSongService : IFullSongService
         {
             TranslationResponseDto translationDto = await _chatGptService.TranslateLyricsAsync(
                 song.LrcLyrics, song.GeniusMetaData.Language, needRomanization, needTranslation);
+            song.GeniusMetaData.Language = translationDto.LanguageCode;
             if (needRomanization && !string.IsNullOrWhiteSpace(translationDto.RomanizedLyrics))
             {
                 song.LrcRomanizedLyrics = translationDto.RomanizedLyrics;
