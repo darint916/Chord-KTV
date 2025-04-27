@@ -12,6 +12,14 @@
     margin-top: 24px;
     color: $text-primary;
 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    max-width: 600px;
+    width: 100%;
+    margin: 24px auto 0;
+
     .tag-container {
         display: none !important;
     }
@@ -25,4 +33,14 @@
         background: rgb(255, 113, 113) !important;
         color: $text-primary !important;
     }
+}
+
+.quiz-icon-button {
+    border: 2px solid currentColor !important;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

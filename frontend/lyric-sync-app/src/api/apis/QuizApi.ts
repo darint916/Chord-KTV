@@ -25,6 +25,13 @@ import {
     QuizResponseDtoToJSON,
 } from '../models/index';
 
+export interface ApiQuizAudioGetRequest {
+    songId?: string;
+    useCachedQuiz?: boolean;
+    difficulty?: number;
+    numQuestions?: number;
+}
+
 export interface ApiQuizRomanizationGetRequest {
     songId?: string;
     useCachedQuiz?: boolean;
@@ -36,6 +43,50 @@ export interface ApiQuizRomanizationGetRequest {
  * 
  */
 export class QuizApi extends runtime.BaseAPI {
+
+    /**
+     */
+    async apiQuizAudioGetRaw(requestParameters: ApiQuizAudioGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<QuizResponseDto>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['songId'] != null) {
+            queryParameters['songId'] = requestParameters['songId'];
+        }
+
+        if (requestParameters['useCachedQuiz'] != null) {
+            queryParameters['useCachedQuiz'] = requestParameters['useCachedQuiz'];
+        }
+
+        if (requestParameters['difficulty'] != null) {
+            queryParameters['difficulty'] = requestParameters['difficulty'];
+        }
+
+        if (requestParameters['numQuestions'] != null) {
+            queryParameters['numQuestions'] = requestParameters['numQuestions'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // Bearer authentication
+        }
+
+        const response = await this.request({
+            path: `/api/quiz/audio`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => QuizResponseDtoFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async apiQuizAudioGet(requestParameters: ApiQuizAudioGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<QuizResponseDto> {
+        const response = await this.apiQuizAudioGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      */

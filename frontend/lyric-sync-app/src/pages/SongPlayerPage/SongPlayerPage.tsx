@@ -45,7 +45,7 @@ const SongPlayerPage: React.FC = () => {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [playlistLoading, setPlaylistLoading] = useState(false);
-  const [lyricsOffset, setLyricsOffset] = useState<number>(0); // in seconds
+  const { lyricsOffset, setLyricsOffset } = useSong();
   const [minLyricOffset, setMinLyricOffset] = useState<number>(-5);
   const [maxLyricOffset, setMaxLyricOffset] = useState<number>(5);
   const {
@@ -266,8 +266,20 @@ const SongPlayerPage: React.FC = () => {
   };
 
   const handleQuizRedirect = () => {
-    setQuizQuestions([]);   // Clear old song quiz questions
-    navigate('/quiz');
+    if (!song.id) {
+      console.warn('[SongPlayerPage] Cannot start quiz – song.id is empty');
+      return;
+    }
+
+    // Clear any stale questions so the quiz page fetches fresh data
+    setQuizQuestions([]);
+
+    // Pass both songId and current lyricsOffset in the URL
+    navigate(
+      `/quiz?id=${encodeURIComponent(song.id)}&offset=${encodeURIComponent(
+        lyricsOffset
+      )}`
+    );
   };
 
   const handleQueueAddition = async (insertAfterCurrent: boolean = false) => {
@@ -289,8 +301,10 @@ const SongPlayerPage: React.FC = () => {
           lyrics: lyrics.trim()
         }
       });
-      if (youTubeId) {
-        response.youTubeId = youTubeId;
+      console.log('[SongPlayerPage] API returned FullSongResponseDto →', response);
+      console.log('[SongPlayerPage] youTubeId on song →', response.youTubeId);
+      if (response) {
+        setSong(response);
       }
       const newItem: QueueItem = {
         queueId: uuidv4(),
@@ -608,7 +622,9 @@ const SongPlayerPage: React.FC = () => {
                   <Grid size={6} className='slider'>
                     <Slider
                       value={lyricsOffset}
-                      onChange={(_, value) => setLyricsOffset(value as number)}
+                      onChange={(_e, value) => {
+                        setLyricsOffset(Number(value));
+                      }}
                       min={minLyricOffset}
                       max={maxLyricOffset}
                       step={0.1}

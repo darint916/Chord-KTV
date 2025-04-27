@@ -397,6 +397,72 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         return songInfoListResponse;
     }
 
+    public async Task<List<string>> GenerateAudioQuizDistractorsAsync(string correctLyric, int difficulty)
+    {
+        if (string.IsNullOrWhiteSpace(correctLyric))
+            throw new ArgumentException("Lyric must not be empty", nameof(correctLyric));
+        if (difficulty < 1 || difficulty > 5)
+            throw new ArgumentOutOfRangeException(nameof(difficulty), "Difficulty must be between 1 and 5");
+
+        // 1) Build prompts
+        string systemPrompt = 
+            "You are an assistant that generates plausible yet incorrect lyric lines " +
+            "as distractors for an audio‐based quiz. Do not repeat the correct line.";
+
+        string userPrompt = $@"
+The correct lyric line is:
+""{correctLyric}""
+
+Difficulty level: {difficulty} (1 = easiest, 5 = hardest).
+
+Your task:
+- Generate exactly 3 incorrect options (distractors).
+- Each must be plausible in the same language/style, about the same length.
+- Do NOT repeat or overlap with the correct lyric.
+- Return ONLY a JSON array of 3 strings, e.g. [""distractor1"",""distractor2"",""distractor3""] with no extra commentary.
+";
+
+        var requestBody = new
+        {
+            model = Model,
+            messages = new object[]
+            {
+                new { role = "system", content = systemPrompt },
+                new { role = "user",   content = userPrompt }
+            },
+            temperature = 0.7,
+            top_p      = 0.9
+        };
+
+        // 2) Call ChatGPT
+        OpenAIResponseDto? openAIResponse = 
+            await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody), nameof(GenerateAudioQuizDistractorsAsync));
+
+        if (openAIResponse == null || openAIResponse.Choices.Count == 0)
+            throw new InvalidOperationException("No response choices from ChatGPT for audio distractors.");
+
+        string raw = openAIResponse.Choices[0].Message.Content?.Trim() 
+                   ?? throw new InvalidOperationException("Empty content in ChatGPT response.");
+
+        // 3) Parse JSON array
+        List<string>? distractors;
+        try
+        {
+            distractors = JsonSerializer.Deserialize<List<string>>(raw, _jsonOptions);
+        }
+        catch (JsonException je)
+        {
+            _logger.LogError(je, "Failed to parse distractors JSON: {Raw}", raw);
+            throw new InvalidOperationException("Invalid JSON format for audio distractors.");
+        }
+
+        if (distractors == null || distractors.Count != 3)
+            throw new InvalidOperationException(
+                $"Expected exactly 3 distractors, but got {distractors?.Count ?? 0}");
+
+        return distractors;
+    }
+
     private async Task<OpenAIResponseDto?> GptChatCompletionAsync(string jsonRequest, [CallerMemberName] string caller = "")
     {
         try

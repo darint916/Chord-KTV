@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Data.Api.QuizData;
 using ChordKTV.Models.Quiz;
@@ -107,5 +109,139 @@ public class QuizService : IQuizService
         await _quizRepo.AddAsync(quiz);
 
         return quiz;
+    }
+
+    /// Generate an "audio" quiz: pick timestamped lines from the LRC,
+    /// ask user to identify the lyric at that time, with plausible distractors.
+    public async Task<Quiz> GenerateAudioQuizAsync(
+        Guid songId,
+        bool useCachedQuiz,
+        int difficulty,
+        int numQuestions)
+    {
+        // 1) clamp inputs
+        difficulty   = Math.Clamp(difficulty,   1, 5);
+        numQuestions = Math.Clamp(numQuestions, 1, 20);
+
+        // 2) optional cache‐lookup (stubbed for now)
+        if (useCachedQuiz)
+        {
+            // TODO: var cached = await _quizRepo.GetLatestAudioQuizAsync(songId, difficulty);
+            // if (cached != null) return cached;
+        }
+
+        // 3) load song & ensure LRC exists
+        var song = await _songRepo.GetSongByIdAsync(songId)
+                   ?? throw new InvalidOperationException($"Song with ID {songId} not found.");
+        if (string.IsNullOrWhiteSpace(song.LrcLyrics))
+            throw new InvalidOperationException("Song LRC lyrics not available.");
+
+        // 4) parse LRC into (start, end, text) tuples
+        var timestampedLines = ParseLrcLines(song.LrcLyrics);
+        if (timestampedLines.Count == 0)
+            throw new InvalidOperationException("No timestamped lines found in LRC.");
+
+        // 5) pick random lines
+        var rng = new Random();
+        var selected = timestampedLines
+            .OrderBy(_ => rng.Next())
+            .Take(numQuestions)
+            .ToList();
+
+        // 6) build questions
+        var questions = new List<QuizQuestion>();
+        int qNum = 1;
+
+        foreach (var (start, end, lyric) in selected)
+        {
+            // TODO: implement this in IChatGptService when ready
+            var distractors = await _chatGptService
+                .GenerateAudioQuizDistractorsAsync(lyric, difficulty);
+
+            // assemble options
+            var options = new List<QuizOption>
+            {
+                new QuizOption { Text = lyric,   IsCorrect = true  }
+            };
+            options.AddRange(
+                distractors.Select(d => new QuizOption { Text = d, IsCorrect = false }));
+
+            // shuffle & log duplicates
+            options = options.OrderBy(_ => rng.Next()).ToList();
+            if (options.Select(o => o.Text)
+                       .Distinct(StringComparer.OrdinalIgnoreCase)
+                       .Count() != options.Count)
+            {
+                _logger.LogWarning(
+                    "Duplicate options generated for audio question #{QuestionNumber}", qNum);
+            }
+
+            // 2) assign OrderIndex
+            for (int i = 0; i < options.Count; i++)
+            {
+                options[i].OrderIndex = i;
+            }
+
+            questions.Add(new QuizQuestion
+            {
+                QuestionNumber   = qNum,
+                StartTimestamp   = start,
+                EndTimestamp     = end,
+                Options          = options
+            });
+            qNum++;
+        }
+
+        // 7) persist & return
+        var quiz = new Quiz
+        {
+            Id         = Guid.NewGuid(),
+            Timestamp  = DateTime.UtcNow,
+            SongId     = songId,
+            Difficulty = difficulty,
+            Questions  = questions,
+        };
+        await _quizRepo.AddAsync(quiz);
+
+        return quiz;
+    }
+
+    /// Parse raw LRC into a list of (start, end, text).
+    /// Uses next‐line start as end
+    private List<(TimeSpan Start, TimeSpan End, string Text)> ParseLrcLines(string lrc)
+    {
+        var lines   = lrc
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var pattern = new Regex(@"\[(\d+):(\d+(?:\.\d+)?)\]");
+        var temp    = new List<(TimeSpan start, string text)>();
+
+        foreach (var raw in lines)
+        {
+            var m = pattern.Match(raw);
+            if (!m.Success) continue;
+
+            int mins = int.Parse(m.Groups[1].Value);
+            double secs = double.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture);
+            var start = TimeSpan.FromSeconds(mins * 60 + secs);
+
+            var text = pattern.Replace(raw, "").Trim();
+            if (text.Length == 0) continue;
+            temp.Add((start, text));
+        }
+
+        // sort & infer end‐times
+        temp.Sort((a, b) => a.start.CompareTo(b.start));
+        var result = new List<(TimeSpan, TimeSpan, string)>();
+
+        for (int i = 0; i < temp.Count; i++)
+        {
+            var (start, text) = temp[i];
+            var end = (i < temp.Count - 1)
+                ? temp[i + 1].start
+                : start.Add(TimeSpan.FromSeconds(5));
+            result.Add((start, end, text));
+        }
+
+        return result;
     }
 }

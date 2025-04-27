@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using ChordKTV.Services.Api;
 using ChordKTV.Dtos.Quiz;
 using ChordKTV.Models.Quiz;
@@ -21,60 +22,97 @@ namespace ChordKTV.Controllers
             _mapper = mapper;
         }
 
+        [AllowAnonymous]
         [HttpGet("romanization")]
         [ProducesResponseType(typeof(QuizResponseDto), 200)]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> GetRomanizationQuiz(
+        public Task<IActionResult> GetRomanizationQuiz(
             [FromQuery] Guid songId,
             [FromQuery] bool useCachedQuiz = false,
             [FromQuery] int difficulty = 3,
             [FromQuery] int numQuestions = 5)
         {
+            return ExecuteQuizRequest(
+                songId,
+                useCachedQuiz,
+                difficulty,
+                numQuestions,
+                _quizService.GenerateQuizAsync,
+                "romanization");
+        }
+
+        [AllowAnonymous]
+        [HttpGet("audio")]
+        [ProducesResponseType(typeof(QuizResponseDto), 200)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public Task<IActionResult> GetAudioQuiz(
+            [FromQuery] Guid songId,
+            [FromQuery] bool useCachedQuiz = false,
+            [FromQuery] int difficulty = 3,
+            [FromQuery] int numQuestions = 5)
+        {
+            return ExecuteQuizRequest(
+                songId,
+                useCachedQuiz,
+                difficulty,
+                numQuestions,
+                _quizService.GenerateAudioQuizAsync,
+                "audio");
+        }
+
+        /// A DRY helper that runs the shared validation / try–catch / mapping logic,
+        /// but calls the quizGenerator delegate for the actual quiz creation.
+        private async Task<IActionResult> ExecuteQuizRequest(
+            Guid songId,
+            bool useCachedQuiz,
+            int difficulty,
+            int numQuestions,
+            Func<Guid, bool, int, int, Task<Quiz>> quizGenerator,
+            string quizTypeForLogs)
+        {
+            // 1) validation
+            if (difficulty is < 1 or > 5)
+                return BadRequest(new { message = "Difficulty must be between 1 and 5" });
+
+            if (numQuestions < 1)
+                return BadRequest(new { message = "Number of questions must be at least 1" });
+
+            if (numQuestions > 20)
+                return BadRequest(new { message = "Number of questions cannot exceed 20" });
+
+            if (songId == Guid.Empty)
+                return BadRequest(new { message = "Song ID is required" });
+
             try
             {
-                if (difficulty is < 1 or > 5)
-                {
-                    return BadRequest(new { message = "Difficulty must be between 1 and 5" });
-                }
+                // 2) actual quiz‐making
+                Quiz quiz = await quizGenerator(songId, useCachedQuiz, difficulty, numQuestions);
 
-                if (numQuestions < 1)
-                {
-                    return BadRequest(new { message = "Number of questions must be at least 1" });
-                }
-                if (numQuestions > 20)
-                {
-                    return BadRequest(new { message = "Number of questions cannot exceed 20" });
-                }
-
-                if (songId == Guid.Empty)
-                {
-                    return BadRequest(new { message = "Song ID is required" });
-                }
-
-                try
-                {
-                    Quiz quiz = await _quizService.GenerateQuizAsync(songId, useCachedQuiz, difficulty, numQuestions);
-
-                    // Map the entity to DTO for the API response
-                    QuizResponseDto quizResponseDto = _mapper.Map<QuizResponseDto>(quiz);
-
-                    return Ok(quizResponseDto);
-                }
-                catch (InvalidOperationException ex) when (ex.Message.Contains("not found"))
-                {
-                    return NotFound(new { message = ex.Message });
-                }
-                catch (InvalidOperationException ex) when (ex.Message.Contains("lyrics not available"))
-                {
-                    return BadRequest(new { message = ex.Message });
-                }
+                // 3) map to DTO & return
+                QuizResponseDto dto = _mapper.Map<QuizResponseDto>(quiz);
+                return Ok(dto);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("not found"))
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("lyrics not available"))
+            {
+                // you may adjust this if it doesn't make sense for audio
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating quiz for songId {SongId}", songId);
-                return StatusCode(500, new { message = "An unexpected error occurred while generating the quiz." });
+                _logger.LogError(
+                    ex,
+                    "Error generating {QuizType} quiz for songId {SongId}",
+                    quizTypeForLogs,
+                    songId);
+                return StatusCode(500, new { message = $"An unexpected error occurred while generating the {quizTypeForLogs} quiz." });
             }
         }
     }
