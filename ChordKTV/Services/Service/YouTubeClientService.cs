@@ -78,9 +78,13 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
 
         PlaylistListResponse playlistResponse = await playlistRequest.ExecuteAsync();
 
-        string playlistTitle = (playlistResponse.Items.Count > 0)
-            ? playlistResponse.Items[0].Snippet.Title
-            : "Unknown Playlist";
+        string playlistTitle = "Unknown Playlist";
+        string? playlistThumbnailUrl = null;
+        if (playlistResponse.Items.Count > 0)
+        {
+            playlistTitle = playlistResponse.Items[0].Snippet.Title;
+            playlistThumbnailUrl = playlistResponse.Items[0].Snippet.Thumbnails.Default__.ToString();
+        }
 
         PlaylistItemsResource.ListRequest playlistItemsRequest = _youTubeService.PlaylistItems.List("snippet,contentDetails");
         playlistItemsRequest.PlaylistId = playlistId;
@@ -128,7 +132,7 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
             Shuffle.FisherYatesShuffle(videos);
         }
 
-        return new PlaylistDetailsDto(playlistTitle, videos);
+        return new PlaylistDetailsDto(playlistTitle, videos, playlistThumbnailUrl);
     }
 
     public async Task<Dictionary<string, VideoDetails>> GetVideosDetailsAsync(List<string> videoIds)
