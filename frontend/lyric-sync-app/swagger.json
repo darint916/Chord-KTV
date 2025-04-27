@@ -524,7 +524,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK – returns a list of Genius hits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GeniusHitDto"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1791,6 +1801,53 @@
             "format": "date-span"
           }
         },
+        "additionalProperties": false
+      },
+      "GeniusHitDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/GeniusResultDto"
+          }
+        },
+        "required": ["result"],
+        "additionalProperties": false
+      },
+      "GeniusResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "header_image_url": {
+            "type": "string"
+          },
+          "song_art_image_url": {
+            "type": "string"
+          },
+          "primary_artist_names": {
+            "type": "string"
+          },
+          "album": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/GeniusAlbumDto" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "required": ["id", "title", "primary_artist_names"],
+        "additionalProperties": false
+      },
+      "GeniusAlbumDto": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" }
+        },
+        "required": ["name"],
         "additionalProperties": false
       }
     },
