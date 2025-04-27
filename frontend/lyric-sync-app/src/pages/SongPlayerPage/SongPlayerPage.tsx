@@ -540,6 +540,12 @@ const SongPlayerPage: React.FC = () => {
   }
 `;
 
+  const activeVideoId = useMemo(() => {
+    if (instrumental && currentQueueItem?.ktvYouTubeId) {
+      return currentQueueItem.ktvYouTubeId;
+    }
+    return song.youTubeId ?? '';
+  }, [instrumental, currentQueueItem?.ktvYouTubeId, song.youTubeId]);
 
   return (
     <div className="song-player-page">
@@ -564,15 +570,14 @@ const SongPlayerPage: React.FC = () => {
         <Grid container className="song-player-content">
           <Grid size={6} alignContent={'center'} className='grid-parent'>
             <YouTubePlayer
-              videoId={instrumental && currentQueueItem?.ktvYouTubeId ? currentQueueItem.ktvYouTubeId : song.youTubeId ?? ''}
+              videoId={activeVideoId}
               onReady={(playerInstance) => {
                 updatePlayerTime(playerInstance);
-                // Seek to last known timestamp when player is ready
                 if (lastTimestamp > 0) {
                   playerInstance.seekTo(lastTimestamp, true);
                 }
               }}
-              key={instrumental ? 'ktv' : 'regular'} // Force re-render when switching
+              key={activeVideoId}
             />
             <Grid container spacing={2} className="controls-grid">
               <Grid size={1} alignContent={'center'}>
