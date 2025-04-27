@@ -87,7 +87,10 @@ const HomePage: React.FC = () => {
         setCurrentPlayingId(firstSong.queueId);
         setSong(processed);
       } catch (err) {
-        setError('Failed to process first song: ' + err);
+        const errorMessage = err instanceof Error
+          ? `Failed to process first song. Error message from OpenAPI stub call: ${err.message}`
+          : 'Failed to process first song';
+        setError(errorMessage);
         // Fallback to basic info if processing fails
         setCurrentPlayingId(firstSong.queueId);
         setSong({
@@ -102,7 +105,10 @@ const HomePage: React.FC = () => {
 
       navigate('/play-song');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load playlist');
+      const errorMessage = err instanceof Error
+        ? `Failed to load playlist. Error message from OpenAPI stub call: ${err.message}`
+        : 'Failed to load playlist';
+      setError(errorMessage);
     } finally {
       setPlaylistLoading(false);
     }
@@ -148,7 +154,10 @@ const HomePage: React.FC = () => {
 
       navigate('/play-song');
     } catch (err) {
-      setError('Search failed. Please try again. Error: ' + err);
+      const errorMessage = err instanceof Error
+        ? `Search failed. Please try again. Error message from OpenAPI stub call: ${err.message}`
+        : 'Search failed. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
