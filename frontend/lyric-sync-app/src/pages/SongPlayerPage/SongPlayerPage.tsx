@@ -45,9 +45,9 @@ const SongPlayerPage: React.FC = () => {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [playlistLoading, setPlaylistLoading] = useState(false);
-  const [lyricsOffset, setLyricsOffset] = useState<number>(0);
-  const [minLyricOffset, setMinLyricOffset] = useState<number>(-5);
-  const [maxLyricOffset, setMaxLyricOffset] = useState<number>(5);
+  const [lyricsOffset, setLyricsOffset] = useState<number>(0); // in seconds
+  const [minLyricOffset, setMinLyricOffset] = useState<number>(-1);
+  const [maxLyricOffset, setMaxLyricOffset] = useState<number>(1);
   const {
     song,
     setQuizQuestions,
