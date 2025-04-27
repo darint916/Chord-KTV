@@ -489,6 +489,17 @@ const SongPlayerPage: React.FC = () => {
         stopAnimationFrame(); // Stop any current animation frame
         resetLyricState(); // Reset lyric state
       }
+      else if (item.error) {
+        setCurrentPlayingId(item.queueId);
+        setSong({
+          title: item.title,
+          artist: item.artist,
+          youTubeId: item.youTubeId || '',
+          lrcLyrics: '',
+          lrcRomanizedLyrics: '',
+          lrcTranslatedLyrics: ''
+        });
+      }
     } catch (err) {
       const errorMessage = err instanceof Error
         ? `Failed to load song details. Error message from OpenAPI stub call: ${err.message}`
