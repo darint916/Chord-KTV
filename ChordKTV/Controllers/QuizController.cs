@@ -110,7 +110,6 @@ namespace ChordKTV.Controllers
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("lyrics not available"))
             {
-                // you may adjust this if it doesn't make sense for audio
                 return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
