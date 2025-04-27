@@ -22,7 +22,7 @@ public class ChatGptService : IChatGptService
     //Context window: 128,000 tokens, max tokens: 16,384 tokens , about 4 chars per token avg ~ 32000 chars, reference: Eminem love the way you lie : 4.4k chars
     //KR + other lang use more tokens, but as ref, https://platform.openai.com/tokenizer to calc, 2793 char -> 1564 tokens (sick enough to die)
     // price as of testing seems like ~$0.01 after 26k tokens lol
-    private const string Model = "gpt-4o-mini"; //last updated 2024-07-18 , knowledge cutoff 10/2023
+    private const string Model = "gpt-4o"; //last updated 2024-07-18 , knowledge cutoff 10/2023
 
     // Add static readonly field for options
     private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -61,9 +61,9 @@ Input Lyrics:
 {originalLyrics}
 
 Remember if the original lyrics are already in English, no translation or romanization is needed and ignore the is needed clauses above.
-The lyrics input contains timestamps LRC Format. Do not change any timestamps or the formatting.
-Ensure that the output follows the expected JSON structure.
-Output Format, keep the exact format, no extra content beyond the json. Make sure it is json parsable:
+The lyrics input contains timestamps LRC Format. Do not change any timestamps or the formatting. Do not add ``` ticks or the word json
+Ensure that the output follows the expected JSON structure. Make sure romanization matches standard dictionary reading. Do not infer romanization, and preserve conjugated forms.
+Output Format, keep the exact format, no extra content beyond the json. Make sure it is json deserializable in C#:
 {{
     ""romanizedLyrics"": ""<romanized lyrics in LRC format, if applicable or null>"",
     ""translatedLyrics"": ""<translated English lyrics in LRC format, if applicable or null>"",
@@ -81,8 +81,8 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
                     new { role = "system", content = systemPrompt },
                     new { role = "user", content = prompt }
             },
-            temperature = 0.4,
-            top_p = 0.9
+            temperature = .175,
+            top_p = 1
         };
 
         var sw = new Stopwatch();
@@ -410,7 +410,15 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
                 string errorContent = await response.Content.ReadAsStringAsync();
                 throw new HttpRequestException($"Error in {nameof(GptChatCompletionAsync)} called from {caller}, ChatGPT API call failed with status code {response.StatusCode}: {errorContent}");
             }
-            OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(await response.Content.ReadAsStringAsync(), _jsonOptions);
+            string escapedContent = await response.Content.ReadAsStringAsync();
+            escapedContent = Regex.Replace(escapedContent, @"(?<!\\)`", @"");
+            //catch slop word: json
+            escapedContent = escapedContent.TrimStart();
+            if (escapedContent.StartsWith("json", StringComparison.OrdinalIgnoreCase))
+            {
+                escapedContent = escapedContent[4..].TrimStart(); // Remove "json" and any spaces after
+            }
+            OpenAIResponseDto? openAIResponse = JsonSerializer.Deserialize<OpenAIResponseDto>(escapedContent, _jsonOptions);
             return openAIResponse;
         }
         catch (Exception ex)
