@@ -133,11 +133,12 @@ public class LrcService : ILrcService
         // we go more strict on time sync if we have a match, note we prioritize LRC
         if (!LanguageUtils.IsRomanizedText(lyricsDtoMatch.PlainLyrics)) // If lyrics are in non en language
         {
-            LrcLyricsDto? romanizedMatch = searchResults.FirstOrDefault(ele =>
-                !string.IsNullOrEmpty(ele.SyncedLyrics) &&
-                LanguageUtils.IsRomanizedText(ele.PlainLyrics) &&
-                CompareUtils.CompareArtistFuzzyScore(artist, ele.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80 && //make sure artist is same
-                CompareUtils.IsCloseToF(ele.Duration, duration, 2));
+            // LrcLyricsDto? romanizedMatch = searchResults.FirstOrDefault(ele =>
+            //     !string.IsNullOrEmpty(ele.SyncedLyrics) &&
+            //     LanguageUtils.IsRomanizedText(ele.PlainLyrics) &&
+            //     CompareUtils.CompareArtistFuzzyScore(artist, ele.ArtistName, lyricsDtoMatch.ArtistName, 90) > 80 && //make sure artist is same
+            //     CompareUtils.IsCloseToF(ele.Duration, duration, 2));
+            LrcLyricsDto? romanizedMatch = null; //Temp disable until we can fix 
 
             if (romanizedMatch != null)
             {
