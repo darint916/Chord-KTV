@@ -235,7 +235,7 @@ const SongPlayerPage: React.FC = () => {
       const current = playerRef.current.getCurrentTime();
       const duration = playerRef.current.getDuration();
 
-      if (checkIfTimeLineChanged(current)) {
+      if (checkIfTimeLineChanged(current + lyricsOffset)) {
         setCurrentTime(current);
       }
 
