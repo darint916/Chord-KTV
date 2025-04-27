@@ -1,5 +1,3 @@
-import { FullSongResponseDto } from '../api';
-
 export interface QueueItem {
   queueId: string;
   title: string;
@@ -7,7 +5,7 @@ export interface QueueItem {
   youTubeId: string;
   ktvYouTubeId?: string;
   lyrics: string;
-  apiRequested: boolean;
-  processedData?: FullSongResponseDto; // Added when processed
+  status: 'pending' | 'loading' | 'loaded';
+  imageUrl?: string;
   error?: string;
 }

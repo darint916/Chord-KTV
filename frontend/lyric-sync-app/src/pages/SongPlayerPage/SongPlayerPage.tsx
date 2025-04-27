@@ -59,6 +59,11 @@ const SongPlayerPage: React.FC = () => {
   } = useSong();
 
   useEffect(() => {
+    currentLineRef.current = -1;
+    prevTimeRange.current = { start: Infinity, end: 0 };
+  }, [song]); // Only runs on song change, so useEffect works
+
+  useEffect(() => {
     // Restore current song if needed
     if (currentPlayingId && !song) {
       const savedSong = queue.find(item => item.queueId === currentPlayingId);
@@ -67,7 +72,6 @@ const SongPlayerPage: React.FC = () => {
       }
     }
   }, []);
-  let animationFrameId: number;
 
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
@@ -93,7 +97,6 @@ const SongPlayerPage: React.FC = () => {
         const response = await songApi.apiSongsSongIdVideoInstrumentalPut({
           songId: song.id
         });
-
         // Update the current song in the queue with the instrumental ID
         setQueue(prevQueue => prevQueue.map(item =>
           item.queueId === currentPlayingId
@@ -138,17 +141,17 @@ const SongPlayerPage: React.FC = () => {
   const prevTimeRange = useRef({ start: Infinity, end: 0 });
   const currentLineRef = useRef(-1); // Track current line index
 
-  const checkIfTimeLineChanged = (currentTime: number, timestamps: number[]) => {
-    if (timestamps.length === 0 ||
+  const checkIfTimeLineChanged = (currentTime: number) => {
+    if (lrcTimestamps.length === 0 ||
       (currentTime >= prevTimeRange.current.start &&
         currentTime < prevTimeRange.current.end)) {
       return false;
     }
 
-    for (let i = currentLineRef.current + 1; i < (timestamps.length + currentLineRef.current); i++) {
-      i %= timestamps.length; // Wrap around if needed
-      const currentTimestamp = timestamps[i];
-      const nextTimestamp = (i < timestamps.length - 1) ? timestamps[i + 1] : Infinity;
+    for (let i = currentLineRef.current + 1; i < (lrcTimestamps.length + currentLineRef.current); i++) {
+      i %= lrcTimestamps.length; // Wrap around if needed
+      const currentTimestamp = lrcTimestamps[i];
+      const nextTimestamp = (i < lrcTimestamps.length - 1) ? lrcTimestamps[i + 1] : Infinity;
       if (currentTime >= currentTimestamp && currentTime < nextTimestamp) {
         currentLineRef.current = i;
         prevTimeRange.current = { start: currentTimestamp, end: nextTimestamp };
@@ -156,11 +159,6 @@ const SongPlayerPage: React.FC = () => {
       }
     }
   };
-
-  useEffect(() => {
-    currentLineRef.current = -1;
-    prevTimeRange.current = { start: Infinity, end: 0 };
-  }, [song]); // Only runs on song change, so useEffect works
 
   const prefetchNextSongs = useCallback(async () => {
     if (!queue.length) { return; }
@@ -172,9 +170,9 @@ const SongPlayerPage: React.FC = () => {
 
       nextItems.forEach((nextItem) => {
         // Only proceed if we haven't already requested the API for this song
-        if (!nextItem.apiRequested) {
+        if (nextItem.status === 'pending') {
           // Mark as requested immediately to prevent duplicate calls
-          nextItem.apiRequested = true;
+          nextItem.status = 'loading';
 
           // Call the API for the next song
           songApi.apiSongsMatchPost({
@@ -189,22 +187,18 @@ const SongPlayerPage: React.FC = () => {
             if (nextItem.youTubeId) {
               response.youTubeId = nextItem.youTubeId;
             }
-            setQueue(prevQueue => prevQueue.map(item =>
-              item.queueId === nextItem.queueId
+
+            setQueue(prevQueue => prevQueue.map(queueItem =>
+              queueItem.queueId === nextItem.queueId
                 ? {
-                  ...item,
-                  processedData: {
-                    title: response.title,
-                    artist: response.artist,
-                    youTubeId: response.youTubeId,
-                    lrcLyrics: response.lrcLyrics,
-                    lrcRomanizedLyrics: response.lrcRomanizedLyrics,
-                    lrcTranslatedLyrics: response.lrcTranslatedLyrics,
-                    geniusMetaData: response.geniusMetaData,
-                    id: response.id
-                  }
+                  ...queueItem,
+                  title: response.title || nextItem.title,
+                  artist: response.artist || nextItem.artist,
+                  lyrics: nextItem.lyrics || '',
+                  status: 'loaded' as const,
+                  imageUrl: response.geniusMetaData?.songImageUrl ?? ''
                 }
-                : item
+                : queueItem
             ));
           }).catch(err => {
             const errorMessage = err instanceof Error ? err.message : 'Failed to process song';
@@ -219,38 +213,68 @@ const SongPlayerPage: React.FC = () => {
   const allowedQuizLanguages = new Set(['AR', 'BG', 'BN', 'EL', 'FA', 'GU', 'HE', 'HI', 'JA', 'KO', 'RU', 'SR', 'TA', 'TE', 'TH', 'UK', 'ZH']);
   const isLanguageAllowedForQuiz = song.geniusMetaData?.language && allowedQuizLanguages.has(song.geniusMetaData.language);
 
-  const updatePlayerTime = (playerInstance: YouTubePlayer) => {
+  const animationFrameRef = useRef<number | null>(null);
+
+  // Cleanup function for the animation frame
+  const stopAnimationFrame = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+  }, []);
+
+  const updatePlayerTime = useCallback((playerInstance: YouTubePlayer) => {
     playerRef.current = playerInstance;
     playerInstance.playVideo(); // Autoplay
     setShowQuizButton(isLanguageAllowedForQuiz ?? true);
     const duration = playerRef.current.getDuration();
 
-    const updatePlayerTime = () => {
-      if (playerRef.current) {
-        const current = playerRef.current.getCurrentTime();
-
-
-        if (checkIfTimeLineChanged(current, lrcTimestamps)) {
-          setCurrentTime(current);
-        }
-        // Check if we're at the halfway point for prefetching
-        if (current / duration >= 0.5) {
-          prefetchNextSongs();
-        }
+    const updateLoop = () => {
+      if (!playerRef.current) {
+        return;
       }
-      animationFrameId = requestAnimationFrame(updatePlayerTime); //req next frame
-    };
-    cancelAnimationFrame(animationFrameId);
-    updatePlayerTime();
-  };
 
-  useEffect(() => { //cleanup on rerender
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId); // Cancel the animation frame when the component unmounts  (cleanup function)
-      };
+      const current = playerRef.current.getCurrentTime();
+      const duration = playerRef.current.getDuration();
+
+      if (checkIfTimeLineChanged(current)) {
+        setCurrentTime(current);
+      }
+
+      // Check for quiz button show condition
+      if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
+        setShowQuizButton(true);
+      }
+
+      // Check for prefetch condition
+      if (current / duration >= 0.5) {
+        prefetchNextSongs();
+      }
+
+      animationFrameRef.current = requestAnimationFrame(updateLoop);
     };
-  }, [currentPlayingId]); // cleanup when current queue element changes
+
+    updateLoop();
+  }, [stopAnimationFrame, prefetchNextSongs, isLanguageAllowedForQuiz]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      stopAnimationFrame();
+    };
+  }, [stopAnimationFrame]);
+
+  // Reset function when song changes
+  const resetLyricState = useCallback(() => {
+    currentLineRef.current = -1;
+    prevTimeRange.current = { start: Infinity, end: 0 };
+    setCurrentTime(0);
+    setShowQuizButton(false);
+  }, [song]);
+
+  // Call resetLyricState when song changes
+  useEffect(() => {
+    resetLyricState();
+  }, [song, resetLyricState]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
@@ -308,15 +332,15 @@ const SongPlayerPage: React.FC = () => {
       }
       const newItem: QueueItem = {
         queueId: uuidv4(),
-        apiRequested: true,
+        status: 'loaded',
         title: response.title ?? '',
         artist: response.artist ?? '',
         youTubeId: response.youTubeId ?? '',
         lyrics: lyrics,
-        processedData: response
+        imageUrl: response.geniusMetaData?.songImageUrl ?? ''
       };
 
-      if (!newItem.processedData?.lrcLyrics) {
+      if (!response.lrcLyrics) {
         throw new Error('Failed to process song: no LRC lyrics found');
       }
 
@@ -336,7 +360,7 @@ const SongPlayerPage: React.FC = () => {
       // Auto-play if adding to next position
       if (insertAfterCurrent) {
         setCurrentPlayingId(newItem.queueId);
-        setSong(newItem.processedData);
+        setSong(response);
       }
 
       // Clear form
@@ -389,7 +413,7 @@ const SongPlayerPage: React.FC = () => {
         artist: video.artist || 'Unknown Artist',
         youTubeId: extractYouTubeVideoId(video.url) || '',
         lyrics: '',
-        apiRequested: false
+        status: 'pending'
       }));
 
       // Add to end of queue
@@ -404,61 +428,50 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
-  const handlePlayFromQueue = async (item: QueueItem) => {
+  const handlePlayFromQueue = useCallback(async (item: QueueItem) => {
     setError('');
 
     try {
-      if (!item.apiRequested) {
-        setQueue(prevQueue => prevQueue.map(queueItem =>
-          queueItem.queueId === item.queueId
-            ? { ...queueItem, apiRequested: true, error: undefined }
-            : queueItem
-        ));
+      if (item.status === 'pending') {
+        item.status = 'loading';
+      }
+      setQueue(prevQueue => prevQueue.map(queueItem =>
+        queueItem.queueId === item.queueId
+          ? { ...queueItem, apiRequested: true, error: undefined }
+          : queueItem
+      ));
 
-        const response = await songApi.apiSongsMatchPost({
-          fullSongRequestDto: {
-            title: item.title,
-            artist: item.artist,
-            youTubeId: item.youTubeId || '',
-            lyrics: item.lyrics || ''
-          }
-        });
-        if (item.youTubeId) {
-          response.youTubeId = item.youTubeId;
-        }
-        const processedData = {
-          title: response.title,
-          artist: response.artist,
-          youTubeId: response.youTubeId,
-          lrcLyrics: response.lrcLyrics,
-          lrcRomanizedLyrics: response.lrcRomanizedLyrics,
-          lrcTranslatedLyrics: response.lrcTranslatedLyrics,
-          geniusMetaData: response.geniusMetaData,
-          id: response.id
-        };
-
-        setQueue(prevQueue => prevQueue.map(queueItem =>
-          queueItem.queueId === item.queueId
-            ? { ...queueItem, processedData, apiRequested: true }
-            : queueItem
-        ));
-
-        setCurrentPlayingId(item.queueId);
-        setSong(processedData);
-      } else {
-        const playbackData = item.processedData || {
+      const response = await songApi.apiSongsMatchPost({
+        fullSongRequestDto: {
           title: item.title,
           artist: item.artist,
           youTubeId: item.youTubeId || '',
-          lrcLyrics: '',
-          lrcRomanizedLyrics: '',
-          lrcTranslatedLyrics: ''
-        };
-
-        setCurrentPlayingId(item.queueId);
-        setSong(playbackData);
+          lyrics: item.lyrics || ''
+        }
+      });
+      if (item.youTubeId) {
+        response.youTubeId = item.youTubeId;
       }
+
+      setQueue(prevQueue => prevQueue.map(queueItem =>
+        queueItem.queueId === item.queueId
+          ? {
+            ...queueItem,
+            title: response.title || item.title,
+            artist: response.artist || item.artist,
+            lyrics: item.lyrics || '',
+            status: 'loaded' as const,
+            imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+          }
+          : queueItem
+      ));
+
+      setCurrentPlayingId(item.queueId);
+      item.status = 'loaded';
+      setSong(response);
       setInstrumental(false);
+      stopAnimationFrame(); // Stop any current animation frame
+      resetLyricState(); // Reset lyric state
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
       setQueue(prevQueue => prevQueue.map(queueItem =>
@@ -477,7 +490,7 @@ const SongPlayerPage: React.FC = () => {
         lrcTranslatedLyrics: ''
       });
     }
-  };
+  }, [currentPlayingId, queue]);
 
   const [isFirst, setIsFirst] = useState(true);
   const [isLast, setIsLast] = useState(true);
@@ -493,7 +506,7 @@ const SongPlayerPage: React.FC = () => {
     const currentIndex = queue.findIndex(item => item.queueId === currentPlayingId);
     setIsFirst(currentIndex <= 0);
     setIsLast(currentIndex >= queue.length - 1);
-  }, [queue, currentPlayingId]);
+  }, [currentPlayingId]);
 
   const handleTrackNavigation = (direction: 'prev' | 'next') => {
     if (queue.length === 0) { return; }
@@ -509,14 +522,8 @@ const SongPlayerPage: React.FC = () => {
     }
 
     const newItem = queue[newIndex];
-    setCurrentPlayingId(newItem.queueId);
 
-    if (newItem.processedData) {
-      setSong(newItem.processedData);
-    }
-    else {
-      handlePlayFromQueue(newItem);
-    }
+    handlePlayFromQueue(newItem);
 
     // Reset KTV mode when changing tracks
     setInstrumental(false);

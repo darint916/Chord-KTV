@@ -59,11 +59,11 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
 
   drag(drop(ref));
 
-  const isLoading = item.apiRequested && !item.processedData && !item.error;
+  const isLoading = (item.status === 'loading') && !item.error;
   const hasError = !!item.error;
-  const songImageUrl = item.processedData?.geniusMetaData?.songImageUrl;
+  const songImageUrl = item.imageUrl;
   const isCurrentSong = currentPlayingId === item.queueId;
-  const isPending = !item.apiRequested;
+  const isPending = (item.status === 'pending');
 
   return (
     <div
@@ -71,7 +71,11 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
       className={`draggable-queue-item ${!isDragging ? 'not-dragging' : ''}`}
     >
       <ListItemButton
-        onClick={() => onPlay(item)}
+        onClick={() => {
+          if (!isCurrentSong) {
+            onPlay(item);
+          }
+        }}
         className={`queue-item 
           ${isCurrentSong ? 'active-song' : ''} 
           ${hasError ? 'error-item' : ''} 
@@ -100,8 +104,8 @@ const DraggableQueueItem: React.FC<DraggableQueueItemProps> = ({
         )}
 
         <ListItemText
-          primary={`${index + 1}. ${item.processedData?.title || item.title}`}
-          secondary={item.processedData?.artist || item.artist}
+          primary={`${index + 1}. ${item.title}`}
+          secondary={item.artist}
           primaryTypographyProps={{
             noWrap: true,
             className: isCurrentSong ? 'active' : '',
