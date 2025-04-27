@@ -150,8 +150,8 @@ const SongPlayerPage: React.FC = () => {
 
     for (let i = currentLineRef.current + 1; i < (lrcTimestamps.length + currentLineRef.current); i++) {
       i %= lrcTimestamps.length; // Wrap around if needed
-      const currentTimestamp = lrcTimestamps[i]  + lyricsOffset;
-      const nextTimestamp = ((i < lrcTimestamps.length - 1) ? lrcTimestamps[i + 1] : Infinity)  + lyricsOffset;
+      const currentTimestamp = lrcTimestamps[i] + lyricsOffset;
+      const nextTimestamp = ((i < lrcTimestamps.length - 1) ? lrcTimestamps[i + 1] : Infinity) + lyricsOffset;
       if (currentTime + lyricsOffset >= currentTimestamp && currentTime + lyricsOffset < nextTimestamp) {
         currentLineRef.current = i;
         prevTimeRange.current = { start: currentTimestamp, end: nextTimestamp };
@@ -419,44 +419,57 @@ const SongPlayerPage: React.FC = () => {
     try {
       if (item.status === 'pending') {
         item.status = 'loading';
-      }
-      setQueue(prevQueue => prevQueue.map(queueItem =>
-        queueItem.queueId === item.queueId
-          ? { ...queueItem, apiRequested: true, error: undefined }
-          : queueItem
-      ));
+        setQueue(prevQueue => prevQueue.map(queueItem =>
+          queueItem.queueId === item.queueId
+            ? { ...queueItem, apiRequested: true, error: undefined }
+            : queueItem
+        ));
 
-      const response = await songApi.apiSongsMatchPost({
-        fullSongRequestDto: {
-          title: item.title,
-          artist: item.artist,
-          youTubeId: item.youTubeId || '',
-          lyrics: item.lyrics || ''
-        }
-      });
-      if (item.youTubeId) {
-        response.youTubeId = item.youTubeId;
-      }
-
-      setQueue(prevQueue => prevQueue.map(queueItem =>
-        queueItem.queueId === item.queueId
-          ? {
-            ...queueItem,
-            title: response.title || item.title,
-            artist: response.artist || item.artist,
-            lyrics: item.lyrics || '',
-            status: 'loaded' as const,
-            imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+        const response = await songApi.apiSongsMatchPost({
+          fullSongRequestDto: {
+            title: item.title,
+            artist: item.artist,
+            youTubeId: item.youTubeId || '',
+            lyrics: item.lyrics || ''
           }
-          : queueItem
-      ));
+        });
+        if (item.youTubeId) {
+          response.youTubeId = item.youTubeId;
+        }
 
-      setCurrentPlayingId(item.queueId);
-      item.status = 'loaded';
-      setSong(response);
-      setInstrumental(false);
-      stopAnimationFrame(); // Stop any current animation frame
-      resetLyricState(); // Reset lyric state
+        setQueue(prevQueue => prevQueue.map(queueItem =>
+          queueItem.queueId === item.queueId
+            ? {
+              ...queueItem,
+              title: response.title || item.title,
+              artist: response.artist || item.artist,
+              lyrics: item.lyrics || '',
+              status: 'loaded' as const,
+              imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+            }
+            : queueItem
+        ));
+
+      }
+      else if (item.status == 'loaded') {
+        const response = await songApi.apiSongsMatchPost({
+          fullSongRequestDto: {
+            title: item.title,
+            artist: item.artist,
+            youTubeId: item.youTubeId || '',
+            lyrics: item.lyrics || ''
+          }
+        });
+        if (item.youTubeId) {
+          response.youTubeId = item.youTubeId;
+        }
+        setCurrentPlayingId(item.queueId);
+        item.status = 'loaded';
+        setSong(response);
+        setInstrumental(false);
+        stopAnimationFrame(); // Stop any current animation frame
+        resetLyricState(); // Reset lyric state
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
       setQueue(prevQueue => prevQueue.map(queueItem =>
