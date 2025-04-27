@@ -143,16 +143,16 @@ const SongPlayerPage: React.FC = () => {
 
   const checkIfTimeLineChanged = (currentTime: number) => {
     if (lrcTimestamps.length === 0 ||
-      (currentTime >= prevTimeRange.current.start &&
-        currentTime < prevTimeRange.current.end)) {
+      (currentTime >= prevTimeRange.current.start + lyricsOffset &&
+        currentTime < prevTimeRange.current.end + lyricsOffset)) {
       return false;
     }
 
     for (let i = currentLineRef.current + 1; i < (lrcTimestamps.length + currentLineRef.current); i++) {
       i %= lrcTimestamps.length; // Wrap around if needed
-      const currentTimestamp = lrcTimestamps[i];
-      const nextTimestamp = (i < lrcTimestamps.length - 1) ? lrcTimestamps[i + 1] : Infinity;
-      if (currentTime >= currentTimestamp && currentTime < nextTimestamp) {
+      const currentTimestamp = lrcTimestamps[i]  + lyricsOffset;
+      const nextTimestamp = ((i < lrcTimestamps.length - 1) ? lrcTimestamps[i + 1] : Infinity)  + lyricsOffset;
+      if (currentTime + lyricsOffset >= currentTimestamp && currentTime + lyricsOffset < nextTimestamp) {
         currentLineRef.current = i;
         prevTimeRange.current = { start: currentTimestamp, end: nextTimestamp };
         return true;
@@ -235,7 +235,7 @@ const SongPlayerPage: React.FC = () => {
       const duration = playerRef.current.getDuration();
 
       if (checkIfTimeLineChanged(current + lyricsOffset)) {
-        setCurrentTime(current);
+        setCurrentTime(current + lyricsOffset);
       }
 
       // Check for quiz button show condition
@@ -267,6 +267,7 @@ const SongPlayerPage: React.FC = () => {
     prevTimeRange.current = { start: Infinity, end: 0 };
     setCurrentTime(0);
     setShowQuizButton(false);
+    setLyricsOffset(0);
   }, [song]);
 
   // Call resetLyricState when song changes
