@@ -110,7 +110,9 @@ const SongPlayerPage: React.FC = () => {
 
       setInstrumental(!instrumental);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to get instrumental version';
+      const errorMessage = err instanceof Error
+        ? `Failed to get instrumental version. Error message from OpenAPI stub call: ${err.message}`
+        : 'Failed to get instrumental version';
       setError(errorMessage);
       setInstrumental(false); // Revert toggle if error
     }
@@ -369,13 +371,14 @@ const SongPlayerPage: React.FC = () => {
       setYoutubeUrl('');
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to process song';
+      const errorMessage = err instanceof Error
+        ? `Failed to process song. Error message from OpenAPI stub call: ${err.message}`
+        : 'Failed to process song';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
-
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
@@ -420,7 +423,9 @@ const SongPlayerPage: React.FC = () => {
       setPlaylistUrl('');
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load playlist';
+      const errorMessage = err instanceof Error
+        ? `Failed to load playlist. Error message from OpenAPI stub call: ${err.message}`
+        : 'Failed to load playlist';
       setError(errorMessage);
     } finally {
       setPlaylistLoading(false);
@@ -485,22 +490,14 @@ const SongPlayerPage: React.FC = () => {
         resetLyricState(); // Reset lyric state
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
+      const errorMessage = err instanceof Error
+        ? `Failed to load song details. Error message from OpenAPI stub call: ${err.message}`
+        : 'Failed to load song details';
       setQueue(prevQueue => prevQueue.map(queueItem =>
         queueItem.queueId === item.queueId
           ? { ...queueItem, error: errorMessage }
           : queueItem
       ));
-
-      setCurrentPlayingId(item.queueId);
-      setSong({
-        title: item.title,
-        artist: item.artist,
-        youTubeId: item.youTubeId || '',
-        lrcLyrics: '',
-        lrcRomanizedLyrics: '',
-        lrcTranslatedLyrics: ''
-      });
     }
   }, [currentPlayingId, queue]);
 
