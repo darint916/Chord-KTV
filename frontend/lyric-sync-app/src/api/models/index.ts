@@ -1,6 +1,7 @@
 /* tslint:disable */
  
 export * from './Album';
+export * from './AuthResponseDto';
 export * from './FullSongRequestDto';
 export * from './FullSongResponseDto';
 export * from './GeniusMetaData';
@@ -16,8 +17,7 @@ export * from './QuizQuestionDto';
 export * from './QuizResponseDto';
 export * from './Song';
 export * from './TranslationRequestDto';
+export * from './UserDto';
 export * from './UserHandwritingResultDto';
-export * from './UserPlaylistActivityDto';
 export * from './UserQuizResultDto';
-export * from './UserSongActivityDto';
 export * from './VideoInfo';
