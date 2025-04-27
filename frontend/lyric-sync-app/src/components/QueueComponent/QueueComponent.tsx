@@ -40,6 +40,14 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
     setQueue(newQueue);
   };
 
+  const handleShuffle = () => {
+    for (let i = queue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [queue[i], queue[j]] = [queue[j], queue[i]];
+    }
+    setQueue([...queue]);
+  };
+
   const clearQueue = () => {
     if (!currentPlayingId) {
       setQueue([]);
@@ -65,8 +73,8 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
               ? `Queue (${queue.findIndex(item => item.queueId === currentPlayingId) + 1}/${queue.length})`
               : `Queue (${queue.length})`}
           </Typography>
-          <IconButton 
-            // onClick={handleShuffle}
+          <IconButton
+            onClick={handleShuffle}
             aria-label="shuffle queue"
             color="primary"
             size="small"
@@ -75,7 +83,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
           </IconButton>
         </Box>
         <Divider variant="fullWidth" className="queue-divider" />
-        
+
         {/* Main content area with fixed height */}
         <Box className="queue-list-container">
           <AutoSizer>
@@ -106,7 +114,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
             )}
           </AutoSizer>
         </Box>
-        
+
         {/* Button container with fixed position at bottom */}
         <Box className="queue-button-container">
           <Button
