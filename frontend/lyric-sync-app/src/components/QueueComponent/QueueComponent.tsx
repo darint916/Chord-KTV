@@ -78,11 +78,8 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
               ? `Queue (${queue.findIndex(item => item.queueId === currentPlayingId) + 1}/${queue.length})`
               : `Queue (${queue.length})`}
           </Typography>
-          <ToggleButton value="check" selected={autoPlayEnabled} onChange={() => setAutoPlayEnabled(prev => !prev)} className="autoplay-toggle">
-            AutoPlay
-          </ToggleButton>
           <IconButton
-            onClick={handleShuffle}
+            // onClick={handleShuffle}
             aria-label="shuffle queue"
             color="primary"
             size="small"
