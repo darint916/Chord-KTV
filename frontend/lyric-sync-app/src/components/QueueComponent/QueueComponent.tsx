@@ -59,7 +59,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
   return (
     <DndProvider backend={HTML5Backend}>
       <Paper elevation={3} className="queue-column">
-         <Box display="flex" alignItems="center" justifyContent="space-between" px={2} pt={1}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" px={2} pt={1}>
           <Typography variant="h6" className="queue-title">
             {currentPlayingId
               ? `Queue (${queue.findIndex(item => item.queueId === currentPlayingId) + 1}/${queue.length})`
