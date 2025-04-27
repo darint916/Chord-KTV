@@ -412,11 +412,8 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
-  // const handlePlayFromQueue = async (item: QueueItem) => {
   const handlePlayFromQueue = useCallback(async (item: QueueItem) => {
     setError('');
-    stopAnimationFrame(); // Stop any current animation frame
-    resetLyricState(); // Reset lyric state
 
     try {
       if (item.status === 'pending') {
@@ -457,6 +454,8 @@ const SongPlayerPage: React.FC = () => {
       item.status = 'loaded';
       setSong(response);
       setInstrumental(false);
+      stopAnimationFrame(); // Stop any current animation frame
+      resetLyricState(); // Reset lyric state
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
       setQueue(prevQueue => prevQueue.map(queueItem =>
@@ -475,7 +474,6 @@ const SongPlayerPage: React.FC = () => {
         lrcTranslatedLyrics: ''
       });
     }
-    // };
   }, [currentPlayingId, queue]);
 
   const [isFirst, setIsFirst] = useState(true);
