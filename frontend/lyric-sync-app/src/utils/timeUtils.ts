@@ -2,7 +2,7 @@
  * Converts .NET TimeSpan string ("hh:mm:ss" or "mm:ss" etc) into seconds.
  */
 export function parseTimeSpan(timeSpan?: string | null): number {
-  if (!timeSpan) return 0;
+  if (!timeSpan) {return 0;}
   const parts = timeSpan.split(':').map(p => parseFloat(p));
   if (parts.length === 3) {
     const [h, m, s] = parts;

@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { useSong } from '../../contexts/SongContext';
 import './HandwritingPage.scss';
-import { LanguageCode } from '../../api';
+import { LanguageCode, QuizQuestionDto } from '../../api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { quizApi } from '../../api/apiClient';
 
@@ -39,8 +39,8 @@ const HandwritingPage: React.FC = () => {
     const effectiveSongId =
       urlSongId || (song?.id && song.id.trim() !== '' ? song.id : null);
 
-    if (!effectiveSongId) return;               // nothing to fetch with
-    if (quizQuestions && quizQuestions.length) return; // already loaded
+    if (!effectiveSongId) {return;}               // nothing to fetch with
+    if (quizQuestions && quizQuestions.length) {return;} // already loaded
 
     (async () => {
       try {
@@ -49,8 +49,8 @@ const HandwritingPage: React.FC = () => {
           songId: effectiveSongId,
         });
         setQuizQuestions(resp.questions ?? []);
-      } catch (e) {
-        console.error('[HandwritingPage] failed to fetch questions', e);
+      } catch {
+        // console.error('[HandwritingPage] failed to fetch questions', e);
         setQuizQuestions([]);
       } finally {
         setLoadingQuestions(false);
@@ -96,7 +96,7 @@ const HandwritingPage: React.FC = () => {
   };
   
   /* ───── helper: pick a phrase even for AUDIO quizzes ───── */
-  const extractPhrase = (q: any): string => {
+  const extractPhrase = (q: QuizQuestionDto): string => {
     if (q.lyricPhrase && q.lyricPhrase.trim().length) {
       return q.lyricPhrase;
     }

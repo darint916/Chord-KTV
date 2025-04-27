@@ -226,7 +226,6 @@ const SongPlayerPage: React.FC = () => {
     playerRef.current = playerInstance;
     playerInstance.playVideo(); // Autoplay
     setShowQuizButton(isLanguageAllowedForQuiz ?? true);
-    const duration = playerRef.current.getDuration();
 
     const updateLoop = () => {
       if (!playerRef.current) {
@@ -291,7 +290,7 @@ const SongPlayerPage: React.FC = () => {
 
   const handleQuizRedirect = () => {
     if (!song.id) {
-      console.warn('[SongPlayerPage] Cannot start quiz – song.id is empty');
+      // console.warn('[SongPlayerPage] Cannot start quiz – song.id is empty');
       return;
     }
 
@@ -325,8 +324,7 @@ const SongPlayerPage: React.FC = () => {
           lyrics: lyrics.trim()
         }
       });
-      console.log('[SongPlayerPage] API returned FullSongResponseDto →', response);
-      console.log('[SongPlayerPage] youTubeId on song →', response.youTubeId);
+
       if (response) {
         setSong(response);
       }

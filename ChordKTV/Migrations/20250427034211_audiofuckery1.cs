@@ -1,4 +1,7 @@
-﻿using System;
+#pragma warning disable CS1591 // Disable missing XML comment warnings
+#pragma warning disable CS8618 // Disable non-nullable field warnings
+
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -8,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ChordKTV.Migrations
 {
     /// <inheritdoc />
-    public partial class audiofuckery1 : Migration
+    public partial class Audiofuckery1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -318,11 +321,15 @@ namespace ChordKTV.Migrations
                 table: "LearnedWords",
                 column: "UserId");
 
+#pragma warning disable CA1861 // Disable warning for static readonly fields over constant array arguments
+#pragma warning disable IDE0300 // Disable warning for collection initialization simplification
             migrationBuilder.CreateIndex(
                 name: "IX_QuizOptions_QuestionId_OrderIndex",
                 table: "QuizOptions",
                 columns: new[] { "QuestionId", "OrderIndex" },
                 unique: true);
+#pragma warning restore CA1861
+#pragma warning restore IDE0300
 
             migrationBuilder.CreateIndex(
                 name: "IX_QuizQuestions_QuizId",
@@ -412,3 +419,6 @@ namespace ChordKTV.Migrations
         }
     }
 }
+
+#pragma warning restore CS1591 // Restore missing XML comment warnings
+#pragma warning restore CS8618 // Restore non-nullable field warnings

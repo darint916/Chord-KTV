@@ -14,7 +14,7 @@ namespace ChordKTV.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20250427034211_audiofuckery1")]
-    partial class audiofuckery1
+    partial class Audiofuckery1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

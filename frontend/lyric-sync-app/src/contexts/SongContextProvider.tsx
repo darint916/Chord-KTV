@@ -24,10 +24,6 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [lyricsOffset, setLyricsOffset] = useState<number>(0);
 
   useEffect(() => {
-    console.log('[SongContextProvider] lyricsOffset updated:', lyricsOffset);
-  }, [lyricsOffset]);
-
-  useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('songQueue', JSON.stringify(queue));
       localStorage.setItem('currentPlayingId', JSON.stringify(currentPlayingId));

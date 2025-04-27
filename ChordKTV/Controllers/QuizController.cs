@@ -76,16 +76,24 @@ namespace ChordKTV.Controllers
         {
             // 1) validation
             if (difficulty is < 1 or > 5)
+            {
                 return BadRequest(new { message = "Difficulty must be between 1 and 5" });
+            }
 
             if (numQuestions < 1)
+            {
                 return BadRequest(new { message = "Number of questions must be at least 1" });
+            }
 
             if (numQuestions > 20)
+            {
                 return BadRequest(new { message = "Number of questions cannot exceed 20" });
+            }
 
             if (songId == Guid.Empty)
+            {
                 return BadRequest(new { message = "Song ID is required" });
+            }
 
             try
             {

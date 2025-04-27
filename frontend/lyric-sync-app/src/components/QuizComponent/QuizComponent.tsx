@@ -47,10 +47,9 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
       } else {
         response = await quizApi.apiQuizAudioGet({ songId });
       }
-      console.log('[QuizComponent] response:', response);
       setQuizQuestions(response.questions ?? []);
-    } catch (error) {
-      console.error('Error fetching quiz questions:', error);
+    } catch {
+      // console.error('Error fetching quiz questions:', error);
       setQuizQuestions([]);
     } finally {
       setIsLoading(false);
@@ -72,7 +71,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
       progressBarColor: '#9de1f6',
       nrOfQuestions: quizQuestions.length.toString(),
       questions: quizQuestions.map((question) => ({
-        question: " " + question.lyricPhrase,
+        question: ' ' + question.lyricPhrase,
         questionType: 'text',
         answerSelectionType: 'single',
         answers: question.options,
@@ -125,10 +124,6 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
   };
 
   const handleTogglePlay = () => {
-    console.log(
-      '[QuizComponent] ▶️ handleTogglePlay',
-      { wasPlaying: isPlaying, currentQuestionIndex }
-    );
     setIsPlaying(p => !p);
   };
 
@@ -136,25 +131,12 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
   const rawStart = parseTimeSpan(quizQuestions[currentQuestionIndex]?.startTimestamp);
   const rawEnd   = parseTimeSpan(quizQuestions[currentQuestionIndex]?.endTimestamp);
   const startSec = Math.max(0, rawStart - lyricsOffset);
-  console.log('[QuizComponent] lyricsOffset →', lyricsOffset);
   const endSec   = Math.max(startSec, rawEnd - lyricsOffset); // keep non-negative & ordered
-  console.log('[QuizComponent] render:', { currentQuestionIndex, startSec, endSec });
-
-  const current = quizQuestions[currentQuestionIndex];
-  console.log(
-    '[QuizComponent] question %d →',
-    currentQuestionIndex+1,
-    'startTimestamp:',
-    current?.startTimestamp,
-    'endTimestamp:',
-    current?.endTimestamp
-  );
 
   const videoId =
     song?.youTubeId ??
     song?.alternateYoutubeIds?.[0] ??
     'dQw4w9WgXcQ'; // fallback
-  console.log('[QuizComponent] ▶️ using videoId =', videoId);
 
   return (
     <div>
@@ -191,9 +173,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
           shuffle={selectedQuizType === 'audio' ? false : true}
           shuffleAnswer={true}
           showInstantFeedback={true}
-          onQuestionSubmit={(q: any) => {
-            console.log('[QuizComponent] �� onQuestionSubmit (raw) →', q);
-            // advance to next question ourselves
+          onQuestionSubmit={() => {
             setCurrentQuestionIndex(prev => {
               const next = prev + 1;
               return next < quizQuestions.length ? next : prev;

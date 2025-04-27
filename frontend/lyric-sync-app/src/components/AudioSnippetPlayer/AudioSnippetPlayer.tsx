@@ -19,7 +19,7 @@ const AudioSnippetPlayer: React.FC<AudioSnippetPlayerProps> = ({
   play,
   onEnded,
 }) => {
-  const playerRef = useRef<any>(null);
+  const playerRef = useRef<YT.Player | null>(null);
   const intervalRef = useRef<number>();
   const [isReady, setIsReady] = useState(false);
 
@@ -39,8 +39,8 @@ const AudioSnippetPlayer: React.FC<AudioSnippetPlayerProps> = ({
     try {
       player.seekTo(startTime, true);
       player.playVideo();
-    } catch (err) {
-      console.warn('[AudioSnippetPlayer] safeStartSnippet failed', err);
+    } catch {
+      // console.error('[AudioSnippetPlayer] safeStartSnippet failed', err);
     }
   };
 
@@ -49,8 +49,8 @@ const AudioSnippetPlayer: React.FC<AudioSnippetPlayerProps> = ({
     const player = playerRef.current;
     if (!player || !isReady) {
       if (play) {
-        // Optionally, show a loading spinner here
-        console.log('[AudioSnippetPlayer] Player not ready yet.');
+        // TODO: Could show a loading spinner here
+        // console.log('[AudioSnippetPlayer] Player not ready yet.');
       }
       return;
     }
@@ -60,8 +60,8 @@ const AudioSnippetPlayer: React.FC<AudioSnippetPlayerProps> = ({
       try {
         player.pauseVideo();
         player.seekTo(startTime, false);
-      } catch (err) {
-        console.warn('[AudioSnippetPlayer] reset error', err);
+      } catch {
+        // console.warn('[AudioSnippetPlayer] reset error', err);
       }
       if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
@@ -98,7 +98,6 @@ const AudioSnippetPlayer: React.FC<AudioSnippetPlayerProps> = ({
         key={videoId} // Only remount when videoId changes
         videoId={videoId}
         onReady={player => {
-          console.log(`[AudioSnippetPlayer] ✅ onReady "${videoId}"`);
           playerRef.current = player;
           setIsReady(true);
         }}

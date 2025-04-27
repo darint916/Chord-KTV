@@ -400,12 +400,17 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
     public async Task<List<string>> GenerateAudioQuizDistractorsAsync(string correctLyric, int difficulty)
     {
         if (string.IsNullOrWhiteSpace(correctLyric))
+        {
             throw new ArgumentException("Lyric must not be empty", nameof(correctLyric));
-        if (difficulty < 1 || difficulty > 5)
+        }
+
+        if (difficulty is < 1 or > 5)
+        {
             throw new ArgumentOutOfRangeException(nameof(difficulty), "Difficulty must be between 1 and 5");
+        }
 
         // 1) Build prompts
-        string systemPrompt = 
+        string systemPrompt =
             "You are an assistant that generates plausible yet incorrect lyric lines " +
             "as distractors for an audio‐based quiz. Do not repeat the correct line.";
 
@@ -431,17 +436,19 @@ Your task:
                 new { role = "user",   content = userPrompt }
             },
             temperature = 0.7,
-            top_p      = 0.9
+            top_p = 0.9
         };
 
         // 2) Call ChatGPT
-        OpenAIResponseDto? openAIResponse = 
+        OpenAIResponseDto? openAIResponse =
             await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody), nameof(GenerateAudioQuizDistractorsAsync));
 
         if (openAIResponse == null || openAIResponse.Choices.Count == 0)
+        {
             throw new InvalidOperationException("No response choices from ChatGPT for audio distractors.");
+        }
 
-        string raw = openAIResponse.Choices[0].Message.Content?.Trim() 
+        string raw = openAIResponse.Choices[0].Message.Content?.Trim()
                    ?? throw new InvalidOperationException("Empty content in ChatGPT response.");
 
         // 3) Parse JSON array
@@ -457,8 +464,9 @@ Your task:
         }
 
         if (distractors == null || distractors.Count != 3)
-            throw new InvalidOperationException(
-                $"Expected exactly 3 distractors, but got {distractors?.Count ?? 0}");
+        {
+            throw new InvalidOperationException($"Expected exactly 3 distractors, but got {distractors?.Count ?? 0}");
+        }
 
         return distractors;
     }

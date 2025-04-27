@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using ChordKTV.Data.Api.SongData;
 using ChordKTV.Data.Api.QuizData;
 using ChordKTV.Models.Quiz;
+using ChordKTV.Models.SongData;
 using ChordKTV.Services.Api;
 
 namespace ChordKTV.Services.Service;
@@ -64,7 +65,7 @@ public class QuizService : IQuizService
         }
 
         // Retrieve the song by songId and verify its lyrics
-        Models.SongData.Song? song = await _songRepo.GetSongByIdAsync(songId) ??
+        Song? song = await _songRepo.GetSongByIdAsync(songId) ??
             throw new InvalidOperationException($"Song with ID {songId} not found in database.");
 
         if (string.IsNullOrWhiteSpace(song.LrcLyrics))
@@ -120,7 +121,7 @@ public class QuizService : IQuizService
         int numQuestions)
     {
         // 1) clamp inputs
-        difficulty   = Math.Clamp(difficulty,   1, 5);
+        difficulty = Math.Clamp(difficulty, 1, 5);
         numQuestions = Math.Clamp(numQuestions, 1, 20);
 
         // 2) optional cache‐lookup (stubbed for now)
@@ -131,15 +132,19 @@ public class QuizService : IQuizService
         }
 
         // 3) load song & ensure LRC exists
-        var song = await _songRepo.GetSongByIdAsync(songId)
+        Song song = await _songRepo.GetSongByIdAsync(songId)
                    ?? throw new InvalidOperationException($"Song with ID {songId} not found.");
         if (string.IsNullOrWhiteSpace(song.LrcLyrics))
+        {
             throw new InvalidOperationException("Song LRC lyrics not available.");
+        }
 
         // 4) parse LRC into (start, end, text) tuples
-        var timestampedLines = ParseLrcLines(song.LrcLyrics);
+        List<(TimeSpan start, TimeSpan end, string text)> timestampedLines = ParseLrcLines(song.LrcLyrics);
         if (timestampedLines.Count == 0)
+        {
             throw new InvalidOperationException("No timestamped lines found in LRC.");
+        }
 
         // 5) pick random lines
         var rng = new Random();
@@ -149,17 +154,17 @@ public class QuizService : IQuizService
             .ToList();
 
         // 6) build questions
-        var questions = new List<QuizQuestion>();
+        List<QuizQuestion> questions = new List<QuizQuestion>();
         int qNum = 1;
 
-        foreach (var (start, end, lyric) in selected)
+        foreach ((TimeSpan start, TimeSpan end, string lyric) in selected)
         {
             // TODO: implement this in IChatGptService when ready
-            var distractors = await _chatGptService
+            List<string> distractors = await _chatGptService
                 .GenerateAudioQuizDistractorsAsync(lyric, difficulty);
 
             // assemble options
-            var options = new List<QuizOption>
+            List<QuizOption> options = new()
             {
                 new QuizOption { Text = lyric,   IsCorrect = true  }
             };
@@ -184,10 +189,10 @@ public class QuizService : IQuizService
 
             questions.Add(new QuizQuestion
             {
-                QuestionNumber   = qNum,
-                StartTimestamp   = start,
-                EndTimestamp     = end,
-                Options          = options
+                QuestionNumber = qNum,
+                StartTimestamp = start,
+                EndTimestamp = end,
+                Options = options
             });
             qNum++;
         }
@@ -195,11 +200,11 @@ public class QuizService : IQuizService
         // 7) persist & return
         var quiz = new Quiz
         {
-            Id         = Guid.NewGuid(),
-            Timestamp  = DateTime.UtcNow,
-            SongId     = songId,
+            Id = Guid.NewGuid(),
+            Timestamp = DateTime.UtcNow,
+            SongId = songId,
             Difficulty = difficulty,
-            Questions  = questions,
+            Questions = questions,
         };
         await _quizRepo.AddAsync(quiz);
 
@@ -208,35 +213,39 @@ public class QuizService : IQuizService
 
     /// Parse raw LRC into a list of (start, end, text).
     /// Uses next‐line start as end
-    private List<(TimeSpan Start, TimeSpan End, string Text)> ParseLrcLines(string lrc)
+    private static readonly string[] _lineSeparators = ["\r\n", "\n"];
+
+    private static List<(TimeSpan Start, TimeSpan End, string Text)> ParseLrcLines(string lrc)
     {
-        var lines   = lrc
-            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        var pattern = new Regex(@"\[(\d+):(\d+(?:\.\d+)?)\]");
-        var temp    = new List<(TimeSpan start, string text)>();
+        string[] lines = lrc
+            .Split(_lineSeparators, StringSplitOptions.RemoveEmptyEntries);
+        Regex pattern = new(@"\[(\d+):(\d+(?:\.\d+)?)\]");
+        List<(TimeSpan start, string text)> temp = new();
 
-        foreach (var raw in lines)
+        foreach (string raw in lines)
         {
-            var m = pattern.Match(raw);
-            if (!m.Success) continue;
+            Match m = pattern.Match(raw);
+            if (!m.Success)
+            { continue; }
 
-            int mins = int.Parse(m.Groups[1].Value);
+            int mins = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
             double secs = double.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture);
-            var start = TimeSpan.FromSeconds(mins * 60 + secs);
+            TimeSpan start = TimeSpan.FromSeconds((mins * 60) + secs);
 
-            var text = pattern.Replace(raw, "").Trim();
-            if (text.Length == 0) continue;
+            string text = pattern.Replace(raw, "").Trim();
+            if (text.Length == 0)
+            { continue; }
             temp.Add((start, text));
         }
 
         // sort & infer end‐times
         temp.Sort((a, b) => a.start.CompareTo(b.start));
-        var result = new List<(TimeSpan, TimeSpan, string)>();
+        List<(TimeSpan start, TimeSpan end, string text)> result = new();
 
         for (int i = 0; i < temp.Count; i++)
         {
-            var (start, text) = temp[i];
-            var end = (i < temp.Count - 1)
+            (TimeSpan start, string text) = temp[i];
+            TimeSpan end = (i < temp.Count - 1)
                 ? temp[i + 1].start
                 : start.Add(TimeSpan.FromSeconds(5));
             result.Add((start, end, text));
