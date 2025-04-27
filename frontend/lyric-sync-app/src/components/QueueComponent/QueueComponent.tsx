@@ -1,5 +1,5 @@
 import React from 'react';
-import { Paper, Typography, Divider, Box, Button } from '@mui/material';
+import { Paper, Typography, Divider, Box, Button, IconButton } from '@mui/material';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import DraggableQueueItem from '../../components/DraggableQueueItem/DraggableQueueItem';
@@ -8,6 +8,7 @@ import ClearAll from '@mui/icons-material/ClearAll';
 import './QueueComponent.scss';
 import { FixedSizeList as List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import Shuffle from '@mui/icons-material/Shuffle';
 
 interface QueueComponentProps {
   queue: QueueItem[];
@@ -58,11 +59,21 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
   return (
     <DndProvider backend={HTML5Backend}>
       <Paper elevation={3} className="queue-column">
-        <Typography variant="h6" className="queue-title" align="center">
-          {currentPlayingId
-            ? `Queue (${queue.findIndex(item => item.queueId === currentPlayingId) + 1}/${queue.length})`
-            : `Queue (${queue.length})`}
-        </Typography>
+         <Box display="flex" alignItems="center" justifyContent="space-between" px={2} pt={1}>
+          <Typography variant="h6" className="queue-title">
+            {currentPlayingId
+              ? `Queue (${queue.findIndex(item => item.queueId === currentPlayingId) + 1}/${queue.length})`
+              : `Queue (${queue.length})`}
+          </Typography>
+          <IconButton 
+            // onClick={handleShuffle}
+            aria-label="shuffle queue"
+            color="primary"
+            size="small"
+          >
+            <Shuffle />
+          </IconButton>
+        </Box>
         <Divider variant="fullWidth" className="queue-divider" />
         
         {/* Main content area with fixed height */}
