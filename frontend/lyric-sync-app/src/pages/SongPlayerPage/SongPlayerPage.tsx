@@ -565,13 +565,6 @@ const SongPlayerPage: React.FC = () => {
   }
 `;
 
-  const activeVideoId = useMemo(() => {
-    if (instrumental && currentQueueItem?.ktvYouTubeId) {
-      return currentQueueItem.ktvYouTubeId;
-    }
-    return song.youTubeId ?? '';
-  }, [instrumental, currentQueueItem?.ktvYouTubeId, song.youTubeId]);
-
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
