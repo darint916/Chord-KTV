@@ -4,8 +4,9 @@ import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../contexts/AuthTypes';
 import { Configuration } from '../../api';
 import { AuthApi } from '../../api/apis/AuthApi';
+import { setAuthToken } from '../../utils/auth';
 
-// Initialize API client
+// Ensure the basePath includes the correct hostname and port.
 const authApi = new AuthApi(
   new Configuration({
     basePath: import.meta.env.VITE_API_BASE_URL,
@@ -23,18 +24,27 @@ const GoogleAuth: React.FC = () => {
   const { setUser } = useAuth();
 
   const handleLogin = async (credentialResponse: CredentialResponse) => {
-    const decoded: GooglePayload = jwtDecode(credentialResponse.credential ?? '');
-    
-    try {
-      // Use the AuthApi stub instead of a direct fetch call
-      await authApi.apiAuthGooglePost(credentialResponse.credential ?? '');
+    const credential = credentialResponse.credential ?? '';
+    const decoded: GooglePayload = jwtDecode(credential);
 
+    try {
+      // IMPORTANT: Call the auth endpoint by passing an object that
+      // has a property named "authorization" whose value is the Google ID token,
+      // prefixed with "Bearer ". This is what the generated API client expects.
+      const authResponse = await authApi.apiAuthGooglePost({
+        authorization: `Bearer ${credential}`,
+      });
+      
+      const jwt = authResponse.token;
+      setAuthToken(jwt);
+      
+      // Update React auth context with the user details.
       setUser({
         id: decoded.sub,
         name: decoded.name,
         email: decoded.email,
         picture: decoded.picture,
-        idToken: credentialResponse.credential ?? ''
+        idToken: jwt,
       });
     } catch {
       handleLoginError();
@@ -42,7 +52,7 @@ const GoogleAuth: React.FC = () => {
   };
 
   const handleLoginError = () => {
-    // Handle login error silently or show a user-friendly message
+    // Clear any auth data
     setUser(null);
   };
 

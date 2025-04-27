@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AppBar, Toolbar, Avatar, Menu, MenuItem, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Box, Typography, IconButton } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthTypes';
 import CloseIcon from '@mui/icons-material/Close';
 import BugReportIcon from '@mui/icons-material/BugReport';
@@ -9,7 +9,7 @@ import './AppBarComponent.scss';
 import logo from '../../assets/chordktv.png';
 
 const AppBarComponent: React.FC = () => {
-  const { user, setUser } = useAuth();
+  const { user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [bugMenuAnchorEl, setBugMenuAnchorEl] = React.useState<null | HTMLElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -19,10 +19,10 @@ const AppBarComponent: React.FC = () => {
   const repoOwner = 'darint916';
   const repoName = 'Chord-KTV';
 
+  const navigate = useNavigate();
+
   const handleLogout = () => {
-    setUser(null);
-    setAnchorEl(null);
-    localStorage.removeItem('user');
+    logout();        // clear token, user state, revoke Google
   };
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -88,6 +88,12 @@ const AppBarComponent: React.FC = () => {
     setIssueTitle('');
   };
 
+  // New handler for the "Stats" button
+  const handleStatsClick = () => {
+    navigate('/stats');
+    handleMenuClose();
+  };
+
   return (
     <>
       <AppBar position="static" elevation={0} className="app-bar">
@@ -104,6 +110,7 @@ const AppBarComponent: React.FC = () => {
               startIcon={<BugReportIcon />}
               onClick={handleBugMenuClick}
               className='report-button'
+              sx={{ marginRight: 2 }}
             >
               Report Issue
             </Button>
@@ -132,6 +139,7 @@ const AppBarComponent: React.FC = () => {
                   onClose={handleMenuClose}
                 >
                   <MenuItem>{user.name}</MenuItem>
+                  <MenuItem onClick={handleStatsClick}>Statistics</MenuItem>
                   <MenuItem onClick={handleLogout}>Logout</MenuItem>
                 </Menu>
               </>

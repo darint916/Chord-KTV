@@ -32,7 +32,7 @@ export interface LearnedWordDto {
      * @type {string}
      * @memberof LearnedWordDto
      */
-    word?: string | null;
+    word?: string;
     /**
      * 
      * @type {LanguageCode}

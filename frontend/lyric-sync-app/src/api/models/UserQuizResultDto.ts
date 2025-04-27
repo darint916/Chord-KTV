@@ -56,7 +56,7 @@ export interface UserQuizResultDto {
      * @type {Array<string>}
      * @memberof UserQuizResultDto
      */
-    correctAnswers?: Array<string> | null;
+    correctAnswers?: Array<string>;
 }
 
 

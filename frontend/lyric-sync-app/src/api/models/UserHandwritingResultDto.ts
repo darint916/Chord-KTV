@@ -44,7 +44,7 @@ export interface UserHandwritingResultDto {
      * @type {string}
      * @memberof UserHandwritingResultDto
      */
-    wordTested?: string | null;
+    wordTested?: string;
     /**
      * 
      * @type {Date}

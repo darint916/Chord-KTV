@@ -1,0 +1,70 @@
+.topSongsPaper {
+  position: relative;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid;
+  border-color: #e0e0e0; // matches 'grey.300'
+  width: 100%;
+  margin: 8px 0;
+}
+
+.scrollContainer {
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 8px;
+}
+
+.songBox {
+  margin-bottom: 16px;
+}
+
+.songRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.songTitle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.songPlays {
+  margin-left: auto;
+  color: #757575; // matches 'text.secondary'
+}
+
+.progressBar {
+  height: 10px;
+  border-radius: 5px;
+}
+
+.fadeTop {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: linear-gradient(to bottom, white, transparent);
+  transition: opacity 0.2s;
+}
+
+.fadeBottom {
+  pointer-events: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: linear-gradient(to top, white, transparent);
+  transition: opacity 0.2s;
+} 
