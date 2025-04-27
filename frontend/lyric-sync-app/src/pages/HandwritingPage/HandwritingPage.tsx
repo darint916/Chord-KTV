@@ -40,7 +40,8 @@ const HandwritingPage: React.FC = () => {
   const getLongestWord = (text: string): string => {
     const segments = Array.from(segmenter.segment(text))
       .filter(segment => segment.isWordLike)
-      .map(segment => segment.segment);
+      .map(segment => segment.segment)
+      .filter(segment => !/[A-Za-z]/.test(segment));
     
     if (segments.length === 0) {return '';}
     
@@ -50,8 +51,8 @@ const HandwritingPage: React.FC = () => {
   };
   
   const wordsToPractice = quizQuestions
-    .map(q => getLongestWord(q.lyricPhrase ?? ''))
-    .filter(word => word.length > 0);
+  .map(q => getLongestWord(q.lyricPhrase ?? ''))
+  .filter(word => word.length > 0);
   
   const currentWord = wordsToPractice[currentWordIndex % wordsToPractice.length];
   const allWordsCompleted = completedWords.length >= wordsToPractice.length;
