@@ -22,7 +22,7 @@ public class ChatGptService : IChatGptService
     //Context window: 128,000 tokens, max tokens: 16,384 tokens , about 4 chars per token avg ~ 32000 chars, reference: Eminem love the way you lie : 4.4k chars
     //KR + other lang use more tokens, but as ref, https://platform.openai.com/tokenizer to calc, 2793 char -> 1564 tokens (sick enough to die)
     // price as of testing seems like ~$0.01 after 26k tokens lol
-    private const string Model = "gpt-4o"; //last updated 2024-07-18 , knowledge cutoff 10/2023
+    private const string Model = "gpt-4o-mini"; //last updated 2024-07-18 , knowledge cutoff 10/2023
 
     // Add static readonly field for options
     private static readonly JsonSerializerOptions _jsonOptions = new()
