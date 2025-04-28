@@ -71,6 +71,10 @@ public class SongController : Controller
     }
 
     [HttpGet("lyrics/lrc/match")]
+    [ProducesResponseType(typeof(LrcLyricsDto), 200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    [ProducesResponseType(503)]
     public async Task<IActionResult> GetLrcLibLyrics([FromQuery] string? title,
                                     [FromQuery] string? artist, [FromQuery] string? albumName,
                                     [FromQuery] float? duration)
@@ -100,6 +104,7 @@ public class SongController : Controller
     }
 
     [HttpPost("lyrics/lrc/translation")]
+    [ProducesResponseType(typeof(LrcLyricsDto), 200)]
     public async Task<IActionResult> PostChatGptTranslations([FromBody] TranslationRequestDto request)
     {
         TranslationResponseDto lyricsDto = await _chatGptService.TranslateLyricsAsync(request.OriginalLyrics, request.LanguageCode, request.Romanize, request.Translate);
@@ -143,6 +148,10 @@ public class SongController : Controller
 
 
     [HttpGet("songs/genius/match")]
+    [ProducesResponseType(typeof(SongDto), 200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    [ProducesResponseType(503)]
     public async Task<IActionResult> GetSongByArtistTitle(
         [FromQuery] string? title,
         [FromQuery] string? artist,
@@ -179,6 +188,11 @@ public class SongController : Controller
     }
 
     [HttpPost("songs/genius/match/batch")]
+    [ProducesResponseType(typeof(List<SongDto>), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    [ProducesResponseType(503)]
     public async Task<IActionResult> GetSongsByArtistTitle(
         [FromBody] JsonElement request,
         [FromQuery] bool forceRefresh = false)
@@ -222,6 +236,9 @@ public class SongController : Controller
     }
 
     [HttpGet("album/{albumName}")]
+    [ProducesResponseType(typeof(List<SongDto>), 200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
     public async Task<IActionResult> GetSongsByAlbum(
         string albumName,
         [FromQuery] string? artist)
@@ -253,6 +270,11 @@ public class SongController : Controller
     }
 
     [HttpGet("songs/genius/search")]
+    [ProducesResponseType(typeof(List<GeniusHit>), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    [ProducesResponseType(503)]
     public async Task<IActionResult> GetGeniusSearchResults([FromQuery, Required, MaxLength(200)] string searchQuery)
     {
         try
@@ -282,6 +304,11 @@ public class SongController : Controller
     }
 
     [HttpGet("songs/lrclib/search")]
+    [ProducesResponseType(typeof(List<LrcLyricsDto>), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    [ProducesResponseType(503)]
     public async Task<IActionResult> GetLrcLibSearchResults([FromQuery, Required, MaxLength(200)] string searchQuery)
     {
         try
@@ -312,6 +339,9 @@ public class SongController : Controller
 
     [HttpPut("songs/{songId}/video/instrumental")]
     [ProducesResponseType(typeof(string), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
     public async Task<IActionResult> PutSongVideoInstrumental(string songId)
     {
         try
@@ -339,6 +369,7 @@ public class SongController : Controller
     }
 
     [HttpGet("health")]
+    [ProducesResponseType(typeof(string), 200)]
     public IActionResult HealthCheck()
     {
         return Ok(new { message = "Song API is healthy." });
@@ -346,6 +377,8 @@ public class SongController : Controller
 
     [DevelopmentOnly]
     [HttpGet("database/song")]
+    [ProducesResponseType(typeof(Song), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetSongFromDb([FromQuery, Required] string title, [FromQuery, Required] string artist, [FromQuery] string? albumName)
     {
         //there is no case for album name but no artist, maybe add in future or not need. This for dev testing
@@ -368,6 +401,7 @@ public class SongController : Controller
 
     [DevelopmentOnly]
     [HttpPost("database/song")]
+    [ProducesResponseType(200)]
     public async Task<IActionResult> AddSongToDb([FromBody] Song song)
     {
         await _songRepo.AddSongAsync(song);
@@ -376,6 +410,8 @@ public class SongController : Controller
 
     [DevelopmentOnly]
     [HttpGet("database/users/{email}")]
+    [ProducesResponseType(typeof(User), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetUserByEmail(string email)
     {
         User? user = await _userRepo.GetUserByEmailAsync(email);
