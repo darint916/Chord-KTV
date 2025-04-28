@@ -5,7 +5,7 @@ import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
 
 export interface GeniusHitsCarouselProps {
   hits: GeniusHitDto[];
-  onSelect: (hit: GeniusHitDto) => void;
+  onSelect: (_hit: GeniusHitDto) => void;
   title?: string;
   fadeColor?: string;
   onMatchSearch?: () => void;
