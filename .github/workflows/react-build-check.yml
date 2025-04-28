@@ -31,6 +31,6 @@ jobs:
         run: echo "CI=true" >> $GITHUB_ENV
 
       # Commented out until all OpenAPI generated unused vars are used
-      # - name: Run build
-      #   run: npm run build
-      #   working-directory: frontend/lyric-sync-app
+      - name: Run build
+        run: npm run build
+        working-directory: frontend/lyric-sync-app
