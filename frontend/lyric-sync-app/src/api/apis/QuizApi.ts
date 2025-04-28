@@ -15,28 +15,25 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiQuizRomanizationPostRequest,
   ProblemDetails,
   QuizResponseDto,
 } from '../models/index';
 import {
+    ApiQuizRomanizationPostRequestFromJSON,
+    ApiQuizRomanizationPostRequestToJSON,
     ProblemDetailsFromJSON,
     ProblemDetailsToJSON,
     QuizResponseDtoFromJSON,
     QuizResponseDtoToJSON,
 } from '../models/index';
 
-export interface ApiQuizAudioGetRequest {
-    songId?: string;
-    useCachedQuiz?: boolean;
-    difficulty?: number;
-    numQuestions?: number;
+export interface ApiQuizAudioPostRequest {
+    apiQuizRomanizationPostRequest?: ApiQuizRomanizationPostRequest;
 }
 
-export interface ApiQuizRomanizationGetRequest {
-    songId?: string;
-    useCachedQuiz?: boolean;
-    difficulty?: number;
-    numQuestions?: number;
+export interface ApiQuizRomanizationPostOperationRequest {
+    apiQuizRomanizationPostRequest?: ApiQuizRomanizationPostRequest;
 }
 
 /**
@@ -46,26 +43,12 @@ export class QuizApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiQuizAudioGetRaw(requestParameters: ApiQuizAudioGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<QuizResponseDto>> {
+    async apiQuizAudioPostRaw(requestParameters: ApiQuizAudioPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<QuizResponseDto>> {
         const queryParameters: any = {};
 
-        if (requestParameters['songId'] != null) {
-            queryParameters['songId'] = requestParameters['songId'];
-        }
-
-        if (requestParameters['useCachedQuiz'] != null) {
-            queryParameters['useCachedQuiz'] = requestParameters['useCachedQuiz'];
-        }
-
-        if (requestParameters['difficulty'] != null) {
-            queryParameters['difficulty'] = requestParameters['difficulty'];
-        }
-
-        if (requestParameters['numQuestions'] != null) {
-            queryParameters['numQuestions'] = requestParameters['numQuestions'];
-        }
-
         const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
 
         if (this.configuration && this.configuration.apiKey) {
             headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // Bearer authentication
@@ -73,9 +56,10 @@ export class QuizApi extends runtime.BaseAPI {
 
         const response = await this.request({
             path: `/api/quiz/audio`,
-            method: 'GET',
+            method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: ApiQuizRomanizationPostRequestToJSON(requestParameters['apiQuizRomanizationPostRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => QuizResponseDtoFromJSON(jsonValue));
@@ -83,33 +67,19 @@ export class QuizApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiQuizAudioGet(requestParameters: ApiQuizAudioGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<QuizResponseDto> {
-        const response = await this.apiQuizAudioGetRaw(requestParameters, initOverrides);
+    async apiQuizAudioPost(requestParameters: ApiQuizAudioPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<QuizResponseDto> {
+        const response = await this.apiQuizAudioPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
      */
-    async apiQuizRomanizationGetRaw(requestParameters: ApiQuizRomanizationGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<QuizResponseDto>> {
+    async apiQuizRomanizationPostRaw(requestParameters: ApiQuizRomanizationPostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<QuizResponseDto>> {
         const queryParameters: any = {};
 
-        if (requestParameters['songId'] != null) {
-            queryParameters['songId'] = requestParameters['songId'];
-        }
-
-        if (requestParameters['useCachedQuiz'] != null) {
-            queryParameters['useCachedQuiz'] = requestParameters['useCachedQuiz'];
-        }
-
-        if (requestParameters['difficulty'] != null) {
-            queryParameters['difficulty'] = requestParameters['difficulty'];
-        }
-
-        if (requestParameters['numQuestions'] != null) {
-            queryParameters['numQuestions'] = requestParameters['numQuestions'];
-        }
-
         const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
 
         if (this.configuration && this.configuration.apiKey) {
             headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // Bearer authentication
@@ -117,9 +87,10 @@ export class QuizApi extends runtime.BaseAPI {
 
         const response = await this.request({
             path: `/api/quiz/romanization`,
-            method: 'GET',
+            method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: ApiQuizRomanizationPostRequestToJSON(requestParameters['apiQuizRomanizationPostRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => QuizResponseDtoFromJSON(jsonValue));
@@ -127,8 +98,8 @@ export class QuizApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiQuizRomanizationGet(requestParameters: ApiQuizRomanizationGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<QuizResponseDto> {
-        const response = await this.apiQuizRomanizationGetRaw(requestParameters, initOverrides);
+    async apiQuizRomanizationPost(requestParameters: ApiQuizRomanizationPostOperationRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<QuizResponseDto> {
+        const response = await this.apiQuizRomanizationPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

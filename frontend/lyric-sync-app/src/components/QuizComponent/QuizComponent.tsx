@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import './QuizComponent.scss';
 import AudioSnippetPlayer from '../AudioSnippetPlayer/AudioSnippetPlayer';
 import { parseTimeSpan } from '../../utils/timeUtils';
+import type { QuizResponseDto } from '../../api/models';
 
 interface QuizData {
   quizTitle: string;
@@ -40,16 +41,32 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
   const handleStartQuiz = async (quizType: 'romanization' | 'audio') => {
     setIsLoading(true);
     setSelectedQuizType(quizType);
+
+    // build your POST body
+    const requestBody = {
+      songId,           // required
+      useCachedQuiz: false,
+      difficulty: 3,
+      numQuestions: 5
+    };
+
     try {
-      let response;
+      let response: QuizResponseDto;
+
       if (quizType === 'romanization') {
-        response = await quizApi.apiQuizRomanizationGet({ songId });
+        // note the wrapper property name!
+        response = await quizApi.apiQuizRomanizationPost({
+          apiQuizRomanizationPostRequest: requestBody
+        });
       } else {
-        response = await quizApi.apiQuizAudioGet({ songId });
+        response = await quizApi.apiQuizAudioPost({
+          apiQuizRomanizationPostRequest: requestBody
+        });
       }
+
       setQuizQuestions(response.questions ?? []);
     } catch {
-      // console.error('Error fetching quiz questions:', error);
+      // console.error('failed to fetch quiz', e);
       setQuizQuestions([]);
     } finally {
       setIsLoading(false);

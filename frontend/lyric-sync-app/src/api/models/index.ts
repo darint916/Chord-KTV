@@ -1,6 +1,7 @@
 /* tslint:disable */
  
 export * from './Album';
+export * from './ApiQuizRomanizationPostRequest';
 export * from './AuthResponseDto';
 export * from './FullSongRequestDto';
 export * from './FullSongResponseDto';
