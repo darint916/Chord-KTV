@@ -85,6 +85,61 @@ const SongPlayerPage: React.FC = () => {
     return queue.find(item => item.queueId === currentPlayingId);
   }, [queue, currentPlayingId]);
 
+  const COMBINED_DELIMITER = '<<<SEP>>>';
+
+  const getCombinedLyrics = useMemo(() => {
+    if (!song.lrcLyrics) return 'Not supported';
+
+    const parseLyrics = (lyrics: string) => {
+      const lines = lyrics.split('\n');
+      const parsed: { time: string, text: string }[] = [];
+
+      for (const line of lines) {
+        const timeMatch = line.match(/^(\[[^\]]+\])/);
+        if (timeMatch) {
+          parsed.push({
+            time: timeMatch[1],
+            text: line.replace(timeMatch[1], '').trim()
+          });
+        }
+      }
+      return parsed;
+    };
+
+    const original = parseLyrics(song.lrcLyrics);
+    const romanized = song.lrcRomanizedLyrics ? parseLyrics(song.lrcRomanizedLyrics) : [];
+    const translated = song.lrcTranslatedLyrics ? parseLyrics(song.lrcTranslatedLyrics) : [];
+
+    const combined: string[] = [];
+
+    for (const origLine of original) {
+      const romLine = romanized.find(l => l.time === origLine.time);
+      const transLine = translated.find(l => l.time === origLine.time);
+
+      const texts: string[] = [];
+
+      // Always include the original
+      if (origLine.text) {
+        texts.push(origLine.text);
+      }
+
+      // Only include romanized if it's different from original (case insensitive)
+      if (romLine && romLine.text && romLine.text.toLowerCase() !== origLine.text.toLowerCase()) {
+        texts.push(romLine.text);
+      }
+
+      // Only include translation if it's different from original (case insensitive)
+      if (transLine && transLine.text && transLine.text.toLowerCase() !== origLine.text.toLowerCase()) {
+        texts.push(transLine.text);
+      }
+
+      const mergedText = texts.join(COMBINED_DELIMITER);
+      combined.push(`${origLine.time}${mergedText}`);
+    }
+
+    return combined.join('\n');
+  }, [song.lrcLyrics, song.lrcRomanizedLyrics, song.lrcTranslatedLyrics]);
+
   const handleKTVToggle = async () => {
     if (!song.id) { return; } // No song ID available
 
@@ -724,6 +779,7 @@ const SongPlayerPage: React.FC = () => {
                 <Tab label="Original Lyrics" />
                 <Tab label="Romanized Lyrics" />
                 <Tab label="Translated Lyrics" />
+                <Tab label="Combined Lyrics" />
               </Tabs>
             </Box>
             <Box className='lrc-grid-parent'>
@@ -733,7 +789,9 @@ const SongPlayerPage: React.FC = () => {
                     ? song.lrcLyrics ?? 'Not supported'
                     : selectedTab === 1
                       ? song.lrcRomanizedLyrics ?? 'Not supported'
-                      : song.lrcTranslatedLyrics ?? 'Not supported'
+                      : selectedTab === 2
+                        ? song.lrcTranslatedLyrics ?? 'Not supported'
+                        : getCombinedLyrics
                 }
                 currentTime={currentTime + lyricsOffsetRef.current}
                 isPlaying={isPlaying}

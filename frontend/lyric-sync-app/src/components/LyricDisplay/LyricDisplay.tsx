@@ -9,7 +9,7 @@ interface LyricDisplayProps {
 
 const LyricDisplay: React.FC<LyricDisplayProps> = ({ rawLrcLyrics, currentTime, isPlaying }) => { // we use https://github.com/mebtte/react-lrc, uses ms for time though
 
-  const { signal, recoverAutoScrollImmediately} = useRecoverAutoScrollImmediately();
+  const { signal, recoverAutoScrollImmediately } = useRecoverAutoScrollImmediately();
   const wasPlayingRef = useRef(isPlaying);
   useEffect(() => {
     if (isPlaying && !wasPlayingRef.current) {
@@ -18,12 +18,22 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ rawLrcLyrics, currentTime, 
     wasPlayingRef.current = isPlaying;
   }, [isPlaying, currentTime]);
 
-  const lineRenderer = useCallback(({ active, line }: { active: boolean; line: LrcLine }) => (
-    <div className={`lyric-text ${active ? 'active-lrc' : ''}`}>
-      {line.content.trim() ? line.content : '♫ ♫'}
-    </div>
-  ), []
-  );
+
+  const COMBINED_DELIMITER = '<<<SEP>>>'; // make sure same delimiter
+
+  const lineRenderer = useCallback(({ active, line }: { active: boolean; line: LrcLine }) => {
+    const parts = line.content.split(COMBINED_DELIMITER);
+
+    return (
+      <div className={`lyric-text ${active ? 'active-lrc' : ''}`}>
+        {parts.map((part, index) => (
+          <div key={index} className={`lyric-part lyric-part-${index}`}>
+            {part.trim() ? part : '♫ ♫'}
+          </div>
+        ))}
+      </div>
+    );
+  }, []);
 
   return ( //autoscroll turned on alr, consider reading docs if we want to reformat line styling and distances
     <div className="lyric-display-container">
