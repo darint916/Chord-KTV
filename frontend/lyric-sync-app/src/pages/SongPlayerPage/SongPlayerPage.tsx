@@ -702,9 +702,6 @@ const SongPlayerPage: React.FC = () => {
   }
 `;
 
-  /**
-   * Always POST to /songs/match with title, artist, lyrics & YouTube ID
-   */
   const handleMatchSearch = async () => {
     setIsLoading(true);
     setError('');

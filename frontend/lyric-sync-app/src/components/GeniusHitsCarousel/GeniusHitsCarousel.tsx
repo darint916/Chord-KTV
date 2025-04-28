@@ -4,11 +4,8 @@ import MediaCarousel, { MediaItem } from '../UserStats/MediaCarousel';
 import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
 
 export interface GeniusHitsCarouselProps {
-  /** raw hits from Genius search */
   hits: GeniusHitDto[];
-  /** callback when user picks one hit */
   onSelect: () => void;
-  /** optional overrides */
   title?: string;
   fadeColor?: string;
   onMatchSearch?: () => void;
@@ -28,7 +25,6 @@ const GeniusHitsCarousel: React.FC<GeniusHitsCarouselProps> = ({
   const items: MediaItem[] = React.useMemo(
     () =>
       hits.map((h) => {
-        // some DTOs use camelCase, some snake_case
         const coverUrl =
           h.result.songArtImageUrl ||
           h.result.headerImageUrl ||
@@ -42,9 +38,7 @@ const GeniusHitsCarousel: React.FC<GeniusHitsCarouselProps> = ({
           '';
         return {
           id: String(h.result.id),
-          /** only the song title here */
           title: h.result.title ?? '',
-          /** separate artist line */
           subtitle: artistNames,
           coverUrl,
         };
