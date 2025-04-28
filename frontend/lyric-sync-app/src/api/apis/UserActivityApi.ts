@@ -18,7 +18,11 @@ import type {
   LanguageCode,
   LearnedWordDto,
   UserHandwritingResultDto,
+  UserPlaylistActivityDto,
+  UserPlaylistActivityFavoriteRequestDto,
   UserQuizResultDto,
+  UserSongActivityDto,
+  UserSongActivityFavoriteRequestDto,
 } from '../models/index';
 import {
     LanguageCodeFromJSON,
@@ -27,16 +31,24 @@ import {
     LearnedWordDtoToJSON,
     UserHandwritingResultDtoFromJSON,
     UserHandwritingResultDtoToJSON,
+    UserPlaylistActivityDtoFromJSON,
+    UserPlaylistActivityDtoToJSON,
+    UserPlaylistActivityFavoriteRequestDtoFromJSON,
+    UserPlaylistActivityFavoriteRequestDtoToJSON,
     UserQuizResultDtoFromJSON,
     UserQuizResultDtoToJSON,
+    UserSongActivityDtoFromJSON,
+    UserSongActivityDtoToJSON,
+    UserSongActivityFavoriteRequestDtoFromJSON,
+    UserSongActivityFavoriteRequestDtoToJSON,
 } from '../models/index';
 
 export interface ApiUserActivityFavoritePlaylistPatchRequest {
-    requestBody?: { [key: string]: any; };
+    userPlaylistActivityFavoriteRequestDto?: UserPlaylistActivityFavoriteRequestDto;
 }
 
 export interface ApiUserActivityFavoriteSongPatchRequest {
-    requestBody?: { [key: string]: any; };
+    userSongActivityFavoriteRequestDto?: UserSongActivityFavoriteRequestDto;
 }
 
 export interface ApiUserActivityHandwritingGetRequest {
@@ -56,7 +68,7 @@ export interface ApiUserActivityLearnedWordsGetRequest {
 }
 
 export interface ApiUserActivityPlaylistPostRequest {
-    requestBody?: { [key: string]: any; };
+    userPlaylistActivityDto?: UserPlaylistActivityDto;
 }
 
 export interface ApiUserActivityQuizPostRequest {
@@ -68,7 +80,7 @@ export interface ApiUserActivityQuizzesGetRequest {
 }
 
 export interface ApiUserActivitySongPostRequest {
-    requestBody?: { [key: string]: any; };
+    userSongActivityDto?: UserSongActivityDto;
 }
 
 /**
@@ -94,7 +106,7 @@ export class UserActivityApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['requestBody'],
+            body: UserPlaylistActivityFavoriteRequestDtoToJSON(requestParameters['userPlaylistActivityFavoriteRequestDto']),
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
@@ -107,9 +119,8 @@ export class UserActivityApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get user\'s favorite playlists
      */
-    async apiUserActivityFavoritePlaylistsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<{ [key: string]: any; }>>> {
+    async apiUserActivityFavoritePlaylistsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -125,15 +136,13 @@ export class UserActivityApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse<any>(response);
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * Get user\'s favorite playlists
      */
-    async apiUserActivityFavoritePlaylistsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<{ [key: string]: any; }>> {
-        const response = await this.apiUserActivityFavoritePlaylistsGetRaw(initOverrides);
-        return await response.value();
+    async apiUserActivityFavoritePlaylistsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiUserActivityFavoritePlaylistsGetRaw(initOverrides);
     }
 
     /**
@@ -154,7 +163,7 @@ export class UserActivityApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['requestBody'],
+            body: UserSongActivityFavoriteRequestDtoToJSON(requestParameters['userSongActivityFavoriteRequestDto']),
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
@@ -167,9 +176,8 @@ export class UserActivityApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get user\'s favorite songs
      */
-    async apiUserActivityFavoriteSongsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<{ [key: string]: any; }>>> {
+    async apiUserActivityFavoriteSongsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -185,15 +193,13 @@ export class UserActivityApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse<any>(response);
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * Get user\'s favorite songs
      */
-    async apiUserActivityFavoriteSongsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<{ [key: string]: any; }>> {
-        const response = await this.apiUserActivityFavoriteSongsGetRaw(initOverrides);
-        return await response.value();
+    async apiUserActivityFavoriteSongsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiUserActivityFavoriteSongsGetRaw(initOverrides);
     }
 
     /**
@@ -224,9 +230,8 @@ export class UserActivityApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get user\'s handwriting results
      */
-    async apiUserActivityHandwritingGetRaw(requestParameters: ApiUserActivityHandwritingGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<UserHandwritingResultDto>>> {
+    async apiUserActivityHandwritingGetRaw(requestParameters: ApiUserActivityHandwritingGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters['language'] != null) {
@@ -246,15 +251,13 @@ export class UserActivityApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(UserHandwritingResultDtoFromJSON));
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * Get user\'s handwriting results
      */
-    async apiUserActivityHandwritingGet(requestParameters: ApiUserActivityHandwritingGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<UserHandwritingResultDto>> {
-        const response = await this.apiUserActivityHandwritingGetRaw(requestParameters, initOverrides);
-        return await response.value();
+    async apiUserActivityHandwritingGet(requestParameters: ApiUserActivityHandwritingGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiUserActivityHandwritingGetRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -318,9 +321,8 @@ export class UserActivityApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get user\'s learned words
      */
-    async apiUserActivityLearnedWordsGetRaw(requestParameters: ApiUserActivityLearnedWordsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LearnedWordDto>>> {
+    async apiUserActivityLearnedWordsGetRaw(requestParameters: ApiUserActivityLearnedWordsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters['language'] != null) {
@@ -340,15 +342,13 @@ export class UserActivityApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LearnedWordDtoFromJSON));
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * Get user\'s learned words
      */
-    async apiUserActivityLearnedWordsGet(requestParameters: ApiUserActivityLearnedWordsGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LearnedWordDto>> {
-        const response = await this.apiUserActivityLearnedWordsGetRaw(requestParameters, initOverrides);
-        return await response.value();
+    async apiUserActivityLearnedWordsGet(requestParameters: ApiUserActivityLearnedWordsGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiUserActivityLearnedWordsGetRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -369,7 +369,7 @@ export class UserActivityApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['requestBody'],
+            body: UserPlaylistActivityDtoToJSON(requestParameters['userPlaylistActivityDto']),
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
@@ -382,9 +382,8 @@ export class UserActivityApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get user\'s playlist activity
      */
-    async apiUserActivityPlaylistsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<{ [key: string]: any; }>>> {
+    async apiUserActivityPlaylistsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -400,15 +399,13 @@ export class UserActivityApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse<any>(response);
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * Get user\'s playlist activity
      */
-    async apiUserActivityPlaylistsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<{ [key: string]: any; }>> {
-        const response = await this.apiUserActivityPlaylistsGetRaw(initOverrides);
-        return await response.value();
+    async apiUserActivityPlaylistsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiUserActivityPlaylistsGetRaw(initOverrides);
     }
 
     /**
@@ -442,9 +439,8 @@ export class UserActivityApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get user\'s quiz results
      */
-    async apiUserActivityQuizzesGetRaw(requestParameters: ApiUserActivityQuizzesGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<UserQuizResultDto>>> {
+    async apiUserActivityQuizzesGetRaw(requestParameters: ApiUserActivityQuizzesGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters['language'] != null) {
@@ -464,15 +460,13 @@ export class UserActivityApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(UserQuizResultDtoFromJSON));
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * Get user\'s quiz results
      */
-    async apiUserActivityQuizzesGet(requestParameters: ApiUserActivityQuizzesGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<UserQuizResultDto>> {
-        const response = await this.apiUserActivityQuizzesGetRaw(requestParameters, initOverrides);
-        return await response.value();
+    async apiUserActivityQuizzesGet(requestParameters: ApiUserActivityQuizzesGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiUserActivityQuizzesGetRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -493,7 +487,7 @@ export class UserActivityApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['requestBody'],
+            body: UserSongActivityDtoToJSON(requestParameters['userSongActivityDto']),
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
@@ -506,9 +500,8 @@ export class UserActivityApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get user\'s song activity
      */
-    async apiUserActivitySongsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<{ [key: string]: any; }>>> {
+    async apiUserActivitySongsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -524,15 +517,13 @@ export class UserActivityApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse<any>(response);
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * Get user\'s song activity
      */
-    async apiUserActivitySongsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<{ [key: string]: any; }>> {
-        const response = await this.apiUserActivitySongsGetRaw(initOverrides);
-        return await response.value();
+    async apiUserActivitySongsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.apiUserActivitySongsGetRaw(initOverrides);
     }
 
 }

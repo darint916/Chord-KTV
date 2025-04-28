@@ -15,25 +15,25 @@
 
 import * as runtime from '../runtime';
 import type {
-  ApiQuizRomanizationPostRequest,
   ProblemDetails,
+  QuizRequestDto,
   QuizResponseDto,
 } from '../models/index';
 import {
-    ApiQuizRomanizationPostRequestFromJSON,
-    ApiQuizRomanizationPostRequestToJSON,
     ProblemDetailsFromJSON,
     ProblemDetailsToJSON,
+    QuizRequestDtoFromJSON,
+    QuizRequestDtoToJSON,
     QuizResponseDtoFromJSON,
     QuizResponseDtoToJSON,
 } from '../models/index';
 
 export interface ApiQuizAudioPostRequest {
-    apiQuizRomanizationPostRequest?: ApiQuizRomanizationPostRequest;
+    quizRequestDto?: QuizRequestDto;
 }
 
-export interface ApiQuizRomanizationPostOperationRequest {
-    apiQuizRomanizationPostRequest?: ApiQuizRomanizationPostRequest;
+export interface ApiQuizRomanizationPostRequest {
+    quizRequestDto?: QuizRequestDto;
 }
 
 /**
@@ -59,7 +59,7 @@ export class QuizApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ApiQuizRomanizationPostRequestToJSON(requestParameters['apiQuizRomanizationPostRequest']),
+            body: QuizRequestDtoToJSON(requestParameters['quizRequestDto']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => QuizResponseDtoFromJSON(jsonValue));
@@ -74,7 +74,7 @@ export class QuizApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiQuizRomanizationPostRaw(requestParameters: ApiQuizRomanizationPostOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<QuizResponseDto>> {
+    async apiQuizRomanizationPostRaw(requestParameters: ApiQuizRomanizationPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<QuizResponseDto>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -90,7 +90,7 @@ export class QuizApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ApiQuizRomanizationPostRequestToJSON(requestParameters['apiQuizRomanizationPostRequest']),
+            body: QuizRequestDtoToJSON(requestParameters['quizRequestDto']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => QuizResponseDtoFromJSON(jsonValue));
@@ -98,7 +98,7 @@ export class QuizApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiQuizRomanizationPost(requestParameters: ApiQuizRomanizationPostOperationRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<QuizResponseDto> {
+    async apiQuizRomanizationPost(requestParameters: ApiQuizRomanizationPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<QuizResponseDto> {
         const response = await this.apiQuizRomanizationPostRaw(requestParameters, initOverrides);
         return await response.value();
     }

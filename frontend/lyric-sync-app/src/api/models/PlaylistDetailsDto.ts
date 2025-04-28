@@ -39,6 +39,12 @@ export interface PlaylistDetailsDto {
      * @memberof PlaylistDetailsDto
      */
     videos?: Array<VideoInfo> | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof PlaylistDetailsDto
+     */
+    playlistThumbnailUrl?: string | null;
 }
 
 /**
@@ -60,6 +66,7 @@ export function PlaylistDetailsDtoFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'playlistTitle': json['playlistTitle'] == null ? undefined : json['playlistTitle'],
         'videos': json['videos'] == null ? undefined : ((json['videos'] as Array<any>).map(VideoInfoFromJSON)),
+        'playlistThumbnailUrl': json['playlistThumbnailUrl'] == null ? undefined : json['playlistThumbnailUrl'],
     };
 }
 
@@ -76,6 +83,7 @@ export function PlaylistDetailsDtoToJSONTyped(value?: PlaylistDetailsDto | null,
         
         'playlistTitle': value['playlistTitle'],
         'videos': value['videos'] == null ? undefined : ((value['videos'] as Array<any>).map(VideoInfoToJSON)),
+        'playlistThumbnailUrl': value['playlistThumbnailUrl'],
     };
 }
 

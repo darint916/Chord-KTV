@@ -56,7 +56,7 @@ export interface UserQuizResultDto {
      * @type {Array<string>}
      * @memberof UserQuizResultDto
      */
-    correctAnswers?: Array<string>;
+    correctAnswers?: Array<string> | null;
 }
 
 
@@ -100,7 +100,7 @@ export function UserQuizResultDtoToJSONTyped(value?: UserQuizResultDto | null, i
         'quizId': value['quizId'],
         'score': value['score'],
         'language': LanguageCodeToJSON(value['language']),
-        'dateCompleted': value['dateCompleted'] == null ? undefined : ((value['dateCompleted'] as any).toISOString()),
+        'dateCompleted': value['dateCompleted'] === null ? null : ((value['dateCompleted'] as any)?.toISOString()),
         'correctAnswers': value['correctAnswers'],
     };
 }

@@ -44,7 +44,7 @@ export interface UserHandwritingResultDto {
      * @type {string}
      * @memberof UserHandwritingResultDto
      */
-    wordTested?: string;
+    wordTested?: string | null;
     /**
      * 
      * @type {Date}
@@ -93,7 +93,7 @@ export function UserHandwritingResultDtoToJSONTyped(value?: UserHandwritingResul
         'language': LanguageCodeToJSON(value['language']),
         'score': value['score'],
         'wordTested': value['wordTested'],
-        'dateCompleted': value['dateCompleted'] == null ? undefined : ((value['dateCompleted'] as any).toISOString()),
+        'dateCompleted': value['dateCompleted'] === null ? null : ((value['dateCompleted'] as any)?.toISOString()),
     };
 }
 

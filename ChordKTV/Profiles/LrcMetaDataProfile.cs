@@ -1,5 +1,4 @@
 using AutoMapper;
-using ChordKTV.Models.SongData;
 using ChordKTV.Dtos.LrcLib;
 
 namespace ChordKTV.Profiles;

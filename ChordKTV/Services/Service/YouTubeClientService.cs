@@ -10,17 +10,17 @@ using ChordKTV.Models.SongData;
 
 namespace ChordKTV.Services.Service;
 
-public class YouTubeApiClientService : IYouTubeClientService, IDisposable
+public class YouTubeClientService : IYouTubeClientService, IDisposable
 {
     private readonly string? _youtubeApiKey;
     private readonly string? _youtubeSearchApiKey;
-    private readonly ILogger<YouTubeApiClientService> _logger;
+    private readonly ILogger<YouTubeClientService> _logger;
     private readonly YouTubeService _youTubeService;
     private readonly YouTubeService _youTubeSearchService;
     private readonly IYoutubeSongRepo _youtubeSongRepo;
     private readonly ISongRepo _songRepo;
     private bool _disposed;
-    public YouTubeApiClientService(IConfiguration configuration, ILogger<YouTubeApiClientService> logger, ISongRepo songRepo, IYoutubeSongRepo youtubeSongRepo)
+    public YouTubeClientService(IConfiguration configuration, ILogger<YouTubeClientService> logger, ISongRepo songRepo, IYoutubeSongRepo youtubeSongRepo)
     {
         _logger = logger;
         _songRepo = songRepo;
@@ -66,7 +66,7 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         }
     }
 
-    public async Task<PlaylistDetailsDto?> GetPlaylistDetailsAsync(string playlistId, bool shuffle)
+    public async Task<PlaylistDetailsDto?> GetPlaylistDetailsAsync(string playlistId, bool shuffle, bool noVideoDetails = false)
     {
         if (string.IsNullOrEmpty(_youtubeApiKey))
         {
@@ -75,12 +75,19 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
 
         PlaylistsResource.ListRequest playlistRequest = _youTubeService.Playlists.List("snippet");
         playlistRequest.Id = playlistId;
-
         PlaylistListResponse playlistResponse = await playlistRequest.ExecuteAsync();
 
-        string playlistTitle = (playlistResponse.Items.Count > 0)
-            ? playlistResponse.Items[0].Snippet.Title
-            : "Unknown Playlist";
+        string playlistTitle = "Unknown Playlist";
+        string? playlistThumbnailUrl = null;
+        if (playlistResponse.Items.Count > 0)
+        {
+            playlistTitle = playlistResponse.Items[0].Snippet.Title;
+            playlistThumbnailUrl = playlistResponse.Items[0].Snippet.Thumbnails.High.Url;
+            if (noVideoDetails)
+            {
+                return new PlaylistDetailsDto(playlistTitle, new List<VideoInfo>(), playlistThumbnailUrl);
+            }
+        }
 
         PlaylistItemsResource.ListRequest playlistItemsRequest = _youTubeService.PlaylistItems.List("snippet,contentDetails");
         playlistItemsRequest.PlaylistId = playlistId;
@@ -128,7 +135,7 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
             Shuffle.FisherYatesShuffle(videos);
         }
 
-        return new PlaylistDetailsDto(playlistTitle, videos);
+        return new PlaylistDetailsDto(playlistTitle, videos, playlistThumbnailUrl);
     }
 
     public async Task<Dictionary<string, VideoDetails>> GetVideosDetailsAsync(List<string> videoIds)
@@ -295,7 +302,7 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         GC.SuppressFinalize(this); // no need for finalizer if Dispose was called
     }
 
-    ~YouTubeApiClientService() // finalizer (safeguard)
+    ~YouTubeClientService() // finalizer (safeguard)
     {
         Dispose(disposing: false);
     }
