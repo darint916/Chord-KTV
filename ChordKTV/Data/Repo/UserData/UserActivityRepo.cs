@@ -99,18 +99,19 @@ public class UserActivityRepo : IUserActivityRepo
 
     public async Task InsertSongActivityAsync(Guid userId, bool isFavorite, Song song)
     {
+        DateTime now = DateTime.UtcNow; //stays consistent
         var activity = new UserSongActivity
         {
             Song = song,
             UserId = userId,
-            DateFavorited = isFavorite ? DateTime.UtcNow : null,
-            LastPlayed = DateTime.UtcNow,
+            DateFavorited = isFavorite ? now : null,
+            LastPlayed = now,
             IsFavorite = isFavorite,
-            DatesPlayed = [DateTime.UtcNow]
+            DatesPlayed = [now]
         };
         if (isFavorite)
         {
-            activity.DateFavorited = DateTime.UtcNow;
+            activity.DateFavorited = now;
         }
         await _context.UserSongActivities.AddAsync(activity);
         await _context.SaveChangesAsync();
@@ -182,11 +183,12 @@ public class UserActivityRepo : IUserActivityRepo
             .OrderByDescending(x => x.LastPlayed)
             .ToListAsync();
     }
-    public async Task InsertPlaylistActivityAsync(Guid userId, bool isFavorite, string playlistId, string playlistThumbnailUrl)
+    public async Task InsertPlaylistActivityAsync(Guid userId, bool isFavorite, string playlistId, string playlistThumbnailUrl, string playlistTitle)
     {
         var activity = new UserPlaylistActivity //TODO: make this the arg of this function and move this logic to service
         {
             PlaylistId = playlistId,
+            Title = playlistTitle,
             PlaylistThumbnailUrl = playlistThumbnailUrl,
             UserId = userId,
             DateFavorited = isFavorite ? DateTime.UtcNow : null,
@@ -263,6 +265,8 @@ public class UserActivityRepo : IUserActivityRepo
         return await _context.UserSongActivities
             .Where(x => x.UserId == userId && x.IsFavorite)
             .OrderByDescending(x => x.LastPlayed)
+            .Include(x => x.Song)
+            .ThenInclude(x => x.GeniusMetaData)
             .ToListAsync();
     }
 

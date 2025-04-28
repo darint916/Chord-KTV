@@ -310,7 +310,7 @@ public class UserActivityController : Controller
                 {
                     return NotFound(new { message = "Playlist not found." });
                 }
-                await _activityRepo.InsertPlaylistActivityAsync(user.Id, dto.IsFavorite, dto.PlaylistId, playlistDetailsDto.PlaylistThumbnailUrl ?? "");
+                await _activityRepo.InsertPlaylistActivityAsync(user.Id, dto.IsFavorite, dto.PlaylistId, playlistDetailsDto.PlaylistThumbnailUrl ?? "", playlistDetailsDto.PlaylistTitle);
                 return CreatedAtAction(nameof(GetUserPlaylistActivities), new { id = dto.PlaylistId }, new { message = dto.IsFavorite ? "Playlist favorited" : "Playlist unfavorited" });
             }
             else

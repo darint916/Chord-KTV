@@ -32,7 +32,7 @@ public interface IUserActivityRepo
 
     // Playlist activity methods
     public Task<UserPlaylistActivity?> GetUserPlaylistActivityAsync(Guid userId, string playlistId);
-    public Task InsertPlaylistActivityAsync(Guid userId, bool isFavorite, string playlistId, string playlistThumbnailUrl);
+    public Task InsertPlaylistActivityAsync(Guid userId, bool isFavorite, string playlistId, string playlistThumbnailUrl, string playlistTitle);
     public Task<IEnumerable<UserPlaylistActivity>> GetUserPlaylistActivitiesAsync(Guid userId);
     public Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity, bool isPlayEvent = true);
     public Task<IEnumerable<UserPlaylistActivity>> GetFavoritePlaylistActivitiesAsync(Guid userId);

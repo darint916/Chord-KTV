@@ -82,7 +82,7 @@ public class YouTubeClientService : IYouTubeClientService, IDisposable
         if (playlistResponse.Items.Count > 0)
         {
             playlistTitle = playlistResponse.Items[0].Snippet.Title;
-            playlistThumbnailUrl = playlistResponse.Items[0].Snippet.Thumbnails.Default__.ToString();
+            playlistThumbnailUrl = playlistResponse.Items[0].Snippet.Thumbnails.High.Url;
             if (noVideoDetails)
             {
                 return new PlaylistDetailsDto(playlistTitle, new List<VideoInfo>(), playlistThumbnailUrl);
