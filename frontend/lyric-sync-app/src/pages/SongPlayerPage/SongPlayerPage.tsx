@@ -456,7 +456,7 @@ const SongPlayerPage: React.FC = () => {
         ));
 
       }
-      else if (item.status == 'loaded') {
+      else if (item.status === 'loaded') {
         const response = await songApi.apiSongsMatchPost({
           fullSongRequestDto: {
             title: item.title,
