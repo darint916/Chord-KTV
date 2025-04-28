@@ -18,7 +18,8 @@ import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import MuiInput from '@mui/material/Input';
 import AddIcon from '@mui/icons-material/Add';
-
+import MediaCarousel, { MediaItem } from '../../components/UserStats/MediaCarousel';
+import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -49,6 +50,9 @@ const SongPlayerPage: React.FC = () => {
   const [minLyricOffset, setMinLyricOffset] = useState<number>(-1);
   const [maxLyricOffset, setMaxLyricOffset] = useState<number>(1);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(false);
+  const [geniusItems, setGeniusItems] = useState<MediaItem[]>([]);
+  const [geniusHits, setGeniusHits] = useState<GeniusHitDto[]>([]);
+  const [isAddingToNext, setIsAddingToNext] = useState(true);
   const {
     song,
     setQuizQuestions,
@@ -88,7 +92,7 @@ const SongPlayerPage: React.FC = () => {
   const COMBINED_DELIMITER = '<<<SEP>>>';
 
   const getCombinedLyrics = useMemo(() => {
-    if (!song.lrcLyrics) {return 'Not supported';}
+    if (!song.lrcLyrics) { return 'Not supported'; }
 
     const parseLyrics = (lyrics: string) => {
       const lines = lyrics.split('\n');
@@ -346,11 +350,12 @@ const SongPlayerPage: React.FC = () => {
   };
 
   const handleAddToNext = async () => {
+    setIsAddingToNext(true);
     await handleQueueAddition(true);
-    setInstrumental(false); // Set KTV to unselected if new song
   };
 
   const handleAddToEnd = async () => {
+    setIsAddingToNext(false);
     await handleQueueAddition(false);
   };
 
@@ -379,34 +384,131 @@ const SongPlayerPage: React.FC = () => {
 
     setIsLoading(true);
     setError('');
+    setGeniusItems([]);
+    setGeniusHits([]);
 
     try {
-      const youTubeId = extractYouTubeVideoId(youtubeUrl);
+      if (youtubeUrl.trim()) {
+        const youTubeId = extractYouTubeVideoId(youtubeUrl.trim());
+        if (!youTubeId) {
+          throw new Error('Invalid YouTube URL.');
+        }
+
+        const response = await songApi.apiSongsMatchPost({
+          fullSongRequestDto: {
+            title: songName.trim(),
+            artist: artistName.trim(),
+            youTubeId,
+            lyrics: lyrics.trim(),
+          }
+        });
+
+        response.youTubeId = youTubeId;
+
+        const newItem: QueueItem = {
+          queueId: uuidv4(),
+          status: 'loaded',
+          title: response.title ?? songName,
+          artist: response.artist ?? artistName,
+          youTubeId: youTubeId,
+          lyrics: lyrics,
+          imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+        };
+
+        setQueue(prev => {
+          if (insertAfterCurrent && currentPlayingId) {
+            const currentIndex = prev.findIndex(item => item.queueId === currentPlayingId);
+            if (currentIndex >= 0) {
+              const newQueue = [...prev];
+              newQueue.splice(currentIndex + 1, 0, newItem);
+              return newQueue;
+            }
+          }
+          return [...prev, newItem];
+        });
+
+        setSongName('');
+        setArtistName('');
+        setLyrics('');
+        setYoutubeUrl('');
+      } else {
+        const queryParts = [songName, artistName, lyrics]
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const searchQuery = queryParts.join(' ');
+
+        if (!searchQuery) {
+          throw new Error('Please enter at least one field to search.');
+        }
+
+        const res = await songApi.apiSongsGeniusSearchGet({ searchQuery });
+
+        const hits = res ?? [];
+        if (hits.length === 0) {
+          throw new Error('No search results found.');
+        }
+
+        const mapped: MediaItem[] = hits.map((h) => {
+          const coverUrl =
+            h.result.songArtImageUrl ||
+            h.result.headerImageUrl ||
+            '';
+
+          return {
+            id: String(h.result.id),
+            title: `${h.result.title} — ${h.result.primaryArtistNames}`,
+            coverUrl,
+          };
+        });
+
+        setGeniusItems(mapped);
+        setGeniusHits(hits);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error
+        ? `Failed to process search. Error: ${err.message}`
+        : 'Failed to process search';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResultSelect = async (_item: MediaItem, index: number) => {
+    const hit = geniusHits[index]?.result;
+    if (!hit) {
+      return;
+    }
+
+    const title = hit.title ?? '';
+    const artist = hit.primary_artist_names ?? '';
+
+    setIsLoading(true);
+    setError('');
+
+    try {
       const response = await songApi.apiSongsMatchPost({
         fullSongRequestDto: {
-          title: songName.trim(),
-          artist: artistName.trim(),
-          youTubeId: youTubeId ?? '',
-          lyrics: lyrics.trim()
-        }
+          title,
+          artist,
+          lyrics: '',
+          youTubeId: '',
+        },
       });
 
       const newItem: QueueItem = {
         queueId: uuidv4(),
-        status: 'loaded',
-        title: response.title ?? '',
-        artist: response.artist ?? '',
+        title: response.title ?? title,
+        artist: response.artist ?? artist,
         youTubeId: response.youTubeId ?? '',
-        lyrics: lyrics,
-        imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+        lyrics: '',
+        status: 'loaded',
+        imageUrl: response.geniusMetaData?.songImageUrl ?? hit.song_art_image_url ?? hit.header_image_url ?? '',
       };
 
-      if (!response.lrcLyrics) {
-        throw new Error('Failed to process song: no LRC lyrics found');
-      }
-
+      // Insert into queue
       setQueue(prev => {
-        if (insertAfterCurrent && currentPlayingId) {
+        if (isAddingToNext && currentPlayingId) {
           const currentIndex = prev.findIndex(item => item.queueId === currentPlayingId);
           if (currentIndex >= 0) {
             const newQueue = [...prev];
@@ -414,25 +516,27 @@ const SongPlayerPage: React.FC = () => {
             return newQueue;
           }
         }
-        // Default: add to end
         return [...prev, newItem];
       });
 
-      // Clear form
+      // Clear search results after adding
+      setGeniusItems([]);
+      setGeniusHits([]);
+
       setSongName('');
       setArtistName('');
       setLyrics('');
       setYoutubeUrl('');
-
     } catch (err) {
       const errorMessage = err instanceof Error
-        ? `Failed to process song. Error message from OpenAPI stub call: ${err.message}`
-        : 'Failed to process song';
+        ? `Failed to add selected song. Error: ${err.message}`
+        : 'Failed to add selected song';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
@@ -880,6 +984,18 @@ const SongPlayerPage: React.FC = () => {
                 </Box>
               </Box>
             </Paper>
+
+            {geniusItems.length > 0 && (
+              <Box mt={4}>
+                <MediaCarousel
+                  title="Select a Song"
+                  items={geniusItems}
+                  onItemClick={(item, index) => handleResultSelect(item, index)}
+                  fadeColor="#E0E7FF"
+                />
+              </Box>
+            )}
+
 
             {/* YouTube Playlist Section */}
             <Paper elevation={3} className="playlist-section">
