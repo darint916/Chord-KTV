@@ -462,8 +462,8 @@ const SongPlayerPage: React.FC = () => {
     const hit = hitDto.result;
     const title = hit.title ?? '';
     const artist =
-      (hit as any).primaryArtistNames ||
-      (hit as any).primary_artist_names ||
+      (hit as { primaryArtistNames?: string; primary_artist_names?: string }).primaryArtistNames ||
+      (hit as { primaryArtistNames?: string; primary_artist_names?: string }).primary_artist_names ||
       '';
 
     setIsLoading(true);
@@ -474,7 +474,7 @@ const SongPlayerPage: React.FC = () => {
         fullSongRequestDto: {
           title,
           artist,
-          lyrics: '',
+          lyrics,
           youTubeId: '',
         },
       });
@@ -701,6 +701,60 @@ const SongPlayerPage: React.FC = () => {
     font-size: 0.875rem;
   }
 `;
+
+  /**
+   * Always POST to /songs/match with title, artist, lyrics & YouTube ID
+   */
+  const handleMatchSearch = async () => {
+    setIsLoading(true);
+    setError('');
+
+    let youTubeId = '';
+    if (youtubeUrl.trim()) {
+      const id = extractYouTubeVideoId(youtubeUrl.trim());
+      if (!id) {
+        setError('Invalid YouTube URL.');
+        setIsLoading(false);
+        return;
+      }
+      youTubeId = id;
+    }
+
+    try {
+      const response = await songApi.apiSongsMatchPost({
+        fullSongRequestDto: {
+          title: songName,
+          artist: artistName,
+          lyrics,
+          youTubeId,
+        },
+      });
+
+      // preserve the extracted YouTube ID
+      response.youTubeId = youTubeId;
+
+      const newQueueItem: QueueItem = {
+        ...response,
+        queueId: uuidv4(),
+        title: response.title ?? songName,
+        artist: response.artist ?? artistName,
+        youTubeId,
+        lyrics,
+        status: 'loaded',
+        imageUrl: response.geniusMetaData?.songImageUrl ?? '',
+      };
+
+      setQueue([newQueueItem, ...queue]);
+      setCurrentPlayingId(newQueueItem.queueId);
+      setSong(response);
+      navigate('/play-song');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError('Match failed. Please try again. Error: ' + msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="song-player-page">
@@ -971,6 +1025,7 @@ const SongPlayerPage: React.FC = () => {
               <GeniusHitsCarousel
                 hits={geniusHits}
                 onSelect={handleResultSelect}
+                onMatchSearch={handleMatchSearch}
               />
             )}
 

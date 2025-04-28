@@ -31,7 +31,8 @@ public static partial class LanguageUtils
 
     public static string RemoveNonLatinCharacters(string input)
     {
-        if (input == null) { return string.Empty; }
+        if (input == null)
+        { return string.Empty; }
         return new string(input.Where(c => c <= 127).ToArray());
     }
 }

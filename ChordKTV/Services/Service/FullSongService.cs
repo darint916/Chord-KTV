@@ -152,7 +152,7 @@ public class FullSongService : IFullSongService
                 // Attempt to get lyrics using a latin-only version of the title and artist
                 string latinTitle = LanguageUtils.RemoveNonLatinCharacters(song.Title);
                 string latinArtist = LanguageUtils.RemoveNonLatinCharacters(song.Artist);
-                
+
                 // Check if both latinTitle and latinArtist are meaningful (more than 2 characters)
                 if (latinTitle.Length > 2 && latinArtist.Length > 2)
                 {

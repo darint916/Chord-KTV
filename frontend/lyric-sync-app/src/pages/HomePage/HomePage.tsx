@@ -197,20 +197,23 @@ const HomePage: React.FC = () => {
     const hit = hitDto.result;
     const title = hit.title ?? '';
     const artist =
-      (hit as any).primaryArtistNames ||
-      (hit as any).primary_artist_names ||
+      (hit as { primaryArtistNames?: string; primary_artist_names?: string }).primaryArtistNames ||
+      (hit as { primaryArtistNames?: string; primary_artist_names?: string }).primary_artist_names ||
       '';
 
     setIsLoading(true);
     setError('');
 
     try {
+      // grab the same YouTube ID & lyrics from state
+      const youTubeId = extractYouTubeVideoId(youtubeUrl.trim()) || '';
+
       const response = await songApi.apiSongsMatchPost({
         fullSongRequestDto: {
           title,
           artist,
-          lyrics: '',
-          youTubeId: '',
+          lyrics,
+          youTubeId,
         },
       });
 
@@ -218,9 +221,9 @@ const HomePage: React.FC = () => {
         ...response,
         title: response.title ?? title,
         artist: response.artist ?? artist,
-        youTubeId: response.youTubeId ?? '',
+        youTubeId,
         queueId: uuidv4(),
-        lyrics: '',
+        lyrics,
         status: 'loaded',
         imageUrl:
           response.geniusMetaData?.songImageUrl ??
@@ -242,6 +245,60 @@ const HomePage: React.FC = () => {
         ? `Search failed. Please try again. Error message from OpenAPI stub call: ${err.message}`
         : 'Search failed. Please try again.';
       setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMatchSearch = async () => {
+    setIsLoading(true);
+    setError('');
+
+    // extract YouTube ID if present
+    let youTubeId = '';
+    if (youtubeUrl.trim()) {
+      const id = extractYouTubeVideoId(youtubeUrl.trim());
+      if (!id) {
+        setError('Invalid YouTube URL.');
+        setIsLoading(false);
+        return;
+      }
+      youTubeId = id;
+    }
+
+    try {
+      // always POST to /songs/match
+      const response = await songApi.apiSongsMatchPost({
+        fullSongRequestDto: {
+          title: songName,
+          artist: artistName,
+          lyrics,
+          youTubeId,
+        },
+      });
+
+      // preserve the ID
+      response.youTubeId = youTubeId;
+
+      // build a QueueItem just like handleSearch's YouTube branch
+      const newQueueItem: QueueItem = {
+        ...response,
+        queueId: uuidv4(),
+        title: response.title ?? songName,
+        artist: response.artist ?? artistName,
+        youTubeId,
+        lyrics,
+        status: 'loaded',
+        imageUrl: response.geniusMetaData?.songImageUrl ?? '',
+      };
+
+      setQueue([newQueueItem, ...queue]);
+      setCurrentPlayingId(newQueueItem.queueId);
+      setSong(response);
+      navigate('/play-song');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError('Match failed. Please try again. Error: ' + msg);
     } finally {
       setIsLoading(false);
     }
@@ -348,6 +405,7 @@ const HomePage: React.FC = () => {
           <GeniusHitsCarousel
             hits={geniusHits}
             onSelect={handleResultSelect}
+            onMatchSearch={handleMatchSearch}
           />
         )}
 
