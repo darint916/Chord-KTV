@@ -42,7 +42,7 @@ export const getMergedQuizResults = <
   return quizzes
     .map((q) => ({
       ...q,
-      quizType: q.quizType || 'romanization',
+      quizType: q.quizType || 'romanize/audio',
     }))
     .concat(
       handwriting.map((q) => ({

@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
 import QueueComponent from '../../components/QueueComponent/QueueComponent';
-import { songApi } from '../../api/apiClient';
+import { songApi, userActivityApi } from '../../api/apiClient';
 import { extractYouTubeVideoId, extractPlaylistId } from '../HomePage/HomePageHelpers';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
@@ -20,6 +20,8 @@ import MuiInput from '@mui/material/Input';
 import AddIcon from '@mui/icons-material/Add';
 import MediaCarousel, { MediaItem } from '../../components/UserStats/MediaCarousel';
 import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -62,6 +64,8 @@ const SongPlayerPage: React.FC = () => {
     currentPlayingId,
     setCurrentPlayingId
   } = useSong();
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
 
   useEffect(() => {
     currentLineRef.current = -1;
@@ -77,6 +81,35 @@ const SongPlayerPage: React.FC = () => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (!song?.id) return;
+
+    (async () => {
+      let currentFav = false;
+
+      // 1) Fetch the true favorite state
+      try {
+        const favs = await userActivityApi.apiUserActivityFavoriteSongsGet();
+        currentFav = favs.some((f: any) => f.songId === song.id);
+        setIsFavorite(currentFav);
+      } catch (err) {
+        console.error('Failed to load favorite status', err);
+      }
+
+      // 2) Log the play event, *preserving* that favorite flag
+      try {
+        await userActivityApi.apiUserActivitySongPost({
+          requestBody: {
+            songId: song.id,
+            isFavorite: currentFav
+          }
+        });
+      } catch (err) {
+        console.error('Failed to log song play', err);
+      }
+    })();
+  }, [song?.id]);
 
   if (!song) {
     return <Typography variant="h5">Error: No song selected</Typography>;
@@ -580,11 +613,16 @@ const SongPlayerPage: React.FC = () => {
       setQueue(prev => [...prev, ...newItems]);
       setPlaylistUrl('');
 
+      try {
+        await userActivityApi.apiUserActivityPlaylistPost({
+          requestBody: { playlistUrl }
+        });
+      } catch (err) {
+        console.error('Failed to log playlist activity', err);
+      }
     } catch (err) {
-      const errorMessage = err instanceof Error
-        ? `Failed to load playlist. Error message from OpenAPI stub call: ${err.message}`
-        : 'Failed to load playlist';
-      setError(errorMessage);
+      const msg = err instanceof Error ? err.message : 'Failed to load playlist';
+      setError(msg);
     } finally {
       setPlaylistLoading(false);
     }
@@ -720,15 +758,43 @@ const SongPlayerPage: React.FC = () => {
   }
 `;
 
+  // Toggle favorite & call the PATCH endpoint
+  const handleToggleFavorite = async () => {
+    if (!song?.id) return;
+    setFavLoading(true);
+    try {
+      await userActivityApi.apiUserActivityFavoriteSongPatch({
+        requestBody: {
+          songId: song.id,
+          isFavorite: !isFavorite
+        }
+      });
+      setIsFavorite(prev => !prev);
+    } catch (error) {
+      console.error('Failed to toggle favorite', error);
+    } finally {
+      setFavLoading(false);
+    }
+  };
+
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
-        <Typography variant="h4" className="song-title" align="center" fontWeight="bold">
-          {song.title}
-        </Typography>
-        <Typography variant="h6" className="song-title" align="center" fontWeight="bold">
-          {song.artist}
-        </Typography>
+        {/* ===== Title + Favorite Button Row ===== */}
+        <Box display="flex" justifyContent="center" alignItems="center" mb={1}>
+          <Typography variant="h4" fontWeight="bold" component="h1">
+            {song.title}
+          </Typography>
+          <IconButton onClick={handleToggleFavorite} disabled={favLoading} color="primary" size="large" sx={{ ml: 1 }}>
+            {isFavorite
+              ? <FavoriteIcon fontSize="inherit" />
+              : <FavoriteBorderIcon fontSize="inherit" />
+            }
+          </IconButton>
+        </Box>
+
+        {/* ===== Artist Line ===== */}
+        <Typography variant="h6" align="center" fontWeight="bold">{song.artist}</Typography>
         {showQuizButton && (
           <Box mt={3} display="flex" justifyContent="center">
             <Button
