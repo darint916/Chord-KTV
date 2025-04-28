@@ -28,7 +28,7 @@ public interface IUserActivityRepo
     public Task InsertSongActivityAsync(Guid userId, bool isFavorite, Song song);
     public Task UpsertSongActivityAsync(UserSongActivity activity, bool isPlayEvent = true);
     public Task<IEnumerable<UserSongActivity>> GetFavoriteSongActivitiesAsync(Guid userId);
-    public Task UpdateSongActivityFavoriteAsync(UserSongActivity activity, bool isFavorite);
+    public Task UpdateSongActivityFavoriteAsync(UserSongActivity activity, bool isFavorite, bool isPlayed = false);
 
     // Playlist activity methods
     public Task<UserPlaylistActivity?> GetUserPlaylistActivityAsync(Guid userId, string playlistId);
