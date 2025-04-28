@@ -6,7 +6,6 @@ using ChordKTV.Models.SongData;
 using ChordKTV.Models.Handwriting;
 using ChordKTV.Dtos;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace ChordKTV.Data.Repo.UserData;
 
@@ -87,7 +86,7 @@ public class UserActivityRepo : IUserActivityRepo
     public async Task<UserSongActivity?> GetUserSongActivityAsync(Guid userId, Guid songId)
     {
         return await _context.UserSongActivities
-            .FirstOrDefaultAsync(x => x.UserId == userId && x.SongId == songId);
+            .FirstOrDefaultAsync(x => x.UserId == userId && x.Song.Id == songId);
     }
 
     public async Task<IEnumerable<UserSongActivity>> GetUserSongActivitiesAsync(Guid userId)
@@ -98,9 +97,32 @@ public class UserActivityRepo : IUserActivityRepo
             .ToListAsync();
     }
 
+    public async Task InsertSongActivityAsync(Guid userId, bool isFavorite, Song song)
+    {
+        var activity = new UserSongActivity
+        {
+            Song = song,
+            UserId = userId,
+            DateFavorited = isFavorite ? DateTime.UtcNow : null,
+            LastPlayed = DateTime.UtcNow,
+            IsFavorite = isFavorite,
+            DatesPlayed = [DateTime.UtcNow]
+        };
+        if (isFavorite)
+        {
+            activity.DateFavorited = DateTime.UtcNow;
+        }
+        await _context.UserSongActivities.AddAsync(activity);
+        await _context.SaveChangesAsync();
+    }
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
+
     public async Task UpsertSongActivityAsync(UserSongActivity activity, bool isPlayEvent = true)
     {
-        UserSongActivity? existing = await GetUserSongActivityAsync(activity.UserId, activity.SongId);
+        UserSongActivity? existing = await GetUserSongActivityAsync(activity.UserId, activity.Song.Id);
 
         if (existing == null)
         {

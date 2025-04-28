@@ -20,6 +20,7 @@ public interface IUserActivityRepo
     // Learned words related methods
     public Task<IEnumerable<LearnedWord>> GetUserLearnedWordsAsync(Guid userId, LanguageCode? language = null);
     public Task AddLearnedWordAsync(LearnedWord word);
+    public Task SaveChangesAsync();
 
     // Song activity methods
     public Task<UserSongActivity?> GetUserSongActivityAsync(Guid userId, Guid songId);
