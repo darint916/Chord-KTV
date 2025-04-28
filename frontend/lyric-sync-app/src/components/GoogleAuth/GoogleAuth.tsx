@@ -34,18 +34,20 @@ const GoogleAuth: React.FC = () => {
       const authResponse = await authApi.apiAuthGooglePost({
         authorization: `Bearer ${credential}`,
       });
-      
+
       const jwt = authResponse.token;
-      setAuthToken(jwt);
-      
-      // Update React auth context with the user details.
-      setUser({
-        id: decoded.sub,
-        name: decoded.name,
-        email: decoded.email,
-        picture: decoded.picture,
-        idToken: jwt,
-      });
+      if (jwt) {
+        setAuthToken(jwt);
+
+        // Update React auth context with the user details.
+        setUser({
+          id: decoded.sub,
+          name: decoded.name,
+          email: decoded.email,
+          picture: decoded.picture,
+          idToken: jwt,
+        });
+      }
     } catch {
       handleLoginError();
     }

@@ -17,24 +17,36 @@ import * as runtime from '../runtime';
 import type {
   FullSongRequestDto,
   FullSongResponseDto,
+  GeniusHit,
+  LrcLyricsDto,
   PlaylistDetailsDto,
   ProblemDetails,
   Song,
+  SongDto,
   TranslationRequestDto,
+  User,
 } from '../models/index';
 import {
     FullSongRequestDtoFromJSON,
     FullSongRequestDtoToJSON,
     FullSongResponseDtoFromJSON,
     FullSongResponseDtoToJSON,
+    GeniusHitFromJSON,
+    GeniusHitToJSON,
+    LrcLyricsDtoFromJSON,
+    LrcLyricsDtoToJSON,
     PlaylistDetailsDtoFromJSON,
     PlaylistDetailsDtoToJSON,
     ProblemDetailsFromJSON,
     ProblemDetailsToJSON,
     SongFromJSON,
     SongToJSON,
+    SongDtoFromJSON,
+    SongDtoToJSON,
     TranslationRequestDtoFromJSON,
     TranslationRequestDtoToJSON,
+    UserFromJSON,
+    UserToJSON,
 } from '../models/index';
 
 export interface ApiAlbumAlbumNameGetRequest {
@@ -107,7 +119,7 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiAlbumAlbumNameGetRaw(requestParameters: ApiAlbumAlbumNameGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiAlbumAlbumNameGetRaw(requestParameters: ApiAlbumAlbumNameGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SongDto>>> {
         if (requestParameters['albumName'] == null) {
             throw new runtime.RequiredError(
                 'albumName',
@@ -134,18 +146,19 @@ export class SongApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(SongDtoFromJSON));
     }
 
     /**
      */
-    async apiAlbumAlbumNameGet(requestParameters: ApiAlbumAlbumNameGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiAlbumAlbumNameGetRaw(requestParameters, initOverrides);
+    async apiAlbumAlbumNameGet(requestParameters: ApiAlbumAlbumNameGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SongDto>> {
+        const response = await this.apiAlbumAlbumNameGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      */
-    async apiDatabaseSongGetRaw(requestParameters: ApiDatabaseSongGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiDatabaseSongGetRaw(requestParameters: ApiDatabaseSongGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Song>> {
         if (requestParameters['title'] == null) {
             throw new runtime.RequiredError(
                 'title',
@@ -187,13 +200,14 @@ export class SongApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => SongFromJSON(jsonValue));
     }
 
     /**
      */
-    async apiDatabaseSongGet(requestParameters: ApiDatabaseSongGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiDatabaseSongGetRaw(requestParameters, initOverrides);
+    async apiDatabaseSongGet(requestParameters: ApiDatabaseSongGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Song> {
+        const response = await this.apiDatabaseSongGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
@@ -228,7 +242,7 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiDatabaseUsersEmailGetRaw(requestParameters: ApiDatabaseUsersEmailGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiDatabaseUsersEmailGetRaw(requestParameters: ApiDatabaseUsersEmailGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<User>> {
         if (requestParameters['email'] == null) {
             throw new runtime.RequiredError(
                 'email',
@@ -251,18 +265,19 @@ export class SongApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
     }
 
     /**
      */
-    async apiDatabaseUsersEmailGet(requestParameters: ApiDatabaseUsersEmailGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiDatabaseUsersEmailGetRaw(requestParameters, initOverrides);
+    async apiDatabaseUsersEmailGet(requestParameters: ApiDatabaseUsersEmailGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<User> {
+        const response = await this.apiDatabaseUsersEmailGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      */
-    async apiHealthGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiHealthGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -278,18 +293,23 @@ export class SongApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<string>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
     }
 
     /**
      */
-    async apiHealthGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiHealthGetRaw(initOverrides);
+    async apiHealthGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+        const response = await this.apiHealthGetRaw(initOverrides);
+        return await response.value();
     }
 
     /**
      */
-    async apiLyricsLrcMatchGetRaw(requestParameters: ApiLyricsLrcMatchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiLyricsLrcMatchGetRaw(requestParameters: ApiLyricsLrcMatchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LrcLyricsDto>> {
         const queryParameters: any = {};
 
         if (requestParameters['title'] != null) {
@@ -321,18 +341,19 @@ export class SongApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => LrcLyricsDtoFromJSON(jsonValue));
     }
 
     /**
      */
-    async apiLyricsLrcMatchGet(requestParameters: ApiLyricsLrcMatchGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiLyricsLrcMatchGetRaw(requestParameters, initOverrides);
+    async apiLyricsLrcMatchGet(requestParameters: ApiLyricsLrcMatchGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LrcLyricsDto> {
+        const response = await this.apiLyricsLrcMatchGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      */
-    async apiLyricsLrcTranslationPostRaw(requestParameters: ApiLyricsLrcTranslationPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiLyricsLrcTranslationPostRaw(requestParameters: ApiLyricsLrcTranslationPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LrcLyricsDto>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -351,18 +372,19 @@ export class SongApi extends runtime.BaseAPI {
             body: TranslationRequestDtoToJSON(requestParameters['translationRequestDto']),
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => LrcLyricsDtoFromJSON(jsonValue));
     }
 
     /**
      */
-    async apiLyricsLrcTranslationPost(requestParameters: ApiLyricsLrcTranslationPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiLyricsLrcTranslationPostRaw(requestParameters, initOverrides);
+    async apiLyricsLrcTranslationPost(requestParameters: ApiLyricsLrcTranslationPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LrcLyricsDto> {
+        const response = await this.apiLyricsLrcTranslationPostRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      */
-    async apiSongsGeniusMatchBatchPostRaw(requestParameters: ApiSongsGeniusMatchBatchPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiSongsGeniusMatchBatchPostRaw(requestParameters: ApiSongsGeniusMatchBatchPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SongDto>>> {
         const queryParameters: any = {};
 
         if (requestParameters['forceRefresh'] != null) {
@@ -385,18 +407,19 @@ export class SongApi extends runtime.BaseAPI {
             body: requestParameters['body'] as any,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(SongDtoFromJSON));
     }
 
     /**
      */
-    async apiSongsGeniusMatchBatchPost(requestParameters: ApiSongsGeniusMatchBatchPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiSongsGeniusMatchBatchPostRaw(requestParameters, initOverrides);
+    async apiSongsGeniusMatchBatchPost(requestParameters: ApiSongsGeniusMatchBatchPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SongDto>> {
+        const response = await this.apiSongsGeniusMatchBatchPostRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      */
-    async apiSongsGeniusMatchGetRaw(requestParameters: ApiSongsGeniusMatchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiSongsGeniusMatchGetRaw(requestParameters: ApiSongsGeniusMatchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SongDto>> {
         const queryParameters: any = {};
 
         if (requestParameters['title'] != null) {
@@ -428,18 +451,19 @@ export class SongApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => SongDtoFromJSON(jsonValue));
     }
 
     /**
      */
-    async apiSongsGeniusMatchGet(requestParameters: ApiSongsGeniusMatchGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiSongsGeniusMatchGetRaw(requestParameters, initOverrides);
+    async apiSongsGeniusMatchGet(requestParameters: ApiSongsGeniusMatchGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SongDto> {
+        const response = await this.apiSongsGeniusMatchGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      */
-    async apiSongsGeniusSearchGetRaw(requestParameters: ApiSongsGeniusSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiSongsGeniusSearchGetRaw(requestParameters: ApiSongsGeniusSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<GeniusHit>>> {
         if (requestParameters['searchQuery'] == null) {
             throw new runtime.RequiredError(
                 'searchQuery',
@@ -466,18 +490,19 @@ export class SongApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(GeniusHitFromJSON));
     }
 
     /**
      */
-    async apiSongsGeniusSearchGet(requestParameters: ApiSongsGeniusSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiSongsGeniusSearchGetRaw(requestParameters, initOverrides);
+    async apiSongsGeniusSearchGet(requestParameters: ApiSongsGeniusSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<GeniusHit>> {
+        const response = await this.apiSongsGeniusSearchGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      */
-    async apiSongsLrclibSearchGetRaw(requestParameters: ApiSongsLrclibSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiSongsLrclibSearchGetRaw(requestParameters: ApiSongsLrclibSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LrcLyricsDto>>> {
         if (requestParameters['searchQuery'] == null) {
             throw new runtime.RequiredError(
                 'searchQuery',
@@ -504,13 +529,14 @@ export class SongApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LrcLyricsDtoFromJSON));
     }
 
     /**
      */
-    async apiSongsLrclibSearchGet(requestParameters: ApiSongsLrclibSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiSongsLrclibSearchGetRaw(requestParameters, initOverrides);
+    async apiSongsLrclibSearchGet(requestParameters: ApiSongsLrclibSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LrcLyricsDto>> {
+        const response = await this.apiSongsLrclibSearchGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

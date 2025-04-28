@@ -9,6 +9,15 @@ interface AudioSnippetPlayerProps {
   onEnded: () => void;    // called when snippet naturally ends
 }
 
+interface YouTubePlayer {
+  seekTo: (_seconds: number, _allowSeekAhead: boolean) => void;
+  playVideo: () => void;
+  pauseVideo: () => void;
+  getCurrentTime: () => number;
+  getDuration: () => number;
+  setVolume: (_volume: number) => void;
+}
+
 /**
  * Renders a hidden YouTubePlayer and controls it to play [startTime … endTime].
  */
@@ -19,7 +28,8 @@ const AudioSnippetPlayer: React.FC<AudioSnippetPlayerProps> = ({
   play,
   onEnded,
 }) => {
-  const playerRef = useRef<YT.Player | null>(null);
+  // const playerRef = useRef<YT.Player | null>(null);
+  const playerRef = useRef<YouTubePlayer | null>(null);
   const intervalRef = useRef<number>();
   const [isReady, setIsReady] = useState(false);
 
@@ -35,7 +45,7 @@ const AudioSnippetPlayer: React.FC<AudioSnippetPlayerProps> = ({
   }, [videoId]);
 
   // Helper to start the snippet safely
-  const safeStartSnippet = (player: YT.Player) => {
+  const safeStartSnippet = (player: YouTubePlayer) => {
     try {
       player.seekTo(startTime, true);
       player.playVideo();

@@ -18,7 +18,7 @@ export function getLanguageColor(languageCode: string): LangColour {
   /* 2.2 quick return if colour was already issued */
   if (langHueMap.has(code)) {
     const hue = langHueMap.get(code);
-    return hueToColour(hue ?? 'defaultHue'); // Provide a fallback hue
+    return hueToColour(hue ?? 0); // Provide a numeric fallback hue
   }
 
   /* 2.3 reproducible starting hue  (32-bit Fowler-Noll hash variant) */

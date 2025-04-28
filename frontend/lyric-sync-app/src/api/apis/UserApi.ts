@@ -14,6 +14,16 @@
 
 
 import * as runtime from '../runtime';
+import type {
+  AuthResponseDto,
+  ProblemDetails,
+} from '../models/index';
+import {
+    AuthResponseDtoFromJSON,
+    AuthResponseDtoToJSON,
+    ProblemDetailsFromJSON,
+    ProblemDetailsToJSON,
+} from '../models/index';
 
 /**
  * 
@@ -22,7 +32,7 @@ export class UserApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiAuthGooglePostRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiAuthGooglePostRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthResponseDto>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -38,13 +48,14 @@ export class UserApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuthResponseDtoFromJSON(jsonValue));
     }
 
     /**
      */
-    async apiAuthGooglePost(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiAuthGooglePostRaw(initOverrides);
+    async apiAuthGooglePost(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthResponseDto> {
+        const response = await this.apiAuthGooglePostRaw(initOverrides);
+        return await response.value();
     }
 
 }

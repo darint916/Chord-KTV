@@ -13,78 +13,85 @@
  */
 
 import { mapValues } from '../runtime';
+import type { Song } from './Song';
+import {
+    SongFromJSON,
+    SongFromJSONTyped,
+    SongToJSON,
+    SongToJSONTyped,
+} from './Song';
+
 /**
  * 
  * @export
- * @interface UserPlaylistActivityDto
+ * @interface UserSongActivity
  */
-export interface UserPlaylistActivityDto {
+export interface UserSongActivity {
     /**
      * 
      * @type {string}
-     * @memberof UserPlaylistActivityDto
+     * @memberof UserSongActivity
      */
-    playlistId?: string | null;
+    id?: string;
+    /**
+     * 
+     * @type {Song}
+     * @memberof UserSongActivity
+     */
+    song: Song;
     /**
      * 
      * @type {string}
-     * @memberof UserPlaylistActivityDto
+     * @memberof UserSongActivity
      */
-    playlistThumbnailUrl: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof UserPlaylistActivityDto
-     */
-    title: string | null;
+    userId?: string;
     /**
      * 
      * @type {Array<Date>}
-     * @memberof UserPlaylistActivityDto
+     * @memberof UserSongActivity
      */
     datesPlayed?: Array<Date> | null;
     /**
      * 
      * @type {Date}
-     * @memberof UserPlaylistActivityDto
+     * @memberof UserSongActivity
      */
     lastPlayed?: Date;
     /**
      * 
      * @type {boolean}
-     * @memberof UserPlaylistActivityDto
+     * @memberof UserSongActivity
      */
     isFavorite?: boolean;
     /**
      * 
      * @type {Date}
-     * @memberof UserPlaylistActivityDto
+     * @memberof UserSongActivity
      */
     dateFavorited?: Date | null;
 }
 
 /**
- * Check if a given object implements the UserPlaylistActivityDto interface.
+ * Check if a given object implements the UserSongActivity interface.
  */
-export function instanceOfUserPlaylistActivityDto(value: object): value is UserPlaylistActivityDto {
-    if (!('playlistThumbnailUrl' in value) || value['playlistThumbnailUrl'] === undefined) return false;
-    if (!('title' in value) || value['title'] === undefined) return false;
+export function instanceOfUserSongActivity(value: object): value is UserSongActivity {
+    if (!('song' in value) || value['song'] === undefined) return false;
     return true;
 }
 
-export function UserPlaylistActivityDtoFromJSON(json: any): UserPlaylistActivityDto {
-    return UserPlaylistActivityDtoFromJSONTyped(json, false);
+export function UserSongActivityFromJSON(json: any): UserSongActivity {
+    return UserSongActivityFromJSONTyped(json, false);
 }
 
-export function UserPlaylistActivityDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserPlaylistActivityDto {
+export function UserSongActivityFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserSongActivity {
     if (json == null) {
         return json;
     }
     return {
         
-        'playlistId': json['playlistId'] == null ? undefined : json['playlistId'],
-        'playlistThumbnailUrl': json['playlistThumbnailUrl'],
-        'title': json['title'],
+        'id': json['id'] == null ? undefined : json['id'],
+        'song': SongFromJSON(json['song']),
+        'userId': json['userId'] == null ? undefined : json['userId'],
         'datesPlayed': json['datesPlayed'] == null ? undefined : json['datesPlayed'],
         'lastPlayed': json['lastPlayed'] == null ? undefined : (new Date(json['lastPlayed'])),
         'isFavorite': json['isFavorite'] == null ? undefined : json['isFavorite'],
@@ -92,20 +99,20 @@ export function UserPlaylistActivityDtoFromJSONTyped(json: any, ignoreDiscrimina
     };
 }
 
-export function UserPlaylistActivityDtoToJSON(json: any): UserPlaylistActivityDto {
-    return UserPlaylistActivityDtoToJSONTyped(json, false);
+export function UserSongActivityToJSON(json: any): UserSongActivity {
+    return UserSongActivityToJSONTyped(json, false);
 }
 
-export function UserPlaylistActivityDtoToJSONTyped(value?: UserPlaylistActivityDto | null, ignoreDiscriminator: boolean = false): any {
+export function UserSongActivityToJSONTyped(value?: UserSongActivity | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'playlistId': value['playlistId'],
-        'playlistThumbnailUrl': value['playlistThumbnailUrl'],
-        'title': value['title'],
+        'id': value['id'],
+        'song': SongToJSON(value['song']),
+        'userId': value['userId'],
         'datesPlayed': value['datesPlayed'],
         'lastPlayed': value['lastPlayed'] == null ? undefined : ((value['lastPlayed']).toISOString()),
         'isFavorite': value['isFavorite'],

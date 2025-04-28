@@ -30,13 +30,13 @@ export interface UserDto {
      * @type {string}
      * @memberof UserDto
      */
-    name?: string;
+    name?: string | null;
     /**
      * 
      * @type {string}
      * @memberof UserDto
      */
-    email?: string;
+    email?: string | null;
 }
 
 /**
