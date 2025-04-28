@@ -8,7 +8,7 @@ interface YouTubePlayerProps {
   autoStart?: boolean;
 }
 
-const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady, onEnd, autoStart: autoStart = 0 }) => {
+const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady, onEnd, autoStart: autoStart = false }) => {
   const setPlayer = useState<YouTubePlayerInstance | null>(null)[1]; // Extract only the setter
 
   const opts = {

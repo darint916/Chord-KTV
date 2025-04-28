@@ -11,7 +11,6 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ rawLrcLyrics, currentTime, 
 
   const { signal, recoverAutoScrollImmediately} = useRecoverAutoScrollImmediately();
   const wasPlayingRef = useRef(isPlaying);
-
   useEffect(() => {
     if (isPlaying && !wasPlayingRef.current) {
       recoverAutoScrollImmediately();

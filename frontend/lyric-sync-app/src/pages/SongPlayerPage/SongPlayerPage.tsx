@@ -142,25 +142,29 @@ const SongPlayerPage: React.FC = () => {
 
 
   const prevTimeRange = useRef({ start: Infinity, end: 0 });
-  const currentLineRef = useRef(-1); // Track current line index
-
-  const checkIfTimeLineChanged = (currentTime: number) => {
+  const currentLineRef = useRef(-1); // Track current line index\
+  const lyricsOffsetRef = useRef<number>(lyricsOffset);
+  useEffect(() => {
+    lyricsOffsetRef.current = lyricsOffset;
+  }, [lyricsOffset]);
+  const checkIfTimeLineChanged = (currentTime: number, offset: number) => {
+    currentTime += offset; // Apply offset to current time
     if (lrcTimestamps.length === 0 ||
-      (currentTime >= prevTimeRange.current.start + lyricsOffset &&
-        currentTime < prevTimeRange.current.end + lyricsOffset)) {
+      (currentTime >= prevTimeRange.current.start &&
+        currentTime < prevTimeRange.current.end)) {
       return false;
     }
-
     for (let i = currentLineRef.current + 1; i < (lrcTimestamps.length + currentLineRef.current); i++) {
       i %= lrcTimestamps.length; // Wrap around if needed
-      const currentTimestamp = lrcTimestamps[i] + lyricsOffset;
-      const nextTimestamp = ((i < lrcTimestamps.length - 1) ? lrcTimestamps[i + 1] : Infinity) + lyricsOffset;
-      if (currentTime + lyricsOffset >= currentTimestamp && currentTime + lyricsOffset < nextTimestamp) {
+      const currentTimestamp = lrcTimestamps[i];
+      const nextTimestamp = ((i < lrcTimestamps.length - 1) ? lrcTimestamps[i + 1] : Infinity);
+      if (currentTime >= currentTimestamp && currentTime < nextTimestamp) {
         currentLineRef.current = i;
         prevTimeRange.current = { start: currentTimestamp, end: nextTimestamp };
         return true;
       }
     }
+    return false;
   };
 
   const prefetchNextSongs = useCallback(async () => {
@@ -217,7 +221,7 @@ const SongPlayerPage: React.FC = () => {
   const isLanguageAllowedForQuiz = song.geniusMetaData?.language && allowedQuizLanguages.has(song.geniusMetaData.language);
 
   const animationFrameRef = useRef<number | null>(null);
-
+  const prevOffset = useRef<number>(0);
   // Cleanup function for the animation frame
   const stopAnimationFrame = useCallback(() => {
     if (animationFrameRef.current) {
@@ -237,9 +241,10 @@ const SongPlayerPage: React.FC = () => {
 
       const current = playerRef.current.getCurrentTime();
       const duration = playerRef.current.getDuration();
-
-      if (checkIfTimeLineChanged(current + lyricsOffset)) {
-        setCurrentTime(current + lyricsOffset);
+      const offset = lyricsOffsetRef.current; //prev getting stale lyricsoffset cuz its nested updateloop (callback)
+      if (checkIfTimeLineChanged(current, offset) || prevOffset.current !== offset) {
+        setCurrentTime(current);
+        prevOffset.current = offset;
       }
 
       // Check for quiz button show condition
@@ -595,7 +600,7 @@ const SongPlayerPage: React.FC = () => {
                   playerInstance.seekTo(lastTimestamp, true);
                 }
               }}
-              autoStart={1}
+              autoStart={true}
               onEnd={() => {
                 if (autoPlayEnabled) {
                   handleNextTrack();
@@ -730,7 +735,7 @@ const SongPlayerPage: React.FC = () => {
                       ? song.lrcRomanizedLyrics ?? 'Not supported'
                       : song.lrcTranslatedLyrics ?? 'Not supported'
                 }
-                currentTime={currentTime + lyricsOffset}
+                currentTime={currentTime + lyricsOffsetRef.current}
                 isPlaying={isPlaying}
               />
             </Box>
