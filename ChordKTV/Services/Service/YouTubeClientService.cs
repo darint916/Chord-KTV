@@ -165,7 +165,7 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         return result;
     }
 
-    public async Task<string?> SearchYoutubeVideoLinkAsync(string title, string artist, string? album, TimeSpan? duration, double durationTolerance = 5)
+    public async Task<string?> SearchYoutubeVideoLinkAsync(string title, string artist, string? album, TimeSpan? duration, double durationTolerance = 7)
     {
         if (string.IsNullOrEmpty(_youtubeSearchApiKey))
         {
@@ -174,7 +174,7 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
         //reference https://developers.google.com/youtube/v3/docs/search/list#.net
 
         SearchResource.ListRequest searchRequest = _youTubeSearchService.Search.List("snippet");
-        searchRequest.Q = $"{title} Official MV by {artist}"; //no album for now, as youtube search api is kinda lobotomized, will return no result
+        searchRequest.Q = $"{title} by {artist} Official"; //no album for now, as youtube search api is kinda lobotomized, will return no result
         searchRequest.Type = "video";
         searchRequest.MaxResults = 6; //more simple, maybe expand in future to allow users to choose, 2 groups based on relevancy sort
         searchRequest.VideoEmbeddable = SearchResource.ListRequest.VideoEmbeddableEnum.True__;

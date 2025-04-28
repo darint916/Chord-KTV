@@ -4,21 +4,28 @@ import YouTube, { YouTubePlayer as YouTubePlayerInstance } from 'react-youtube';
 interface YouTubePlayerProps {
   videoId: string;
   onReady: (_playerInstance: YouTubePlayerInstance) => void;
+  onEnd?: () => void;
+  autoStart?: boolean;
 }
 
-const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady }) => {
+const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady, onEnd, autoStart: autoStart = false }) => {
   const setPlayer = useState<YouTubePlayerInstance | null>(null)[1]; // Extract only the setter
 
   const opts = {
     width: '100%',
     playerVars: {
-      autoplay: 0,
+      autoplay: autoStart ? 1 : 0,
       rel: 0,
       fs: 0,
       modestbranding: 1,
       disablekb: 1
     }
   };
+
+  const handleEnd = () => {
+    if (onEnd) { onEnd(); }
+  };
+
 
   const handleReady = (event: { target: YouTubePlayerInstance }) => {
     const playerInstance = event.target;
@@ -28,7 +35,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady }) => {
 
   return (
     <div>
-      <YouTube videoId={videoId} className="youtube-player" opts={opts} onReady={handleReady} />
+      <YouTube videoId={videoId} className="youtube-player" opts={opts} onReady={handleReady} onEnd={handleEnd} />
     </div>
   );
 };

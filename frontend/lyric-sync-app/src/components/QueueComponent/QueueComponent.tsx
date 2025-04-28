@@ -1,5 +1,5 @@
 import React from 'react';
-import { Paper, Typography, Divider, Box, Button, IconButton } from '@mui/material';
+import { Paper, Typography, Divider, Box, Button, IconButton, ToggleButton } from '@mui/material';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import DraggableQueueItem from '../../components/DraggableQueueItem/DraggableQueueItem';
@@ -16,6 +16,8 @@ interface QueueComponentProps {
   setQueue: React.Dispatch<React.SetStateAction<QueueItem[]>>;
   setCurrentPlayingId: React.Dispatch<React.SetStateAction<string | null>>;
   handlePlayFromQueue: (_item: QueueItem) => Promise<void>;
+  autoPlayEnabled: boolean;
+  setAutoPlayEnabled: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const QueueComponent: React.FC<QueueComponentProps> = ({
@@ -23,7 +25,9 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
   currentPlayingId,
   setQueue,
   setCurrentPlayingId,
-  handlePlayFromQueue
+  autoPlayEnabled,
+  handlePlayFromQueue,
+  setAutoPlayEnabled,
 }) => {
 
   const moveQueueItem = (dragIndex: number, hoverIndex: number) => {
@@ -38,6 +42,15 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
   const removeFromQueue = (queueId: string) => {
     const newQueue = queue.filter(item => item.queueId !== queueId);
     setQueue(newQueue);
+  };
+
+  const handleShuffle = () => {
+    const currIdx = queue.findIndex(item => item.queueId === currentPlayingId);
+    for (let i = currIdx + 1; i < queue.length - 1; i++) {
+      const j = Math.floor(Math.random() * (queue.length - i)) + i;
+      [queue[i], queue[j]] = [queue[j], queue[i]];
+    }
+    setQueue([...queue]);
   };
 
   const clearQueue = () => {
@@ -65,8 +78,11 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
               ? `Queue (${queue.findIndex(item => item.queueId === currentPlayingId) + 1}/${queue.length})`
               : `Queue (${queue.length})`}
           </Typography>
-          <IconButton 
-            // onClick={handleShuffle}
+          <ToggleButton value="check" selected={autoPlayEnabled} onChange={() => setAutoPlayEnabled(prev => !prev)} className="autoplay-toggle">
+            AutoPlay
+          </ToggleButton>
+          <IconButton
+            onClick={handleShuffle}
             aria-label="shuffle queue"
             color="primary"
             size="small"
@@ -75,7 +91,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
           </IconButton>
         </Box>
         <Divider variant="fullWidth" className="queue-divider" />
-        
+
         {/* Main content area with fixed height */}
         <Box className="queue-list-container">
           <AutoSizer>
@@ -106,7 +122,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
             )}
           </AutoSizer>
         </Box>
-        
+
         {/* Button container with fixed position at bottom */}
         <Box className="queue-button-container">
           <Button

@@ -39,13 +39,13 @@ const HandwritingPage: React.FC = () => {
     const effectiveSongId =
       urlSongId || (song?.id && song.id.trim() !== '' ? song.id : null);
 
-    if (!effectiveSongId) {return;}               // nothing to fetch with
-    if (quizQuestions && quizQuestions.length) {return;} // already loaded
+    if (!effectiveSongId) { return; }               // nothing to fetch with
+    if (quizQuestions && quizQuestions.length) { return; } // already loaded
 
     (async () => {
       try {
         setLoadingQuestions(true);
-        const resp = await quizApi.apiQuizRomanizationGet({
+        const resp = await quizApi.apiQuizRomanizationPost({
           songId: effectiveSongId,
         });
         setQuizQuestions(resp.questions ?? []);
@@ -85,9 +85,10 @@ const HandwritingPage: React.FC = () => {
   const getLongestWord = (text: string): string => {
     const segments = Array.from(segmenter.segment(text))
       .filter(segment => segment.isWordLike)
-      .map(segment => segment.segment);
+      .map(segment => segment.segment)
+      .filter(segment => !/[A-Za-z]/.test(segment));
 
-    if (segments.length === 0) {return '';}
+    if (segments.length === 0) { return ''; }
 
     return segments.reduce((longest, current) =>
       current.length > longest.length ? current : longest
@@ -115,12 +116,14 @@ const HandwritingPage: React.FC = () => {
       </Typography>
     );
   }
-
   const currentWord = wordsToPractice[currentWordIndex % wordsToPractice.length];
-  const allWordsCompleted = completedWords.length >= wordsToPractice.length;
-  if (allWordsCompleted) {
-    setQuizCompleted(true);
-  }
+
+  useEffect(() => {
+    if (completedWords.length >= wordsToPractice.length && wordsToPractice.length > 0) {
+      setQuizCompleted(true);
+    }
+  }, [completedWords, wordsToPractice.length]);
+
 
   const handleWordCompletionAttempt = (isSuccess: boolean) => {
     if (isSuccess) {
@@ -279,7 +282,7 @@ const HandwritingPage: React.FC = () => {
                 color="secondary"
                 onClick={completeQuiz}
               >
-               Complete Quiz
+                Complete Quiz
               </Button>
             </Box>
           </div>

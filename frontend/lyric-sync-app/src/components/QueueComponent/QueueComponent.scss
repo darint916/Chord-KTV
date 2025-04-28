@@ -10,7 +10,7 @@
   background: $gradient !important;
   width: 100%;
   height: 380px;
-  
+
   .queue-title {
     padding: 16px;
     color: $text-primary;
@@ -25,7 +25,7 @@
     border: none;
     flex-shrink: 0;
   }
-  
+
   .queue-list-container {
     flex: 1;
     width: 100%;
@@ -36,9 +36,9 @@
       scrollbar-width: none; /* Firefox */
       -ms-overflow-style: none; /* IE 10+ */
     }
-    
+
   }
-  
+
   .queue-button-container {
     padding: 16px;
     flex-shrink: 0;
@@ -53,4 +53,34 @@
 .queue-list::-webkit-scrollbar {
   width: 0 !important;
   height: 0 !important;
+}
+
+$autoplay-border:   #90caf9;
+$autoplay-bg:       #177bcdb7;
+$autoplay-bg-light: #e3f2fd;
+$autoplay-text:     #ffffff;
+.autoplay-toggle {
+  // base size & spacing
+  padding: 4px 8px !important;
+  min-width: auto !important;
+  height: 32px !important;
+  font-size: 0.875rem;
+  border-radius: 16px !important;
+
+  // default (unselected) appearance
+  border: 1px solid $autoplay-border;
+  background-color: transparent;
+  color: $autoplay-bg !important;
+
+  // hover state
+  &:hover {
+    background-color: $autoplay-bg-light;
+  }
+
+  // selected state (when `.Mui-selected` is applied by MUI)
+  &.Mui-selected {
+    border-color: $autoplay-bg !important;
+    background-color: $autoplay-bg !important;
+    color: $autoplay-text !important;
+  }
 }

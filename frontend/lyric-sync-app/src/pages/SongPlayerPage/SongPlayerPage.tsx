@@ -14,11 +14,12 @@ import QueueComponent from '../../components/QueueComponent/QueueComponent';
 import { songApi } from '../../api/apiClient';
 import { extractYouTubeVideoId, extractPlaylistId } from '../HomePage/HomePageHelpers';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
-import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import MuiInput from '@mui/material/Input';
-
+import AddIcon from '@mui/icons-material/Add';
+import MediaCarousel, { MediaItem } from '../../components/UserStats/MediaCarousel';
+import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -45,9 +46,13 @@ const SongPlayerPage: React.FC = () => {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [playlistLoading, setPlaylistLoading] = useState(false);
-  const [lyricsOffset, setLyricsOffset] = useState<number>(0);
-  const [minLyricOffset, setMinLyricOffset] = useState<number>(-5);
-  const [maxLyricOffset, setMaxLyricOffset] = useState<number>(5);
+  const [lyricsOffset, setLyricsOffset] = useState<number>(0); // in seconds
+  const [minLyricOffset, setMinLyricOffset] = useState<number>(-1);
+  const [maxLyricOffset, setMaxLyricOffset] = useState<number>(1);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(false);
+  const [geniusItems, setGeniusItems] = useState<MediaItem[]>([]);
+  const [geniusHits, setGeniusHits] = useState<GeniusHitDto[]>([]);
+  const [isAddingToNext, setIsAddingToNext] = useState(true);
   const {
     song,
     setQuizQuestions,
@@ -84,6 +89,61 @@ const SongPlayerPage: React.FC = () => {
     return queue.find(item => item.queueId === currentPlayingId);
   }, [queue, currentPlayingId]);
 
+  const COMBINED_DELIMITER = '<<<SEP>>>';
+
+  const getCombinedLyrics = useMemo(() => {
+    if (!song.lrcLyrics) { return 'Not supported'; }
+
+    const parseLyrics = (lyrics: string) => {
+      const lines = lyrics.split('\n');
+      const parsed: { time: string, text: string }[] = [];
+
+      for (const line of lines) {
+        const timeMatch = line.match(/^(\[[^\]]+\])/);
+        if (timeMatch) {
+          parsed.push({
+            time: timeMatch[1],
+            text: line.replace(timeMatch[1], '').trim()
+          });
+        }
+      }
+      return parsed;
+    };
+
+    const original = parseLyrics(song.lrcLyrics);
+    const romanized = song.lrcRomanizedLyrics ? parseLyrics(song.lrcRomanizedLyrics) : [];
+    const translated = song.lrcTranslatedLyrics ? parseLyrics(song.lrcTranslatedLyrics) : [];
+
+    const combined: string[] = [];
+
+    for (const origLine of original) {
+      const romLine = romanized.find(l => l.time === origLine.time);
+      const transLine = translated.find(l => l.time === origLine.time);
+
+      const texts: string[] = [];
+
+      // Always include the original
+      if (origLine.text) {
+        texts.push(origLine.text);
+      }
+
+      // Only include romanized if it's different from original (case insensitive)
+      if (romLine && romLine.text && romLine.text.toLowerCase() !== origLine.text.toLowerCase()) {
+        texts.push(romLine.text);
+      }
+
+      // Only include translation if it's different from original (case insensitive)
+      if (transLine && transLine.text && transLine.text.toLowerCase() !== origLine.text.toLowerCase()) {
+        texts.push(transLine.text);
+      }
+
+      const mergedText = texts.join(COMBINED_DELIMITER);
+      combined.push(`${origLine.time}${mergedText}`);
+    }
+
+    return combined.join('\n');
+  }, [song.lrcLyrics, song.lrcRomanizedLyrics, song.lrcTranslatedLyrics]);
+
   const handleKTVToggle = async () => {
     if (!song.id) { return; } // No song ID available
 
@@ -110,7 +170,9 @@ const SongPlayerPage: React.FC = () => {
 
       setInstrumental(!instrumental);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to get instrumental version';
+      const errorMessage = err instanceof Error
+        ? `Failed to get instrumental version. Error message from OpenAPI stub call: ${err.message}`
+        : 'Failed to get instrumental version';
       setError(errorMessage);
       setInstrumental(false); // Revert toggle if error
     }
@@ -139,25 +201,29 @@ const SongPlayerPage: React.FC = () => {
 
 
   const prevTimeRange = useRef({ start: Infinity, end: 0 });
-  const currentLineRef = useRef(-1); // Track current line index
-
-  const checkIfTimeLineChanged = (currentTime: number) => {
+  const currentLineRef = useRef(-1); // Track current line index\
+  const lyricsOffsetRef = useRef<number>(lyricsOffset);
+  useEffect(() => {
+    lyricsOffsetRef.current = lyricsOffset;
+  }, [lyricsOffset]);
+  const checkIfTimeLineChanged = (currentTime: number, offset: number) => {
+    currentTime += offset; // Apply offset to current time
     if (lrcTimestamps.length === 0 ||
       (currentTime >= prevTimeRange.current.start &&
         currentTime < prevTimeRange.current.end)) {
       return false;
     }
-
     for (let i = currentLineRef.current + 1; i < (lrcTimestamps.length + currentLineRef.current); i++) {
       i %= lrcTimestamps.length; // Wrap around if needed
       const currentTimestamp = lrcTimestamps[i];
-      const nextTimestamp = (i < lrcTimestamps.length - 1) ? lrcTimestamps[i + 1] : Infinity;
+      const nextTimestamp = ((i < lrcTimestamps.length - 1) ? lrcTimestamps[i + 1] : Infinity);
       if (currentTime >= currentTimestamp && currentTime < nextTimestamp) {
         currentLineRef.current = i;
         prevTimeRange.current = { start: currentTimestamp, end: nextTimestamp };
         return true;
       }
     }
+    return false;
   };
 
   const prefetchNextSongs = useCallback(async () => {
@@ -214,7 +280,7 @@ const SongPlayerPage: React.FC = () => {
   const isLanguageAllowedForQuiz = song.geniusMetaData?.language && allowedQuizLanguages.has(song.geniusMetaData.language);
 
   const animationFrameRef = useRef<number | null>(null);
-
+  const prevOffset = useRef<number>(0);
   // Cleanup function for the animation frame
   const stopAnimationFrame = useCallback(() => {
     if (animationFrameRef.current) {
@@ -234,14 +300,15 @@ const SongPlayerPage: React.FC = () => {
 
       const current = playerRef.current.getCurrentTime();
       const duration = playerRef.current.getDuration();
-
-      if (checkIfTimeLineChanged(current)) {
+      const offset = lyricsOffsetRef.current; //prev getting stale lyricsoffset cuz its nested updateloop (callback)
+      if (checkIfTimeLineChanged(current, offset) || prevOffset.current !== offset) {
         setCurrentTime(current);
+        prevOffset.current = offset;
       }
 
       // Check for quiz button show condition
       // if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
-      setShowQuizButton(true);
+      // setShowQuizButton(true);
       // }
 
       // Check for prefetch condition
@@ -253,7 +320,7 @@ const SongPlayerPage: React.FC = () => {
     };
 
     updateLoop();
-  }, [stopAnimationFrame, prefetchNextSongs, isLanguageAllowedForQuiz]);
+  }, [stopAnimationFrame, prefetchNextSongs, isLanguageAllowedForQuiz, lyricsOffset]);
 
   // Cleanup effect
   useEffect(() => {
@@ -268,6 +335,9 @@ const SongPlayerPage: React.FC = () => {
     prevTimeRange.current = { start: Infinity, end: 0 };
     setCurrentTime(0);
     setShowQuizButton(false);
+    setLyricsOffset(0);
+    setMinLyricOffset(-1);
+    setMaxLyricOffset(1);
   }, [song]);
 
   // Call resetLyricState when song changes
@@ -279,12 +349,13 @@ const SongPlayerPage: React.FC = () => {
     setSelectedTab(newValue);
   };
 
-  const handleAddToNextAndPlay = async () => {
+  const handleAddToNext = async () => {
+    setIsAddingToNext(true);
     await handleQueueAddition(true);
-    setInstrumental(false); // Set KTV to unselected if new song
   };
 
   const handleAddToEnd = async () => {
+    setIsAddingToNext(false);
     await handleQueueAddition(false);
   };
 
@@ -313,37 +384,131 @@ const SongPlayerPage: React.FC = () => {
 
     setIsLoading(true);
     setError('');
+    setGeniusItems([]);
+    setGeniusHits([]);
 
     try {
-      const youTubeId = extractYouTubeVideoId(youtubeUrl);
+      if (youtubeUrl.trim()) {
+        const youTubeId = extractYouTubeVideoId(youtubeUrl.trim());
+        if (!youTubeId) {
+          throw new Error('Invalid YouTube URL.');
+        }
+
+        const response = await songApi.apiSongsMatchPost({
+          fullSongRequestDto: {
+            title: songName.trim(),
+            artist: artistName.trim(),
+            youTubeId,
+            lyrics: lyrics.trim(),
+          }
+        });
+
+        response.youTubeId = youTubeId;
+
+        const newItem: QueueItem = {
+          queueId: uuidv4(),
+          status: 'loaded',
+          title: response.title ?? songName,
+          artist: response.artist ?? artistName,
+          youTubeId: youTubeId,
+          lyrics: lyrics,
+          imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+        };
+
+        setQueue(prev => {
+          if (insertAfterCurrent && currentPlayingId) {
+            const currentIndex = prev.findIndex(item => item.queueId === currentPlayingId);
+            if (currentIndex >= 0) {
+              const newQueue = [...prev];
+              newQueue.splice(currentIndex + 1, 0, newItem);
+              return newQueue;
+            }
+          }
+          return [...prev, newItem];
+        });
+
+        setSongName('');
+        setArtistName('');
+        setLyrics('');
+        setYoutubeUrl('');
+      } else {
+        const queryParts = [songName, artistName, lyrics]
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const searchQuery = queryParts.join(' ');
+
+        if (!searchQuery) {
+          throw new Error('Please enter at least one field to search.');
+        }
+
+        const res = await songApi.apiSongsGeniusSearchGet({ searchQuery });
+
+        const hits = res ?? [];
+        if (hits.length === 0) {
+          throw new Error('No search results found.');
+        }
+
+        const mapped: MediaItem[] = hits.map((h) => {
+          const coverUrl =
+            h.result.songArtImageUrl ||
+            h.result.headerImageUrl ||
+            '';
+
+          return {
+            id: String(h.result.id),
+            title: `${h.result.title} — ${h.result.primaryArtistNames}`,
+            coverUrl,
+          };
+        });
+
+        setGeniusItems(mapped);
+        setGeniusHits(hits);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error
+        ? `Failed to process search. Error: ${err.message}`
+        : 'Failed to process search';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResultSelect = async (_item: MediaItem, index: number) => {
+    const hit = geniusHits[index]?.result;
+    if (!hit) {
+      return;
+    }
+
+    const title = hit.title ?? '';
+    const artist = hit.primary_artist_names ?? '';
+
+    setIsLoading(true);
+    setError('');
+
+    try {
       const response = await songApi.apiSongsMatchPost({
         fullSongRequestDto: {
-          title: songName.trim(),
-          artist: artistName.trim(),
-          youTubeId: youTubeId ?? '',
-          lyrics: lyrics.trim()
-        }
+          title,
+          artist,
+          lyrics: '',
+          youTubeId: '',
+        },
       });
 
-      if (response) {
-        setSong(response);
-      }
       const newItem: QueueItem = {
         queueId: uuidv4(),
-        status: 'loaded',
-        title: response.title ?? '',
-        artist: response.artist ?? '',
+        title: response.title ?? title,
+        artist: response.artist ?? artist,
         youTubeId: response.youTubeId ?? '',
-        lyrics: lyrics,
-        imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+        lyrics: '',
+        status: 'loaded',
+        imageUrl: response.geniusMetaData?.songImageUrl ?? hit.song_art_image_url ?? hit.header_image_url ?? '',
       };
 
-      if (!response.lrcLyrics) {
-        throw new Error('Failed to process song: no LRC lyrics found');
-      }
-
+      // Insert into queue
       setQueue(prev => {
-        if (insertAfterCurrent && currentPlayingId) {
+        if (isAddingToNext && currentPlayingId) {
           const currentIndex = prev.findIndex(item => item.queueId === currentPlayingId);
           if (currentIndex >= 0) {
             const newQueue = [...prev];
@@ -351,24 +516,21 @@ const SongPlayerPage: React.FC = () => {
             return newQueue;
           }
         }
-        // Default: add to end
         return [...prev, newItem];
       });
 
-      // Auto-play if adding to next position
-      if (insertAfterCurrent) {
-        setCurrentPlayingId(newItem.queueId);
-        setSong(response);
-      }
+      // Clear search results after adding
+      setGeniusItems([]);
+      setGeniusHits([]);
 
-      // Clear form
       setSongName('');
       setArtistName('');
       setLyrics('');
       setYoutubeUrl('');
-
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to process song';
+      const errorMessage = err instanceof Error
+        ? `Failed to add selected song. Error: ${err.message}`
+        : 'Failed to add selected song';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -419,7 +581,9 @@ const SongPlayerPage: React.FC = () => {
       setPlaylistUrl('');
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load playlist';
+      const errorMessage = err instanceof Error
+        ? `Failed to load playlist. Error message from OpenAPI stub call: ${err.message}`
+        : 'Failed to load playlist';
       setError(errorMessage);
     } finally {
       setPlaylistLoading(false);
@@ -432,61 +596,77 @@ const SongPlayerPage: React.FC = () => {
     try {
       if (item.status === 'pending') {
         item.status = 'loading';
-      }
-      setQueue(prevQueue => prevQueue.map(queueItem =>
-        queueItem.queueId === item.queueId
-          ? { ...queueItem, apiRequested: true, error: undefined }
-          : queueItem
-      ));
+        setQueue(prevQueue => prevQueue.map(queueItem =>
+          queueItem.queueId === item.queueId
+            ? { ...queueItem, apiRequested: true, error: undefined }
+            : queueItem
+        ));
 
-      const response = await songApi.apiSongsMatchPost({
-        fullSongRequestDto: {
+        const response = await songApi.apiSongsMatchPost({
+          fullSongRequestDto: {
+            title: item.title,
+            artist: item.artist,
+            youTubeId: item.youTubeId || '',
+            lyrics: item.lyrics || ''
+          }
+        });
+        if (item.youTubeId) {
+          response.youTubeId = item.youTubeId;
+        }
+
+        setQueue(prevQueue => prevQueue.map(queueItem =>
+          queueItem.queueId === item.queueId
+            ? {
+              ...queueItem,
+              title: response.title || item.title,
+              artist: response.artist || item.artist,
+              lyrics: item.lyrics || '',
+              status: 'loaded' as const,
+              imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+            }
+            : queueItem
+        ));
+
+      }
+      else if (item.status === 'loaded') {
+        const response = await songApi.apiSongsMatchPost({
+          fullSongRequestDto: {
+            title: item.title,
+            artist: item.artist,
+            youTubeId: item.youTubeId || '',
+            lyrics: item.lyrics || ''
+          }
+        });
+        if (item.youTubeId) {
+          response.youTubeId = item.youTubeId;
+        }
+        setCurrentPlayingId(item.queueId);
+        item.status = 'loaded';
+        setSong(response);
+        setInstrumental(false);
+        stopAnimationFrame(); // Stop any current animation frame
+        resetLyricState(); // Reset lyric state
+      }
+      else if (item.error) {
+        setCurrentPlayingId(item.queueId);
+        setSong({
           title: item.title,
           artist: item.artist,
           youTubeId: item.youTubeId || '',
-          lyrics: item.lyrics || ''
-        }
-      });
-      if (item.youTubeId) {
-        response.youTubeId = item.youTubeId;
+          lrcLyrics: '',
+          lrcRomanizedLyrics: '',
+          lrcTranslatedLyrics: ''
+        });
       }
-
-      setQueue(prevQueue => prevQueue.map(queueItem =>
-        queueItem.queueId === item.queueId
-          ? {
-            ...queueItem,
-            title: response.title || item.title,
-            artist: response.artist || item.artist,
-            lyrics: item.lyrics || '',
-            status: 'loaded' as const,
-            imageUrl: response.geniusMetaData?.songImageUrl ?? ''
-          }
-          : queueItem
-      ));
-
-      setCurrentPlayingId(item.queueId);
-      item.status = 'loaded';
-      setSong(response);
-      setInstrumental(false);
-      stopAnimationFrame(); // Stop any current animation frame
-      resetLyricState(); // Reset lyric state
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load song details';
+      const errorMessage = err instanceof Error
+        ? `Failed to load song details. Error message from OpenAPI stub call: ${err.message}`
+        : 'Failed to load song details';
       setQueue(prevQueue => prevQueue.map(queueItem =>
         queueItem.queueId === item.queueId
           ? { ...queueItem, error: errorMessage }
           : queueItem
       ));
-
-      setCurrentPlayingId(item.queueId);
-      setSong({
-        title: item.title,
-        artist: item.artist,
-        youTubeId: item.youTubeId || '',
-        lrcLyrics: '',
-        lrcRomanizedLyrics: '',
-        lrcTranslatedLyrics: ''
-      });
     }
   }, [currentPlayingId, queue]);
 
@@ -540,13 +720,6 @@ const SongPlayerPage: React.FC = () => {
   }
 `;
 
-  const activeVideoId = useMemo(() => {
-    if (instrumental && currentQueueItem?.ktvYouTubeId) {
-      return currentQueueItem.ktvYouTubeId;
-    }
-    return song.youTubeId ?? '';
-  }, [instrumental, currentQueueItem?.ktvYouTubeId, song.youTubeId]);
-
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
@@ -570,14 +743,20 @@ const SongPlayerPage: React.FC = () => {
         <Grid container className="song-player-content">
           <Grid size={6} alignContent={'center'} className='grid-parent'>
             <YouTubePlayer
-              videoId={activeVideoId}
+              videoId={instrumental && currentQueueItem?.ktvYouTubeId ? currentQueueItem.ktvYouTubeId : song.youTubeId ?? ''}
               onReady={(playerInstance) => {
                 updatePlayerTime(playerInstance);
                 if (lastTimestamp > 0) {
                   playerInstance.seekTo(lastTimestamp, true);
                 }
               }}
-              key={activeVideoId}
+              autoStart={true}
+              onEnd={() => {
+                if (autoPlayEnabled) {
+                  handleNextTrack();
+                }
+              }}
+              key={instrumental ? 'ktv' : 'regular'} // Force re-render when switching
             />
             <Grid container spacing={2} className="controls-grid">
               <Grid size={1} alignContent={'center'}>
@@ -624,7 +803,7 @@ const SongPlayerPage: React.FC = () => {
                       inputProps={{
                         step: 1,
                         min: -99,
-                        max: 0,
+                        max: 98,
                         type: 'number',
                       }}
                     />
@@ -637,7 +816,7 @@ const SongPlayerPage: React.FC = () => {
                       }}
                       min={minLyricOffset}
                       max={maxLyricOffset}
-                      step={0.1}
+                      step={0.01}
                       color='primary'
                       valueLabelDisplay="auto"
                       valueLabelFormat={(value) => `${value > 0 ? '+' : ''}${value}s`}
@@ -659,7 +838,7 @@ const SongPlayerPage: React.FC = () => {
                       }}
                       inputProps={{
                         step: 1,
-                        min: 0,
+                        min: -98,
                         max: 99,
                         type: 'number',
                       }}
@@ -667,7 +846,7 @@ const SongPlayerPage: React.FC = () => {
                   </Grid>
                   <Grid size={3} className="lyric-set-offset">
                     <TextField
-                      label="Lyric Offset"
+                      label="Offset"
                       type="number"
                       size="small"
                       value={lyricsOffset}
@@ -679,6 +858,7 @@ const SongPlayerPage: React.FC = () => {
                       }}
                       className='slider-boxes'
                       inputProps={{
+                        step: 0.02,
                         style: { textAlign: 'center' },
                       }}
                     />
@@ -694,6 +874,7 @@ const SongPlayerPage: React.FC = () => {
                 <Tab label="Original Lyrics" />
                 <Tab label="Romanized Lyrics" />
                 <Tab label="Translated Lyrics" />
+                <Tab label="Combined Lyrics" />
               </Tabs>
             </Box>
             <Box className='lrc-grid-parent'>
@@ -703,9 +884,11 @@ const SongPlayerPage: React.FC = () => {
                     ? song.lrcLyrics ?? 'Not supported'
                     : selectedTab === 1
                       ? song.lrcRomanizedLyrics ?? 'Not supported'
-                      : song.lrcTranslatedLyrics ?? 'Not supported'
+                      : selectedTab === 2
+                        ? song.lrcTranslatedLyrics ?? 'Not supported'
+                        : getCombinedLyrics
                 }
-                currentTime={currentTime + lyricsOffset}
+                currentTime={currentTime + lyricsOffsetRef.current}
                 isPlaying={isPlaying}
               />
             </Box>
@@ -775,15 +958,15 @@ const SongPlayerPage: React.FC = () => {
                   )}
                 </Box>
                 <Box display="flex" flexDirection="column" gap={1}>
-                  <Tooltip title="Add next and play">
+                  <Tooltip title="Add to next in queue">
                     <IconButton
                       color="primary"
-                      onClick={handleAddToNextAndPlay}
+                      onClick={handleAddToNext}
                       disabled={isLoading}
                       className="queue-button"
                       size="large"
                     >
-                      <PlaylistPlayIcon fontSize="inherit" />
+                      <AddIcon fontSize="inherit" />
                     </IconButton>
                   </Tooltip>
 
@@ -801,6 +984,18 @@ const SongPlayerPage: React.FC = () => {
                 </Box>
               </Box>
             </Paper>
+
+            {geniusItems.length > 0 && (
+              <Box mt={4}>
+                <MediaCarousel
+                  title="Select a Song"
+                  items={geniusItems}
+                  onItemClick={(item, index) => handleResultSelect(item, index)}
+                  fadeColor="#E0E7FF"
+                />
+              </Box>
+            )}
+
 
             {/* YouTube Playlist Section */}
             <Paper elevation={3} className="playlist-section">
@@ -851,11 +1046,12 @@ const SongPlayerPage: React.FC = () => {
               currentPlayingId={currentPlayingId}
               setQueue={setQueue}
               setCurrentPlayingId={setCurrentPlayingId}
+              autoPlayEnabled={autoPlayEnabled}
               handlePlayFromQueue={handlePlayFromQueue}
+              setAutoPlayEnabled={setAutoPlayEnabled}
             />
           </Grid>
         </Grid>
-        {/* Search Section */}
       </Container>
     </div >
   );
