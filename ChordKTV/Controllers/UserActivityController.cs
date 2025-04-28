@@ -10,12 +10,9 @@ using ChordKTV.Models.Handwriting;
 using AutoMapper;
 using ChordKTV.Models.UserData;
 using ChordKTV.Dtos;
-using System.Security.Claims;
-using ChordKTV.Utils;
 using ChordKTV.Services.Api;
 using ChordKTV.Utils.Extensions;
 using ChordKTV.Data.Api.QuizData;
-using ChordKTV.Services.Service;
 
 namespace ChordKTV.Controllers;
 
@@ -25,16 +22,13 @@ namespace ChordKTV.Controllers;
 public class UserActivityController : Controller
 {
     private readonly IUserActivityRepo _activityRepo;
-    private readonly IUserRepo _userRepo;
     private readonly ILogger<UserActivityController> _logger;
     private readonly IMapper _mapper;
     private readonly IUserContextService _userContextService;
     private readonly ISongRepo _songRepo;
-    private readonly IQuizRepo _quizRepo;
     private readonly IYouTubeClientService _youtubeClientService;
     public UserActivityController(
         IUserActivityRepo activityRepo,
-        IUserRepo userRepo,
         ILogger<UserActivityController> logger,
         IMapper mapper,
         IUserContextService userContextService,
@@ -44,12 +38,10 @@ public class UserActivityController : Controller
         )
     {
         _activityRepo = activityRepo;
-        _userRepo = userRepo;
         _logger = logger;
         _mapper = mapper;
         _userContextService = userContextService;
         _songRepo = songRepo;
-        _quizRepo = quizRepo;
         _youtubeClientService = youTubeClientService;
     }
 
