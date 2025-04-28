@@ -56,11 +56,11 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
       if (quizType === 'romanization') {
         // note the wrapper property name!
         response = await quizApi.apiQuizRomanizationPost({
-          apiQuizRomanizationPostRequest: requestBody
+          quizRequestDto: requestBody
         });
       } else {
         response = await quizApi.apiQuizAudioPost({
-          apiQuizRomanizationPostRequest: requestBody
+          quizRequestDto: requestBody
         });
       }
 
