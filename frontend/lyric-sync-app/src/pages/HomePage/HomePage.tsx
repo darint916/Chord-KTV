@@ -19,6 +19,8 @@ import logo from '../../assets/chordktv.png';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
 import { extractYouTubeVideoId, extractPlaylistId } from './HomePageHelpers';
+import MediaCarousel, { MediaItem } from '../../components/UserStats/MediaCarousel';
+import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
 
 const HomePage: React.FC = () => {
   const [songName, setSongName] = useState('');
@@ -31,6 +33,8 @@ const HomePage: React.FC = () => {
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [lyrics, setLyrics] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [geniusItems, setGeniusItems] = useState<MediaItem[]>([]);
+  const [geniusHits, setGeniusHits] = useState<GeniusHitDto[]>([]);
 
   const handleLoadPlaylist = async () => {
     if (!playlistUrl.trim()) {
@@ -109,46 +113,145 @@ const HomePage: React.FC = () => {
   };
 
   const handleSearch = async () => {
-    if (!songName.trim() && !artistName.trim() && !lyrics.trim() && !youtubeUrl.trim()) {
+    // If only a YouTube URL is provided, skip Genius search and call match directly
+    if (youtubeUrl.trim()) {
+      const youTubeId = extractYouTubeVideoId(youtubeUrl.trim());
+      if (!youTubeId) {
+        setError('Invalid YouTube URL.');
+        return;
+      }
+
+      setIsLoading(true);
+      setError('');
+      try {
+        const response = await songApi.apiSongsMatchPost({
+          fullSongRequestDto: {
+            title: songName,
+            artist: artistName,
+            youTubeId,
+            lyrics,
+          }
+        });
+        // preserve the original video ID
+        response.youTubeId = youTubeId;
+
+        const newQueueItem: QueueItem = {
+          ...response,
+          queueId: uuidv4(),
+          title: response.title ?? songName,
+          artist: response.artist ?? artistName,
+          youTubeId,
+          lyrics,
+          status: 'loaded',
+          imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+        };
+        setQueue([newQueueItem, ...queue]);
+        setCurrentPlayingId(newQueueItem.queueId);
+        setSong(response);
+        navigate('/play-song');
+      } catch (err) {
+        setError('Search failed. Please try again. Error: ' + err);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // Otherwise, build a free-text Genius search query
+    const queryParts = [songName, artistName, lyrics]
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const searchQuery = queryParts.join(' ');
+
+    if (!searchQuery) {
       setError('Please enter at least one field to search.');
       return;
     }
 
     setIsLoading(true);
+    setGeniusItems([]);
+    setGeniusHits([]);
 
-    const youTubeId = extractYouTubeVideoId(youtubeUrl);
+    try {
+      const res = await songApi.apiSongsGeniusSearchGet({ searchQuery });
 
+      const hits = res ?? [];
+      if (hits.length === 0) {
+        setError('No results found.');
+        return;
+      }
+
+      /* map to carousel friendly items */
+      const mapped: MediaItem[] = hits.map((h) => {
+        const coverUrl =
+          h.result.songArtImageUrl ||
+          h.result.headerImageUrl ||
+          '';
+
+        return {
+          id: String(h.result.id),
+          title: `${h.result.title} — ${h.result.primaryArtistNames}`,
+          coverUrl,
+        };
+      });
+
+      setGeniusItems(mapped);
+      setGeniusHits(hits);
+    } catch (err) {
+      setError('Search failed. Please try again. Error: ' + err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResultSelect = async (_item: MediaItem, index: number) => {
+    const hit = geniusHits[index]?.result;
+    if (!hit) {
+      return;
+    }
+
+    const title = hit.title ?? '';
+    const artist = hit.primary_artist_names ?? '';
+
+    setIsLoading(true);
+    setError('');
 
     try {
       const response = await songApi.apiSongsMatchPost({
         fullSongRequestDto: {
-          title: songName,
-          artist: artistName,
-          lyrics: lyrics,
-          youTubeId: youTubeId || ''
-        }
+          title,
+          artist,
+          lyrics: '',
+          youTubeId: '',
+        },
       });
-      if (youTubeId) {
-        response.youTubeId = youTubeId;
-      }
 
       const newQueueItem: QueueItem = {
         ...response,
-        title: response.title ?? '',
-        artist: response.artist ?? '',
+        title: response.title ?? title,
+        artist: response.artist ?? artist,
         youTubeId: response.youTubeId ?? '',
         queueId: uuidv4(),
-        lyrics: lyrics ?? '',
+        lyrics: '',
         status: 'loaded',
-        imageUrl: response.geniusMetaData?.songImageUrl ?? ''
+        imageUrl:
+          response.geniusMetaData?.songImageUrl ??
+          hit.song_art_image_url ??
+          hit.header_image_url ??
+          '',
       };
+
       setQueue([newQueueItem, ...queue]);
       setCurrentPlayingId(newQueueItem.queueId);
       setSong(response);
 
+      // Clear results so the carousel disappears next time
+      setGeniusItems([]);
+      setGeniusHits([]);
+
       navigate('/play-song');
     } catch (err) {
-      setError('Search failed. Please try again. Error: ' + err);
+      setError('Failed to process song. Error: ' + err);
     } finally {
       setIsLoading(false);
     }
@@ -249,6 +352,18 @@ const HomePage: React.FC = () => {
             </IconButton>
           </Box>
         </Paper>
+
+        {/* SHOW GENIUS CANDIDATES WHEN PRESENT */}
+        {geniusItems.length > 0 && (
+          <Box mt={4}>
+            <MediaCarousel
+              title="Select a Song"
+              items={geniusItems}
+              onItemClick={handleResultSelect}
+              fadeColor="#E0E7FF"
+            />
+          </Box>
+        )}
 
         {/* OR Divider */}
         <Box className="or-divider">

@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   FullSongRequestDto,
   FullSongResponseDto,
+  GeniusHitDto,
   PlaylistDetailsDto,
   ProblemDetails,
   Song,
@@ -27,6 +28,8 @@ import {
     FullSongRequestDtoToJSON,
     FullSongResponseDtoFromJSON,
     FullSongResponseDtoToJSON,
+    GeniusHitDtoFromJSON,
+    GeniusHitDtoToJSON,
     PlaylistDetailsDtoFromJSON,
     PlaylistDetailsDtoToJSON,
     ProblemDetailsFromJSON,
@@ -439,7 +442,7 @@ export class SongApi extends runtime.BaseAPI {
 
     /**
      */
-    async apiSongsGeniusSearchGetRaw(requestParameters: ApiSongsGeniusSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiSongsGeniusSearchGetRaw(requestParameters: ApiSongsGeniusSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<GeniusHitDto>>> {
         if (requestParameters['searchQuery'] == null) {
             throw new runtime.RequiredError(
                 'searchQuery',
@@ -466,13 +469,14 @@ export class SongApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(GeniusHitDtoFromJSON));
     }
 
     /**
      */
-    async apiSongsGeniusSearchGet(requestParameters: ApiSongsGeniusSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiSongsGeniusSearchGetRaw(requestParameters, initOverrides);
+    async apiSongsGeniusSearchGet(requestParameters: ApiSongsGeniusSearchGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<GeniusHitDto>> {
+        const response = await this.apiSongsGeniusSearchGetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
