@@ -13,6 +13,7 @@ import dashboardTheme from '../../theme/dashboardTheme';
 import { MediaItem } from '../../components/UserStats/MediaCarousel';
 import { getTopAggregatedItems, safeFetch, getMergedQuizResults } from './statsHelpers';
 import styles from './UserStatsPage.module.scss';
+import KpiStrip from '../../components/UserStats/KPIStrip';
 
 /* DTOs */
 interface SongActivityDto {
