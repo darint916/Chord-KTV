@@ -24,76 +24,92 @@ import {
 /**
  * 
  * @export
- * @interface UserHandwritingResultDto
+ * @interface UserHandwritingResult
  */
-export interface UserHandwritingResultDto {
+export interface UserHandwritingResult {
+    /**
+     * 
+     * @type {string}
+     * @memberof UserHandwritingResult
+     */
+    id?: string;
     /**
      * 
      * @type {LanguageCode}
-     * @memberof UserHandwritingResultDto
+     * @memberof UserHandwritingResult
      */
     language?: LanguageCode;
     /**
      * 
      * @type {number}
-     * @memberof UserHandwritingResultDto
+     * @memberof UserHandwritingResult
      */
     score?: number;
     /**
      * 
      * @type {string}
-     * @memberof UserHandwritingResultDto
+     * @memberof UserHandwritingResult
      */
     wordTested?: string | null;
     /**
      * 
      * @type {Date}
-     * @memberof UserHandwritingResultDto
+     * @memberof UserHandwritingResult
      */
-    dateCompleted?: Date | null;
+    dateCompleted?: Date;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserHandwritingResult
+     */
+    userId?: string;
 }
 
 
 
 /**
- * Check if a given object implements the UserHandwritingResultDto interface.
+ * Check if a given object implements the UserHandwritingResult interface.
  */
-export function instanceOfUserHandwritingResultDto(value: object): value is UserHandwritingResultDto {
+export function instanceOfUserHandwritingResult(value: object): value is UserHandwritingResult {
     return true;
 }
 
-export function UserHandwritingResultDtoFromJSON(json: any): UserHandwritingResultDto {
-    return UserHandwritingResultDtoFromJSONTyped(json, false);
+export function UserHandwritingResultFromJSON(json: any): UserHandwritingResult {
+    return UserHandwritingResultFromJSONTyped(json, false);
 }
 
-export function UserHandwritingResultDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserHandwritingResultDto {
+export function UserHandwritingResultFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserHandwritingResult {
     if (json == null) {
         return json;
     }
     return {
         
+        'id': json['id'] == null ? undefined : json['id'],
         'language': json['language'] == null ? undefined : LanguageCodeFromJSON(json['language']),
         'score': json['score'] == null ? undefined : json['score'],
         'wordTested': json['wordTested'] == null ? undefined : json['wordTested'],
         'dateCompleted': json['dateCompleted'] == null ? undefined : (new Date(json['dateCompleted'])),
+        'userId': json['userId'] == null ? undefined : json['userId'],
     };
 }
 
-export function UserHandwritingResultDtoToJSON(json: any): UserHandwritingResultDto {
-    return UserHandwritingResultDtoToJSONTyped(json, false);
+export function UserHandwritingResultToJSON(json: any): UserHandwritingResult {
+    return UserHandwritingResultToJSONTyped(json, false);
 }
 
-export function UserHandwritingResultDtoToJSONTyped(value?: UserHandwritingResultDto | null, ignoreDiscriminator: boolean = false): any {
+export function UserHandwritingResultToJSONTyped(value?: UserHandwritingResult | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
+        'id': value['id'],
         'language': LanguageCodeToJSON(value['language']),
         'score': value['score'],
         'wordTested': value['wordTested'],
-        'dateCompleted': value['dateCompleted'] == null ? undefined : ((value['dateCompleted'] as any).toISOString()),
+        'dateCompleted': value['dateCompleted'] == null ? undefined : ((value['dateCompleted']).toISOString()),
+        'userId': value['userId'],
     };
 }
 

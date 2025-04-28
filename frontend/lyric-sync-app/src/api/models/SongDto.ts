@@ -13,167 +13,159 @@
  */
 
 import { mapValues } from '../runtime';
-import type { GeniusMetaData } from './GeniusMetaData';
+import type { GeniusMetaDataDto } from './GeniusMetaDataDto';
 import {
-    GeniusMetaDataFromJSON,
-    GeniusMetaDataFromJSONTyped,
-    GeniusMetaDataToJSON,
-    GeniusMetaDataToJSONTyped,
-} from './GeniusMetaData';
-import type { Album } from './Album';
-import {
-    AlbumFromJSON,
-    AlbumFromJSONTyped,
-    AlbumToJSON,
-    AlbumToJSONTyped,
-} from './Album';
+    GeniusMetaDataDtoFromJSON,
+    GeniusMetaDataDtoFromJSONTyped,
+    GeniusMetaDataDtoToJSON,
+    GeniusMetaDataDtoToJSONTyped,
+} from './GeniusMetaDataDto';
 
 /**
  * 
  * @export
- * @interface Song
+ * @interface SongDto
  */
-export interface Song {
+export interface SongDto {
     /**
      * 
      * @type {string}
-     * @memberof Song
+     * @memberof SongDto
      */
     id?: string;
     /**
      * 
      * @type {string}
-     * @memberof Song
+     * @memberof SongDto
      */
-    title: string;
+    title?: string | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof Song
+     * @memberof SongDto
      */
     alternateTitles?: Array<string> | null;
     /**
      * 
      * @type {string}
-     * @memberof Song
+     * @memberof SongDto
      */
     artist?: string | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof Song
+     * @memberof SongDto
      */
     featuredArtists?: Array<string> | null;
     /**
      * 
-     * @type {Array<Album>}
-     * @memberof Song
+     * @type {Array<string>}
+     * @memberof SongDto
      */
-    albums?: Array<Album> | null;
+    albumNames?: Array<string> | null;
     /**
      * 
      * @type {Date}
-     * @memberof Song
+     * @memberof SongDto
      */
     releaseDate?: Date | null;
     /**
      * 
      * @type {string}
-     * @memberof Song
+     * @memberof SongDto
      */
     genre?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof Song
+     * @memberof SongDto
      */
     duration?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof Song
+     * @memberof SongDto
      */
     plainLyrics?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof Song
+     * @memberof SongDto
      */
     lrcLyrics?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof Song
+     * @memberof SongDto
      */
     lrcRomanizedLyrics?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof Song
+     * @memberof SongDto
      */
     lrcTranslatedLyrics?: string | null;
     /**
      * 
      * @type {number}
-     * @memberof Song
+     * @memberof SongDto
      */
     lrcId?: number | null;
     /**
      * 
      * @type {number}
-     * @memberof Song
+     * @memberof SongDto
      */
     romLrcId?: number | null;
     /**
      * 
      * @type {string}
-     * @memberof Song
+     * @memberof SongDto
      */
-    youtubeId?: string | null;
+    youTubeId?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof Song
+     * @memberof SongDto
      */
-    youtubeInstrumentalId?: string | null;
+    youTubeInstrumentalId?: string | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof Song
+     * @memberof SongDto
      */
     alternateYoutubeIds?: Array<string> | null;
     /**
      * 
-     * @type {GeniusMetaData}
-     * @memberof Song
+     * @type {GeniusMetaDataDto}
+     * @memberof SongDto
      */
-    geniusMetaData?: GeniusMetaData;
+    geniusMetaData?: GeniusMetaDataDto;
 }
 
 /**
- * Check if a given object implements the Song interface.
+ * Check if a given object implements the SongDto interface.
  */
-export function instanceOfSong(value: object): value is Song {
-    if (!('title' in value) || value['title'] === undefined) return false;
+export function instanceOfSongDto(value: object): value is SongDto {
     return true;
 }
 
-export function SongFromJSON(json: any): Song {
-    return SongFromJSONTyped(json, false);
+export function SongDtoFromJSON(json: any): SongDto {
+    return SongDtoFromJSONTyped(json, false);
 }
 
-export function SongFromJSONTyped(json: any, ignoreDiscriminator: boolean): Song {
+export function SongDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): SongDto {
     if (json == null) {
         return json;
     }
     return {
         
         'id': json['id'] == null ? undefined : json['id'],
-        'title': json['title'],
+        'title': json['title'] == null ? undefined : json['title'],
         'alternateTitles': json['alternateTitles'] == null ? undefined : json['alternateTitles'],
         'artist': json['artist'] == null ? undefined : json['artist'],
         'featuredArtists': json['featuredArtists'] == null ? undefined : json['featuredArtists'],
-        'albums': json['albums'] == null ? undefined : ((json['albums'] as Array<any>).map(AlbumFromJSON)),
+        'albumNames': json['albumNames'] == null ? undefined : json['albumNames'],
         'releaseDate': json['releaseDate'] == null ? undefined : (new Date(json['releaseDate'])),
         'genre': json['genre'] == null ? undefined : json['genre'],
         'duration': json['duration'] == null ? undefined : json['duration'],
@@ -183,18 +175,18 @@ export function SongFromJSONTyped(json: any, ignoreDiscriminator: boolean): Song
         'lrcTranslatedLyrics': json['lrcTranslatedLyrics'] == null ? undefined : json['lrcTranslatedLyrics'],
         'lrcId': json['lrcId'] == null ? undefined : json['lrcId'],
         'romLrcId': json['romLrcId'] == null ? undefined : json['romLrcId'],
-        'youtubeId': json['youtubeId'] == null ? undefined : json['youtubeId'],
-        'youtubeInstrumentalId': json['youtubeInstrumentalId'] == null ? undefined : json['youtubeInstrumentalId'],
+        'youTubeId': json['youTubeId'] == null ? undefined : json['youTubeId'],
+        'youTubeInstrumentalId': json['youTubeInstrumentalId'] == null ? undefined : json['youTubeInstrumentalId'],
         'alternateYoutubeIds': json['alternateYoutubeIds'] == null ? undefined : json['alternateYoutubeIds'],
-        'geniusMetaData': json['geniusMetaData'] == null ? undefined : GeniusMetaDataFromJSON(json['geniusMetaData']),
+        'geniusMetaData': json['geniusMetaData'] == null ? undefined : GeniusMetaDataDtoFromJSON(json['geniusMetaData']),
     };
 }
 
-export function SongToJSON(json: any): Song {
-    return SongToJSONTyped(json, false);
+export function SongDtoToJSON(json: any): SongDto {
+    return SongDtoToJSONTyped(json, false);
 }
 
-export function SongToJSONTyped(value?: Song | null, ignoreDiscriminator: boolean = false): any {
+export function SongDtoToJSONTyped(value?: SongDto | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -206,7 +198,7 @@ export function SongToJSONTyped(value?: Song | null, ignoreDiscriminator: boolea
         'alternateTitles': value['alternateTitles'],
         'artist': value['artist'],
         'featuredArtists': value['featuredArtists'],
-        'albums': value['albums'] == null ? undefined : ((value['albums'] as Array<any>).map(AlbumToJSON)),
+        'albumNames': value['albumNames'],
         'releaseDate': value['releaseDate'] == null ? undefined : ((value['releaseDate'] as any).toISOString().substring(0,10)),
         'genre': value['genre'],
         'duration': value['duration'],
@@ -216,10 +208,10 @@ export function SongToJSONTyped(value?: Song | null, ignoreDiscriminator: boolea
         'lrcTranslatedLyrics': value['lrcTranslatedLyrics'],
         'lrcId': value['lrcId'],
         'romLrcId': value['romLrcId'],
-        'youtubeId': value['youtubeId'],
-        'youtubeInstrumentalId': value['youtubeInstrumentalId'],
+        'youTubeId': value['youTubeId'],
+        'youTubeInstrumentalId': value['youTubeInstrumentalId'],
         'alternateYoutubeIds': value['alternateYoutubeIds'],
-        'geniusMetaData': GeniusMetaDataToJSON(value['geniusMetaData']),
+        'geniusMetaData': GeniusMetaDataDtoToJSON(value['geniusMetaData']),
     };
 }
 
