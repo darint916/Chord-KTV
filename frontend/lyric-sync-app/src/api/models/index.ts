@@ -23,3 +23,4 @@ export * from './UserQuizResultDto';
 export * from './UserSongActivityDto';
 export * from './UserSongActivityFavoriteRequestDto';
 export * from './VideoInfo';
+export * from './AuthResponseDto';
