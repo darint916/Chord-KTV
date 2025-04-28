@@ -145,8 +145,8 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
   };
 
   // log on every render what the computed timestamps are
-  const rawStart = parseTimeSpan(quizQuestions[currentQuestionIndex]?.startTimestamp);
-  const rawEnd   = parseTimeSpan(quizQuestions[currentQuestionIndex]?.endTimestamp);
+  const rawStart = parseTimeSpan(quizQuestions![currentQuestionIndex]?.startTimestamp);
+  const rawEnd   = parseTimeSpan(quizQuestions![currentQuestionIndex]?.endTimestamp);
   const startSec = Math.max(0, rawStart - lyricsOffset);
   const endSec   = Math.max(startSec, rawEnd - lyricsOffset); // keep non-negative & ordered
 
@@ -193,7 +193,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
           onQuestionSubmit={() => {
             setCurrentQuestionIndex(prev => {
               const next = prev + 1;
-              return next < quizQuestions.length ? next : prev;
+              return next < quizQuestions!.length ? next : prev;
             });
             setIsPlaying(false);      // stop current snippet
           }}
