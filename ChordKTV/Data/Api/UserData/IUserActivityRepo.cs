@@ -9,28 +9,29 @@ namespace ChordKTV.Data.Api.UserData;
 public interface IUserActivityRepo
 {
     // Quiz related methods
-    Task<IEnumerable<UserQuizResult>> GetUserQuizResultsAsync(Guid userId, LanguageCode? language = null);
-    Task AddQuizResultAsync(UserQuizResult result);
-    Task ProcessQuizResultAsync(UserQuizResult result, IEnumerable<string> correctAnswers, LanguageCode language);
+    public Task<IEnumerable<UserQuizResult>> GetUserQuizResultsAsync(Guid userId, LanguageCode? language = null);
+    public Task AddQuizResultAsync(UserQuizResult result);
+    public Task ProcessQuizResultAsync(UserQuizResult result, IEnumerable<string> correctAnswers, LanguageCode language);
 
     // Handwriting related methods
-    Task<IEnumerable<UserHandwritingResult>> GetUserHandwritingResultsAsync(Guid userId, LanguageCode? language = null);
-    Task AddHandwritingResultAsync(UserHandwritingResult result);
+    public Task<IEnumerable<UserHandwritingResult>> GetUserHandwritingResultsAsync(Guid userId, LanguageCode? language = null);
+    public Task AddHandwritingResultAsync(UserHandwritingResult result);
 
     // Learned words related methods
-    Task<IEnumerable<LearnedWord>> GetUserLearnedWordsAsync(Guid userId, LanguageCode? language = null);
-    Task AddLearnedWordAsync(LearnedWord word);
+    public Task<IEnumerable<LearnedWord>> GetUserLearnedWordsAsync(Guid userId, LanguageCode? language = null);
+    public Task AddLearnedWordAsync(LearnedWord word);
+    public Task SaveChangesAsync();
 
     // Song activity methods
-    Task<UserSongActivity?> GetUserSongActivityAsync(Guid userId, Guid songId);
-    Task<IEnumerable<UserSongActivity>> GetUserSongActivitiesAsync(Guid userId);
-    Task UpsertSongActivityAsync(UserSongActivity activity, bool isPlayEvent = true);
-    Task<IEnumerable<UserSongActivity>> GetFavoriteSongActivitiesAsync(Guid userId);
+    public Task<UserSongActivity?> GetUserSongActivityAsync(Guid userId, Guid songId);
+    public Task<IEnumerable<UserSongActivity>> GetUserSongActivitiesAsync(Guid userId);
+    public Task UpsertSongActivityAsync(UserSongActivity activity, bool isPlayEvent = true);
+    public Task<IEnumerable<UserSongActivity>> GetFavoriteSongActivitiesAsync(Guid userId);
 
     // Playlist activity methods
-    Task<UserPlaylistActivity?> GetUserPlaylistActivityAsync(Guid userId, string playlistUrl);
-    Task<IEnumerable<UserPlaylistActivity>> GetUserPlaylistActivitiesAsync(Guid userId);
-    Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity, bool isPlayEvent = true);
-    Task<IEnumerable<UserPlaylistActivity>> GetFavoritePlaylistActivitiesAsync(Guid userId);
+    public Task<UserPlaylistActivity?> GetUserPlaylistActivityAsync(Guid userId, string playlistUrl);
+    public Task<IEnumerable<UserPlaylistActivity>> GetUserPlaylistActivitiesAsync(Guid userId);
+    public Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity, bool isPlayEvent = true);
+    public Task<IEnumerable<UserPlaylistActivity>> GetFavoritePlaylistActivitiesAsync(Guid userId);
 
 }

@@ -228,7 +228,7 @@ public class UserActivityController : Controller
     }
 
     [HttpPatch("favorite/song")]
-    public async Task<IActionResult> ToggleFavoriteSong([FromBody] UserSongActivityDto dto)
+    public async Task<IActionResult> ToggleFavoriteSong([FromBody] UserSongActivityFavoriteRequestDto dto)
     {
         try
         {
@@ -238,11 +238,12 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            Song? song = await _songRepo.GetSongByIdAsync(dto.SongId);
-            if (song == null)
-            {
-                return NotFound(new { message = "Song not found." });
-            }
+            UserSongActivity? userSongActivity = await _activityRepo.GetUserSongActivityAsync(user.Id, dto.SongId);
+            // Song? song = await _songRepo.GetSongByIdAsync(dto.SongId);
+            // if (song == null)
+            // {
+            //     return NotFound(new { message = "Song not found." });
+            // }
 
             UserSongActivity activity = _mapper.Map<UserSongActivity>(dto);
             activity.UserId = user.Id;
@@ -280,7 +281,7 @@ public class UserActivityController : Controller
     }
 
     [HttpPatch("favorite/playlist")]
-    public async Task<IActionResult> ToggleFavoritePlaylist([FromBody] UserPlaylistActivityDto dto)
+    public async Task<IActionResult> ToggleFavoritePlaylist([FromBody] UserPlaylistActivityFavoriteRequestDto dto)
     {
         try
         {

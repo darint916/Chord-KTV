@@ -9,4 +9,8 @@ public class UserSongActivityDto
     public List<DateTime> DatesPlayed { get; set; } = new List<DateTime>();
     public DateTime LastPlayed { get; set; }
     public DateTime? DateFavorited { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Artist { get; set; } = string.Empty;
+    public string? GeniusThumbnailUrl { get; set; } = string.Empty;
+    public string? YoutubeThumbnailUrl { get; set; } = string.Empty;
 }

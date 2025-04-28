@@ -75,7 +75,6 @@ public class YouTubeApiClientService : IYouTubeClientService, IDisposable
 
         PlaylistsResource.ListRequest playlistRequest = _youTubeService.Playlists.List("snippet");
         playlistRequest.Id = playlistId;
-
         PlaylistListResponse playlistResponse = await playlistRequest.ExecuteAsync();
 
         string playlistTitle = "Unknown Playlist";
