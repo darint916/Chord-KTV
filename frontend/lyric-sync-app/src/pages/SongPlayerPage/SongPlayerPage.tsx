@@ -88,7 +88,7 @@ const SongPlayerPage: React.FC = () => {
   const COMBINED_DELIMITER = '<<<SEP>>>';
 
   const getCombinedLyrics = useMemo(() => {
-    if (!song.lrcLyrics) return 'Not supported';
+    if (!song.lrcLyrics) {return 'Not supported';}
 
     const parseLyrics = (lyrics: string) => {
       const lines = lyrics.split('\n');
