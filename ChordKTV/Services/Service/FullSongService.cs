@@ -149,7 +149,49 @@ public class FullSongService : IFullSongService
             lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(song.Title, song.Artist, null, songDuration);
             if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics))
             {
-                _logger.LogWarning("Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
+                // Attempt to get lyrics using a latin-only version of the title and artist
+                string latinTitle = LanguageUtils.RemoveNonLatinCharacters(song.Title);
+                string latinArtist = LanguageUtils.RemoveNonLatinCharacters(song.Artist);
+
+                // Check if both latinTitle and latinArtist are meaningful (more than 2 characters)
+                if (latinTitle.Length > 2 && latinArtist.Length > 2)
+                {
+                    lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(latinTitle, latinArtist, null, songDuration);
+                }
+
+                if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics))
+                {
+                    if (videoDetails is null) //candidate search off genius params if no video (with video is caught later)
+                    { //works only if we have genius hit
+                        candidateSongInfoList ??= await _chatGptService.GetCandidateSongInfosAsync(song.Title, song.Artist);
+                        foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
+                        {
+                            _logger.LogInformation("Genius Found: Testing Candidate for LRC Lib: '{Title}' by '{Artist}'", candidate.Title, candidate.Artist);
+                            lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(candidate.Title, candidate.Artist, null, songDuration);
+                            if (lrcLyricsDto is not null && !string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics))
+                            {
+                                title = candidate.Title;
+                                artist = candidate.Artist;
+                                break;
+                            }
+                        }
+                        if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics)) //recheck if we still dont find it with candidate list
+                        {
+                            _logger.LogWarning("Genius PostGPT Attempt: Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}", title, artist, duration);
+                            return null; //no song found
+                        }
+                    }
+                }
+                else
+                {
+                    song.LrcId = lrcLyricsDto.Id;
+                    song.LrcLyrics = lrcLyricsDto.SyncedLyrics;
+                    if (lrcLyricsDto.Duration != null)
+                    {
+                        //overwrite duration if we have a better one
+                        song.Duration = TimeSpan.FromSeconds(lrcLyricsDto.Duration.Value);
+                    }
+                }
             }
             else
             {
