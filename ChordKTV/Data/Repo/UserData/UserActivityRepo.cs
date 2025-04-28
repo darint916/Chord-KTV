@@ -115,6 +115,17 @@ public class UserActivityRepo : IUserActivityRepo
         await _context.UserSongActivities.AddAsync(activity);
         await _context.SaveChangesAsync();
     }
+
+    public async Task UpdateSongActivityFavoriteAsync(UserSongActivity activity, bool isFavorite)
+    {
+        if (activity.IsFavorite == isFavorite)
+        {
+            return;
+        }
+        activity.IsFavorite = isFavorite;
+        activity.DateFavorited = isFavorite ? DateTime.UtcNow : null;
+        await _context.SaveChangesAsync();
+    }
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();

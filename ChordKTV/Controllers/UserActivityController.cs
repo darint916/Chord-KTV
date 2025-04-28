@@ -239,18 +239,21 @@ public class UserActivityController : Controller
             }
 
             UserSongActivity? userSongActivity = await _activityRepo.GetUserSongActivityAsync(user.Id, dto.SongId);
-            // Song? song = await _songRepo.GetSongByIdAsync(dto.SongId);
-            // if (song == null)
-            // {
-            //     return NotFound(new { message = "Song not found." });
-            // }
-
-            UserSongActivity activity = _mapper.Map<UserSongActivity>(dto);
-            activity.UserId = user.Id;
-
-            await _activityRepo.UpsertSongActivityAsync(activity, isPlayEvent: false);
-
-            return Ok(new { message = dto.IsFavorite ? "Song favorited" : "Song unfavorited" });
+            if (userSongActivity is null) //try to add new row
+            {
+                Song? song = await _songRepo.GetSongByIdAsync(dto.SongId);
+                if (song == null)
+                {
+                    return NotFound(new { message = "Song not found." });
+                }
+                await _activityRepo.InsertSongActivityAsync(user.Id, dto.IsFavorite, song);
+                return CreatedAtAction(nameof(GetUserSongActivities), new { id = dto.SongId }, new { message = dto.IsFavorite ? "Song favorited" : "Song unfavorited" });
+            }
+            else //update existing fav
+            {
+                await _activityRepo.UpdateSongActivityFavoriteAsync(userSongActivity, dto.IsFavorite);
+                return Ok(new { message = dto.IsFavorite ? "Song favorited" : "Song unfavorited" });
+            }
         }
         catch (Exception ex)
         {
