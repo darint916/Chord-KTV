@@ -149,7 +149,30 @@ public class FullSongService : IFullSongService
             lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(song.Title, song.Artist, null, songDuration);
             if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics))
             {
-                _logger.LogWarning("Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
+                // Attempt to get lyrics using a latin-only version of the title and artist
+                string latinTitle = LanguageUtils.RemoveNonLatinCharacters(song.Title);
+                string latinArtist = LanguageUtils.RemoveNonLatinCharacters(song.Artist);
+                
+                // Check if both latinTitle and latinArtist are meaningful (more than 2 characters)
+                if (latinTitle.Length > 2 && latinArtist.Length > 2)
+                {
+                    lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(latinTitle, latinArtist, null, songDuration);
+                }
+
+                if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics))
+                {
+                    _logger.LogWarning("Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
+                }
+                else
+                {
+                    song.LrcId = lrcLyricsDto.Id;
+                    song.LrcLyrics = lrcLyricsDto.SyncedLyrics;
+                    if (lrcLyricsDto.Duration != null)
+                    {
+                        //overwrite duration if we have a better one
+                        song.Duration = TimeSpan.FromSeconds(lrcLyricsDto.Duration.Value);
+                    }
+                }
             }
             else
             {

@@ -1,6 +1,7 @@
 namespace ChordKTV.Utils;
 
 using System.Text.RegularExpressions;
+using System.Linq;
 
 public static partial class LanguageUtils
 {
@@ -27,4 +28,10 @@ public static partial class LanguageUtils
         //assume further is greek
         _ => false
     };
+
+    public static string RemoveNonLatinCharacters(string input)
+    {
+        if (input == null) { return string.Empty; }
+        return new string(input.Where(c => c <= 127).ToArray());
+    }
 }

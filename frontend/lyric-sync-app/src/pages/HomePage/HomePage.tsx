@@ -19,7 +19,7 @@ import logo from '../../assets/chordktv.png';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
 import { extractYouTubeVideoId, extractPlaylistId } from './HomePageHelpers';
-import MediaCarousel, { MediaItem } from '../../components/UserStats/MediaCarousel';
+import GeniusHitsCarousel from '../../components/GeniusHitsCarousel/GeniusHitsCarousel';
 import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
 
 const HomePage: React.FC = () => {
@@ -33,7 +33,6 @@ const HomePage: React.FC = () => {
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [lyrics, setLyrics] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [geniusItems, setGeniusItems] = useState<MediaItem[]>([]);
   const [geniusHits, setGeniusHits] = useState<GeniusHitDto[]>([]);
 
   const handleLoadPlaylist = async () => {
@@ -175,7 +174,6 @@ const HomePage: React.FC = () => {
     }
 
     setIsLoading(true);
-    setGeniusItems([]);
     setGeniusHits([]);
 
     try {
@@ -187,21 +185,6 @@ const HomePage: React.FC = () => {
         return;
       }
 
-      /* map to carousel friendly items */
-      const mapped: MediaItem[] = hits.map((h) => {
-        const coverUrl =
-          h.result.songArtImageUrl ||
-          h.result.headerImageUrl ||
-          '';
-
-        return {
-          id: String(h.result.id),
-          title: `${h.result.title} — ${h.result.primaryArtistNames}`,
-          coverUrl,
-        };
-      });
-
-      setGeniusItems(mapped);
       setGeniusHits(hits);
     } catch (err) {
       setError('Search failed. Please try again. Error: ' + err);
@@ -210,14 +193,13 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const handleResultSelect = async (_item: MediaItem, index: number) => {
-    const hit = geniusHits[index]?.result;
-    if (!hit) {
-      return;
-    }
-
+  const handleResultSelect = async (hitDto: GeniusHitDto) => {
+    const hit = hitDto.result;
     const title = hit.title ?? '';
-    const artist = hit.primary_artist_names ?? '';
+    const artist =
+      (hit as any).primaryArtistNames ||
+      (hit as any).primary_artist_names ||
+      '';
 
     setIsLoading(true);
     setError('');
@@ -252,7 +234,6 @@ const HomePage: React.FC = () => {
       setSong(response);
 
       // Clear results so the carousel disappears next time
-      setGeniusItems([]);
       setGeniusHits([]);
 
       navigate('/play-song');
@@ -363,15 +344,11 @@ const HomePage: React.FC = () => {
         </Paper>
 
         {/* SHOW GENIUS CANDIDATES WHEN PRESENT */}
-        {geniusItems.length > 0 && (
-          <Box mt={4}>
-            <MediaCarousel
-              title="Select a Song"
-              items={geniusItems}
-              onItemClick={handleResultSelect}
-              fadeColor="#E0E7FF"
-            />
-          </Box>
+        {geniusHits.length > 0 && (
+          <GeniusHitsCarousel
+            hits={geniusHits}
+            onSelect={handleResultSelect}
+          />
         )}
 
         {/* OR Divider */}
