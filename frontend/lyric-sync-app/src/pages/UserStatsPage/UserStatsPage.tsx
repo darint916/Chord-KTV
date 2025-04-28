@@ -3,7 +3,6 @@ import { Alert, Box, CircularProgress, Container, ThemeProvider, Typography, } f
 import Grid from '@mui/material/Grid2';
 import { useAuth } from '../../contexts/AuthTypes';
 import { userActivityApi } from '../../api/apiClient';
-import KpiStrip from '../../components/UserStats/KpiStrip';
 import FavoriteSongsCarousel from '../../components/UserStats/FavoriteSongsCarousel';
 import FavoritePlaylistsCarousel from '../../components/UserStats/FavoritePlaylistsCarousel';
 import TopSongsChart from '../../components/UserStats/TopSongsChart';
@@ -78,16 +77,27 @@ const UserStatsPage: React.FC = () => {
           safeFetch(userActivityApi.apiUserActivityPlaylistsGet({ signal: ctrl.signal }), logout),
           safeFetch(userActivityApi.apiUserActivityFavoriteSongsGet({ signal: ctrl.signal }), logout),
           safeFetch(userActivityApi.apiUserActivityFavoritePlaylistsGet({ signal: ctrl.signal }), logout),
-          safeFetch(userActivityApi.apiUserActivityQuizzesGet({ signal: ctrl.signal }), logout),
-          safeFetch(userActivityApi.apiUserActivityLearnedWordsGet({ signal: ctrl.signal }), logout),
-          safeFetch(userActivityApi.apiUserActivityHandwritingGet({ signal: ctrl.signal }), logout),
+          safeFetch(userActivityApi.apiUserActivityQuizzesGet(), logout),
+          safeFetch(userActivityApi.apiUserActivityLearnedWordsGet(), logout),
+          safeFetch(userActivityApi.apiUserActivityHandwritingGet(), logout),
         ]);
         setSongs(s);
         setPlaylists(p);
         setFavoriteSongs(favS);
         setFavoritePlaylists(favP);
-        setQuizzes(q);
-        setWords(w);
+        setQuizzes(q.map(item => ({
+          ...item,
+          quizId: item.quizId ?? '', // Ensure quizId is always a string
+          score: item.score ?? 0, // Ensure score is always a number
+          language: item.language ?? '', // Ensure language is always a string
+          dateCompleted: item.dateCompleted ? new Date(item.dateCompleted).toISOString() : null, // Convert Date to string
+        })));
+        setWords(w.map(item => ({ 
+          ...item, 
+          word: item.word ?? '', 
+          language: item.language ?? '', 
+          dateLearned: item.dateLearned ? new Date(item.dateLearned).toISOString() : null 
+        })));
         setHandwriting(h);
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'Unknown error';
