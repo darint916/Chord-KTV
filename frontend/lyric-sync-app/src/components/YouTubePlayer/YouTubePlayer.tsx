@@ -5,15 +5,16 @@ interface YouTubePlayerProps {
   videoId: string;
   onReady: (_playerInstance: YouTubePlayerInstance) => void;
   onEnd?: () => void;
+  autoStart?: boolean;
 }
 
-const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady, onEnd }) => {
+const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady, onEnd, autoStart: autoStart = 0 }) => {
   const setPlayer = useState<YouTubePlayerInstance | null>(null)[1]; // Extract only the setter
 
   const opts = {
     width: '100%',
     playerVars: {
-      autoplay: 0,
+      autoplay: autoStart ? 1 : 0,
       rel: 0,
       fs: 0,
       modestbranding: 1,

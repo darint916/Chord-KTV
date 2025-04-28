@@ -595,6 +595,7 @@ const SongPlayerPage: React.FC = () => {
                   playerInstance.seekTo(lastTimestamp, true);
                 }
               }}
+              autoStart={1}
               onEnd={() => {
                 if (autoPlayEnabled) {
                   handleNextTrack();
