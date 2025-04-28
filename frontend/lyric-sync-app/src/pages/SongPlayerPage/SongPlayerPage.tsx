@@ -48,6 +48,7 @@ const SongPlayerPage: React.FC = () => {
   const [lyricsOffset, setLyricsOffset] = useState<number>(0); // in seconds
   const [minLyricOffset, setMinLyricOffset] = useState<number>(-1);
   const [maxLyricOffset, setMaxLyricOffset] = useState<number>(1);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(false);
   const {
     song,
     setQuizQuestions,
@@ -579,6 +580,11 @@ const SongPlayerPage: React.FC = () => {
                   playerInstance.seekTo(lastTimestamp, true);
                 }
               }}
+              onEnd={() => {
+                if (autoPlayEnabled) {
+                  handleNextTrack();
+                }
+              }}
               key={instrumental ? 'ktv' : 'regular'} // Force re-render when switching
             />
             <Grid container spacing={2} className="controls-grid">
@@ -852,7 +858,9 @@ const SongPlayerPage: React.FC = () => {
               currentPlayingId={currentPlayingId}
               setQueue={setQueue}
               setCurrentPlayingId={setCurrentPlayingId}
+              autoPlayEnabled={autoPlayEnabled}
               handlePlayFromQueue={handlePlayFromQueue}
+              setAutoPlayEnabled={setAutoPlayEnabled}
             />
           </Grid>
         </Grid>
