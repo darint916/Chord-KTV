@@ -272,6 +272,8 @@ const SongPlayerPage: React.FC = () => {
     setCurrentTime(0);
     setShowQuizButton(false);
     setLyricsOffset(0);
+    setMinLyricOffset(-1);
+    setMaxLyricOffset(1);
   }, [song]);
 
   // Call resetLyricState when song changes
