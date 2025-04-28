@@ -54,6 +54,10 @@ public class UserActivityController : Controller
     }
 
     [HttpPost("playlist")]
+    [ProducesResponseType(typeof(UserPlaylistActivityDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AddOrUpdatePlaylistActivity([FromBody] UserPlaylistActivityDto dto)
     {
         try
@@ -84,6 +88,8 @@ public class UserActivityController : Controller
     }
 
     [HttpGet("playlists")]
+    [ProducesResponseType(typeof(IEnumerable<UserPlaylistActivityDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetUserPlaylistActivities()
     {
         User? user = await _userContextService.GetCurrentUserAsync();
@@ -97,6 +103,10 @@ public class UserActivityController : Controller
     }
 
     [HttpPost("quiz")]
+    [ProducesResponseType(typeof(UserQuizResultDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AddQuizResult([FromBody] UserQuizResultDto dto)
     {
         try
@@ -128,6 +138,9 @@ public class UserActivityController : Controller
     }
 
     [HttpGet("quizzes")]
+    [ProducesResponseType(typeof(IEnumerable<UserQuizResultDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetUserQuizResults([FromQuery] LanguageCode? language = null)
     {
         User? user = await _userContextService.GetCurrentUserAsync();
@@ -141,6 +154,11 @@ public class UserActivityController : Controller
     }
 
     [HttpPost("song")]
+    [ProducesResponseType(typeof(UserSongActivityDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(UserSongActivityDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AddOrUpdateSongActivity([FromBody] UserSongActivityDto dto)
     {
         try
@@ -172,6 +190,9 @@ public class UserActivityController : Controller
     }
 
     [HttpGet("songs")]
+    [ProducesResponseType(typeof(IEnumerable<UserSongActivityDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetUserSongActivities()
     {
         try
@@ -193,6 +214,9 @@ public class UserActivityController : Controller
     }
 
     [HttpPost("handwriting")]
+    [ProducesResponseType(typeof(UserHandwritingResultDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AddHandwritingResult([FromBody] UserHandwritingResultDto dto)
     {
         try
@@ -219,6 +243,8 @@ public class UserActivityController : Controller
     }
 
     [HttpGet("handwriting")]
+    [ProducesResponseType(typeof(IEnumerable<UserHandwritingResultDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetUserHandwritingResults([FromQuery] LanguageCode? language = null)
     {
         User? user = await _userContextService.GetCurrentUserAsync();
@@ -232,6 +258,10 @@ public class UserActivityController : Controller
     }
 
     [HttpPatch("favorite/song")]
+    [ProducesResponseType(typeof(UserSongActivityDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(UserSongActivityDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> ToggleFavoriteSong([FromBody] UserSongActivityFavoriteRequestDto dto)
     {
         try
@@ -267,6 +297,9 @@ public class UserActivityController : Controller
     }
 
     [HttpGet("favorite/songs")]
+    [ProducesResponseType(typeof(IEnumerable<UserSongActivityDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetFavoriteSongs()
     {
         try
@@ -288,6 +321,11 @@ public class UserActivityController : Controller
     }
 
     [HttpPatch("favorite/playlist")]
+    [ProducesResponseType(typeof(UserPlaylistActivityDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(UserPlaylistActivityDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ToggleFavoritePlaylist([FromBody] UserPlaylistActivityFavoriteRequestDto dto)
     {
         try
@@ -329,6 +367,9 @@ public class UserActivityController : Controller
     }
 
     [HttpGet("favorite/playlists")]
+    [ProducesResponseType(typeof(IEnumerable<UserPlaylistActivityDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetFavoritePlaylists()
     {
         try
@@ -350,6 +391,9 @@ public class UserActivityController : Controller
     }
 
     [HttpPost("learned-word")]
+    [ProducesResponseType(typeof(LearnedWordDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AddLearnedWord([FromBody] LearnedWordDto dto)
     {
         try
@@ -374,6 +418,8 @@ public class UserActivityController : Controller
     }
 
     [HttpGet("learned-words")]
+    [ProducesResponseType(typeof(IEnumerable<LearnedWordDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetUserLearnedWords([FromQuery] LanguageCode? language = null)
     {
         User? user = await _userContextService.GetCurrentUserAsync();
@@ -388,6 +434,8 @@ public class UserActivityController : Controller
 
     [HttpGet("full")]
     [DevelopmentOnly]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetUserActivityHistory()
     {
         User? user = await _userContextService.GetCurrentUserAsync();
