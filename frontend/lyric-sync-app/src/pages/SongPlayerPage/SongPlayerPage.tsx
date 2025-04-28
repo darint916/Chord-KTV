@@ -304,7 +304,7 @@ const SongPlayerPage: React.FC = () => {
 
       // Check for quiz button show condition
       // if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
-      setShowQuizButton(true);
+      // setShowQuizButton(true);
       // }
 
       // Check for prefetch condition
