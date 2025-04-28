@@ -4,16 +4,18 @@ import { QuizQuestionDto } from '../api';
 import { QueueItem } from './QueueTypes';
 
 // Define the context type
-interface SongContextType {
+export interface SongContextType {
   song: FullSongResponseDto | null;
   quizQuestions?: QuizQuestionDto[] | null;
-  setSong: (_song: FullSongResponseDto) => void;
+  setSong: (_song: FullSongResponseDto | null) => void;
   setQuizQuestions: (_quiz: QuizQuestionDto[]) => void;
   queue: QueueItem[];
   setQueue: (_queue: QueueItem[] | ((_prevQueue: QueueItem[]) => QueueItem[])) => void;
   currentPlayingId: string | null;
   // setCurrentPlayingId: (_id: string | null) => void;
   setCurrentPlayingId: React.Dispatch<React.SetStateAction<string | null>>;
+  lyricsOffset: number;
+  setLyricsOffset: () => void;
 }
 
 // Create context

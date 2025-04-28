@@ -21,6 +21,8 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return savedCurrentId ? JSON.parse(savedCurrentId) : null;
   });
 
+  const [lyricsOffset, setLyricsOffset] = useState<number>(0);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('songQueue', JSON.stringify(queue));
@@ -51,7 +53,7 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [quizQuestions]);
 
   return (
-    <SongContext.Provider value={{ song, setSong, quizQuestions, setQuizQuestions, queue, setQueue, currentPlayingId, setCurrentPlayingId }}>
+    <SongContext.Provider value={{ song, setSong, queue, setQueue, currentPlayingId, setCurrentPlayingId, quizQuestions, setQuizQuestions, lyricsOffset, setLyricsOffset }}>
       {children}
     </SongContext.Provider>
   );

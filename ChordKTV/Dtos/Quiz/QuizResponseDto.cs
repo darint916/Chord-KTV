@@ -3,6 +3,8 @@ namespace ChordKTV.Dtos.Quiz;
 public class QuizQuestionDto
 {
     public int QuestionNumber { get; set; }
+    public string? StartTimestamp { get; set; }
+    public string? EndTimestamp { get; set; }
     public string LyricPhrase { get; set; } = string.Empty;
     public List<string> Options { get; set; } = [];
     public int? CorrectOptionIndex { get; set; }

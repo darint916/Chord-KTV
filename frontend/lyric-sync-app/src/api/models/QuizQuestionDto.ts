@@ -43,6 +43,18 @@ export interface QuizQuestionDto {
      * @memberof QuizQuestionDto
      */
     correctOptionIndex?: number | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof QuizQuestionDto
+     */
+    startTimestamp?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof QuizQuestionDto
+     */
+    endTimestamp?: string | null;
 }
 
 /**
@@ -66,6 +78,8 @@ export function QuizQuestionDtoFromJSONTyped(json: any, ignoreDiscriminator: boo
         'lyricPhrase': json['lyricPhrase'] == null ? undefined : json['lyricPhrase'],
         'options': json['options'] == null ? undefined : json['options'],
         'correctOptionIndex': json['correctOptionIndex'] == null ? undefined : json['correctOptionIndex'],
+        'startTimestamp': json['startTimestamp'] == null ? undefined : json['startTimestamp'],
+        'endTimestamp': json['endTimestamp'] == null ? undefined : json['endTimestamp'],
     };
 }
 
@@ -84,6 +98,8 @@ export function QuizQuestionDtoToJSONTyped(value?: QuizQuestionDto | null, ignor
         'lyricPhrase': value['lyricPhrase'],
         'options': value['options'],
         'correctOptionIndex': value['correctOptionIndex'],
+        'startTimestamp': value['startTimestamp'],
+        'endTimestamp': value['endTimestamp'],
     };
 }
 

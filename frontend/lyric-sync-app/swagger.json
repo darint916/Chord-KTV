@@ -94,46 +94,140 @@
       }
     },
     "/api/quiz/romanization": {
-      "get": {
+      "post": {
         "tags": [
           "Quiz"
         ],
-        "parameters": [
-          {
-            "name": "songId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "useCachedQuiz",
-            "in": "query",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "name": "difficulty",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 3
-            }
-          },
-          {
-            "name": "numQuestions",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 5
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "songId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "useCachedQuiz": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "difficulty": {
+                    "type": "integer",
+                    "format": "int32",
+                    "default": 3
+                  },
+                  "numQuestions": {
+                    "type": "integer",
+                    "format": "int32",
+                    "default": 5
+                  }
+                }
+              }
             }
           }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/quiz/audio": {
+      "post": {
+        "tags": [
+          "Quiz"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "songId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "useCachedQuiz": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "difficulty": {
+                    "type": "integer",
+                    "format": "int32",
+                    "default": 3
+                  },
+                  "numQuestions": {
+                    "type": "integer",
+                    "format": "int32",
+                    "default": 5
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -1628,6 +1722,14 @@
           "correctOptionIndex": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "startTimestamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "endTimestamp": {
+            "type": "string",
             "nullable": true
           }
         },

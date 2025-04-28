@@ -11,4 +11,5 @@ public interface IChatGptService
     public Task<List<TranslationResponseDto>> BatchTranslateLyricsAsync(List<TranslationRequestDto> lrcLyrics);
     public Task<Quiz> GenerateRomanizationQuizAsync(string lyrics, int difficulty, int numQuestions, Guid songId);
     public Task<CandidateSongInfoListResponse> GetCandidateSongInfosAsync(string videoTitle, string channelName);
+    public Task<List<string>> GenerateAudioQuizDistractorsAsync(string correctLyric, int difficulty);
 }

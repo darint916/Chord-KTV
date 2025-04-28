@@ -6,6 +6,7 @@ apis/UserApi.ts
 apis/index.ts
 index.ts
 models/Album.ts
+models/ApiQuizRomanizationPostRequest.ts
 models/AuthResponseDto.ts
 models/FullSongRequestDto.ts
 models/FullSongResponseDto.ts
