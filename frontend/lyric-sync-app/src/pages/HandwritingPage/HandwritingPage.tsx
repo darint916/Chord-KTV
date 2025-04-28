@@ -117,10 +117,13 @@ const HandwritingPage: React.FC = () => {
     );
   }
   const currentWord = wordsToPractice[currentWordIndex % wordsToPractice.length];
-  const allWordsCompleted = completedWords.length >= wordsToPractice.length;
-  if (allWordsCompleted) {
-    setQuizCompleted(true);
-  }
+
+  useEffect(() => {
+    if (completedWords.length >= wordsToPractice.length && wordsToPractice.length > 0) {
+      setQuizCompleted(true);
+    }
+  }, [completedWords, wordsToPractice.length]);
+
 
   const handleWordCompletionAttempt = (isSuccess: boolean) => {
     if (isSuccess) {
