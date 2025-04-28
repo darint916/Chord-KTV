@@ -12,6 +12,7 @@ import AlbumIcon from '@mui/icons-material/Album'; // Import for default placeho
 export interface MediaItem {
   id: string;
   title: string;
+  subtitle?: string;
   coverUrl: string;
   plays?: number; 
   isEmptyState?: boolean;
@@ -154,6 +155,18 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
                   >
                     {m.title}
                   </Typography>
+
+                  {/* render artist/other subtitle if present */}
+                  {m.subtitle && (
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary" 
+                      noWrap
+                    >
+                      {m.subtitle}
+                    </Typography>
+                  )}
+
                   {m.plays !== undefined && (
                     <Typography variant="caption" color="text.secondary">
                       {m.plays} plays

@@ -18,7 +18,7 @@ import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import MuiInput from '@mui/material/Input';
 import AddIcon from '@mui/icons-material/Add';
-import MediaCarousel, { MediaItem } from '../../components/UserStats/MediaCarousel';
+import GeniusHitsCarousel from '../../components/GeniusHitsCarousel/GeniusHitsCarousel';
 import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -52,7 +52,6 @@ const SongPlayerPage: React.FC = () => {
   const [minLyricOffset, setMinLyricOffset] = useState<number>(-1);
   const [maxLyricOffset, setMaxLyricOffset] = useState<number>(1);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(false);
-  const [geniusItems, setGeniusItems] = useState<MediaItem[]>([]);
   const [geniusHits, setGeniusHits] = useState<GeniusHitDto[]>([]);
   const [isAddingToNext, setIsAddingToNext] = useState(true);
   const {
@@ -415,7 +414,6 @@ const SongPlayerPage: React.FC = () => {
 
     setIsLoading(true);
     setError('');
-    setGeniusItems([]);
     setGeniusHits([]);
 
     try {
@@ -479,20 +477,6 @@ const SongPlayerPage: React.FC = () => {
           throw new Error('No search results found.');
         }
 
-        const mapped: MediaItem[] = hits.map((h) => {
-          const coverUrl =
-            h.result.songArtImageUrl ||
-            h.result.headerImageUrl ||
-            '';
-
-          return {
-            id: String(h.result.id),
-            title: `${h.result.title} — ${h.result.primaryArtistNames}`,
-            coverUrl,
-          };
-        });
-
-        setGeniusItems(mapped);
         setGeniusHits(hits);
       }
     } catch (err) {
@@ -505,14 +489,13 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
-  const handleResultSelect = async (_item: MediaItem, index: number) => {
-    const hit = geniusHits[index]?.result;
-    if (!hit) {
-      return;
-    }
-
+  const handleResultSelect = async (hitDto: GeniusHitDto) => {
+    const hit = hitDto.result;
     const title = hit.title ?? '';
-    const artist = hit.primary_artist_names ?? '';
+    const artist =
+      (hit as { primaryArtistNames?: string; primary_artist_names?: string }).primaryArtistNames ||
+      (hit as { primaryArtistNames?: string; primary_artist_names?: string }).primary_artist_names ||
+      '';
 
     setIsLoading(true);
     setError('');
@@ -522,7 +505,7 @@ const SongPlayerPage: React.FC = () => {
         fullSongRequestDto: {
           title,
           artist,
-          lyrics: '',
+          lyrics,
           youTubeId: '',
         },
       });
@@ -551,7 +534,6 @@ const SongPlayerPage: React.FC = () => {
       });
 
       // Clear search results after adding
-      setGeniusItems([]);
       setGeniusHits([]);
 
       setSongName('');
@@ -772,6 +754,57 @@ const SongPlayerPage: React.FC = () => {
       // console.error('Failed to toggle favorite', error);
     } finally {
       setFavLoading(false);
+    }
+  };
+
+  const handleMatchSearch = async () => {
+    setIsLoading(true);
+    setError('');
+
+    let youTubeId = '';
+    if (youtubeUrl.trim()) {
+      const id = extractYouTubeVideoId(youtubeUrl.trim());
+      if (!id) {
+        setError('Invalid YouTube URL.');
+        setIsLoading(false);
+        return;
+      }
+      youTubeId = id;
+    }
+
+    try {
+      const response = await songApi.apiSongsMatchPost({
+        fullSongRequestDto: {
+          title: songName,
+          artist: artistName,
+          lyrics,
+          youTubeId,
+        },
+      });
+
+      // preserve the extracted YouTube ID
+      response.youTubeId = youTubeId;
+
+      const newQueueItem: QueueItem = {
+        ...response,
+        queueId: uuidv4(),
+        title: response.title ?? songName,
+        artist: response.artist ?? artistName,
+        youTubeId,
+        lyrics,
+        status: 'loaded',
+        imageUrl: response.geniusMetaData?.songImageUrl ?? '',
+      };
+
+      setQueue([newQueueItem, ...queue]);
+      setCurrentPlayingId(newQueueItem.queueId);
+      setSong(response);
+      navigate('/play-song');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError('Match failed. Please try again. Error: ' + msg);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1049,15 +1082,12 @@ const SongPlayerPage: React.FC = () => {
               </Box>
             </Paper>
 
-            {geniusItems.length > 0 && (
-              <Box mt={4}>
-                <MediaCarousel
-                  title="Select a Song"
-                  items={geniusItems}
-                  onItemClick={(item, index) => handleResultSelect(item, index)}
-                  fadeColor="#E0E7FF"
-                />
-              </Box>
+            {geniusHits.length > 0 && (
+              <GeniusHitsCarousel
+                hits={geniusHits}
+                onSelect={handleResultSelect}
+                onMatchSearch={handleMatchSearch}
+              />
             )}
 
 
