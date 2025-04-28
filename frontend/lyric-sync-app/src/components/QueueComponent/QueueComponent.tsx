@@ -82,7 +82,7 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
             AutoPlay
           </ToggleButton>
           <IconButton
-            // onClick={handleShuffle}
+            onClick={handleShuffle}
             aria-label="shuffle queue"
             color="primary"
             size="small"

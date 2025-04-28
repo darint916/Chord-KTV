@@ -25,9 +25,6 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, onReady, onEnd }
     if (onEnd) { onEnd(); }
   };
 
-  const handleEnd = () => {
-    if (onEnd) { onEnd(); }
-  };
 
   const handleReady = (event: { target: YouTubePlayerInstance }) => {
     const playerInstance = event.target;

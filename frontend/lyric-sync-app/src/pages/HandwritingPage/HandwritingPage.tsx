@@ -77,7 +77,8 @@ const HandwritingPage: React.FC = () => {
   const getLongestWord = (text: string): string => {
     const segments = Array.from(segmenter.segment(text))
       .filter(segment => segment.isWordLike)
-      .map(segment => segment.segment);
+      .map(segment => segment.segment)
+      .filter(segment => !/[A-Za-z]/.test(segment));
 
     if (segments.length === 0) {return '';}
 
