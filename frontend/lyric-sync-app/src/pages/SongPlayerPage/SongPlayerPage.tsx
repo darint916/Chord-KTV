@@ -626,7 +626,7 @@ const SongPlayerPage: React.FC = () => {
                       inputProps={{
                         step: 1,
                         min: -99,
-                        max: 0,
+                        max: 98,
                         type: 'number',
                       }}
                     />
@@ -637,7 +637,7 @@ const SongPlayerPage: React.FC = () => {
                       onChange={(_, value) => setLyricsOffset(value as number)}
                       min={minLyricOffset}
                       max={maxLyricOffset}
-                      step={0.1}
+                      step={0.01}
                       color='primary'
                       valueLabelDisplay="auto"
                       valueLabelFormat={(value) => `${value > 0 ? '+' : ''}${value}s`}
@@ -659,7 +659,7 @@ const SongPlayerPage: React.FC = () => {
                       }}
                       inputProps={{
                         step: 1,
-                        min: 0,
+                        min: -98,
                         max: 99,
                         type: 'number',
                       }}
@@ -679,6 +679,7 @@ const SongPlayerPage: React.FC = () => {
                       }}
                       className='slider-boxes'
                       inputProps={{
+                        step: 0.02,
                         style: { textAlign: 'center' },
                       }}
                     />
