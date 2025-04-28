@@ -102,27 +102,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "songId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "useCachedQuiz": {
-                    "type": "boolean",
-                    "default": false
-                  },
-                  "difficulty": {
-                    "type": "integer",
-                    "format": "int32",
-                    "default": 3
-                  },
-                  "numQuestions": {
-                    "type": "integer",
-                    "format": "int32",
-                    "default": 5
-                  }
-                }
+                "$ref": "#/components/schemas/QuizRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizRequestDto"
               }
             }
           }
@@ -203,27 +193,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "songId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "useCachedQuiz": {
-                    "type": "boolean",
-                    "default": false
-                  },
-                  "difficulty": {
-                    "type": "integer",
-                    "format": "int32",
-                    "default": 3
-                  },
-                  "numQuestions": {
-                    "type": "integer",
-                    "format": "int32",
-                    "default": 5
-                  }
-                }
+                "$ref": "#/components/schemas/QuizRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizRequestDto"
               }
             }
           }
@@ -554,13 +534,13 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {}
+              "schema": { }
             },
             "text/json": {
-              "schema": {}
+              "schema": { }
             },
             "application/*+json": {
-              "schema": {}
+              "schema": { }
             }
           }
         },
@@ -618,17 +598,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK – returns a list of Genius hits",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/GeniusHitDto"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
@@ -807,36 +777,10 @@
         }
       }
     },
-    "/api/user/activity/songs": {
-      "get": {
-        "tags": [
-          "User Activity"
-        ],
-        "summary": "Get user's song activity",
-        "responses": {
-          "200": {
-            "description": "List of user song activities",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserSongActivityDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      }
-    },
     "/api/user/activity/playlist": {
       "post": {
         "tags": [
-          "User Activity"
+          "UserActivity"
         ],
         "requestBody": {
           "content": {
@@ -867,25 +811,11 @@
     "/api/user/activity/playlists": {
       "get": {
         "tags": [
-          "User Activity"
+          "UserActivity"
         ],
-        "summary": "Get user's playlist activity",
         "responses": {
           "200": {
-            "description": "List of user playlist activities",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserPlaylistActivityDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
+            "description": "OK"
           }
         }
       }
@@ -893,7 +823,7 @@
     "/api/user/activity/quiz": {
       "post": {
         "tags": [
-          "User Activity"
+          "UserActivity"
         ],
         "requestBody": {
           "content": {
@@ -924,9 +854,8 @@
     "/api/user/activity/quizzes": {
       "get": {
         "tags": [
-          "User Activity"
+          "UserActivity"
         ],
-        "summary": "Get user's quiz results",
         "parameters": [
           {
             "name": "language",
@@ -938,20 +867,7 @@
         ],
         "responses": {
           "200": {
-            "description": "List of user quiz results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserQuizResultDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
+            "description": "OK"
           }
         }
       }
@@ -959,7 +875,7 @@
     "/api/user/activity/song": {
       "post": {
         "tags": [
-          "User Activity"
+          "UserActivity"
         ],
         "requestBody": {
           "content": {
@@ -987,10 +903,22 @@
         }
       }
     },
+    "/api/user/activity/songs": {
+      "get": {
+        "tags": [
+          "UserActivity"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/user/activity/handwriting": {
       "post": {
         "tags": [
-          "User Activity"
+          "UserActivity"
         ],
         "requestBody": {
           "content": {
@@ -1019,9 +947,8 @@
       },
       "get": {
         "tags": [
-          "User Activity"
+          "UserActivity"
         ],
-        "summary": "Get user's handwriting results",
         "parameters": [
           {
             "name": "language",
@@ -1033,55 +960,7 @@
         ],
         "responses": {
           "200": {
-            "description": "List of user handwriting results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserHandwritingResultDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      }
-    },
-    "/api/user/activity/learned-words": {
-      "get": {
-        "tags": [
-          "User Activity"
-        ],
-        "summary": "Get user's learned words",
-        "parameters": [
-          {
-            "name": "language",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/LanguageCode"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of learned words",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LearnedWordDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
+            "description": "OK"
           }
         }
       }
@@ -1089,23 +968,23 @@
     "/api/user/activity/favorite/song": {
       "patch": {
         "tags": [
-          "User Activity"
+          "UserActivity"
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UserSongActivityDto"
+                "$ref": "#/components/schemas/UserSongActivityFavoriteRequestDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/UserSongActivityDto"
+                "$ref": "#/components/schemas/UserSongActivityFavoriteRequestDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/UserSongActivityDto"
+                "$ref": "#/components/schemas/UserSongActivityFavoriteRequestDto"
               }
             }
           }
@@ -1120,25 +999,11 @@
     "/api/user/activity/favorite/songs": {
       "get": {
         "tags": [
-          "User Activity"
+          "UserActivity"
         ],
-        "summary": "Get user's favorite songs",
         "responses": {
           "200": {
-            "description": "List of user favorite songs",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserSongActivityDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
+            "description": "OK"
           }
         }
       }
@@ -1146,70 +1011,27 @@
     "/api/user/activity/favorite/playlist": {
       "patch": {
         "tags": [
-          "User Activity"
+          "UserActivity"
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UserPlaylistActivityDto"
+                "$ref": "#/components/schemas/UserPlaylistActivityFavoriteRequestDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/UserPlaylistActivityDto"
+                "$ref": "#/components/schemas/UserPlaylistActivityFavoriteRequestDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/UserPlaylistActivityDto"
+                "$ref": "#/components/schemas/UserPlaylistActivityFavoriteRequestDto"
               }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/user/activity/learned-word": {
-      "post": {
-        "tags": [
-          "User Activity"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LearnedWordDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LearnedWordDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/LearnedWordDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/user/activity/full": {
-      "get": {
-        "tags": [
-          "User Activity"
-        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1220,25 +1042,75 @@
     "/api/user/activity/favorite/playlists": {
       "get": {
         "tags": [
-          "User Activity"
+          "UserActivity"
         ],
-        "summary": "Get user's favorite playlists",
         "responses": {
           "200": {
-            "description": "List of user favorite playlists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserPlaylistActivityDto"
-                  }
-                }
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/user/activity/learned-word": {
+      "post": {
+        "tags": [
+          "UserActivity"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LearnedWordDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LearnedWordDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LearnedWordDto"
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized"
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/user/activity/learned-words": {
+      "get": {
+        "tags": [
+          "UserActivity"
+        ],
+        "parameters": [
+          {
+            "name": "language",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/LanguageCode"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/user/activity/full": {
+      "get": {
+        "tags": [
+          "UserActivity"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -1475,114 +1347,6 @@
         },
         "additionalProperties": false
       },
-      "UserSongActivityDto": {
-        "type": "object",
-        "description": "DTO for user's song activity. Define properties as per backend specification.",
-        "additionalProperties": true
-      },
-      "UserPlaylistActivityDto": {
-        "type": "object",
-        "description": "DTO for user's playlist activity. Define properties as per backend specification.",
-        "additionalProperties": true
-      },
-      "UserQuizResultDto": {
-        "type": "object",
-        "properties": {
-          "quizId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "score": {
-            "type": "number",
-            "format": "float"
-          },
-          "language": {
-            "$ref": "#/components/schemas/LanguageCode"
-          },
-          "dateCompleted": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "correctAnswers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "additionalProperties": false
-      },
-      "UserHandwritingResultDto": {
-        "type": "object",
-        "properties": {
-          "language": {
-            "$ref": "#/components/schemas/LanguageCode"
-          },
-          "score": {
-            "type": "number",
-            "format": "float"
-          },
-          "wordTested": {
-            "type": "string"
-          },
-          "dateCompleted": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "LearnedWordDto": {
-        "type": "object",
-        "properties": {
-          "word": {
-            "type": "string"
-          },
-          "language": {
-            "$ref": "#/components/schemas/LanguageCode"
-          },
-          "dateLearned": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "UserDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
-      "AuthResponseDto": {
-        "type": "object",
-        "properties": {
-          "user": {
-            "$ref": "#/components/schemas/UserDto"
-          },
-          "token": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "user",
-          "token"
-        ],
-        "additionalProperties": false
-      },
       "LanguageCode": {
         "enum": [
           "UNK",
@@ -1633,6 +1397,24 @@
         ],
         "type": "string"
       },
+      "LearnedWordDto": {
+        "type": "object",
+        "properties": {
+          "word": {
+            "type": "string",
+            "nullable": true
+          },
+          "language": {
+            "$ref": "#/components/schemas/LanguageCode"
+          },
+          "dateLearned": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "MatchScores": {
         "type": "object",
         "properties": {
@@ -1669,6 +1451,10 @@
             "items": {
               "$ref": "#/components/schemas/VideoInfo"
             },
+            "nullable": true
+          },
+          "playlistThumbnailUrl": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -1708,6 +1494,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "startTimestamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "endTimestamp": {
+            "type": "string",
+            "nullable": true
+          },
           "lyricPhrase": {
             "type": "string",
             "nullable": true
@@ -1723,14 +1517,34 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
-          },
-          "startTimestamp": {
+          }
+        },
+        "additionalProperties": false
+      },
+      "QuizRequestDto": {
+        "required": [
+          "songId"
+        ],
+        "type": "object",
+        "properties": {
+          "songId": {
             "type": "string",
-            "nullable": true
+            "format": "uuid"
           },
-          "endTimestamp": {
-            "type": "string",
-            "nullable": true
+          "useCachedQuiz": {
+            "type": "boolean"
+          },
+          "difficulty": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "numQuestions": {
+            "maximum": 20,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -1883,6 +1697,171 @@
         },
         "additionalProperties": false
       },
+      "UserHandwritingResultDto": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "$ref": "#/components/schemas/LanguageCode"
+          },
+          "score": {
+            "type": "number",
+            "format": "float"
+          },
+          "wordTested": {
+            "type": "string",
+            "nullable": true
+          },
+          "dateCompleted": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserPlaylistActivityDto": {
+        "required": [
+          "playlistThumbnailUrl",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "playlistId": {
+            "type": "string",
+            "nullable": true
+          },
+          "playlistThumbnailUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "datesPlayed": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "nullable": true
+          },
+          "lastPlayed": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isFavorite": {
+            "type": "boolean"
+          },
+          "dateFavorited": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserPlaylistActivityFavoriteRequestDto": {
+        "type": "object",
+        "properties": {
+          "playlistId": {
+            "type": "string",
+            "nullable": true
+          },
+          "isFavorite": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserQuizResultDto": {
+        "type": "object",
+        "properties": {
+          "quizId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "score": {
+            "type": "number",
+            "format": "float"
+          },
+          "language": {
+            "$ref": "#/components/schemas/LanguageCode"
+          },
+          "dateCompleted": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "correctAnswers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserSongActivityDto": {
+        "type": "object",
+        "properties": {
+          "songId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isFavorite": {
+            "type": "boolean"
+          },
+          "datesPlayed": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "nullable": true
+          },
+          "lastPlayed": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dateFavorited": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "artist": {
+            "type": "string",
+            "nullable": true
+          },
+          "geniusThumbnailUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "youtubeThumbnailUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserSongActivityFavoriteRequestDto": {
+        "type": "object",
+        "properties": {
+          "songId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isFavorite": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "VideoInfo": {
         "type": "object",
         "properties": {
@@ -1903,53 +1882,6 @@
             "format": "date-span"
           }
         },
-        "additionalProperties": false
-      },
-      "GeniusHitDto": {
-        "type": "object",
-        "properties": {
-          "result": {
-            "$ref": "#/components/schemas/GeniusResultDto"
-          }
-        },
-        "required": ["result"],
-        "additionalProperties": false
-      },
-      "GeniusResultDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string"
-          },
-          "header_image_url": {
-            "type": "string"
-          },
-          "song_art_image_url": {
-            "type": "string"
-          },
-          "primary_artist_names": {
-            "type": "string"
-          },
-          "album": {
-            "oneOf": [
-              { "$ref": "#/components/schemas/GeniusAlbumDto" },
-              { "type": "null" }
-            ]
-          }
-        },
-        "required": ["id", "title", "primary_artist_names"],
-        "additionalProperties": false
-      },
-      "GeniusAlbumDto": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string" }
-        },
-        "required": ["name"],
         "additionalProperties": false
       }
     },

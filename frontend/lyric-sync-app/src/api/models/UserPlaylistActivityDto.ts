@@ -24,13 +24,19 @@ export interface UserPlaylistActivityDto {
      * @type {string}
      * @memberof UserPlaylistActivityDto
      */
-    playlistUrl?: string | null;
+    playlistId?: string | null;
     /**
      * 
-     * @type {boolean}
+     * @type {string}
      * @memberof UserPlaylistActivityDto
      */
-    isFavorite?: boolean;
+    playlistThumbnailUrl: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserPlaylistActivityDto
+     */
+    title: string | null;
     /**
      * 
      * @type {Array<Date>}
@@ -45,6 +51,12 @@ export interface UserPlaylistActivityDto {
     lastPlayed?: Date;
     /**
      * 
+     * @type {boolean}
+     * @memberof UserPlaylistActivityDto
+     */
+    isFavorite?: boolean;
+    /**
+     * 
      * @type {Date}
      * @memberof UserPlaylistActivityDto
      */
@@ -55,6 +67,8 @@ export interface UserPlaylistActivityDto {
  * Check if a given object implements the UserPlaylistActivityDto interface.
  */
 export function instanceOfUserPlaylistActivityDto(value: object): value is UserPlaylistActivityDto {
+    if (!('playlistThumbnailUrl' in value) || value['playlistThumbnailUrl'] === undefined) return false;
+    if (!('title' in value) || value['title'] === undefined) return false;
     return true;
 }
 
@@ -68,10 +82,12 @@ export function UserPlaylistActivityDtoFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'playlistUrl': json['playlistUrl'] == null ? undefined : json['playlistUrl'],
-        'isFavorite': json['isFavorite'] == null ? undefined : json['isFavorite'],
+        'playlistId': json['playlistId'] == null ? undefined : json['playlistId'],
+        'playlistThumbnailUrl': json['playlistThumbnailUrl'],
+        'title': json['title'],
         'datesPlayed': json['datesPlayed'] == null ? undefined : json['datesPlayed'],
         'lastPlayed': json['lastPlayed'] == null ? undefined : (new Date(json['lastPlayed'])),
+        'isFavorite': json['isFavorite'] == null ? undefined : json['isFavorite'],
         'dateFavorited': json['dateFavorited'] == null ? undefined : (new Date(json['dateFavorited'])),
     };
 }
@@ -87,11 +103,13 @@ export function UserPlaylistActivityDtoToJSONTyped(value?: UserPlaylistActivityD
 
     return {
         
-        'playlistUrl': value['playlistUrl'],
-        'isFavorite': value['isFavorite'],
+        'playlistId': value['playlistId'],
+        'playlistThumbnailUrl': value['playlistThumbnailUrl'],
+        'title': value['title'],
         'datesPlayed': value['datesPlayed'],
         'lastPlayed': value['lastPlayed'] == null ? undefined : ((value['lastPlayed']).toISOString()),
-        'dateFavorited': value['dateFavorited'] == null ? undefined : ((value['dateFavorited'] as any).toISOString()),
+        'isFavorite': value['isFavorite'],
+        'dateFavorited': value['dateFavorited'] === null ? null : ((value['dateFavorited'] as any)?.toISOString()),
     };
 }
 
