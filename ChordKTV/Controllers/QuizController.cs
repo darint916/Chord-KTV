@@ -23,43 +23,35 @@ namespace ChordKTV.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("romanization")]
+        [HttpPost("romanization")]
         [ProducesResponseType(typeof(QuizResponseDto), 200)]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
-        public Task<IActionResult> GetRomanizationQuiz(
-            [FromQuery] Guid songId,
-            [FromQuery] bool useCachedQuiz = false,
-            [FromQuery] int difficulty = 3,
-            [FromQuery] int numQuestions = 5)
+        public async Task<IActionResult> GetRomanizationQuiz([FromBody] QuizRequestDto request)
         {
-            return ExecuteQuizRequest(
-                songId,
-                useCachedQuiz,
-                difficulty,
-                numQuestions,
+            return await ExecuteQuizRequest(
+                request.SongId,
+                request.UseCachedQuiz,
+                request.Difficulty,
+                request.NumQuestions,
                 _quizService.GenerateQuizAsync,
                 "romanization");
         }
 
         [AllowAnonymous]
-        [HttpGet("audio")]
+        [HttpPost("audio")]
         [ProducesResponseType(typeof(QuizResponseDto), 200)]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
-        public Task<IActionResult> GetAudioQuiz(
-            [FromQuery] Guid songId,
-            [FromQuery] bool useCachedQuiz = false,
-            [FromQuery] int difficulty = 3,
-            [FromQuery] int numQuestions = 5)
+        public async Task<IActionResult> GetAudioQuiz([FromBody] QuizRequestDto request)
         {
-            return ExecuteQuizRequest(
-                songId,
-                useCachedQuiz,
-                difficulty,
-                numQuestions,
+            return await ExecuteQuizRequest(
+                request.SongId,
+                request.UseCachedQuiz,
+                request.Difficulty,
+                request.NumQuestions,
                 _quizService.GenerateAudioQuizAsync,
                 "audio");
         }

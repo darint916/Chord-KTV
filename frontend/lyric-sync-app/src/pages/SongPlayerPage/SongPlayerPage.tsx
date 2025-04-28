@@ -45,7 +45,7 @@ const SongPlayerPage: React.FC = () => {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [playlistLoading, setPlaylistLoading] = useState(false);
-  const { lyricsOffset, setLyricsOffset } = useSong();
+  const [lyricsOffset, setLyricsOffset] = useState<number>(0);
   const [minLyricOffset, setMinLyricOffset] = useState<number>(-5);
   const [maxLyricOffset, setMaxLyricOffset] = useState<number>(5);
   const {
@@ -240,9 +240,9 @@ const SongPlayerPage: React.FC = () => {
       }
 
       // Check for quiz button show condition
-      if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
-        setShowQuizButton(true);
-      }
+      // if (current / duration >= 0.9 && isLanguageAllowedForQuiz) {
+      setShowQuizButton(true);
+      // }
 
       // Check for prefetch condition
       if (current / duration >= 0.5) {

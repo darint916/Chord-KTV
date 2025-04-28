@@ -1,10 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import HandwritingCanvas from '../../components/HandwritingCanvas/HandwritingCanvas';
-import { 
-  Container, 
-  Box, 
-  Typography, 
-  Button, 
+import {
+  Container,
+  Box,
+  Typography,
+  Button,
   Grid,
   List,
   ListItem,
@@ -50,7 +50,6 @@ const HandwritingPage: React.FC = () => {
         });
         setQuizQuestions(resp.questions ?? []);
       } catch {
-        // console.error('[HandwritingPage] failed to fetch questions', e);
         setQuizQuestions([]);
       } finally {
         setLoadingQuestions(false);
@@ -72,7 +71,7 @@ const HandwritingPage: React.FC = () => {
   if (!song || !song.geniusMetaData) {
     return <Typography variant="h5">Error: Song data is undefined or corrupted</Typography>;
   }
-  
+
   /* ───── 2.  Robust segmenter (fallback to 'en' if UNK/empty) ───── */
   const languageForSegmentation =
     song.geniusMetaData.language && song.geniusMetaData.language !== 'UNK'
@@ -87,14 +86,14 @@ const HandwritingPage: React.FC = () => {
     const segments = Array.from(segmenter.segment(text))
       .filter(segment => segment.isWordLike)
       .map(segment => segment.segment);
-    
+
     if (segments.length === 0) {return '';}
-    
-    return segments.reduce((longest, current) => 
+
+    return segments.reduce((longest, current) =>
       current.length > longest.length ? current : longest
     );
   };
-  
+
   /* ───── helper: pick a phrase even for AUDIO quizzes ───── */
   const extractPhrase = (q: QuizQuestionDto): string => {
     if (q.lyricPhrase && q.lyricPhrase.trim().length) {
@@ -107,7 +106,7 @@ const HandwritingPage: React.FC = () => {
   const wordsToPractice = quizQuestions
     .map(q => getLongestWord(extractPhrase(q)))
     .filter(word => word.length > 0);
-  
+
   /* guard: no usable words after extraction */
   if (wordsToPractice.length === 0) {
     return (
@@ -122,7 +121,7 @@ const HandwritingPage: React.FC = () => {
   if (allWordsCompleted) {
     setQuizCompleted(true);
   }
-  
+
   const handleWordCompletionAttempt = (isSuccess: boolean) => {
     if (isSuccess) {
       const newCompletedWords = [...new Set([...completedWords, currentWordIndex])];
@@ -184,7 +183,7 @@ const HandwritingPage: React.FC = () => {
         <Typography variant="h6" gutterBottom align="center">
           You practiced {completedWords.length} out of {wordsToPractice.length} words successfully.
         </Typography>
-        
+
         <Box sx={{ mt: 4, mb: 4 }}>
           <Typography variant="h6" gutterBottom>
             Completed Words:
@@ -192,10 +191,10 @@ const HandwritingPage: React.FC = () => {
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             {completedWordsList.length > 0 ? (
               completedWordsList.map((word, index) => (
-                <Chip 
-                  key={index} 
-                  label={word} 
-                  color="success" 
+                <Chip
+                  key={index}
+                  label={word}
+                  color="success"
                   variant="outlined"
                   sx={{ mb: 1 }}
                 />
@@ -209,16 +208,16 @@ const HandwritingPage: React.FC = () => {
         </Box>
 
         <Box textAlign="center" mt={4} display="flex" gap={2} justifyContent={'center'}>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             color="primary"
             onClick={resetQuiz}
             sx={{ mt: 2 }}
           >
             Practice Again
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             color="primary"
             onClick={handleBackToHome}
             sx={{ mt: 2 }}
@@ -247,27 +246,27 @@ const HandwritingPage: React.FC = () => {
             <Typography variant="h6" gutterBottom align="center">
               Current word: {currentWord}
             </Typography>
-            
+
             <Box className="handwriting-canvas-wrapper">
-              <HandwritingCanvas 
+              <HandwritingCanvas
                 ref={handwritingCanvasRef}
                 expectedText={currentWord}
                 selectedLanguage={song.geniusMetaData.language as LanguageCode}
                 onComplete={handleWordCompletionAttempt}
               />
             </Box>
-            
+
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 6, mt: 1 }}>
               {currentWordCompleted ? (
-                <Button 
-                  variant="contained" 
+                <Button
+                  variant="contained"
                   color="success"
                   onClick={moveToNextWord}
                 >
                   Next Word
                 </Button>
               ) : (
-                <Button 
+                <Button
                   variant="outlined"
                   color="error"
                   onClick={moveToNextWord}
@@ -275,8 +274,8 @@ const HandwritingPage: React.FC = () => {
                   Skip Word
                 </Button>
               )}
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 color="secondary"
                 onClick={completeQuiz}
               >
@@ -294,27 +293,27 @@ const HandwritingPage: React.FC = () => {
             </Typography>
             <List dense={true}>
               {wordsToPractice.map((word, index) => (
-                <ListItem 
+                <ListItem
                   key={index}
                   disablePadding
                   sx={{
                     mb: 0.5,
                     '& .MuiListItemButton-root': {
                       borderRadius: 1,
-                      backgroundColor: completedWords.includes(index) 
-                        ? 'success.light' 
-                        : currentWordIndex === index 
-                          ? 'action.selected' 
+                      backgroundColor: completedWords.includes(index)
+                        ? 'success.light'
+                        : currentWordIndex === index
+                          ? 'action.selected'
                           : 'transparent',
                       '&:hover': {
-                        backgroundColor: completedWords.includes(index) 
-                          ? 'success.light' 
+                        backgroundColor: completedWords.includes(index)
+                          ? 'success.light'
                           : 'action.hover',
                       }
                     }
                   }}
                 >
-                  <ListItemButton 
+                  <ListItemButton
                     onClick={() => handleWordSelect(index)}
                     selected={currentWordIndex === index}
                   >
