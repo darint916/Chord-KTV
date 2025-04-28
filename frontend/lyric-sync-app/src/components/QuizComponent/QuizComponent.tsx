@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
-import { quizApi } from '../../api/apiClient';
+import { quizApi, userActivityApi } from '../../api/apiClient';
 import { useSong } from '../../contexts/SongContext';
 import Quiz from 'react-quiz-component';
 import { useNavigate } from 'react-router-dom';
 import './QuizComponent.scss';
 import AudioSnippetPlayer from '../AudioSnippetPlayer/AudioSnippetPlayer';
 import { parseTimeSpan } from '../../utils/timeUtils';
-import type { QuizResponseDto } from '../../api/models';
+import type { QuizResponseDto, LanguageCode, UserQuizResultDto, QuizQuestionDto } from '../../api/models';
 
 interface QuizData {
   quizTitle: string;
@@ -30,6 +30,7 @@ interface QuizData {
 
 const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ songId, lyricsOffset = 0 }) => {
   const [quizData, setQuizData] = useState<QuizData | null>(null);
+  const [quizId, setQuizId] = useState<string>('');
   const { quizQuestions, setQuizQuestions, song } = useSong();
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,6 +66,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
       }
 
       setQuizQuestions(response.questions ?? []);
+      setQuizId((response as QuizResponseDto).quizId ?? (response as QuizResponseDto).id ?? '');
     } catch {
       // console.error('failed to fetch quiz', e);
       setQuizQuestions([]);
@@ -127,9 +129,49 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
     );
   }
 
-  const handleQuizComplete = () => {
+  const handleQuizComplete = async (quizResult: {numberOfCorrectAnswers?: number; score?: number; questionSummary?: Array<{answers: string[]; correctAnswer: string;}>;}) => {
     setQuizCompleted(true);
     setIsPlaying(false);
+
+    const score = quizResult.numberOfCorrectAnswers ?? quizResult.score ?? 0;
+
+    let correctAnswers: string[] = [];
+
+    if (Array.isArray(quizResult.questionSummary) && quizResult.questionSummary.length) {
+      correctAnswers = quizResult.questionSummary
+        .map((qs: { answers?: string[]; correctAnswer?: string }) => {
+          if (!qs.answers || qs.correctAnswer === null) {return '';}
+          const idx = Number(qs.correctAnswer) - 1;  
+          return qs.answers[idx] ?? '';
+        })
+        .filter((ans: string) => ans); 
+    }
+
+    // Fallback: derive from quizQuestions state.
+    if (correctAnswers.length === 0 && Array.isArray(quizQuestions)) {
+      correctAnswers = (quizQuestions as QuizQuestionDto[])
+        .map(q => {
+          const idx = q.correctOptionIndex ?? 0;
+          return q.options?.[idx] ?? q.correctAnswer ?? '';
+        })
+        .filter((ans): ans is string => !!ans);
+    }
+
+    const language: LanguageCode =
+      (song?.geniusMetaData?.language ?? 'UNK') as LanguageCode;
+
+    try {
+      await userActivityApi.apiUserActivityQuizPost({
+        userQuizResultDto: {
+          quizId,
+          score,
+          language,
+          correctAnswers,
+        } as UserQuizResultDto,
+      });
+    } catch {
+      // console.error('Failed to log quiz result', err);
+    }
   };
 
   const handleBackToHome = () => {

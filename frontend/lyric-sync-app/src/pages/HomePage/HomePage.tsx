@@ -66,13 +66,13 @@ const HomePage: React.FC = () => {
       // Set the queue with new songs
       setQueue(newQueue);
 
-      // Log playlist load in user activity (fire-and-forget)
+      // Log playlist
       try {
         await userActivityApi.apiUserActivityPlaylistPost({
           requestBody: { playlistUrl }
         });
-      } catch (err) {
-        console.error('Failed to log playlist activity', err);
+      } catch {
+        // console.error('Failed to log playlist activity', err);
       }
 
       // Immediately process the first song

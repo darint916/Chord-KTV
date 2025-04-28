@@ -83,21 +83,19 @@ const SongPlayerPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!song?.id) return;
+    if (!song?.id) {return;}
 
     (async () => {
       let currentFav = false;
 
-      // 1) Fetch the true favorite state
       try {
         const favs = await userActivityApi.apiUserActivityFavoriteSongsGet();
-        currentFav = favs.some((f: any) => f.songId === song.id);
+        currentFav = favs.some((f: { songId: string }) => f.songId === song.id);
         setIsFavorite(currentFav);
-      } catch (err) {
-        console.error('Failed to load favorite status', err);
+      } catch {
+        // console.error('Failed to load favorite status', err);
       }
 
-      // 2) Log the play event, *preserving* that favorite flag
       try {
         await userActivityApi.apiUserActivitySongPost({
           requestBody: {
@@ -105,8 +103,8 @@ const SongPlayerPage: React.FC = () => {
             isFavorite: currentFav
           }
         });
-      } catch (err) {
-        console.error('Failed to log song play', err);
+      } catch {
+        // console.error('Failed to log song play', err);
       }
     })();
   }, [song?.id]);
@@ -617,8 +615,8 @@ const SongPlayerPage: React.FC = () => {
         await userActivityApi.apiUserActivityPlaylistPost({
           requestBody: { playlistUrl }
         });
-      } catch (err) {
-        console.error('Failed to log playlist activity', err);
+      } catch {
+        // console.error('Failed to log playlist activity', err);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load playlist';
@@ -758,9 +756,9 @@ const SongPlayerPage: React.FC = () => {
   }
 `;
 
-  // Toggle favorite & call the PATCH endpoint
+  // Toggle favorite
   const handleToggleFavorite = async () => {
-    if (!song?.id) return;
+    if (!song?.id) {return;}
     setFavLoading(true);
     try {
       await userActivityApi.apiUserActivityFavoriteSongPatch({
@@ -770,8 +768,8 @@ const SongPlayerPage: React.FC = () => {
         }
       });
       setIsFavorite(prev => !prev);
-    } catch (error) {
-      console.error('Failed to toggle favorite', error);
+    } catch {
+      // console.error('Failed to toggle favorite', error);
     } finally {
       setFavLoading(false);
     }
