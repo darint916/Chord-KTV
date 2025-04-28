@@ -14,18 +14,23 @@ export interface MediaItem {
   title: string;
   coverUrl: string;
   plays?: number; 
+  isEmptyState?: boolean;
 }
 
 interface MediaCarouselProps {
   title: string;
   items: MediaItem[];
   emptyStateMessage?: string; // Optional message for empty state
+  onItemClick?: (_item: MediaItem, _index: number) => void;
+  fadeColor?: string;
 }
 
 const MediaCarousel: React.FC<MediaCarouselProps> = ({ 
   title, 
   items,
-  emptyStateMessage = 'Nothing here yet!'
+  emptyStateMessage = 'Nothing here yet!',
+  onItemClick,
+  fadeColor,
 }) => {
   // Add state and ref for scroll tracking
   const [scrollPercentage, setScrollPercentage] = React.useState(0);
@@ -101,7 +106,13 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
               }}
               elevation={m.isEmptyState ? 1 : 3}
             >
-              <CardActionArea sx={{ p: 0 }} disabled={m.isEmptyState}>
+              <CardActionArea
+                sx={{ p: 0 }}
+                disabled={m.isEmptyState}
+                onClick={() =>
+                  !m.isEmptyState && onItemClick?.(m, index)
+                }
+              >
                 {m.coverUrl ? (
                   <CardMedia
                     component="img"
@@ -163,7 +174,7 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
             bottom: 0,
             left: 0,
             width: theme.spacing(30), // 50 * 8px = 400px
-            background: `linear-gradient(to left, transparent, ${theme.palette.background.default})`,
+            background: `linear-gradient(to left, transparent, ${fadeColor || theme.palette.background.default})`,
             opacity: scrollPercentage, // Increases as we scroll right
           })}
         />
@@ -177,7 +188,7 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
             bottom: 0,
             right: 0,
             width: theme.spacing(30), // 50 * 8px = 400px
-            background: `linear-gradient(to right, transparent, ${theme.palette.background.default})`,
+            background: `linear-gradient(to right, transparent, ${fadeColor || theme.palette.background.default})`,
             opacity: 1 - scrollPercentage, // Decreases as we scroll right
           })}
         />

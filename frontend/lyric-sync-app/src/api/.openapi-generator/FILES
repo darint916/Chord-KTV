@@ -9,8 +9,11 @@ models/Album.ts
 models/AuthResponseDto.ts
 models/FullSongRequestDto.ts
 models/FullSongResponseDto.ts
+models/GeniusAlbumDto.ts
+models/GeniusHitDto.ts
 models/GeniusMetaData.ts
 models/GeniusMetaDataDto.ts
+models/GeniusResultDto.ts
 models/HandwritingCanvasRequestDto.ts
 models/HandwritingCanvasResponseDto.ts
 models/LanguageCode.ts
