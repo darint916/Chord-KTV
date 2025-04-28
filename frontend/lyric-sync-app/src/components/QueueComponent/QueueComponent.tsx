@@ -41,8 +41,9 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
   };
 
   const handleShuffle = () => {
-    for (let i = queue.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+    const currIdx = queue.findIndex(item => item.queueId === currentPlayingId);
+    for (let i = currIdx + 1; i < queue.length - 1; i++) {
+      const j = Math.floor(Math.random() * (queue.length - i)) + i;
       [queue[i], queue[j]] = [queue[j], queue[i]];
     }
     setQueue([...queue]);
