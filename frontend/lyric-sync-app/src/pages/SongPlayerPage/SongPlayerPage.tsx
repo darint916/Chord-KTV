@@ -588,7 +588,7 @@ const SongPlayerPage: React.FC = () => {
         <Grid container className="song-player-content">
           <Grid size={6} alignContent={'center'} className='grid-parent'>
             <YouTubePlayer
-              videoId={activeVideoId}
+              videoId={instrumental && currentQueueItem?.ktvYouTubeId ? currentQueueItem.ktvYouTubeId : song.youTubeId ?? ''}
               onReady={(playerInstance) => {
                 updatePlayerTime(playerInstance);
                 if (lastTimestamp > 0) {
