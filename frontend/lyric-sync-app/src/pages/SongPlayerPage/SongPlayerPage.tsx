@@ -697,7 +697,7 @@ const SongPlayerPage: React.FC = () => {
                   </Grid>
                   <Grid size={3} className="lyric-set-offset">
                     <TextField
-                      label="Lyric Offset"
+                      label="Offset"
                       type="number"
                       size="small"
                       value={lyricsOffset}

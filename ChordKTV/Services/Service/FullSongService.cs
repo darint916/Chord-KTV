@@ -189,7 +189,7 @@ public class FullSongService : IFullSongService
                 if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics)) //recheck if we still dont find it with candidate list
                 {
                     _logger.LogWarning("PostGPT Attempt: Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}", title, artist, duration);
-                    return _mapper.Map<FullSongResponseDto>(song); //return empty song
+                    return null; //no song found
                 }
             }
 

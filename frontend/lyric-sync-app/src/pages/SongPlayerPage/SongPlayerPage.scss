@@ -213,7 +213,7 @@
     display: flex;
     height: 100%;
   }
-  
+
 }
 
 
@@ -226,12 +226,12 @@
     display: flex;
     align-items: center;
     margin: 0 auto;
-    
+
     &.Mui-selected {
       background-color: rgba(27, 177, 32, 0.6);
       font-weight: bold;
       color: white;
-      
+
       &:hover {
         background-color: rgba(87, 199, 90, 0.5);
       }
