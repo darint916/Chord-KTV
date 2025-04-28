@@ -30,7 +30,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("auth/google")]
-    [ProducesResponseType(typeof(User), 200)]
+    [ProducesResponseType(typeof(AuthResponseDto), 200)]
     [ProducesResponseType(401)]
     [ProducesResponseType(500)]
     public async Task<IActionResult> AuthenticateGoogle([FromHeader] string authorization)
