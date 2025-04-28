@@ -161,7 +161,26 @@ public class FullSongService : IFullSongService
 
                 if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics))
                 {
-                    _logger.LogWarning("Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Album:'{AlbumName}' Duration: {Duration}", song.Title, song.Artist, song.Albums.FirstOrDefault()?.Name, songDuration);
+                    if (videoDetails is null) //candidate search off genius params if no video (with video is caught later)
+                    { //works only if we have genius hit
+                        candidateSongInfoList ??= await _chatGptService.GetCandidateSongInfosAsync(song.Title, song.Artist);
+                        foreach (CandidateSongInfo candidate in candidateSongInfoList.Candidates)
+                        {
+                            _logger.LogInformation("Genius Found: Testing Candidate for LRC Lib: '{Title}' by '{Artist}'", candidate.Title, candidate.Artist);
+                            lrcLyricsDto = await _lrcService.GetAllLrcLibLyricsAsync(candidate.Title, candidate.Artist, null, songDuration);
+                            if (lrcLyricsDto is not null && !string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics))
+                            {
+                                title = candidate.Title;
+                                artist = candidate.Artist;
+                                break;
+                            }
+                        }
+                        if (lrcLyricsDto is null || string.IsNullOrWhiteSpace(lrcLyricsDto.SyncedLyrics)) //recheck if we still dont find it with candidate list
+                        {
+                            _logger.LogWarning("Genius PostGPT Attempt: Failed to get lyrics from LRC lib for '{Title}' by '{Artist}', Duration: {Duration}", title, artist, duration);
+                            return null; //no song found
+                        }
+                    }
                 }
                 else
                 {
