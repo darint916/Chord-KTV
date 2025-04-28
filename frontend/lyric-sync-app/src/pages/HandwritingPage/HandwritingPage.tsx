@@ -39,13 +39,13 @@ const HandwritingPage: React.FC = () => {
     const effectiveSongId =
       urlSongId || (song?.id && song.id.trim() !== '' ? song.id : null);
 
-    if (!effectiveSongId) {return;}               // nothing to fetch with
-    if (quizQuestions && quizQuestions.length) {return;} // already loaded
+    if (!effectiveSongId) { return; }               // nothing to fetch with
+    if (quizQuestions && quizQuestions.length) { return; } // already loaded
 
     (async () => {
       try {
         setLoadingQuestions(true);
-        const resp = await quizApi.apiQuizRomanizationGet({
+        const resp = await quizApi.apiQuizRomanizationPost({
           songId: effectiveSongId,
         });
         setQuizQuestions(resp.questions ?? []);
@@ -72,7 +72,15 @@ const HandwritingPage: React.FC = () => {
     return <Typography variant="h5">Error: Song data is undefined or corrupted</Typography>;
   }
 
-  const segmenter = new Intl.Segmenter(song.geniusMetaData.language, { granularity: 'word' });
+  /* ───── 2.  Robust segmenter (fallback to 'en' if UNK/empty) ───── */
+  const languageForSegmentation =
+    song.geniusMetaData.language && song.geniusMetaData.language !== 'UNK'
+      ? song.geniusMetaData.language
+      : 'en';
+
+  const segmenter = new Intl.Segmenter(languageForSegmentation, {
+    granularity: 'word',
+  });
 
   const getLongestWord = (text: string): string => {
     const segments = Array.from(segmenter.segment(text))
@@ -80,17 +88,34 @@ const HandwritingPage: React.FC = () => {
       .map(segment => segment.segment)
       .filter(segment => !/[A-Za-z]/.test(segment));
 
-    if (segments.length === 0) {return '';}
+    if (segments.length === 0) { return ''; }
 
     return segments.reduce((longest, current) =>
       current.length > longest.length ? current : longest
     );
   };
 
+  /* ───── helper: pick a phrase even for AUDIO quizzes ───── */
+  const extractPhrase = (q: QuizQuestionDto): string => {
+    if (q.lyricPhrase && q.lyricPhrase.trim().length) {
+      return q.lyricPhrase;
+    }
+    const idx = q.correctOptionIndex ?? 0;
+    return q.options?.[idx] ?? '';
+  };
+
   const wordsToPractice = quizQuestions
-    .map(q => getLongestWord(q.lyricPhrase ?? ''))
+    .map(q => getLongestWord(extractPhrase(q)))
     .filter(word => word.length > 0);
 
+  /* guard: no usable words after extraction */
+  if (wordsToPractice.length === 0) {
+    return (
+      <Typography variant="h5">
+        Error: Could not extract practice words from the quiz data.
+      </Typography>
+    );
+  }
   const currentWord = wordsToPractice[currentWordIndex % wordsToPractice.length];
   const allWordsCompleted = completedWords.length >= wordsToPractice.length;
   if (allWordsCompleted) {
