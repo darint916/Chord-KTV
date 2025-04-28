@@ -1,5 +1,5 @@
 import React from 'react';
-import { Paper, Typography, Divider, Box, Button, IconButton } from '@mui/material';
+import { Paper, Typography, Divider, Box, Button, IconButton, ToggleButton } from '@mui/material';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import DraggableQueueItem from '../../components/DraggableQueueItem/DraggableQueueItem';
@@ -16,6 +16,8 @@ interface QueueComponentProps {
   setQueue: React.Dispatch<React.SetStateAction<QueueItem[]>>;
   setCurrentPlayingId: React.Dispatch<React.SetStateAction<string | null>>;
   handlePlayFromQueue: (_item: QueueItem) => Promise<void>;
+  autoPlayEnabled: boolean;
+  setAutoPlayEnabled: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const QueueComponent: React.FC<QueueComponentProps> = ({
@@ -23,7 +25,9 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
   currentPlayingId,
   setQueue,
   setCurrentPlayingId,
-  handlePlayFromQueue
+  autoPlayEnabled,
+  handlePlayFromQueue,
+  setAutoPlayEnabled,
 }) => {
 
   const moveQueueItem = (dragIndex: number, hoverIndex: number) => {
@@ -74,6 +78,9 @@ const QueueComponent: React.FC<QueueComponentProps> = ({
               ? `Queue (${queue.findIndex(item => item.queueId === currentPlayingId) + 1}/${queue.length})`
               : `Queue (${queue.length})`}
           </Typography>
+          <ToggleButton value="check" selected={autoPlayEnabled} onChange={() => setAutoPlayEnabled(prev => !prev)} className="autoplay-toggle">
+            AutoPlay
+          </ToggleButton>
           <IconButton
             onClick={handleShuffle}
             aria-label="shuffle queue"

@@ -72,35 +72,19 @@ const HandwritingPage: React.FC = () => {
     return <Typography variant="h5">Error: Song data is undefined or corrupted</Typography>;
   }
 
-  /* ───── 2.  Robust segmenter (fallback to 'en' if UNK/empty) ───── */
-  const languageForSegmentation =
-    song.geniusMetaData.language && song.geniusMetaData.language !== 'UNK'
-      ? song.geniusMetaData.language
-      : 'en';
-
-  const segmenter = new Intl.Segmenter(languageForSegmentation, {
-    granularity: 'word',
-  });
+  const segmenter = new Intl.Segmenter(song.geniusMetaData.language, { granularity: 'word' });
 
   const getLongestWord = (text: string): string => {
     const segments = Array.from(segmenter.segment(text))
       .filter(segment => segment.isWordLike)
-      .map(segment => segment.segment);
+      .map(segment => segment.segment)
+      .filter(segment => !/[A-Za-z]/.test(segment));
 
     if (segments.length === 0) {return '';}
 
     return segments.reduce((longest, current) =>
       current.length > longest.length ? current : longest
     );
-  };
-
-  /* ───── helper: pick a phrase even for AUDIO quizzes ───── */
-  const extractPhrase = (q: QuizQuestionDto): string => {
-    if (q.lyricPhrase && q.lyricPhrase.trim().length) {
-      return q.lyricPhrase;
-    }
-    const idx = q.correctOptionIndex ?? 0;
-    return q.options?.[idx] ?? '';
   };
 
   const wordsToPractice = quizQuestions
@@ -270,7 +254,7 @@ const HandwritingPage: React.FC = () => {
                 color="secondary"
                 onClick={completeQuiz}
               >
-               Complete Quiz
+                Complete Quiz
               </Button>
             </Box>
           </div>
