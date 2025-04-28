@@ -14,10 +14,10 @@ import QueueComponent from '../../components/QueueComponent/QueueComponent';
 import { songApi } from '../../api/apiClient';
 import { extractYouTubeVideoId, extractPlaylistId } from '../HomePage/HomePageHelpers';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
-import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import MuiInput from '@mui/material/Input';
+import AddIcon from '@mui/icons-material/Add';
 
 
 // Define the YouTubePlayer interface
@@ -345,7 +345,7 @@ const SongPlayerPage: React.FC = () => {
     setSelectedTab(newValue);
   };
 
-  const handleAddToNextAndPlay = async () => {
+  const handleAddToNext = async () => {
     await handleQueueAddition(true);
     setInstrumental(false); // Set KTV to unselected if new song
   };
@@ -391,9 +391,6 @@ const SongPlayerPage: React.FC = () => {
         }
       });
 
-      if (response) {
-        setSong(response);
-      }
       const newItem: QueueItem = {
         queueId: uuidv4(),
         status: 'loaded',
@@ -420,12 +417,6 @@ const SongPlayerPage: React.FC = () => {
         // Default: add to end
         return [...prev, newItem];
       });
-
-      // Auto-play if adding to next position
-      if (insertAfterCurrent) {
-        setCurrentPlayingId(newItem.queueId);
-        setSong(response);
-      }
 
       // Clear form
       setSongName('');
@@ -863,15 +854,15 @@ const SongPlayerPage: React.FC = () => {
                   )}
                 </Box>
                 <Box display="flex" flexDirection="column" gap={1}>
-                  <Tooltip title="Add next and play">
+                  <Tooltip title="Add to next in queue">
                     <IconButton
                       color="primary"
-                      onClick={handleAddToNextAndPlay}
+                      onClick={handleAddToNext}
                       disabled={isLoading}
                       className="queue-button"
                       size="large"
                     >
-                      <PlaylistPlayIcon fontSize="inherit" />
+                      <AddIcon fontSize="inherit" />
                     </IconButton>
                   </Tooltip>
 
@@ -945,7 +936,6 @@ const SongPlayerPage: React.FC = () => {
             />
           </Grid>
         </Grid>
-        {/* Search Section */}
       </Container>
     </div >
   );
