@@ -565,13 +565,6 @@ const SongPlayerPage: React.FC = () => {
   }
 `;
 
-  const activeVideoId = useMemo(() => {
-    if (instrumental && currentQueueItem?.ktvYouTubeId) {
-      return currentQueueItem.ktvYouTubeId;
-    }
-    return song.youTubeId ?? '';
-  }, [instrumental, currentQueueItem?.ktvYouTubeId, song.youTubeId]);
-
   return (
     <div className="song-player-page">
       <Container maxWidth="lg" className="song-player-container">
@@ -595,7 +588,7 @@ const SongPlayerPage: React.FC = () => {
         <Grid container className="song-player-content">
           <Grid size={6} alignContent={'center'} className='grid-parent'>
             <YouTubePlayer
-              videoId={activeVideoId}
+              videoId={instrumental && currentQueueItem?.ktvYouTubeId ? currentQueueItem.ktvYouTubeId : song.youTubeId ?? ''}
               onReady={(playerInstance) => {
                 updatePlayerTime(playerInstance);
                 if (lastTimestamp > 0) {
