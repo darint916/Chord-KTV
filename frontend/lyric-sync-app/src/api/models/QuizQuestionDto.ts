@@ -30,6 +30,18 @@ export interface QuizQuestionDto {
      * @type {string}
      * @memberof QuizQuestionDto
      */
+    startTimestamp?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof QuizQuestionDto
+     */
+    endTimestamp?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof QuizQuestionDto
+     */
     lyricPhrase?: string | null;
     /**
      * 
@@ -43,18 +55,6 @@ export interface QuizQuestionDto {
      * @memberof QuizQuestionDto
      */
     correctOptionIndex?: number | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof QuizQuestionDto
-     */
-    startTimestamp?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof QuizQuestionDto
-     */
-    endTimestamp?: string | null;
 }
 
 /**
@@ -75,11 +75,11 @@ export function QuizQuestionDtoFromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'questionNumber': json['questionNumber'] == null ? undefined : json['questionNumber'],
+        'startTimestamp': json['startTimestamp'] == null ? undefined : json['startTimestamp'],
+        'endTimestamp': json['endTimestamp'] == null ? undefined : json['endTimestamp'],
         'lyricPhrase': json['lyricPhrase'] == null ? undefined : json['lyricPhrase'],
         'options': json['options'] == null ? undefined : json['options'],
         'correctOptionIndex': json['correctOptionIndex'] == null ? undefined : json['correctOptionIndex'],
-        'startTimestamp': json['startTimestamp'] == null ? undefined : json['startTimestamp'],
-        'endTimestamp': json['endTimestamp'] == null ? undefined : json['endTimestamp'],
     };
 }
 
@@ -95,11 +95,11 @@ export function QuizQuestionDtoToJSONTyped(value?: QuizQuestionDto | null, ignor
     return {
         
         'questionNumber': value['questionNumber'],
+        'startTimestamp': value['startTimestamp'],
+        'endTimestamp': value['endTimestamp'],
         'lyricPhrase': value['lyricPhrase'],
         'options': value['options'],
         'correctOptionIndex': value['correctOptionIndex'],
-        'startTimestamp': value['startTimestamp'],
-        'endTimestamp': value['endTimestamp'],
     };
 }
 

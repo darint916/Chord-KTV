@@ -49,6 +49,30 @@ export interface UserSongActivityDto {
      * @memberof UserSongActivityDto
      */
     dateFavorited?: Date | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserSongActivityDto
+     */
+    title?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserSongActivityDto
+     */
+    artist?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserSongActivityDto
+     */
+    geniusThumbnailUrl?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserSongActivityDto
+     */
+    youtubeThumbnailUrl?: string | null;
 }
 
 /**
@@ -73,6 +97,10 @@ export function UserSongActivityDtoFromJSONTyped(json: any, ignoreDiscriminator:
         'datesPlayed': json['datesPlayed'] == null ? undefined : json['datesPlayed'],
         'lastPlayed': json['lastPlayed'] == null ? undefined : (new Date(json['lastPlayed'])),
         'dateFavorited': json['dateFavorited'] == null ? undefined : (new Date(json['dateFavorited'])),
+        'title': json['title'] == null ? undefined : json['title'],
+        'artist': json['artist'] == null ? undefined : json['artist'],
+        'geniusThumbnailUrl': json['geniusThumbnailUrl'] == null ? undefined : json['geniusThumbnailUrl'],
+        'youtubeThumbnailUrl': json['youtubeThumbnailUrl'] == null ? undefined : json['youtubeThumbnailUrl'],
     };
 }
 
@@ -91,7 +119,11 @@ export function UserSongActivityDtoToJSONTyped(value?: UserSongActivityDto | nul
         'isFavorite': value['isFavorite'],
         'datesPlayed': value['datesPlayed'],
         'lastPlayed': value['lastPlayed'] == null ? undefined : ((value['lastPlayed']).toISOString()),
-        'dateFavorited': value['dateFavorited'] == null ? undefined : ((value['dateFavorited'] as any).toISOString()),
+        'dateFavorited': value['dateFavorited'] === null ? null : ((value['dateFavorited'] as any)?.toISOString()),
+        'title': value['title'],
+        'artist': value['artist'],
+        'geniusThumbnailUrl': value['geniusThumbnailUrl'],
+        'youtubeThumbnailUrl': value['youtubeThumbnailUrl'],
     };
 }
 
