@@ -15,6 +15,7 @@ using ChordKTV.Utils;
 using ChordKTV.Services.Api;
 using ChordKTV.Utils.Extensions;
 using ChordKTV.Data.Api.QuizData;
+using ChordKTV.Services.Service;
 
 namespace ChordKTV.Controllers;
 
@@ -30,7 +31,7 @@ public class UserActivityController : Controller
     private readonly IUserContextService _userContextService;
     private readonly ISongRepo _songRepo;
     private readonly IQuizRepo _quizRepo;
-
+    private readonly IYouTubeClientService _youtubeClientService;
     public UserActivityController(
         IUserActivityRepo activityRepo,
         IUserRepo userRepo,
@@ -38,7 +39,9 @@ public class UserActivityController : Controller
         IMapper mapper,
         IUserContextService userContextService,
         ISongRepo songRepo,
-        IQuizRepo quizRepo)
+        IQuizRepo quizRepo,
+        IYouTubeClientService youTubeClientService
+        )
     {
         _activityRepo = activityRepo;
         _userRepo = userRepo;
@@ -47,6 +50,7 @@ public class UserActivityController : Controller
         _userContextService = userContextService;
         _songRepo = songRepo;
         _quizRepo = quizRepo;
+        _youtubeClientService = youTubeClientService;
     }
 
     [HttpPost("playlist")]
@@ -60,9 +64,9 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            if (string.IsNullOrWhiteSpace(dto.PlaylistUrl) || !UrlValidationUtils.PlaylistUrlRegex().IsMatch(dto.PlaylistUrl))
+            if (string.IsNullOrWhiteSpace(dto.PlaylistId))
             {
-                return BadRequest(new { message = "Invalid playlist URL." });
+                return BadRequest(new { message = "Invalid playlist Id." });
             }
 
             UserPlaylistActivity activity = _mapper.Map<UserPlaylistActivity>(dto);
@@ -294,17 +298,28 @@ public class UserActivityController : Controller
                 return Unauthorized(new { message = "User not found" });
             }
 
-            if (string.IsNullOrWhiteSpace(dto.PlaylistUrl) || !UrlValidationUtils.PlaylistUrlRegex().IsMatch(dto.PlaylistUrl))
+            if (string.IsNullOrWhiteSpace(dto.PlaylistId))
             {
                 return BadRequest(new { message = "Invalid playlist URL." });
             }
-
-            UserPlaylistActivity activity = _mapper.Map<UserPlaylistActivity>(dto);
-            activity.UserId = user.Id;
-
-            await _activityRepo.UpsertPlaylistActivityAsync(activity, isPlayEvent: false);
-
-            return Ok(new { message = dto.IsFavorite ? "Playlist favorited" : "Playlist unfavorited" });
+            UserPlaylistActivity? userPlaylistActivity = await _activityRepo.GetUserPlaylistActivityAsync(user.Id, dto.PlaylistId); //TODO: use playlist id not url
+            if (userPlaylistActivity is null)
+            {
+                PlaylistDetailsDto? playlistDetailsDto = await _youtubeClientService.GetPlaylistDetailsAsync(dto.PlaylistId, false, true);
+                if (playlistDetailsDto is null)
+                {
+                    return NotFound(new { message = "Playlist not found." });
+                }
+                await _activityRepo.InsertPlaylistActivityAsync(user.Id, dto.IsFavorite, dto.PlaylistId, playlistDetailsDto.PlaylistThumbnailUrl ?? "");
+                return CreatedAtAction(nameof(GetUserPlaylistActivities), new { id = dto.PlaylistId }, new { message = dto.IsFavorite ? "Playlist favorited" : "Playlist unfavorited" });
+            }
+            else
+            { //TODO migrate this to service
+                userPlaylistActivity.IsFavorite = dto.IsFavorite;
+                userPlaylistActivity.DateFavorited = dto.IsFavorite ? DateTime.UtcNow : null;
+                await _activityRepo.SaveChangesAsync();
+                return Ok(new { message = dto.IsFavorite ? "Playlist favorited" : "Playlist unfavorited" });
+            }
         }
         catch (Exception ex)
         {

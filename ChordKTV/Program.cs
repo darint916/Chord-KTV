@@ -80,7 +80,7 @@ builder.Services.AddScoped<IGeniusMetaDataRepo, GeniusMetaDataRepo>();
 builder.Services.AddScoped<IYoutubeSongRepo, YoutubeSongRepo>();
 
 //scoped services
-builder.Services.AddScoped<IYouTubeClientService, YouTubeApiClientService>();
+builder.Services.AddScoped<IYouTubeClientService, YouTubeClientService>();
 builder.Services.AddScoped<IHandwritingService, HandwritingService>();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IQuizService, QuizService>();

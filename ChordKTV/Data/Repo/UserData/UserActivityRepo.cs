@@ -169,10 +169,10 @@ public class UserActivityRepo : IUserActivityRepo
     }
 
     // Playlist Activity Methods
-    public async Task<UserPlaylistActivity?> GetUserPlaylistActivityAsync(Guid userId, string playlistUrl)
+    public async Task<UserPlaylistActivity?> GetUserPlaylistActivityAsync(Guid userId, string playlistId)
     {
         return await _context.UserPlaylistActivities
-            .FirstOrDefaultAsync(x => x.UserId == userId && x.PlaylistUrl == playlistUrl);
+            .FirstOrDefaultAsync(x => x.UserId == userId && x.PlaylistId == playlistId);
     }
 
     public async Task<IEnumerable<UserPlaylistActivity>> GetUserPlaylistActivitiesAsync(Guid userId)
@@ -182,10 +182,24 @@ public class UserActivityRepo : IUserActivityRepo
             .OrderByDescending(x => x.LastPlayed)
             .ToListAsync();
     }
-
+    public async Task InsertPlaylistActivityAsync(Guid userId, bool isFavorite, string playlistId, string playlistThumbnailUrl)
+    {
+        var activity = new UserPlaylistActivity //TODO: make this the arg of this function and move this logic to service
+        {
+            PlaylistId = playlistId,
+            PlaylistThumbnailUrl = playlistThumbnailUrl,
+            UserId = userId,
+            DateFavorited = isFavorite ? DateTime.UtcNow : null,
+            LastPlayed = DateTime.UtcNow,
+            IsFavorite = isFavorite,
+            DatesPlayed = [DateTime.UtcNow]
+        };
+        await _context.UserPlaylistActivities.AddAsync(activity);
+        await _context.SaveChangesAsync();
+    }
     public async Task UpsertPlaylistActivityAsync(UserPlaylistActivity activity, bool isPlayEvent = true)
     {
-        UserPlaylistActivity? existing = await GetUserPlaylistActivityAsync(activity.UserId, activity.PlaylistUrl);
+        UserPlaylistActivity? existing = await GetUserPlaylistActivityAsync(activity.UserId, activity.PlaylistId);
 
         if (existing == null)
         {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class UserPlaylistActivityDto
 {
-    public string PlaylistUrl { get; set; } = string.Empty;
+    public string PlaylistId { get; set; } = string.Empty;
     public required string PlaylistThumbnailUrl { get; set; }
     public List<DateTime> DatesPlayed { get; set; } = new List<DateTime>();
     public DateTime LastPlayed { get; set; }
