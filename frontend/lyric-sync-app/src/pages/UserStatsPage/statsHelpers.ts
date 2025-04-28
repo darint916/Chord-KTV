@@ -46,7 +46,7 @@ export const getMergedQuizResults = <
     }))
     .concat(
       handwriting.map((q) => ({
-        ...(q as Q),
+        ...(q as unknown as Q),
         quizType: 'handwriting',
       }))
     )

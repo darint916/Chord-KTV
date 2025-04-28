@@ -37,11 +37,6 @@ const dashboardTheme = createTheme({
         },
       },
     },
-    MuiFocusVisible: {
-      styleOverrides: {
-        root: { outline: '2px dashed #0052CC !important' },
-      },
-    },
   },
 });
 
