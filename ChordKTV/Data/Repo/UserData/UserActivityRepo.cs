@@ -126,12 +126,11 @@ public class UserActivityRepo : IUserActivityRepo
             activity.LastPlayed = now;
         }
 
-        if (activity.IsFavorite == isFavorite)
+        if (activity.IsFavorite != isFavorite)
         {
-            return;
+            activity.IsFavorite = isFavorite;
+            activity.DateFavorited = isFavorite ? DateTime.UtcNow : null;
         }
-        activity.IsFavorite = isFavorite;
-        activity.DateFavorited = isFavorite ? DateTime.UtcNow : null;
         await _context.SaveChangesAsync();
     }
     public async Task SaveChangesAsync()
