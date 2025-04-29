@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Paper } from '@mui/material';
-import styles from './KpiStrip.module.scss';
+import styles from './KPIStrip.module.scss';
 
 interface Kpi {
   label: string;
