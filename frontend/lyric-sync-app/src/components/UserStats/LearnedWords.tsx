@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { getLanguageColor } from '../../utils/languageColorUtils';
 import styles from './LearnedWords.module.scss';
+import { LearnedWordDto } from '../../api';
 
 interface WordDto {
   word: string;
@@ -18,7 +19,7 @@ interface WordDto {
 }
 
 interface LearnedWordsProps {
-  recent: WordDto[];
+  recent: LearnedWordDto[];
 }
 
 const LearnedWords: React.FC<LearnedWordsProps> = ({ recent }) => {
@@ -61,7 +62,7 @@ const LearnedWords: React.FC<LearnedWordsProps> = ({ recent }) => {
             </MenuItem>
             {uniqueLanguages.map((lang) => (
               <MenuItem key={lang} value={lang}>
-                {lang.toUpperCase()}
+                {(lang ?? 'UNK').toUpperCase()}
               </MenuItem>
             ))}
           </Select>
@@ -77,11 +78,12 @@ const LearnedWords: React.FC<LearnedWordsProps> = ({ recent }) => {
         <Box className={styles.scrollContainer}>
           <Box className={styles.chipRow}>
             {filteredWords.map((w) => {
-              const langColorProps = getLanguageColor(w.language);
+              const lang = w.language ?? 'UNK';
+              const langColorProps = getLanguageColor(lang);
               return (
                 <Chip
                   key={`${w.word}-${w.language}`}
-                  label={`${w.word} · ${w.language.toUpperCase()}`}
+                  label={`${w.word} · ${lang.toUpperCase()}`}
                   sx={{ fontWeight: 500, ...langColorProps }}
                 />
               );
