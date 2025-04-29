@@ -20,6 +20,7 @@ import MuiInput from '@mui/material/Input';
 import AddIcon from '@mui/icons-material/Add';
 import GeniusHitsCarousel from '../../components/GeniusHitsCarousel/GeniusHitsCarousel';
 import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
+import { GeniusHit } from '../../api';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -50,7 +51,7 @@ const SongPlayerPage: React.FC = () => {
   const [minLyricOffset, setMinLyricOffset] = useState<number>(-1);
   const [maxLyricOffset, setMaxLyricOffset] = useState<number>(1);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(false);
-  const [geniusHits, setGeniusHits] = useState<GeniusHitDto[]>([]);
+  const [geniusHits, setGeniusHits] = useState<GeniusHit[]>([]);
   const [isAddingToNext, setIsAddingToNext] = useState(true);
   const {
     song,
@@ -458,8 +459,12 @@ const SongPlayerPage: React.FC = () => {
     }
   };
 
-  const handleResultSelect = async (hitDto: GeniusHitDto) => {
+  const handleResultSelect = async (hitDto: GeniusHit) => {
     const hit = hitDto.result;
+    if (!hit) {
+      setError('Selected song is missing details.');
+      return;
+    }
     const title = hit.title ?? '';
     const artist =
       (hit as { primaryArtistNames?: string; primary_artist_names?: string }).primaryArtistNames ||
@@ -486,7 +491,7 @@ const SongPlayerPage: React.FC = () => {
         youTubeId: response.youTubeId ?? '',
         lyrics: '',
         status: 'loaded',
-        imageUrl: response.geniusMetaData?.songImageUrl ?? hit.song_art_image_url ?? hit.header_image_url ?? '',
+        imageUrl: response.geniusMetaData?.songImageUrl ?? hit.songArtImageUrl ?? hit.headerImageUrl ?? '',
       };
 
       // Insert into queue
