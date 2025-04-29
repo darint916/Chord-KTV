@@ -1,5 +1,4 @@
 /* tslint:disable */
-/* eslint-disable */
 export * from './Album';
 export * from './AuthResponseDto';
 export * from './FullSongRequestDto';
