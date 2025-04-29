@@ -2,6 +2,9 @@
   position: relative;
   overflow: hidden;
   padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .sectionTitle {
@@ -15,6 +18,7 @@
 }
 
 .scrollContainer {
+  flex: 1;
   overflow-y: auto;
   height: 504px; // 7 * 72px, matches the TSX
   padding-right: 8px;

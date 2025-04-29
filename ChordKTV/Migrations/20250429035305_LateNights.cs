@@ -1,3 +1,5 @@
+#pragma warning disable CA1861, IDE0300
+
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -8,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ChordKTV.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class LateNights : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -177,7 +179,8 @@ namespace ChordKTV.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    PlaylistUrl = table.Column<string>(type: "text", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    PlaylistId = table.Column<string>(type: "text", nullable: false),
                     PlaylistThumbnailUrl = table.Column<string>(type: "text", nullable: false),
                     DatesPlayed = table.Column<List<DateTime>>(type: "timestamp with time zone[]", nullable: false),
                     LastPlayed = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -328,7 +331,7 @@ namespace ChordKTV.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_QuizOptions_QuestionId_OrderIndex",
                 table: "QuizOptions",
-                columns: ["QuestionId", "OrderIndex"],
+                columns: new[] { "QuestionId", "OrderIndex" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -424,3 +427,5 @@ namespace ChordKTV.Migrations
         }
     }
 }
+
+#pragma warning restore CA1861, IDE0300

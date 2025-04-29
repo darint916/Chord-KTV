@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ChordKTV.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250428211907_Init")]
-    partial class Init
+    [Migration("20250429035305_LateNights")]
+    partial class LateNights
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -115,11 +115,15 @@ namespace ChordKTV.Migrations
                     b.Property<DateTime>("LastPlayed")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("PlaylistId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("PlaylistThumbnailUrl")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("PlaylistUrl")
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");
 

@@ -93,6 +93,8 @@ public class UserActivityRepo : IUserActivityRepo
     {
         return await _context.UserSongActivities
             .Where(x => x.UserId == userId)
+            .Include(x => x.Song)
+            .ThenInclude(s => s.GeniusMetaData)
             .OrderByDescending(x => x.LastPlayed)
             .ToListAsync();
     }
