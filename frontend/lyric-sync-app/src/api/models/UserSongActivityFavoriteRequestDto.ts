@@ -31,6 +31,12 @@ export interface UserSongActivityFavoriteRequestDto {
      * @memberof UserSongActivityFavoriteRequestDto
      */
     isFavorite?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof UserSongActivityFavoriteRequestDto
+     */
+    isPlayed?: boolean;
 }
 
 /**
@@ -52,6 +58,7 @@ export function UserSongActivityFavoriteRequestDtoFromJSONTyped(json: any, ignor
         
         'songId': json['songId'] == null ? undefined : json['songId'],
         'isFavorite': json['isFavorite'] == null ? undefined : json['isFavorite'],
+        'isPlayed': json['isPlayed'] == null ? undefined : json['isPlayed'],
     };
 }
 
@@ -68,6 +75,7 @@ export function UserSongActivityFavoriteRequestDtoToJSONTyped(value?: UserSongAc
         
         'songId': value['songId'],
         'isFavorite': value['isFavorite'],
+        'isPlayed': value['isPlayed'],
     };
 }
 

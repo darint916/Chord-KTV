@@ -13,7 +13,7 @@ using ChordKTV.Dtos;
 using ChordKTV.Services.Api;
 using ChordKTV.Utils.Extensions;
 using ChordKTV.Data.Api.QuizData;
-
+using System;
 namespace ChordKTV.Controllers;
 
 [ApiController]
@@ -277,7 +277,7 @@ public class UserActivityController : Controller
             }
             else //update existing fav
             {
-                await _activityRepo.UpdateSongActivityFavoriteAsync(userSongActivity, dto.IsFavorite);
+                await _activityRepo.UpdateSongActivityFavoriteAsync(userSongActivity, dto.IsFavorite, dto.IsPlayed);
                 return Ok(new { message = dto.IsFavorite ? "Song favorited" : "Song unfavorited" });
             }
         }
@@ -347,6 +347,12 @@ public class UserActivityController : Controller
             { //TODO migrate this to service
                 userPlaylistActivity.IsFavorite = dto.IsFavorite;
                 userPlaylistActivity.DateFavorited = dto.IsFavorite ? DateTime.UtcNow : null;
+                if (dto.IsPlayed)
+                {
+                    DateTime now = DateTime.UtcNow;
+                    userPlaylistActivity.DatesPlayed.Add(now);
+                    userPlaylistActivity.LastPlayed = now;
+                }
                 await _activityRepo.SaveChangesAsync();
                 return Ok(new { message = dto.IsFavorite ? "Playlist favorited" : "Playlist unfavorited" });
             }

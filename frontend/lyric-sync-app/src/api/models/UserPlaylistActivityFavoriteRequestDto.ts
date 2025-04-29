@@ -31,6 +31,12 @@ export interface UserPlaylistActivityFavoriteRequestDto {
      * @memberof UserPlaylistActivityFavoriteRequestDto
      */
     isFavorite?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof UserPlaylistActivityFavoriteRequestDto
+     */
+    isPlayed?: boolean;
 }
 
 /**
@@ -52,6 +58,7 @@ export function UserPlaylistActivityFavoriteRequestDtoFromJSONTyped(json: any, i
         
         'playlistId': json['playlistId'] == null ? undefined : json['playlistId'],
         'isFavorite': json['isFavorite'] == null ? undefined : json['isFavorite'],
+        'isPlayed': json['isPlayed'] == null ? undefined : json['isPlayed'],
     };
 }
 
@@ -68,6 +75,7 @@ export function UserPlaylistActivityFavoriteRequestDtoToJSONTyped(value?: UserPl
         
         'playlistId': value['playlistId'],
         'isFavorite': value['isFavorite'],
+        'isPlayed': value['isPlayed'],
     };
 }
 
