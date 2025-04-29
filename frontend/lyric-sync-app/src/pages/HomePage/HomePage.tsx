@@ -20,7 +20,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
 import { extractYouTubeVideoId, extractPlaylistId } from './HomePageHelpers';
 import GeniusHitsCarousel from '../../components/GeniusHitsCarousel/GeniusHitsCarousel';
-import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
+import type { GeniusHit } from '../../api';
 
 const HomePage: React.FC = () => {
   const [songName, setSongName] = useState('');
@@ -33,7 +33,7 @@ const HomePage: React.FC = () => {
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [lyrics, setLyrics] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [geniusHits, setGeniusHits] = useState<GeniusHitDto[]>([]);
+  const [geniusHits, setGeniusHits] = useState<GeniusHit[]>([]);
 
   const handleLoadPlaylist = async () => {
     if (!playlistUrl.trim()) {
@@ -193,8 +193,12 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const handleResultSelect = async (hitDto: GeniusHitDto) => {
+  const handleResultSelect = async (hitDto: GeniusHit) => {
     const hit = hitDto.result;
+    if (!hit) {
+      setError('Selected song is missing details.');
+      return;
+    }
     const title = hit.title ?? '';
     const artist =
       (hit as { primaryArtistNames?: string; primary_artist_names?: string }).primaryArtistNames ||
@@ -227,8 +231,8 @@ const HomePage: React.FC = () => {
         status: 'loaded',
         imageUrl:
           response.geniusMetaData?.songImageUrl ??
-          hit.song_art_image_url ??
-          hit.header_image_url ??
+          hit.songArtImageUrl ??
+          hit.headerImageUrl ??
           '',
       };
 
