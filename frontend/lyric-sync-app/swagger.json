@@ -3635,6 +3635,9 @@
           },
           "isFavorite": {
             "type": "boolean"
+          },
+          "isPlayed": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -3794,6 +3797,9 @@
             "format": "uuid"
           },
           "isFavorite": {
+            "type": "boolean"
+          },
+          "isPlayed": {
             "type": "boolean"
           }
         },
