@@ -144,11 +144,16 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
     setIsPlaying(p => !p);
   };
 
+  if (!quizQuestions || !quizQuestions[currentQuestionIndex]) {
+    return <Typography variant="h5">Invalid quiz state. Please try again.</Typography>;
+  }
+
+
   // log on every render what the computed timestamps are
   const rawStart = parseTimeSpan(quizQuestions[currentQuestionIndex]?.startTimestamp);
-  const rawEnd   = parseTimeSpan(quizQuestions[currentQuestionIndex]?.endTimestamp);
+  const rawEnd = parseTimeSpan(quizQuestions[currentQuestionIndex]?.endTimestamp);
   const startSec = Math.max(0, rawStart - lyricsOffset);
-  const endSec   = Math.max(startSec, rawEnd - lyricsOffset); // keep non-negative & ordered
+  const endSec = Math.max(startSec, rawEnd - lyricsOffset); // keep non-negative & ordered
 
   const videoId =
     song?.youTubeId ??
@@ -203,7 +208,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
       {quizCompleted && (
         <Box marginTop={2}>
           <Button variant="contained" color="primary" onClick={handleBackToHome}>
-              Back to Home
+            Back to Home
           </Button>
         </Box>
       )}

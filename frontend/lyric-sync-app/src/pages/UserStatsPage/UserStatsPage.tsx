@@ -14,52 +14,16 @@ import { MediaItem } from '../../components/UserStats/MediaCarousel';
 import { getTopAggregatedItems, safeFetch, getMergedQuizResults } from './statsHelpers';
 import styles from './UserStatsPage.module.scss';
 import KpiStrip from '../../components/UserStats/KPIStrip';
-
-/* DTOs */
-interface SongActivityDto {
-  songId: string;
-  title: string;
-  coverUrl: string;
-  isFavorite: boolean;
-  datesPlayed: string[];
-}
-
-interface PlaylistActivityDto {
-  playlistUrl: string;
-  title: string;
-  coverUrl: string;
-  isFavorite: boolean;
-  datesPlayed: string[];
-}
-
-interface UserQuizResultDto {
-  quizId: string;
-  score: number;
-  language: string;
-  dateCompleted?: string | null;
-}
-
-interface UserHandwritingResultDto {
-  wordTested: string;
-  language: string;
-  score: number;
-  dateCompleted?: string | null;
-}
-
-interface LearnedWordDto {
-  word: string;
-  language: string;
-  dateLearned?: string | null;
-}
+import { UserSongActivityDto, UserPlaylistActivityDto, UserQuizResultDto, UserHandwritingResultDto, LearnedWordDto } from '../../api';
 
 const UserStatsPage: React.FC = () => {
   const { user, logout } = useAuth();
 
   /* state */
-  const [songs, setSongs] = useState<SongActivityDto[]>([]);
-  const [playlists, setPlaylists] = useState<PlaylistActivityDto[]>([]);
-  const [favoriteSongs, setFavoriteSongs] = useState<SongActivityDto[]>([]);
-  const [favoritePlaylists, setFavoritePlaylists] = useState<PlaylistActivityDto[]>([]);
+  const [songs, setSongs] = useState<UserSongActivityDto[]>([]);
+  const [playlists, setPlaylists] = useState<UserPlaylistActivityDto[]>([]);
+  const [favoriteSongs, setFavoriteSongs] = useState<UserSongActivityDto[]>([]);
+  const [favoritePlaylists, setFavoritePlaylists] = useState<UserPlaylistActivityDto[]>([]);
   const [quizzes, setQuizzes] = useState<UserQuizResultDto[]>([]);
   const [handwriting, setHandwriting] = useState<UserHandwritingResultDto[]>([]);
   const [words, setWords] = useState<LearnedWordDto[]>([]);
@@ -68,7 +32,7 @@ const UserStatsPage: React.FC = () => {
 
   /* data fetch */
   useEffect(() => {
-    if (!user) {return;}
+    if (!user) { return; }
     const ctrl = new AbortController();
     (async () => {
       try {
@@ -88,16 +52,16 @@ const UserStatsPage: React.FC = () => {
         setFavoritePlaylists(favP);
         setQuizzes(q.map(item => ({
           ...item,
-          quizId: item.quizId ?? '', // Ensure quizId is always a string
+          quizId: item.quizId ?? 'unknown-quiz', // Ensure quizId is always a string
           score: item.score ?? 0, // Ensure score is always a number
-          language: item.language ?? '', // Ensure language is always a string
-          dateCompleted: item.dateCompleted ? new Date(item.dateCompleted).toISOString() : null, // Convert Date to string
+          language: item.language ?? undefined, // Ensure language is always a string
+          dateCompleted: item.dateCompleted ? new Date(item.dateCompleted) : null, // Convert Date to string
         })));
-        setWords(w.map(item => ({ 
-          ...item, 
-          word: item.word ?? '', 
-          language: item.language ?? '', 
-          dateLearned: item.dateLearned ? new Date(item.dateLearned).toISOString() : null 
+        setWords(w.map(item => ({
+          ...item,
+          word: item.word ?? '',
+          language: item.language ?? undefined,
+          dateLearned: item.dateLearned ? new Date(item.dateLearned) : null
         })));
         setHandwriting(h);
       } catch (e) {
@@ -112,7 +76,7 @@ const UserStatsPage: React.FC = () => {
 
   /* KPI numbers */
   const kpis = useMemo(() => {
-    const totalPlays = songs.reduce((acc, s) => acc + s.datesPlayed.length, 0);
+    const totalPlays = songs.reduce((acc, s) => acc + (s.datesPlayed?.length ?? 0), 0);
     return [
       { label: 'Unique Songs', value: new Set(songs.map((s) => s.songId)).size },
       { label: 'Song Plays', value: totalPlays },
@@ -139,10 +103,10 @@ const UserStatsPage: React.FC = () => {
   const favSongs: MediaItem[] = useMemo(
     () =>
       favoriteSongs.map(({ songId, datesPlayed }, index) => ({
-        id: songId,
-        title: songId, // use the song id as the title
+        id: songId ?? 'unknown-playlist',
+        title: songId ?? 'unknown-playlist', // use the song id as the title
         coverUrl: placeholderImages[index % placeholderImages.length], // assign a fake image
-        plays: datesPlayed.length,
+        plays: datesPlayed?.length ?? 0,
       })),
     [favoriteSongs],
   );
@@ -150,18 +114,18 @@ const UserStatsPage: React.FC = () => {
   // Compute carousel data for favorite playlists using the dedicated favoritePlaylists state
   const favPlaylists: MediaItem[] = useMemo(
     () =>
-      favoritePlaylists.map(({ playlistUrl, datesPlayed }, index) => ({
-        id: playlistUrl,
-        title: playlistUrl, // use the playlist url as the title
+      favoritePlaylists.map(({ playlistId, datesPlayed }, index) => ({
+        id: playlistId ?? 'unknown-playlist',
+        title: playlistId ?? 'unknown-playlist', // use the playlist url as the title
         coverUrl: placeholderImages[index % placeholderImages.length], // assign a fake image
-        plays: datesPlayed.length,
+        plays: datesPlayed?.length ?? 0,
       })),
     [favoritePlaylists],
   );
 
   /* top-3 lists */
   const topSongs = useMemo(() => {
-    return getTopAggregatedItems(songs, (s) => s.songId, (s) => s.datesPlayed.length, 7)
+    return getTopAggregatedItems(songs, (s) => s.songId ?? 'unknown-song', (s) => s.datesPlayed?.length ?? 0, 7)
       .map(({ id, plays }) => {
         const song = songs.find(s => s.songId === id);
         return { id, title: song?.title || id, plays };
@@ -169,7 +133,7 @@ const UserStatsPage: React.FC = () => {
   }, [songs]);
 
   const topPls = useMemo(() => {
-    return getTopAggregatedItems(playlists, (p) => p.playlistUrl, (p) => p.datesPlayed.length, 7);
+    return getTopAggregatedItems(playlists, (p) => p.playlistId ?? 'unknown-playlist', (p) => p.datesPlayed?.length ?? 0, 7);
   }, [playlists]);
 
   const recentWords = useMemo(
@@ -185,29 +149,45 @@ const UserStatsPage: React.FC = () => {
   );
 
   const quizzesForDisplay = useMemo(
-    () => getMergedQuizResults(quizzes, handwriting),
+    () =>
+      getMergedQuizResults(
+        quizzes.map((q) => ({ ...q, quizType: 'romanization' })), // <-- ADD QUIZTYPE
+        handwriting.map((h) => ({ ...h, quizType: 'handwriting' }))
+      ),
     [quizzes, handwriting]
   );
 
   /* guards */
-  if (!user)
-  {return (
-    <Box mt={6} textAlign="center">
-      <Typography sx={{ color: 'black' }}>Please log in to view your dashboard.</Typography>
-    </Box>
-  );}
-  if (loading)
-  {return (
-    <Box display="flex" justifyContent="center" mt={6}>
-      <CircularProgress />
-    </Box>
-  );}
-  if (error)
-  {return (
-    <Alert severity="error" sx={{ mt: 4 }}>
-      {error}
-    </Alert>
-  );}
+  if (!user) {
+    return (
+      <Box mt={6} textAlign="center">
+        <Typography sx={{ color: 'black' }}>Please log in to view your dashboard.</Typography>
+      </Box>
+    );
+  }
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" mt={6}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ mt: 4 }}>
+        {error}
+      </Alert>
+    );
+  }
+
+  // To fix typing build errors
+  const sanitizedQuizzes = quizzesForDisplay.map(q => ({
+    ...q,
+    quizId: q.quizId ?? 'unknown-quiz',
+    language: q.language ?? 'UNK',
+    score: q.score ?? 0,
+    dateCompleted: q.dateCompleted instanceof Date ? q.dateCompleted.toISOString() : q.dateCompleted ?? null,
+  }));
 
   /* render */
   return (
@@ -241,19 +221,19 @@ const UserStatsPage: React.FC = () => {
             alignItems="stretch"
             columns={12}
           >
-            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
-              <QuizResultsSection quizzes={quizzesForDisplay} />
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
+              <QuizResultsSection quizzes={sanitizedQuizzes} />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
               <TopSongsChart data={topSongs} />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
               <TopPlaylists data={topPls} />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex' }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
               <LearnedWords recent={recentWords} />
             </Grid>
           </Grid>

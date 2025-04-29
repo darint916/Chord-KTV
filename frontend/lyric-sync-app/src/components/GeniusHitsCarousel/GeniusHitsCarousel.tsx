@@ -1,11 +1,11 @@
 import React from 'react';
 import { Box, Button } from '@mui/material';
 import MediaCarousel, { MediaItem } from '../UserStats/MediaCarousel';
-import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
+import type { GeniusHit } from '../../api';
 
 export interface GeniusHitsCarouselProps {
-  hits: GeniusHitDto[];
-  onSelect: (_hit: GeniusHitDto) => void;
+  hits: GeniusHit[];
+  onSelect: (_hit: GeniusHit) => void;
   title?: string;
   fadeColor?: string;
   onMatchSearch?: () => void;
@@ -25,20 +25,31 @@ const GeniusHitsCarousel: React.FC<GeniusHitsCarouselProps> = ({
   const items: MediaItem[] = React.useMemo(
     () =>
       hits.map((h) => {
+        const result = h.result;
+        if (!result) {
+          return {
+            id: 'invalid',
+            title: 'Invalid result',
+            coverUrl: '',
+            isEmptyState: true,
+          };
+        }
+
         const coverUrl =
-          h.result.songArtImageUrl ||
-          h.result.headerImageUrl ||
-          // fallback names
-          (h.result as { song_art_image_url?: string; header_image_url?: string }).song_art_image_url ||
-          (h.result as { song_art_image_url?: string; header_image_url?: string }).header_image_url ||
+          result.songArtImageUrl ||
+          result.headerImageUrl ||
+          (result as { song_art_image_url?: string; header_image_url?: string }).song_art_image_url ||
+          (result as { song_art_image_url?: string; header_image_url?: string }).header_image_url ||
           '';
+
         const artistNames =
-          (h.result as { primaryArtistNames?: string; primary_artist_names?: string }).primaryArtistNames ||
-          (h.result as { primaryArtistNames?: string; primary_artist_names?: string }).primary_artist_names ||
+          (result as { primaryArtistNames?: string; primary_artist_names?: string }).primaryArtistNames ||
+          (result as { primaryArtistNames?: string; primary_artist_names?: string }).primary_artist_names ||
           '';
+
         return {
-          id: String(h.result.id),
-          title: h.result.title ?? '',
+          id: String(result.id ?? 'unknown'),
+          title: result.title ?? '',
           subtitle: artistNames,
           coverUrl,
         };
@@ -46,7 +57,7 @@ const GeniusHitsCarousel: React.FC<GeniusHitsCarouselProps> = ({
     [hits]
   );
 
-  if (items.length === 0) {return null;}
+  if (items.length === 0) { return null; }
 
   const handleItemClick = (_item: MediaItem, index: number) => {
     onSelect(hits[index]);

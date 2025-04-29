@@ -14,7 +14,7 @@ export interface MediaItem {
   title: string;
   subtitle?: string;
   coverUrl: string;
-  plays?: number; 
+  plays?: number;
   isEmptyState?: boolean;
 }
 
@@ -26,8 +26,8 @@ interface MediaCarouselProps {
   fadeColor?: string;
 }
 
-const MediaCarousel: React.FC<MediaCarouselProps> = ({ 
-  title, 
+const MediaCarousel: React.FC<MediaCarouselProps> = ({
+  title,
   items,
   emptyStateMessage = 'Nothing here yet!',
   onItemClick,
@@ -41,8 +41,10 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
   const displayItems = items.length > 0 ? items : Array(6).fill(null).map((_, index) => ({
     id: `empty-${index}`,
     title: index === 0 ? emptyStateMessage : '---',
-    coverUrl: '', 
+    coverUrl: '',
     isEmptyState: true, // Custom property to identify skeleton items
+    subtitle: undefined,
+    plays: undefined,
   }));
 
   // Handle scroll events to calculate the scroll percentage
@@ -53,7 +55,7 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
       const scrollWidth = container.scrollWidth;
       const clientWidth = container.clientWidth;
       const maxScrollLeft = scrollWidth - clientWidth;
-      
+
       // Calculate scroll percentage (0 to 1)
       const percentage = maxScrollLeft > 0 ? scrollLeft / maxScrollLeft : 0;
       setScrollPercentage(percentage);
@@ -135,7 +137,7 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
                       height: 160,
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center', 
+                      justifyContent: 'center',
                       bgcolor: 'grey.200',
                       borderTopLeftRadius: 8,
                       borderTopRightRadius: 8,
@@ -145,10 +147,10 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
                   </Box>
                 )}
                 <CardContent sx={{ py: 1, px: 1.5 }}>
-                  <Typography 
-                    variant="subtitle2" 
-                    noWrap 
-                    sx={{ 
+                  <Typography
+                    variant="subtitle2"
+                    noWrap
+                    sx={{
                       fontWeight: 600,
                       color: (m.isEmptyState && index !== 0) ? 'text.secondary' : 'text.primary'
                     }}
@@ -158,9 +160,9 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
 
                   {/* render artist/other subtitle if present */}
                   {m.subtitle && (
-                    <Typography 
-                      variant="caption" 
-                      color="text.secondary" 
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
                       noWrap
                     >
                       {m.subtitle}
