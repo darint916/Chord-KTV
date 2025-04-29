@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Button } from '@mui/material';
 import MediaCarousel, { MediaItem } from '../UserStats/MediaCarousel';
-import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
 import type { GeniusHit } from '../../api';
 
 export interface GeniusHitsCarouselProps {

@@ -14,52 +14,16 @@ import { MediaItem } from '../../components/UserStats/MediaCarousel';
 import { getTopAggregatedItems, safeFetch, getMergedQuizResults } from './statsHelpers';
 import styles from './UserStatsPage.module.scss';
 import KpiStrip from '../../components/UserStats/KPIStrip';
-
-/* DTOs */
-interface SongActivityDto {
-  songId: string;
-  title: string;
-  coverUrl: string;
-  isFavorite: boolean;
-  datesPlayed: string[];
-}
-
-interface PlaylistActivityDto {
-  playlistUrl: string;
-  title: string;
-  coverUrl: string;
-  isFavorite: boolean;
-  datesPlayed: string[];
-}
-
-interface UserQuizResultDto {
-  quizId: string;
-  score: number;
-  language: string;
-  dateCompleted?: string | null;
-}
-
-interface UserHandwritingResultDto {
-  wordTested: string;
-  language: string;
-  score: number;
-  dateCompleted?: string | null;
-}
-
-interface LearnedWordDto {
-  word: string;
-  language: string;
-  dateLearned?: string | null;
-}
+import { UserSongActivityDto, UserPlaylistActivityDto, UserQuizResultDto, UserHandwritingResultDto, LearnedWordDto } from '../../api';
 
 const UserStatsPage: React.FC = () => {
   const { user, logout } = useAuth();
 
   /* state */
-  const [songs, setSongs] = useState<SongActivityDto[]>([]);
-  const [playlists, setPlaylists] = useState<PlaylistActivityDto[]>([]);
-  const [favoriteSongs, setFavoriteSongs] = useState<SongActivityDto[]>([]);
-  const [favoritePlaylists, setFavoritePlaylists] = useState<PlaylistActivityDto[]>([]);
+  const [songs, setSongs] = useState<UserSongActivityDto[]>([]);
+  const [playlists, setPlaylists] = useState<UserPlaylistActivityDto[]>([]);
+  const [favoriteSongs, setFavoriteSongs] = useState<UserSongActivityDto[]>([]);
+  const [favoritePlaylists, setFavoritePlaylists] = useState<UserPlaylistActivityDto[]>([]);
   const [quizzes, setQuizzes] = useState<UserQuizResultDto[]>([]);
   const [handwriting, setHandwriting] = useState<UserHandwritingResultDto[]>([]);
   const [words, setWords] = useState<LearnedWordDto[]>([]);
@@ -90,14 +54,14 @@ const UserStatsPage: React.FC = () => {
           ...item,
           quizId: item.quizId ?? '', // Ensure quizId is always a string
           score: item.score ?? 0, // Ensure score is always a number
-          language: item.language ?? '', // Ensure language is always a string
-          dateCompleted: item.dateCompleted ? new Date(item.dateCompleted).toISOString() : null, // Convert Date to string
+          language: item.language ?? undefined, // Ensure language is always a string
+          dateCompleted: item.dateCompleted ? new Date(item.dateCompleted) : null, // Convert Date to string
         })));
         setWords(w.map(item => ({ 
           ...item, 
           word: item.word ?? '', 
-          language: item.language ?? '', 
-          dateLearned: item.dateLearned ? new Date(item.dateLearned).toISOString() : null 
+          language: item.language ?? undefined, 
+          dateLearned: item.dateLearned ? new Date(item.dateLearned) : null 
         })));
         setHandwriting(h);
       } catch (e) {
@@ -112,7 +76,7 @@ const UserStatsPage: React.FC = () => {
 
   /* KPI numbers */
   const kpis = useMemo(() => {
-    const totalPlays = songs.reduce((acc, s) => acc + s.datesPlayed.length, 0);
+    const totalPlays = songs.reduce((acc, s) => acc + (s.datesPlayed?.length ?? 0), 0);
     return [
       { label: 'Unique Songs', value: new Set(songs.map((s) => s.songId)).size },
       { label: 'Song Plays', value: totalPlays },
