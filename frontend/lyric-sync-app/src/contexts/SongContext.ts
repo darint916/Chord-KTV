@@ -15,7 +15,7 @@ export interface SongContextType {
   // setCurrentPlayingId: (_id: string | null) => void;
   setCurrentPlayingId: React.Dispatch<React.SetStateAction<string | null>>;
   lyricsOffset: number;
-  setLyricsOffset: () => void;
+  setLyricsOffset: React.Dispatch<React.SetStateAction<number>>;
 }
 
 // Create context
