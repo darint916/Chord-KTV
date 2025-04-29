@@ -85,7 +85,7 @@ export function LearnedWordDtoToJSONTyped(value?: LearnedWordDto | null, ignoreD
         
         'word': value['word'],
         'language': LanguageCodeToJSON(value['language']),
-        'dateLearned': value['dateLearned'] == null ? undefined : ((value['dateLearned'] as any).toISOString()),
+        'dateLearned': value['dateLearned'] === null ? null : ((value['dateLearned'] as any)?.toISOString()),
     };
 }
 

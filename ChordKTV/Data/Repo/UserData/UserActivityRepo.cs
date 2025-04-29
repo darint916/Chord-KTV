@@ -117,14 +117,20 @@ public class UserActivityRepo : IUserActivityRepo
         await _context.SaveChangesAsync();
     }
 
-    public async Task UpdateSongActivityFavoriteAsync(UserSongActivity activity, bool isFavorite)
+    public async Task UpdateSongActivityFavoriteAsync(UserSongActivity activity, bool isFavorite, bool isPlayed = false)
     {
-        if (activity.IsFavorite == isFavorite)
+        if (isPlayed)
         {
-            return;
+            DateTime now = DateTime.UtcNow;
+            activity.DatesPlayed.Add(now);
+            activity.LastPlayed = now;
         }
-        activity.IsFavorite = isFavorite;
-        activity.DateFavorited = isFavorite ? DateTime.UtcNow : null;
+
+        if (activity.IsFavorite != isFavorite)
+        {
+            activity.IsFavorite = isFavorite;
+            activity.DateFavorited = isFavorite ? DateTime.UtcNow : null;
+        }
         await _context.SaveChangesAsync();
     }
     public async Task SaveChangesAsync()
@@ -185,16 +191,17 @@ public class UserActivityRepo : IUserActivityRepo
     }
     public async Task InsertPlaylistActivityAsync(Guid userId, bool isFavorite, string playlistId, string playlistThumbnailUrl, string playlistTitle)
     {
+        DateTime now = DateTime.UtcNow; //stays consistent
         var activity = new UserPlaylistActivity //TODO: make this the arg of this function and move this logic to service
         {
             PlaylistId = playlistId,
             Title = playlistTitle,
             PlaylistThumbnailUrl = playlistThumbnailUrl,
             UserId = userId,
-            DateFavorited = isFavorite ? DateTime.UtcNow : null,
-            LastPlayed = DateTime.UtcNow,
+            DateFavorited = isFavorite ? now : null,
+            LastPlayed = now,
             IsFavorite = isFavorite,
-            DatesPlayed = [DateTime.UtcNow]
+            DatesPlayed = [now]
         };
         await _context.UserPlaylistActivities.AddAsync(activity);
         await _context.SaveChangesAsync();
