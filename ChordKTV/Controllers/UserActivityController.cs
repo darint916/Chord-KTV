@@ -187,22 +187,13 @@ public class UserActivityController : Controller
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetUserSongActivities()
     {
-        try
-        {
-            User? user = await _userContextService.GetCurrentUserAsync();
-            if (user is null)
-            {
-                return Unauthorized(new { message = "User not found" });
-            }
+        User? user = await _userContextService.GetCurrentUserAsync();
+        if (user == null)
+        { return Unauthorized(); }
 
-            IEnumerable<UserSongActivity> songActivities = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
-            return Ok(_mapper.Map<IEnumerable<UserSongActivityDto>>(songActivities));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving song activities");
-            return StatusCode(500, new { message = "An unexpected error occurred." });
-        }
+        IEnumerable<UserSongActivity> activities = await _activityRepo.GetUserSongActivitiesAsync(user.Id);
+        IEnumerable<UserSongActivityDto> dtos = _mapper.Map<IEnumerable<UserSongActivityDto>>(activities);
+        return Ok(dtos);
     }
 
     [HttpPost("handwriting")]
