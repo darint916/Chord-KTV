@@ -46,7 +46,9 @@ const HandwritingPage: React.FC = () => {
       try {
         setLoadingQuestions(true);
         const resp = await quizApi.apiQuizRomanizationPost({
-          songId: effectiveSongId,
+          quizRequestDto: {
+            songId: effectiveSongId,
+          }
         });
         setQuizQuestions(resp.questions ?? []);
       } catch {
