@@ -19,7 +19,6 @@ import SkipNextIcon from '@mui/icons-material/SkipNext';
 import MuiInput from '@mui/material/Input';
 import AddIcon from '@mui/icons-material/Add';
 import GeniusHitsCarousel from '../../components/GeniusHitsCarousel/GeniusHitsCarousel';
-import type { GeniusHitDto } from '../../api/models/GeniusHitDto';
 import { GeniusHit } from '../../api';
 
 // Define the YouTubePlayer interface

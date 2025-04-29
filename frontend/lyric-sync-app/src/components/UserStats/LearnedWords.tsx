@@ -13,11 +13,6 @@ import { getLanguageColor } from '../../utils/languageColorUtils';
 import styles from './LearnedWords.module.scss';
 import { LearnedWordDto } from '../../api';
 
-interface WordDto {
-  word: string;
-  language: string;
-}
-
 interface LearnedWordsProps {
   recent: LearnedWordDto[];
 }
