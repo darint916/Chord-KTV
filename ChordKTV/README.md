@@ -62,189 +62,256 @@ dotnet ef migrations add <migration name>
 dotnet ef database update
 ```
 
-## API Documentation
+## Google Cloud for Handwriting Recognition Setup
+
+Make sure that you have gcloud CLI installed. Run ```gcloud auth application-default login``` before running the backend.
+This is a necessary step, since there is no way to pass API key into function call for Google Cloud Vision API.
+
 
 ### Authentication
 
 Some endpoints may require authentication. The API provides a Google authentication endpoint: ```POST /api/auth/google```
 Call with Google JWT Bearer token to enable access to endpoints that require authentication.
+Note : User Activity Endpoints require auth. 
 
-### Lyrics
+# ChordKTV API Documentation
 
-#### ```GET /api/lyrics/lrc/search```
+This document outlines the REST API endpoints available in the ChordKTV application. The API provides functionality for handwriting recognition, quiz generation, song data management, and user activity tracking.
 
-Returns time-synced lyrics from LRCLIB. Attempts to retrieve both original and romanized lyrics if they exist.
-We use both of LRCLIB's endpoints (https://lrclib.net/docs), performing an exact match (if at least title and artist exists), and then also a fuzzier search function. Exact searches from most strict parameters to least strict. For the batch search, it sends api requests in parallel from most strict to least (20 entries max each call), along with key word extraction. Post processing involves sorting by fuzzy matching the title and artist and duration. 
-When finding romanized lyrics, it does a more strict artist filter search, to match full words with the artist to try to get a very accurate match on the artist names.
+## Table of Contents
+- [Authentication](#authentication)
+- [Handwriting Recognition](#handwriting-recognition)
+- [Quiz](#quiz)
+- [Songs](#songs)
+- [User Activity](#user-activity)
 
-**Query Parameters**:
+## Authentication
 
-- title (string): Song title
+### Google Authentication
+```
+POST /api/auth/google
+```
 
-- artist (string): Song artist
+Authenticates a user with a Google ID token.
 
-- albumName (string): Album name
-
-- duration (number): Song duration in seconds
+**Headers:**
+- `Authorization`: Bearer {Google ID token}
 
 **Response:**
-
-- 200 OK: Search results
-
-#### ```POST /api/lyrics/lrc/translation```
-
-Translates lyrics between languages.
-
-**Request Body** (application/json):
 ```json
 {
-  "originalLyrics": "string",
-  "languageCode": "LanguageCode",
-  "romanize": true,
-  "translate": true
+  "user": {
+    "id": "uuid",
+    "name": "string",
+    "email": "string"
+  },
+  "token": "string"
+}
+```
+
+**Status Codes:**
+- `200 OK`: Authentication successful
+- `401 Unauthorized`: Authentication failed
+- `500 Internal Server Error`: Server error
+
+## Handwriting Recognition
+
+### Recognize Handwritten Text
+```
+POST /api/handwriting/ocr
+```
+
+Recognizes text from a handwritten image.
+
+**Request Body:**
+```json
+{
+  "image": "string", // base64 encoded image data
+  "language": "enum", // LanguageCode (e.g., "EN", "JP", "KO")
+  "expectedMatch": "string" // Optional, for verification
 }
 ```
 
 **Response:**
+```json
+{
+  "recognizedText": "string",
+  "matchPercentage": 0.0
+}
+```
 
-- 200 OK: Search results
+**Status Codes:**
+- `200 OK`: Recognition successful
+- `400 Bad Request`: Invalid image data or parameters
+- `500 Internal Server Error`: Server error
 
-### Songs
+## Quiz
 
-#### ```POST /api/songs/match```
+### Generate Romanization Quiz
+```
+POST /api/quiz/romanization
+```
 
-Searches for songs with comprehensive details.
+Generates a quiz focused on romanization of lyrics.
 
-**Request Body** (application/json):
+**Request Body:**
+```json
+{
+  "songId": "uuid",
+  "useCachedQuiz": false,
+  "difficulty": 1, // Integer between 1-5
+  "numQuestions": 5 // Integer between 1-20
+}
+```
+
+**Response:**
+```json
+{
+  "quizId": "uuid",
+  "songId": "uuid",
+  "difficulty": 0,
+  "timestamp": "2023-01-01T00:00:00Z",
+  "questions": [
+    {
+      "questionNumber": 0,
+      "startTimestamp": "string",
+      "endTimestamp": "string",
+      "lyricPhrase": "string",
+      "options": ["string"],
+      "correctOptionIndex": 0
+    }
+  ]
+}
+```
+
+**Status Codes:**
+- `200 OK`: Quiz generated successfully
+- `400 Bad Request`: Invalid parameters
+- `404 Not Found`: Song not found
+- `500 Internal Server Error`: Server error
+
+### Generate Audio Quiz
+```
+POST /api/quiz/audio
+```
+
+Generates a quiz focused on audio recognition.
+
+**Request Body & Response:** Same as romanization quiz
+
+## Songs
+
+### Get YouTube Playlist
+```
+GET /api/youtube/playlists/{playlistId}
+```
+
+Retrieves details of a YouTube playlist.
+
+**Parameters:**
+- `playlistId`: YouTube playlist ID
+- `shuffle` (query, optional): Shuffle the videos (default: false)
+
+**Response:**
+```json
+{
+  "playlistTitle": "string",
+  "videos": [
+    {
+      "title": "string",
+      "artist": "string",
+      "url": "string",
+      "duration": "string"
+    }
+  ],
+  "playlistThumbnailUrl": "string"
+}
+```
+
+### Get LRC Lyrics
+```
+GET /api/lyrics/lrc/match
+```
+
+Retrieves synchronized lyrics in LRC format.
+
+**Parameters:**
+- `title` (query): Song title
+- `artist` (query): Artist name
+- `albumName` (query): Album name
+- `duration` (query): Song duration in seconds
+
+**Response:**
+```json
+{
+  "id": 0,
+  "romanizedId": 0,
+  "name": "string",
+  "trackName": "string",
+  "artistName": "string",
+  "albumName": "string",
+  "duration": 0.0,
+  "instrumental": false,
+  "plainLyrics": "string",
+  "syncedLyrics": "string",
+  "romanizedPlainLyrics": "string",
+  "romanizedSyncedLyrics": "string",
+  "alternateTitles": ["string"],
+  "alternateArtists": ["string"],
+  "titleMatchScores": {
+    "lrcExactMatch": false,
+    "lrcRomanizedScore": 0,
+    "lrcOriginalScore": 0,
+    "lrcInputParamScore": 0
+  },
+  "artistMatchScores": {
+    "lrcExactMatch": false,
+    "lrcRomanizedScore": 0,
+    "lrcOriginalScore": 0,
+    "lrcInputParamScore": 0
+  }
+}
+```
+
+### Translate Lyrics
+```
+POST /api/lyrics/lrc/translation
+```
+
+Translates lyrics using ChatGPT.
+
+**Request Body:**
+```json
+{
+  "originalLyrics": "string",
+  "languageCode": "enum", // LanguageCode
+  "romanize": false,
+  "translate": false
+}
+```
+
+**Response:** Same as LRC Lyrics response
+
+### Get Full Song Information
+```
+POST /api/songs/match
+```
+
+Retrieves complete song information by matching title, artist, and lyrics.
+
+**Request Body:**
 ```json
 {
   "title": "string",
   "artist": "string",
   "album": "string",
-  "duration": "date-span",
+  "duration": "string",
   "lyrics": "string",
   "youTubeId": "string"
 }
 ```
-**Response:**
-
-- 200 OK: Returns song details
-
-    ```json
-    {
-        "id": "uuid",
-        "title": "string",
-        "alternateTitles": ["string"],
-        "artist": "string",
-        "featuredArtists": ["string"],
-        "albumNames": ["string"],
-        "releaseDate": "date",
-        "duration": "date-span",
-        "genre": "string",
-        "plainLyrics": "string",
-        "lrcLyrics": "string",
-        "lrcRomanizedLyrics": "string",
-        "lrcTranslatedLyrics": "string",
-        "youTubeId": "string",
-        "alternateYoutubeIds": ["string"],
-        "geniusMetaData": {
-            "geniusId": 0,
-            "headerImageUrl": "string",
-            "songImageUrl": "string",
-            "language": "LanguageCode"
-        },
-        "titleMatchScores": {
-            "lrcExactMatch": true,
-            "lrcRomanizedScore": 0,
-            "lrcOriginalScore": 0,
-            "lrcInputParamScore": 0
-        },
-        "artistMatchScores": {
-            "lrcExactMatch": true,
-            "lrcRomanizedScore": 0,
-            "lrcOriginalScore": 0,
-            "lrcInputParamScore": 0
-        }
-    }
-    ```
-- 404 Not Found: Song not found
-
-- 500 Internal Server Error: Server error
-
-- 503 Service Unavailable: Service unavailable
-
-#### ```GET /api/songs/genius/search```
-
-Searches for lyrics on Genius.
-
-**Query Parameters**:
-
-- title (string): Song title
-
-- artist (string): Song artist
-
-- lyrics (string): Lyrics text
-
-- forceRefresh (boolean, default=false): Force refresh cached results
 
 **Response:**
-
-- 200 OK: Search results
-
-#### ```POST /api/songs/genius/search/batch```
-
-Performs batch search for lyrics on Genius.
-
-**Query Parameters:**
-
-- forceRefresh (boolean, default=false): Force refresh cached results
-
-**Response:**
-
-- 200 OK: Batch search results
-
-### Album
-
-#### ```GET /api/album/{albumName}```
-
-Retrieves details about an album.
-
-**Path Parameters:**
-
-- albumName (string): Album name
-
-**Query Parameters:**
-
-- artist (string): Artist name
-
-**Response:**
-
-- 200 OK: Album details
-
-### Database Operations
-
-#### ```GET /api/database/song```
-
-Retrieves song details from the database.
-
-**Query Parameters:**
-
-- title (string, required): Song title
-
-- artist (string, required): Song artist
-
-- albumName (string): Album name
-
-**Response:**
-
-- 200 OK: Song details
-
-#### ```POST /api/database/song```
-
-Adds a song to the database.
-
-**Request Body** (application/json):
-
 ```json
 {
   "id": "uuid",
@@ -252,169 +319,232 @@ Adds a song to the database.
   "alternateTitles": ["string"],
   "artist": "string",
   "featuredArtists": ["string"],
-  "albums": [
-    {
-      "id": "uuid",
-      "isSingle": true,
-      "name": "string",
-      "artist": "string",
-      "songs": [Song]
-    }
-  ],
-  "releaseDate": "date",
+  "albumNames": ["string"],
+  "releaseDate": "2023-01-01",
+  "duration": "string",
   "genre": "string",
-  "duration": "date-span",
   "plainLyrics": "string",
   "lrcLyrics": "string",
   "lrcRomanizedLyrics": "string",
   "lrcTranslatedLyrics": "string",
-  "lrcId": 0,
-  "romLrcId": 0,
-  "youtubeId": "string",
+  "youTubeId": "string",
   "alternateYoutubeIds": ["string"],
   "geniusMetaData": {
     "geniusId": 0,
     "headerImageUrl": "string",
-    "headerImageThumbnailUrl": "string",
     "songImageUrl": "string",
-    "songImageThumbnailUrl": "string",
-    "language": "LanguageCode"
-  }
+    "language": "enum" // LanguageCode
+  },
+  "titleMatchScores": {},
+  "artistMatchScores": {}
 }
 ```
 
+### Get Songs by Album
+```
+GET /api/album/{albumName}
+```
+
+Retrieves songs from a specific album.
+
+**Parameters:**
+- `albumName`: Album name
+- `artist` (query, optional): Artist name
+
 **Response:**
-
-- 200 OK: Song added successfully
-
-#### ```GET /api/database/users/{email}```
-
-Retrieves user details from the database.
-
-**Path Parameters:**
-
-- email (string): User email address
-
-**Response:**
-
-- 200 OK: User details
-
-### Handwriting Recognition
-
-#### ```POST /api/handwriting/ocr```
-
-Recognizes handwritten text from an image.
-
-**Request Body** (application/json):
-
 ```json
-{
-  "image": "string",
-  "language": "LanguageCode",
-  "expectedMatch": "string"
-}
+[
+  {
+    "id": "uuid",
+    "title": "string",
+    // Other song properties...
+  }
+]
 ```
 
-**Response:**
+### Search Genius
+```
+GET /api/songs/genius/search
+```
 
-- 200 OK: Returns recognition results
-    ```json
-    {
-        "recognizedText": "string",
-        "matchPercentage": 0.0
-    }
-    ```
-- 400 Bad Request: Invalid input
+Searches for songs using the Genius API.
 
-- 500 Internal Server Error: Server error
-
-### Quiz
-
-#### GET /api/quiz/romanization
-
-Generates a quiz for romanizing song lyrics.
-
-**Query Parameters:**
-
-- songId (string, uuid): ID of the song
-
-- useCachedQuiz (boolean, default=false): Use cached quiz if available
-
-- difficulty (integer, default=3): Difficulty level
-
-- numQuestions (integer, default=5): Number of questions
+**Parameters:**
+- `searchQuery` (query, required): Search query
 
 **Response:**
-
-- 200 OK: Returns quiz questions
-    ```json
-    {
-        "quizId": "uuid",
-        "songId": "uuid",
-        "difficulty": 0,
-        "timestamp": "date-time",
-        "questions": [
-            {
-            "questionNumber": 0,
-            "lyricPhrase": "string",
-            "options": ["string"],
-            "correctOptionIndex": 0
-            }
-        ]
+```json
+[
+  {
+    "result": {
+      "id": 0,
+      "title": "string",
+      "header_image_url": "string",
+      "song_art_image_url": "string",
+      "primary_artist_names": "string",
+      "album": {
+        "name": "string"
+      }
     }
-    ```
-- 400 Bad Request: Invalid parameters
+  }
+]
+```
 
-- 404 Not Found: Song not found
+### Find Instrumental Version
+```
+PUT /api/songs/{songId}/video/instrumental
+```
 
-- 500 Internal Server Error: Server error
+Finds an instrumental YouTube video for a song.
 
-### YouTube Playlists
+**Parameters:**
+- `songId`: UUID of the song
 
-#### ```GET /api/youtube/playlists/{playlistId}```
-
-Retrieves details about a YouTube playlist.
-
-**Path Parameters:**
-
-- playlistId (string): YouTube playlist ID
-
-**Query Parameters:**
-
-- shuffle (boolean, default=false): Shuffle the playlist order
-
-**Response:**
-
-- 200 OK: Returns playlist details
-    ```json
-    {
-        "playlistTitle": "string",
-        "videos": [
-            {
-            "title": "string",
-            "artist": "string",
-            "url": "string",
-            "duration": "date-span"
-            }
-        ]
-    }
-    ```
-- 500 Internal Server Error: Server error
+**Response:** YouTube ID as string
 
 ### Health Check
+```
+GET /api/health
+```
 
-#### ```GET /api/health```
-
-Checks the health status of the service.
+Checks if the Song API is operational.
 
 **Response:**
+```json
+{
+  "message": "Song API is healthy."
+}
+```
 
-- 200 OK: Service is healthy
+## User Activity
 
-## Google Cloud for Handwriting Recognition Setup
+### Add Playlist Activity
+```
+POST /api/user/activity/playlist
+```
 
-Make sure that you have gcloud CLI installed. Run ```gcloud auth application-default login``` before running the backend.
-This is a necessary step, since there is no way to pass API key into function call for Google Cloud Vision API.
+Records a user's interaction with a playlist.
+
+**Request Body:**
+```json
+{
+  "playlistId": "string",
+  "playlistThumbnailUrl": "string",
+  "title": "string",
+  "datesPlayed": ["2023-01-01T00:00:00Z"],
+  "lastPlayed": "2023-01-01T00:00:00Z",
+  "isFavorite": false,
+  "dateFavorited": "2023-01-01T00:00:00Z"
+}
+```
+
+**Authentication Required:** Yes
+
+### Add Quiz Result
+```
+POST /api/user/activity/quiz
+```
+
+Records a user's quiz result.
+
+**Request Body:**
+```json
+{
+  "quizId": "uuid",
+  "score": 0.0,
+  "language": "enum", // LanguageCode
+  "dateCompleted": "2023-01-01T00:00:00Z",
+  "correctAnswers": ["string"]
+}
+```
+
+**Authentication Required:** Yes
+
+### Add Song Activity
+```
+POST /api/user/activity/song
+```
+
+Records a user's interaction with a song.
+
+**Request Body:**
+```json
+{
+  "songId": "uuid",
+  "isFavorite": false,
+  "datesPlayed": ["2023-01-01T00:00:00Z"],
+  "lastPlayed": "2023-01-01T00:00:00Z",
+  "dateFavorited": "2023-01-01T00:00:00Z"
+}
+```
+
+**Authentication Required:** Yes
+
+### Toggle Favorite Song
+```
+PATCH /api/user/activity/favorite/song
+```
+
+Toggles a song's favorite status.
+
+**Request Body:**
+```json
+{
+  "songId": "uuid",
+  "isFavorite": true,
+  "isPlayed": false
+}
+```
+
+**Authentication Required:** Yes
+
+### Get Favorite Songs
+```
+GET /api/user/activity/favorite/songs
+```
+
+Retrieves user's favorite songs.
+
+**Authentication Required:** Yes
+
+## Common Data Types
+
+### LanguageCode Enum
+```
+UNK, AF, AR, BG, BN, CA, CS, DA, DE, EL, EN, ES, ET, FA, FI, FR, GU, 
+HE, HI, HR, HU, ID, IT, JA, KO, LT, LV, MS, NL, NO, PL, PT, RO, RU, 
+SK, SL, SR, SV, TA, TE, TH, TR, UK, VI, ZH
+```
+
+### Handwriting Canvas Request
+```json
+{
+  "image": "string", // base64 encoded image
+  "language": "LanguageCode",
+  "expectedMatch": "string" // optional
+}
+```
+
+### Quiz Request
+```json
+{
+  "songId": "uuid",
+  "useCachedQuiz": false,
+  "difficulty": 1, // 1-5
+  "numQuestions": 5 // 1-20
+}
+```
+
+### Authentication Considerations
+Most endpoints related to user activity require authentication. Include the JWT token in the Authorization header:
+```
+Authorization: Bearer {token}
+```
+
+---
+
+This is a general overview of the API. For more detailed information, refer to the API specification or contact the development team.
+
 
 ## License 📜📝⚖️
 This project is licensed under the [**MIT License**](LICENSE). 🎼🎵🎧
