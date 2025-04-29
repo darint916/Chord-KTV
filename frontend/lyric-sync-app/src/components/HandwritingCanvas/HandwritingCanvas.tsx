@@ -12,7 +12,7 @@ import './HandwritingCanvas.scss';
 interface HandwritingCanvasProps {
   expectedText: string;
   selectedLanguage: LanguageCode;
-  onComplete?: (_isSuccess: boolean) => void;
+  onComplete?: (_matchPercentage: number) => void;
 }
 
 const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, HandwritingCanvasProps>(
@@ -164,14 +164,14 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
 
         if (match === 100) {
           setFeedbackMessage('Good job!');
-          if (onComplete) { onComplete(true); }
+          if (onComplete) { onComplete(100); }
         } else {
           setFeedbackMessage(`Try again! Match: ${match}%`);
-          if (onComplete) { onComplete(false); }
+          if (onComplete) { onComplete(match); }
         }
       } catch {
         setFeedbackMessage('Error in recognition. Please try again.');
-        if (onComplete) { onComplete(false); }
+        if (onComplete) { onComplete(-1); }
       }
     };
 

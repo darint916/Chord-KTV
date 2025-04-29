@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSong } from '../../contexts/SongContext';
 import SearchIcon from '@mui/icons-material/Search';
 import './HomePage.scss';
-import { songApi } from '../../api/apiClient';
+import { songApi, userActivityApi } from '../../api/apiClient';
 import logo from '../../assets/chordktv.png';
 import { v4 as uuidv4 } from 'uuid';
 import { QueueItem } from '../../contexts/QueueTypes';
@@ -64,6 +64,19 @@ const HomePage: React.FC = () => {
 
       // Set the queue with new songs
       setQueue(newQueue);
+
+      // Log playlist
+      try {
+        await userActivityApi.apiUserActivityFavoritePlaylistPatch({
+          userPlaylistActivityFavoriteRequestDto: {
+            playlistId,
+            isPlayed: true,
+            isFavorite: true
+          }
+        });
+      } catch {
+        // console.error('Failed to log playlist activity', err);
+      }
 
       // Immediately process the first song
       const firstSong = newQueue[0];

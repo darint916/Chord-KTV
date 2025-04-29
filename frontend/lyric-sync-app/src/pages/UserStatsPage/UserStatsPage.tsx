@@ -102,11 +102,15 @@ const UserStatsPage: React.FC = () => {
   // Compute carousel data for favorite songs using the dedicated favoriteSongs state
   const favSongs: MediaItem[] = useMemo(
     () =>
-      favoriteSongs.map(({ songId, datesPlayed }, index) => ({
-        id: songId ?? 'unknown-playlist',
-        title: songId ?? 'unknown-playlist', // use the song id as the title
-        coverUrl: placeholderImages[index % placeholderImages.length], // assign a fake image
-        plays: datesPlayed?.length ?? 0,
+      favoriteSongs.map(({ songId, title, artist, geniusThumbnailUrl }, index) => ({
+        id: songId ?? 'unknown-song',
+        title: title ?? songId ?? 'Unknown Song',
+        subtitle: artist ?? undefined,
+        coverUrl:
+          geniusThumbnailUrl && geniusThumbnailUrl !== ''
+            ? geniusThumbnailUrl
+            : placeholderImages[index % placeholderImages.length],
+        // Do not set "plays" so that the play count is not rendered for songs
       })),
     [favoriteSongs],
   );
@@ -114,12 +118,18 @@ const UserStatsPage: React.FC = () => {
   // Compute carousel data for favorite playlists using the dedicated favoritePlaylists state
   const favPlaylists: MediaItem[] = useMemo(
     () =>
-      favoritePlaylists.map(({ playlistId, datesPlayed }, index) => ({
-        id: playlistId ?? 'unknown-playlist',
-        title: playlistId ?? 'unknown-playlist', // use the playlist url as the title
-        coverUrl: placeholderImages[index % placeholderImages.length], // assign a fake image
-        plays: datesPlayed?.length ?? 0,
-      })),
+      favoritePlaylists.map(
+        ({ playlistId, title, playlistThumbnailUrl, datesPlayed }, index) => ({
+          id: playlistId ?? 'unknown-playlist',
+          title: title ?? playlistId ?? 'Unknown Playlist',
+          subtitle: undefined,
+          coverUrl:
+            playlistThumbnailUrl && playlistThumbnailUrl !== ''
+              ? playlistThumbnailUrl
+              : placeholderImages[index % placeholderImages.length],
+          plays: datesPlayed?.length ?? 0,
+        })
+      ),
     [favoritePlaylists],
   );
 
@@ -128,12 +138,34 @@ const UserStatsPage: React.FC = () => {
     return getTopAggregatedItems(songs, (s) => s.songId ?? 'unknown-song', (s) => s.datesPlayed?.length ?? 0, 7)
       .map(({ id, plays }) => {
         const song = songs.find(s => s.songId === id);
-        return { id, title: song?.title || id, plays };
+        return {
+          id,
+          title: song?.title || id,
+          subtitle: song?.artist || undefined,
+          coverUrl: song?.geniusThumbnailUrl || '', // fallback as needed
+          plays,
+        };
       });
   }, [songs]);
 
-  const topPls = useMemo(() => {
-    return getTopAggregatedItems(playlists, (p) => p.playlistId ?? 'unknown-playlist', (p) => p.datesPlayed?.length ?? 0, 7);
+  const topPls: MediaItem[] = useMemo(() => {
+    return getTopAggregatedItems(
+      playlists,
+      p => p.playlistId ?? 'unknown-playlist',
+      p => p.datesPlayed?.length ?? 0,
+      7
+    ).map(({ id, plays }, index) => {
+      const pl = playlists.find(p => p.playlistId === id);
+      return {
+        id,
+        title:   pl?.title  ?? id,
+        // reuse subtitle if you want to show the raw ID under the name:
+        subtitle: undefined,
+        coverUrl: pl?.playlistThumbnailUrl 
+                   ?? placeholderImages[index % placeholderImages.length],
+        plays,
+      };
+    });
   }, [playlists]);
 
   const recentWords = useMemo(
@@ -144,7 +176,7 @@ const UserStatsPage: React.FC = () => {
             new Date(b.dateLearned ?? 0).getTime() -
             new Date(a.dateLearned ?? 0).getTime(),
         )
-        .slice(0, 50),
+        .slice(0, 500),
     [words],
   );
 
@@ -201,6 +233,8 @@ const UserStatsPage: React.FC = () => {
             Usage Stats
           </Typography>
 
+          <Box className={styles.titleSpacer} />
+
           <KpiStrip data={kpis} />
 
           <Box className={styles.kpiSpacer} />
@@ -221,19 +255,22 @@ const UserStatsPage: React.FC = () => {
             alignItems="stretch"
             columns={12}
           >
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
+            <Grid
+              size={{ xs: 12, sm: 6, md: 3 }}
+              sx={{ maxWidth: 300, minWidth: 260 }}
+            >
               <QuizResultsSection quizzes={sanitizedQuizzes} />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{  maxWidth: 400, minWidth: 260 }}>
               <TopSongsChart data={topSongs} />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{  pl: 8 }}>
               <TopPlaylists data={topPls} />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ pl: 2 }}>
               <LearnedWords recent={recentWords} />
             </Grid>
           </Grid>

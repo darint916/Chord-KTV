@@ -41,7 +41,7 @@ const LearnedWords: React.FC<LearnedWordsProps> = ({ recent }) => {
       className={styles.learnedWordsPaper}
     >
       <Box className={styles.headerRow}>
-        <Typography variant="h6">Learned&nbsp;Words</Typography>
+        <Typography variant="h6">Learned&nbsp;Phrases</Typography>
         
         <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
           <InputLabel id="filter-language-label">Language</InputLabel>

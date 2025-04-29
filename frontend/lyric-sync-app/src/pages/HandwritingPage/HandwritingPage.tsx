@@ -15,9 +15,9 @@ import {
 } from '@mui/material';
 import { useSong } from '../../contexts/SongContext';
 import './HandwritingPage.scss';
-import { LanguageCode, QuizQuestionDto } from '../../api';
+import { LanguageCode, QuizQuestionDto, UserHandwritingResultDto } from '../../api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { quizApi } from '../../api/apiClient';
+import { quizApi, userActivityApi } from '../../api/apiClient';
 
 const HandwritingPage: React.FC = () => {
   const { song, quizQuestions, setQuizQuestions } = useSong();
@@ -126,11 +126,34 @@ const HandwritingPage: React.FC = () => {
     }
   }, [completedWords, wordsToPractice.length]);
 
+  const handleWordCompletionAttempt = (raw: number): void => {
+    const matchPct = raw;
 
-  const handleWordCompletionAttempt = (isSuccess: boolean) => {
-    if (isSuccess) {
-      const newCompletedWords = [...new Set([...completedWords, currentWordIndex])];
-      setCompletedWords(newCompletedWords);
+    // compute 0–5
+    const scoreOutOf5 = Math.round((matchPct / 100) * 5);
+    const language = (song?.geniusMetaData?.language ?? 'UNK') as LanguageCode;
+    const dto: UserHandwritingResultDto = {
+      language,
+      score: scoreOutOf5,
+      wordTested: currentWord,
+    };
+
+    if (scoreOutOf5 > 0) {
+      userActivityApi
+        .apiUserActivityHandwritingPost({ userHandwritingResultDto: dto })
+        .catch(() => {});
+    }
+
+    // locally mark complete at ≥98%
+    if (matchPct >= 98) {
+
+      userActivityApi.apiUserActivityLearnedWordPost({ learnedWordDto: {
+        language,
+        word: currentWord,
+      } })
+        .catch(() => {});
+
+      setCompletedWords(prev => [...new Set([...prev, currentWordIndex])]);
       setCurrentWordCompleted(true);
     }
   };
