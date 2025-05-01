@@ -232,13 +232,21 @@ const SongPlayerPage: React.FC = () => {
   useEffect(() => {
     lyricsOffsetRef.current = lyricsOffset;
   }, [lyricsOffset]);
+  // const counter = useRef(0); // Counter to track the number of times the function is called
   const checkIfTimeLineChanged = (currentTime: number, offset: number) => {
     currentTime += offset; // Apply offset to current time
+    // if (counter.current > 15) {
+    //   counter.current = 0;
+    //   console.log('Current Time:', currentTime, 'Offset:', offset, 'Lyrics Offset:', lyricsOffsetRef.current);
+    // }
+    // counter.current++;
     if (lrcTimestamps.length === 0 ||
       (currentTime >= prevTimeRange.current.start &&
         currentTime < prevTimeRange.current.end)) {
       return false;
     }
+
+    // console.log('Current Line:', currentLineRef.current, 'Prev Time Range:', prevTimeRange.current);
     for (let i = currentLineRef.current + 1; i < (lrcTimestamps.length + currentLineRef.current); i++) {
       i %= lrcTimestamps.length; // Wrap around if needed
       const currentTimestamp = lrcTimestamps[i];

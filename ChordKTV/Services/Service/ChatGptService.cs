@@ -48,118 +48,174 @@ public class ChatGptService : IChatGptService
         {
             throw new ArgumentException($"Error in {nameof(TranslateLyricsAsync)}: At least one of romanize or translate must be true.");
         }
-        string prompt = $@"
-You are a helpful assistant that translates LRC formatted lyrics into an English translation (if needed) and, if needed, a romanized version (using the English alphabet) while maintaining the same format.
-Is romanization needed: {(romanize ? "Yes" : "No")}
-Is translation needed: {(translate ? "Yes" : "No")}
-Notice the only exception to this is if the original lyrics are already in English, in which case no translation or romanization is needed. This occurs if language code is UNK, correct to EN if it is english and null out romanization and translation.
-If not needed, have the json response for the section be null or not there. Maintain the LRC text format timestamps exactly in the responses.
-If the language cannot be determined, auto-detect it instead of returning 'UNK'. Correct the suggested ISO 639-1 language code (2 letters if not uknown) if needed: {languageCode}.
-If multiple languages are detected, use the most common non-English language code. If unknown make it 'UNK'.
-
-Input Lyrics:
-{originalLyrics}
-
-Remember if the original lyrics are already in English, no translation or romanization is needed and ignore the is needed clauses above.
-The lyrics input contains timestamps LRC Format. Do not change any timestamps or the formatting. Do not add ``` ticks or the word json
-Ensure that the output follows the expected JSON structure. Make sure romanization matches standard dictionary reading. Do not infer romanization, and preserve conjugated forms.
-Output Format, keep the exact format, no extra content beyond the json. Make sure it is json deserializable in C#:
-{{
-    ""romanizedLyrics"": ""<romanized lyrics in LRC format, if applicable or null>"",
-    ""translatedLyrics"": ""<translated English lyrics in LRC format, if applicable or null>"",
-    ""languageCode"": ""<valid ISO 639-1 language code>""
-}}
-";
-
-        string systemPrompt = $@"
-You are a helpful assistant that translates LRC formatted lyrics into an English translation and, if needed, a romanized version (using the English alphabet) while maintaing the same format.";
-        var requestBody = new
+        object? requestBodyRom = null, requestBodyTrans = null;
+        if (romanize)
         {
-            model = Model,
-            messages = new object[]
+            string sysPrompt = $@"You are a JSON‐output specialist.  Given LRC‐format lyrics, emit **exactly one** JSON object formatted as such and nothing else:
+**Japanese** ⇒ Always use **Revised Hepburn**, preserving every conjugated ending and vowel length (hiragana is one to one)  e.g. 触れればすべて思い出して → **furereba subete omoidashite**
+**Chinese** ⇒ Hanyu Pinyin
+**Cyrillic** ⇒ ISO‐9
+**Arabic** ⇒ ALA‐LC
+**etc.** for any other script
+            {{
+                ""romanizedLyrics"": ""< single string in LRC format where
+– every bracketed timestamp is preserved exactly,
+– any Latin letters, digits, punctuation, and spacing are copied verbatim,
+- Whenever you see text in a non-Latin script, apply that language’s most widely accepted official romanization scheme, preserving all original morphological endings and diacritics (e.g. Pinyin for Chinese, Revised Hepburn for Japanese, ISO 9 for Cyrillic, ALA-LC for Arabic, etc.).>"",
+                ""languageCode"": ""<the ISO 639-1 code of the primary non-Latin language detected (or ""en"" if all text is Latin).  >""
+            }}";
+            string userPrompt = $@"
+                Here are the lyrics in LRC format.  Please produce the JSON described in the system prompt:
+                {originalLyrics}";
+            requestBodyRom = new
             {
-                    new { role = "system", content = systemPrompt },
-                    new { role = "user", content = prompt }
-            },
-            temperature = .175,
-            top_p = 1
-        };
-
+                model = Model,
+                messages = new object[]
+                {
+                    new { role = "system", content = sysPrompt },
+                    new { role = "user", content = userPrompt }
+                },
+                temperature = 0,
+                top_p = 1
+            };
+        }
+        if (translate)
+        {
+            string sysPrompt = $@"You are a JSON‐output specialist.  Given LRC‐format lyrics, emit **exactly one** JSON object formatted as such and nothing else:
+            {{
+                ""translatedLyrics"": ""<a single string in LRC format where:
+– each bracketed timestamp is preserved exactly,
+– any English (Latin) text is copied verbatim,
+– any non-English text is translated into natural, idiomatic English,
+– blank lines remain blank lines with their original timestamps (if any).>>""
+Do NOT include any additional fields, comments, or markdown—only the JSON object.
+                ""languageCode"": ""<the ISO 639-1 code of the primary non-English language in the lyrics (use ""EN"" if all lines are already English, or ""UNK"" if you truly cannot detect it).>";
+            string prompt = $@"
+                Here are the lyrics in LRC format.  Please produce the JSON described in the system prompt:
+                {originalLyrics}";
+            requestBodyTrans = new
+            {
+                model = Model,
+                messages = new object[]
+                {
+                        new { role = "system", content = sysPrompt },
+                        new { role = "user", content = prompt }
+                },
+                temperature = 0.2,
+                top_p = 1
+            };
+        }
+        Task<OpenAIResponseDto?> romTask = romanize ? GptChatCompletionAsync(JsonSerializer.Serialize(requestBodyRom)) : Task.FromResult<OpenAIResponseDto?>(null);
+        Task<OpenAIResponseDto?> transTask = translate ? GptChatCompletionAsync(JsonSerializer.Serialize(requestBodyTrans)) : Task.FromResult<OpenAIResponseDto?>(null);
         var sw = new Stopwatch();
         sw.Start();
-        OpenAIResponseDto? openAIResponse = await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody));
+        await Task.WhenAll(romTask, transTask);
         sw.Stop();
         _logger.LogInformation("⏱️ ChatGPT API call took: {ElapsedMilliseconds}ms", sw.ElapsedMilliseconds);
-        if (openAIResponse == null || openAIResponse.Choices.Count == 0)
+
+        string? romMsgContent = romTask.Result?.Choices[0].Message.Content;
+        string? transMsgContent = transTask.Result?.Choices[0].Message.Content;
+        if (romanize && string.IsNullOrWhiteSpace(romMsgContent))
         {
-            _logger.LogError("No choices were returned from the ChatGPT API for TranslateLyrics.");
-            throw new InvalidOperationException("No choices were returned from the ChatGPT API TranslateLyrics.");
+            _logger.LogError("Null Content was returned from the ChatGPT API for Romanization in TranslateLyrics.");
+            throw new InvalidOperationException("Null Content was returned from the Romanization in ChatGPT API TranslateLyrics.");
         }
-        string? messageContent = openAIResponse.Choices[0].Message.Content;
-        TranslatedSongLyrics? translatedSongLyrics = null;
+        if (translate && string.IsNullOrWhiteSpace(transMsgContent))
+        {
+            _logger.LogError("Null Content was returned from the ChatGPT API for Translation in TranslateLyrics.");
+            throw new InvalidOperationException("Null Content was returned from the Translation in ChatGPT API TranslateLyrics.");
+        }
+
+        TranslatedSongLyrics? translationResponseDto = null;
+        TranslatedSongLyrics? romanizedResponseDto = null;
         try //Deserializer may fail (if format wrong)
         {
             // Process romanizedLyrics field
-            string pattern1 = @"(""romanizedLyrics""\s*:\s*"")(.+?)(""\s*,\s*""translatedLyrics"")";
-            messageContent = Regex.Replace(messageContent, pattern1, match =>
+            if (!string.IsNullOrEmpty(romMsgContent))
             {
-                string prefix = match.Groups[1].Value;
-                string content = match.Groups[2].Value;
-                string suffix = match.Groups[3].Value;
+                string pattern1 = @"(""romanizedLyrics""\s*:\s*"")(.+?)(""\s*,\s*""languageCode"")";
+                romMsgContent = Regex.Replace(romMsgContent, pattern1, match =>
+                {
+                    string prefix = match.Groups[1].Value;
+                    string content = match.Groups[2].Value;
+                    string suffix = match.Groups[3].Value;
 
-                // Escape any unescaped quotes in the content
-                string escapedContent = Regex.Replace(content, @"(?<!\\)""", @"\""");
+                    // Escape any unescaped quotes in the content
+                    string escapedContent = Regex.Replace(content, @"(?<!\\)""", @"\""");
 
-                return prefix + escapedContent + suffix;
-            }, RegexOptions.Singleline);
+                    return prefix + escapedContent + suffix;
+                }, RegexOptions.Singleline);
 
+                romanizedResponseDto = JsonSerializer.Deserialize<TranslatedSongLyrics?>(romMsgContent, _jsonOptions);
+
+                if (romanizedResponseDto is null)
+                {
+                    _logger.LogError("Failed to deserialize the RomanizedSongLyrics object. Raw response: {MessageContent}", romMsgContent);
+                    throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: Failed to deserialize the RomanizedSongLyrics object.");
+                }
+                if (Enum.TryParse(romanizedResponseDto.LanguageCode.ToUpperInvariant(), out LanguageCode langCode))
+                {
+                    if (langCode == LanguageCode.UNK)
+                    {
+                        _logger.LogError("Unknown language code returned from ChatGPT API: {LanguageCode} \n Lyrics: {OriginalLyrics}", romanizedResponseDto.LanguageCode, originalLyrics);
+                    }
+                    else
+                    {
+                        languageCode = langCode;
+                    }
+                }
+            }
             // Process translatedLyrics field
-            string pattern2 = @"(""translatedLyrics""\s*:\s*"")(.+?)(""\s*,\s*""languageCode"")";
-            messageContent = Regex.Replace(messageContent, pattern2, match =>
+            if (!string.IsNullOrEmpty(transMsgContent))
             {
-                string prefix = match.Groups[1].Value;
-                string content = match.Groups[2].Value;
-                string suffix = match.Groups[3].Value;
+                string pattern2 = @"(""translatedLyrics""\s*:\s*"")(.+?)(""\s*,\s*""languageCode"")";
+                transMsgContent = Regex.Replace(transMsgContent, pattern2, match =>
+                {
+                    string prefix = match.Groups[1].Value;
+                    string content = match.Groups[2].Value;
+                    string suffix = match.Groups[3].Value;
 
-                // Escape any unescaped quotes in the content
-                string escapedContent = Regex.Replace(content, @"(?<!\\)""", @"\""");
+                    // Escape any unescaped quotes in the content
+                    string escapedContent = Regex.Replace(content, @"(?<!\\)""", @"\""");
 
-                return prefix + escapedContent + suffix;
-            }, RegexOptions.Singleline);
+                    return prefix + escapedContent + suffix;
+                }, RegexOptions.Singleline);
 
-            translatedSongLyrics = JsonSerializer.Deserialize<TranslatedSongLyrics>(messageContent, _jsonOptions);
-            if (translatedSongLyrics == null)
-            {
-                throw new JsonException("Null response from ChatGPT API TranslateLyrics");
+                translationResponseDto = JsonSerializer.Deserialize<TranslatedSongLyrics>(transMsgContent, _jsonOptions);
+
+                if (translationResponseDto is null)
+                {
+                    _logger.LogError("Failed to deserialize the TranslatedSongLyrics object. Raw response: {MessageContent}", transMsgContent);
+                    throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: Failed to deserialize the TranslatedSongLyrics object.");
+                }
+                if (Enum.TryParse(translationResponseDto.LanguageCode.ToUpperInvariant(), out LanguageCode langCode))
+                {
+                    if (langCode == LanguageCode.UNK)
+                    {
+                        _logger.LogError("Unknown language code returned from ChatGPT API: {LanguageCode} \n Lyrics: {OriginalLyrics}", translationResponseDto.LanguageCode, originalLyrics);
+                    }
+                    else
+                    {
+                        if (romanizedResponseDto != null && !string.Equals(romanizedResponseDto.LanguageCode, translationResponseDto.LanguageCode, StringComparison.OrdinalIgnoreCase))
+                        {
+                            _logger.LogError("Language code mismatch between romanized and translated lyrics: {RomanizedLanguageCode} vs {TranslatedLanguageCode} \n Lyrics: {OriginalLyrics}", romanizedResponseDto.LanguageCode, translationResponseDto.LanguageCode, originalLyrics);
+                        }
+                        languageCode = langCode; //we will take the second one (seems more reliable from translation prompt)
+                    }
+                }
             }
         }
         catch (JsonException ex)
         {
-            _logger.LogError(ex, "Failed to deserialize the ChatGPT API response for TranslateLyrics. messageContent: {MessageContent}", messageContent);
+            _logger.LogError(ex, "Failed to deserialize the ChatGPT API response for TranslateLyrics. messageContent: {MessageContent}", romMsgContent ?? transMsgContent);
             throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: Failed to deserialize the ChatGPT API response.");
         }
 
-        //Try parsing language code from string
-        if (Enum.TryParse(translatedSongLyrics.LanguageCode.ToUpperInvariant(), out LanguageCode parsedLanguageCode))
-        {
-            if (parsedLanguageCode == LanguageCode.UNK)
-            {
-                _logger.LogError("Unknown language code returned from ChatGPT API: {LanguageCode} \n Lyrics: {OriginalLyrics}", translatedSongLyrics.LanguageCode, originalLyrics);
-            }
-            else
-            {
-                languageCode = parsedLanguageCode;
-            }
-        }
-        else
-        {
-            _logger.LogError("Failed to parse language code from ChatGPT API response: {LanguageCode} \n Lyrics: {OriginalLyrics}", translatedSongLyrics.LanguageCode, originalLyrics);
-        }
         if (languageCode != LanguageCode.EN)
         {
-            if ((romanize && string.IsNullOrEmpty(translatedSongLyrics.RomanizedLyrics)) || (translate && string.IsNullOrEmpty(translatedSongLyrics.TranslatedLyrics)))
+            if ((romanize && string.IsNullOrEmpty(romanizedResponseDto?.RomanizedLyrics)) || (translate && string.IsNullOrEmpty(translationResponseDto?.TranslatedLyrics)))
             {
-                _logger.LogError("messageContent: {MessageContent}", messageContent);
+                _logger.LogError("messageContent: {MessageContent}", romMsgContent ?? transMsgContent);
                 throw new InvalidOperationException($"Error in {nameof(TranslateLyricsAsync)}: The ChatGPT API response did not contain the expected translations.");
             }
         }
@@ -168,8 +224,8 @@ You are a helpful assistant that translates LRC formatted lyrics into an English
         {
             OriginalLyrics = originalLyrics,
             LanguageCode = languageCode,
-            RomanizedLyrics = languageCode == LanguageCode.EN ? originalLyrics : translatedSongLyrics.RomanizedLyrics,
-            TranslatedLyrics = languageCode == LanguageCode.EN ? originalLyrics : translatedSongLyrics.TranslatedLyrics,
+            RomanizedLyrics = languageCode == LanguageCode.EN ? originalLyrics : romanizedResponseDto?.RomanizedLyrics,
+            TranslatedLyrics = languageCode == LanguageCode.EN ? originalLyrics : translationResponseDto?.TranslatedLyrics,
         };
     }
 
