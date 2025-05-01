@@ -21,6 +21,7 @@ import { QueueItem } from '../../contexts/QueueTypes';
 import { extractYouTubeVideoId, extractPlaylistId } from './HomePageHelpers';
 import GeniusHitsCarousel from '../../components/GeniusHitsCarousel/GeniusHitsCarousel';
 import type { GeniusHit } from '../../api';
+import { UserPlaylistActivityDto } from '../../api';
 
 const HomePage: React.FC = () => {
   const [songName, setSongName] = useState('');
@@ -29,7 +30,7 @@ const HomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [playlistLoading, setPlaylistLoading] = useState(false);
   const navigate = useNavigate();
-  const { setSong, queue, setQueue, setCurrentPlayingId, playlists, setPlaylists, setSelectedPlaylistIndex } = useSong();
+  const { setSong, queue, setQueue, setCurrentPlayingId, playlists, setPlaylists, selectedPlaylistIndex, setSelectedPlaylistIndex } = useSong();
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [lyrics, setLyrics] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -65,13 +66,23 @@ const HomePage: React.FC = () => {
       // Set the queue with new songs
       setQueue(newQueue);
 
+      const favoriteDtos: UserPlaylistActivityDto[] = await userActivityApi.apiUserActivityFavoritePlaylistsGet();
+      const favoriteIds = favoriteDtos.map(dto => dto.playlistId);
+      const isAlreadyFavorite = favoriteIds.includes(playlistId);
+      setPlaylists([{
+        playlistId,
+        title: response.playlistTitle || 'Unknown Playlist',
+        isFavorite: false
+      }]);
+      setSelectedPlaylistIndex(0);
+
       // Log playlist
       try {
         await userActivityApi.apiUserActivityFavoritePlaylistPatch({
           userPlaylistActivityFavoriteRequestDto: {
             playlistId,
             isPlayed: true,
-            isFavorite: true
+            isFavorite: isAlreadyFavorite
           }
         });
       } catch {
@@ -118,12 +129,6 @@ const HomePage: React.FC = () => {
           lrcTranslatedLyrics: ''
         });
       }
-      setPlaylists([{
-        playlistId,
-        title: response.playlistTitle || 'Unknown Playlist',
-        isFavorite: false
-      }]);
-      setSelectedPlaylistIndex(playlists.length);
 
 
       navigate('/play-song');

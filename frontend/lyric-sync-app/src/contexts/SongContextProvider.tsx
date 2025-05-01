@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { FullSongResponseDto, QuizQuestionDto } from '../api';
 import { SongContext, PlaylistInfo } from './SongContext';
 import { QueueItem } from './QueueTypes';
+import { userActivityApi } from '../api/apiClient';
+import { UserPlaylistActivityDto } from '../api';
 
 // Provider component
 export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -61,24 +63,33 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  const [selectedPlaylistIndex, setSelectedPlaylistIndex] = useState<number>(() => {
-    try {
-      const storedIndex = localStorage.getItem('selectedPlaylistIndex');
-      return storedIndex ? Number(storedIndex) : 0;
-    } catch {
-      return 0;
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('selectedPlaylistIndex', selectedPlaylistIndex.toString());
-  }, [selectedPlaylistIndex]);
-
+  const [selectedPlaylistIndex, setSelectedPlaylistIndex] = useState(0);
 
   useEffect(() => {
     localStorage.setItem('playlists', JSON.stringify(playlists));
   }, [playlists]);
 
+  useEffect(() => {
+    const syncFavoritesFromBackend = async () => {
+      try {
+        const favoriteDtos: UserPlaylistActivityDto[] = await userActivityApi.apiUserActivityFavoritePlaylistsGet();
+        const favoriteIds = favoriteDtos.map(dto => dto.playlistId);
+
+        setPlaylists(prev =>
+          prev.map(pl => ({
+            ...pl,
+            isFavorite: favoriteIds.includes(pl.playlistId),
+          }))
+        );
+      } catch (err) {
+        console.error('Failed to fetch favorite playlists', err);
+      }
+    };
+
+    if (playlists.length > 0) {
+      syncFavoritesFromBackend();
+    }
+  }, [playlists.length]);
 
   return (
     <SongContext.Provider value={{

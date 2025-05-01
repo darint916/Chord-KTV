@@ -22,6 +22,7 @@ import GeniusHitsCarousel from '../../components/GeniusHitsCarousel/GeniusHitsCa
 import { GeniusHit, UserSongActivityFavoriteRequestDto } from '../../api';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import { UserPlaylistActivityDto } from '../../api';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -601,23 +602,31 @@ const SongPlayerPage: React.FC = () => {
       setQueue(prev => [...prev, ...newItems]);
       setPlaylistUrl('');
 
+      const favoriteDtos: UserPlaylistActivityDto[] = await userActivityApi.apiUserActivityFavoritePlaylistsGet();
+      const favoriteIds = favoriteDtos.map(dto => dto.playlistId);
+      const isAlreadyFavorite = favoriteIds.includes(playlistId);
+      setPlaylists(prev => {
+        const exists = prev.some(p => p.playlistId === playlistId);
+        if (exists) return prev;
+        return [...prev, {
+          playlistId,
+          title: response.playlistTitle || 'Unknown Playlist',
+          isFavorite: isAlreadyFavorite,
+        }];
+      });
+
+
       try {
         await userActivityApi.apiUserActivityFavoritePlaylistPatch({
           userPlaylistActivityFavoriteRequestDto: {
             playlistId,
             isPlayed: true,
-            isFavorite: true
+            isFavorite: isAlreadyFavorite
           }
         });
       } catch {
         // console.error('Failed to log playlist activity', err);
       }
-      setPlaylists(prev => [...prev, {
-        playlistId,
-        title: response.playlistTitle || 'Playlist',
-        isFavorite: false
-      }]);
-
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load playlist';
       setError(msg);
