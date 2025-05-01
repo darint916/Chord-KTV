@@ -49,20 +49,18 @@ public class ChatGptService : IChatGptService
             throw new ArgumentException($"Error in {nameof(TranslateLyricsAsync)}: At least one of romanize or translate must be true.");
         }
         string prompt = $@"
-You are a helpful assistant that translates LRC formatted lyrics into an English translation (if needed) and, if needed, a romanized version (using the English alphabet) while maintaining the same format.
+You are a helpful assistant that translates LRC formatted lyrics a romanized version (using the English alphabet) while maintaining the same format, and if needed, into an English translation.
 Is romanization needed: {(romanize ? "Yes" : "No")}
 Is translation needed: {(translate ? "Yes" : "No")}
-Notice the only exception to this is if the original lyrics are already in English, in which case no translation or romanization is needed. This occurs if language code is UNK, correct to EN if it is english and null out romanization and translation.
+If everything in input lyrics are already all in English and if language code is UNK, correct to EN if it is english and null out romanization and translation fields.
 If not needed, have the json response for the section be null or not there. Maintain the LRC text format timestamps exactly in the responses.
 If the language cannot be determined, auto-detect it instead of returning 'UNK'. Correct the suggested ISO 639-1 language code (2 letters if not uknown) if needed: {languageCode}.
 If multiple languages are detected, use the most common non-English language code. If unknown make it 'UNK'.
 
+The lyrics input contains timestamps LRC Format. Do not change any timestamps or the formatting. Ensure that the output follows the expected JSON structure. Make sure romanization matches exact standard dictionary reading. Do not infer romanization, and preserve conjugated forms.
 Input Lyrics:
 {originalLyrics}
 
-Remember if the original lyrics are already in English, no translation or romanization is needed and ignore the is needed clauses above.
-The lyrics input contains timestamps LRC Format. Do not change any timestamps or the formatting. Do not add ``` ticks or the word json
-Ensure that the output follows the expected JSON structure. Make sure romanization matches standard dictionary reading. Do not infer romanization, and preserve conjugated forms.
 Output Format, keep the exact format, no extra content beyond the json. Make sure it is json deserializable in C#:
 {{
     ""romanizedLyrics"": ""<romanized lyrics in LRC format, if applicable or null>"",
