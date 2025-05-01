@@ -63,9 +63,7 @@ const SongPlayerPage: React.FC = () => {
     setQueue,
     currentPlayingId,
     setCurrentPlayingId,
-    playlists,
     setPlaylists,
-    setSelectedPlaylistIndex
   } = useSong();
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
@@ -607,7 +605,7 @@ const SongPlayerPage: React.FC = () => {
       const isAlreadyFavorite = favoriteIds.includes(playlistId);
       setPlaylists(prev => {
         const exists = prev.some(p => p.playlistId === playlistId);
-        if (exists) return prev;
+        if (exists) {return prev;}
         return [...prev, {
           playlistId,
           title: response.playlistTitle || 'Unknown Playlist',

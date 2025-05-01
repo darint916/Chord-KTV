@@ -81,8 +81,8 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isFavorite: favoriteIds.includes(pl.playlistId),
           }))
         );
-      } catch (err) {
-        console.error('Failed to fetch favorite playlists', err);
+      } catch {
+        // Keep silent if couldn't sync favorites
       }
     };
 

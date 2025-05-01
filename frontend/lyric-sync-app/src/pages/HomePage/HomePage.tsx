@@ -30,7 +30,7 @@ const HomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [playlistLoading, setPlaylistLoading] = useState(false);
   const navigate = useNavigate();
-  const { setSong, queue, setQueue, setCurrentPlayingId, playlists, setPlaylists, selectedPlaylistIndex, setSelectedPlaylistIndex } = useSong();
+  const { setSong, queue, setQueue, setCurrentPlayingId, setPlaylists, setSelectedPlaylistIndex } = useSong();
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [lyrics, setLyrics] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');

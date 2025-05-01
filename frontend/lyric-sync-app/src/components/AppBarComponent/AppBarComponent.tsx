@@ -48,7 +48,7 @@ const AppBarComponent: React.FC = () => {
       updated[selectedPlaylistIndex].isFavorite = !playlist.isFavorite;
       setPlaylists(updated);
     } catch {
-      // Handle error if needed
+      // Keep silent if couldn't favorite
     }
   };
 
