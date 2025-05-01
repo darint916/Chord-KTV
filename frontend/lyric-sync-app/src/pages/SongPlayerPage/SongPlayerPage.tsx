@@ -145,13 +145,11 @@ const SongPlayerPage: React.FC = () => {
 
     const original = parseLyrics(song.lrcLyrics);
     const romanized = song.lrcRomanizedLyrics ? parseLyrics(song.lrcRomanizedLyrics) : [];
-    const translated = song.lrcTranslatedLyrics ? parseLyrics(song.lrcTranslatedLyrics) : [];
 
     const combined: string[] = [];
 
     for (const origLine of original) {
       const romLine = romanized.find(l => l.time === origLine.time);
-      const transLine = translated.find(l => l.time === origLine.time);
 
       const texts: string[] = [];
 
@@ -163,11 +161,6 @@ const SongPlayerPage: React.FC = () => {
       // Only include romanized if it's different from original (case insensitive)
       if (romLine && romLine.text && romLine.text.toLowerCase() !== origLine.text.toLowerCase()) {
         texts.push(romLine.text);
-      }
-
-      // Only include translation if it's different from original (case insensitive)
-      if (transLine && transLine.text && transLine.text.toLowerCase() !== origLine.text.toLowerCase()) {
-        texts.push(transLine.text);
       }
 
       const mergedText = texts.join(COMBINED_DELIMITER);

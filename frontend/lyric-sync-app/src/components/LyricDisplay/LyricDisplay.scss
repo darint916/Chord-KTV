@@ -36,6 +36,14 @@
   text-shadow: 
     0 0 4px white, /* Soft glow */
     0 0 10px white;
+  
+  .lyric-part-0 {
+    color: $secondary-color; // original
+  }
+
+  .lyric-part-1 {
+    color: rgb(217, 0, 0); // romanized
+  }
 }
 
 .lrc { //hide scroll

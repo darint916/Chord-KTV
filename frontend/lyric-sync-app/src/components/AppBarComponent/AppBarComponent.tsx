@@ -96,20 +96,20 @@ const AppBarComponent: React.FC = () => {
     let labels = '';
 
     switch (issueType) {
-      case 'feature':
-        template = 'feature-request.md';
-        labels = 'enhancement';
-        break;
-      case 'song':
-        template = 'search-play-report.md';
-        labels = 'search issue,bug';
-        break;
-      case 'bug':
-        template = 'bug-report.md';
-        labels = 'bug';
-        break;
-      default:
-        template = '';
+    case 'feature':
+      template = 'feature-request.md';
+      labels = 'enhancement';
+      break;
+    case 'song':
+      template = 'search-play-report.md';
+      labels = 'search issue,bug';
+      break;
+    case 'bug':
+      template = 'bug-report.md';
+      labels = 'bug';
+      break;
+    default:
+      template = '';
     }
 
     const encodedTitle = encodeURIComponent(issueTitle || `New ${issueType} report`);

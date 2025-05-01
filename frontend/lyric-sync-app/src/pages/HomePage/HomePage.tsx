@@ -261,9 +261,10 @@ const HomePage: React.FC = () => {
           '',
       };
 
-      setQueue([newQueueItem, ...queue]);
+      setQueue([newQueueItem]); // reset queue to just the song
       setCurrentPlayingId(newQueueItem.queueId);
       setSong(response);
+      setPlaylists([]); // clear playlist display if playling new song
 
       // Clear results so the carousel disappears next time
       setGeniusHits([]);
