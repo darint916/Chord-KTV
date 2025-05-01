@@ -52,8 +52,33 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [quizQuestions]);
 
-  const [playlists, setPlaylists] = useState<PlaylistInfo[]>([]);
-  const [selectedPlaylistIndex, setSelectedPlaylistIndex] = useState(0);
+  const [playlists, setPlaylists] = useState<PlaylistInfo[]>(() => {
+    try {
+      const stored = localStorage.getItem('playlists');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [selectedPlaylistIndex, setSelectedPlaylistIndex] = useState<number>(() => {
+    try {
+      const storedIndex = localStorage.getItem('selectedPlaylistIndex');
+      return storedIndex ? Number(storedIndex) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('selectedPlaylistIndex', selectedPlaylistIndex.toString());
+  }, [selectedPlaylistIndex]);
+
+
+  useEffect(() => {
+    localStorage.setItem('playlists', JSON.stringify(playlists));
+  }, [playlists]);
+
 
   return (
     <SongContext.Provider value={{
