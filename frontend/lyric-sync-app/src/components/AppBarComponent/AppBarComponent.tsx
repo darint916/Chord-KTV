@@ -12,6 +12,7 @@ import { Favorite, FavoriteBorder } from '@mui/icons-material';
 import { userActivityApi } from '../../api/apiClient';
 import KeyboardDoubleArrowLeftIcon from '@mui/icons-material/KeyboardDoubleArrowLeft';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
+import { useLocation } from 'react-router-dom';
 
 const AppBarComponent: React.FC = () => {
   const { user, logout } = useAuth();
@@ -21,6 +22,10 @@ const AppBarComponent: React.FC = () => {
   const [issueType, setIssueType] = useState('');
   const [issueTitle, setIssueTitle] = useState('');
   const { playlists, selectedPlaylistIndex, setSelectedPlaylistIndex, setPlaylists } = useSong();
+
+  // Hide playlist on homepage (makes no sense to display it there)
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
 
   const currentPlaylist = playlists[selectedPlaylistIndex];
   const handlePrev = () => {
@@ -135,7 +140,7 @@ const AppBarComponent: React.FC = () => {
               Chord KTV
             </Link>
           </div>
-          {currentPlaylist && (
+          {!isHomePage && currentPlaylist && (
             <Box display="flex" alignItems="center" sx={{ flexGrow: 1, justifyContent: 'center' }}>
               <IconButton onClick={handlePrev} disabled={selectedPlaylistIndex === 0}><KeyboardDoubleArrowLeftIcon /></IconButton>
               <Typography variant="h6" className="playlist-title" sx={{ mx: 1 }}>
