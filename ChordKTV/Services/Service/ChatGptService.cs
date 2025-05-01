@@ -52,11 +52,16 @@ public class ChatGptService : IChatGptService
         if (romanize)
         {
             string sysPrompt = $@"You are a JSON‐output specialist.  Given LRC‐format lyrics, emit **exactly one** JSON object formatted as such and nothing else:
+**Japanese** ⇒ Always use **Revised Hepburn**, preserving every conjugated ending and vowel length (hiragana is one to one)  e.g. 触れればすべて思い出して → **furereba subete omoidashite**
+**Chinese** ⇒ Hanyu Pinyin
+**Cyrillic** ⇒ ISO‐9
+**Arabic** ⇒ ALA‐LC
+**etc.** for any other script
             {{
                 ""romanizedLyrics"": ""< single string in LRC format where
 – every bracketed timestamp is preserved exactly,
 – any Latin letters, digits, punctuation, and spacing are copied verbatim,
-– any non-Latin characters (e.g. Hangul, Cyrillic, Arabic, Chinese, etc.) are transliterated into English letters using that language’s standard romanization.  >"",
+- Whenever you see text in a non-Latin script, apply that language’s most widely accepted official romanization scheme, preserving all original morphological endings and diacritics (e.g. Pinyin for Chinese, Revised Hepburn for Japanese, ISO 9 for Cyrillic, ALA-LC for Arabic, etc.).>"",
                 ""languageCode"": ""<the ISO 639-1 code of the primary non-Latin language detected (or ""en"" if all text is Latin).  >""
             }}";
             string userPrompt = $@"
@@ -191,7 +196,7 @@ Do NOT include any additional fields, comments, or markdown—only the JSON obje
                     }
                     else
                     {
-                        if (romanizedResponseDto != null && romanizedResponseDto.LanguageCode != translationResponseDto.LanguageCode)
+                        if (romanizedResponseDto != null && !string.Equals(romanizedResponseDto.LanguageCode, translationResponseDto.LanguageCode, StringComparison.OrdinalIgnoreCase))
                         {
                             _logger.LogError("Language code mismatch between romanized and translated lyrics: {RomanizedLanguageCode} vs {TranslatedLanguageCode} \n Lyrics: {OriginalLyrics}", romanizedResponseDto.LanguageCode, translationResponseDto.LanguageCode, originalLyrics);
                         }
