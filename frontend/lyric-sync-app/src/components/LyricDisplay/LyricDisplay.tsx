@@ -5,9 +5,10 @@ interface LyricDisplayProps {
   rawLrcLyrics: string;
   currentTime: number;
   isPlaying: boolean;
+  tabIndex: number;
 }
 
-const LyricDisplay: React.FC<LyricDisplayProps> = ({ rawLrcLyrics, currentTime, isPlaying }) => { // we use https://github.com/mebtte/react-lrc, uses ms for time though
+const LyricDisplay: React.FC<LyricDisplayProps> = ({ rawLrcLyrics, currentTime, isPlaying, tabIndex }) => { // we use https://github.com/mebtte/react-lrc, uses ms for time though
 
   const { signal, recoverAutoScrollImmediately } = useRecoverAutoScrollImmediately();
   const wasPlayingRef = useRef(isPlaying);
@@ -36,7 +37,8 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ rawLrcLyrics, currentTime, 
   }, []);
 
   return ( //autoscroll turned on alr, consider reading docs if we want to reformat line styling and distances
-    <div className="lyric-display-container">
+    // <div className="lyric-display-container">
+    <div className={`lyric-display-container ${tabIndex === 3 ? 'combined-mode' : 'normal-mode'}`}>
       <Lrc
         lrc={rawLrcLyrics}
         currentMillisecond={currentTime * 1000}
@@ -45,7 +47,7 @@ const LyricDisplay: React.FC<LyricDisplayProps> = ({ rawLrcLyrics, currentTime, 
         recoverAutoScrollInterval={3000} //3 second for recovery auto
         className="lrc"
       />
-    </div>
+    </div >
   );
 };
 

@@ -1005,6 +1005,7 @@ const SongPlayerPage: React.FC = () => {
                 }
                 currentTime={currentTime + lyricsOffsetRef.current}
                 isPlaying={isPlaying}
+                tabIndex={selectedTab}
               />
             </Box>
           </Grid>
