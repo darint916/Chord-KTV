@@ -72,7 +72,7 @@ const HomePage: React.FC = () => {
       setPlaylists([{
         playlistId,
         title: response.playlistTitle || 'Unknown Playlist',
-        isFavorite: false
+        isFavorite: isAlreadyFavorite
       }]);
       setSelectedPlaylistIndex(0);
 
