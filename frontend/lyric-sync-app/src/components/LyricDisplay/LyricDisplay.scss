@@ -22,46 +22,31 @@
   min-height: 10px;
   // Responsive font sizes
   font-size: 10px;
-
   @media (min-width: 600px) {
     font-size: 18px;
   }
-
   @media (min-width: 1200px) {
     font-size: 26px;
   }
 }
 
-.normal-mode {
-  .active-lrc {
+.active-lrc
+{
+  text-shadow: 
+    0 0 4px white, /* Soft glow */
+    0 0 10px white;
+  
+  .lyric-part-0 {
     color: color.scale($secondary-color, $lightness: -10%);
-    text-shadow:
-      0 0 4px white,
-      /* Soft glow */
-      0 0 10px white;
   }
+
+  .lyric-part-1 {
+    color: rgb(190, 0, 0);
+  }
+
 }
 
-.combined-mode {
-  .active-lrc {
-    text-shadow:
-      0 0 4px white,
-      /* Soft glow */
-      0 0 10px white;
-
-    .lyric-part-0 {
-      color: rgb(190, 0, 0); // original
-    }
-
-    .lyric-part-1 {
-      color: color.scale($secondary-color, $lightness: -10%); // romanized
-    }
-  }
-}
-
-.lrc {
-
-  //hide scroll
+.lrc { //hide scroll
   /* webkit */
   &::-webkit-scrollbar {
     width: 0;

@@ -153,14 +153,14 @@ const SongPlayerPage: React.FC = () => {
 
       const texts: string[] = [];
 
-      // Always include the original
-      if (origLine.text) {
-        texts.push(origLine.text);
-      }
-
       // Only include romanized if it's different from original (case insensitive)
       if (romLine && romLine.text && romLine.text.toLowerCase() !== origLine.text.toLowerCase()) {
         texts.push(romLine.text);
+      }
+
+      // Always include the original
+      if (origLine.text) {
+        texts.push(origLine.text);
       }
 
       const mergedText = texts.join(COMBINED_DELIMITER);
