@@ -7,6 +7,12 @@ import BugReportIcon from '@mui/icons-material/BugReport';
 import GoogleAuth from '../GoogleAuth/GoogleAuth';
 import './AppBarComponent.scss';
 import logo from '../../assets/chordktv.png';
+import { useSong } from '../../contexts/SongContext';
+import { Favorite, FavoriteBorder } from '@mui/icons-material';
+import { userActivityApi } from '../../api/apiClient';
+import KeyboardDoubleArrowLeftIcon from '@mui/icons-material/KeyboardDoubleArrowLeft';
+import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
+import { useLocation } from 'react-router-dom';
 
 const AppBarComponent: React.FC = () => {
   const { user, logout } = useAuth();
@@ -15,6 +21,36 @@ const AppBarComponent: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [issueType, setIssueType] = useState('');
   const [issueTitle, setIssueTitle] = useState('');
+  const { playlists, selectedPlaylistIndex, setSelectedPlaylistIndex, setPlaylists } = useSong();
+
+  // Hide playlist on homepage (makes no sense to display it there)
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
+
+  const currentPlaylist = playlists[selectedPlaylistIndex];
+  const handlePrev = () => {
+    setSelectedPlaylistIndex((prev) => Math.max(0, prev - 1));
+  };
+  const handleNext = () => {
+    setSelectedPlaylistIndex((prev) => Math.min(playlists.length - 1, prev + 1));
+  };
+
+  const toggleFavorite = async () => {
+    const playlist = playlists[selectedPlaylistIndex];
+    try {
+      await userActivityApi.apiUserActivityFavoritePlaylistPatch({
+        userPlaylistActivityFavoriteRequestDto: {
+          playlistId: playlist.playlistId,
+          isFavorite: !playlist.isFavorite
+        }
+      });
+      const updated = [...playlists];
+      updated[selectedPlaylistIndex].isFavorite = !playlist.isFavorite;
+      setPlaylists(updated);
+    } catch {
+      // Keep silent if couldn't favorite
+    }
+  };
 
   const repoOwner = 'darint916';
   const repoName = 'Chord-KTV';
@@ -104,6 +140,18 @@ const AppBarComponent: React.FC = () => {
               Chord KTV
             </Link>
           </div>
+          {!isHomePage && currentPlaylist && (
+            <Box display="flex" alignItems="center" sx={{ flexGrow: 1, justifyContent: 'center' }}>
+              <IconButton onClick={handlePrev} disabled={selectedPlaylistIndex === 0}><KeyboardDoubleArrowLeftIcon /></IconButton>
+              <Typography variant="h6" className="playlist-title" sx={{ mx: 1 }}>
+                {currentPlaylist.title}
+              </Typography>
+              <IconButton onClick={toggleFavorite} sx={{ ml: 1 }}>
+                {currentPlaylist.isFavorite ? <Favorite /> : <FavoriteBorder />}
+              </IconButton>
+              <IconButton onClick={handleNext} disabled={selectedPlaylistIndex === playlists.length - 1}><KeyboardDoubleArrowRightIcon /></IconButton>
+            </Box>
+          )}
           <div className="section">
             <Button
               color="inherit"

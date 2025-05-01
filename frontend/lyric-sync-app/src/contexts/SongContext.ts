@@ -3,6 +3,12 @@ import { FullSongResponseDto } from '../api';
 import { QuizQuestionDto } from '../api';
 import { QueueItem } from './QueueTypes';
 
+export interface PlaylistInfo {
+  playlistId: string;
+  title: string;
+  isFavorite: boolean;
+}
+
 // Define the context type
 export interface SongContextType {
   song: FullSongResponseDto | null;
@@ -12,10 +18,13 @@ export interface SongContextType {
   queue: QueueItem[];
   setQueue: (_queue: QueueItem[] | ((_prevQueue: QueueItem[]) => QueueItem[])) => void;
   currentPlayingId: string | null;
-  // setCurrentPlayingId: (_id: string | null) => void;
   setCurrentPlayingId: React.Dispatch<React.SetStateAction<string | null>>;
   lyricsOffset: number;
   setLyricsOffset: React.Dispatch<React.SetStateAction<number>>;
+  playlists: PlaylistInfo[];
+  setPlaylists: React.Dispatch<React.SetStateAction<PlaylistInfo[]>>;
+  selectedPlaylistIndex: number;
+  setSelectedPlaylistIndex: React.Dispatch<React.SetStateAction<number>>;
 }
 
 // Create context

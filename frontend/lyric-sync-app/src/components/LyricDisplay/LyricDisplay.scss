@@ -32,10 +32,18 @@
 
 .active-lrc
 {
-  color: color.scale($secondary-color, $lightness: -10%);
   text-shadow: 
     0 0 4px white, /* Soft glow */
     0 0 10px white;
+  
+  .lyric-part-0 {
+    color: color.scale($secondary-color, $lightness: -10%);
+  }
+
+  .lyric-part-1 {
+    color: rgb(190, 0, 0);
+  }
+
 }
 
 .lrc { //hide scroll

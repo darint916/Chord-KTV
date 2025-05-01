@@ -22,6 +22,7 @@ import GeniusHitsCarousel from '../../components/GeniusHitsCarousel/GeniusHitsCa
 import { GeniusHit, UserSongActivityFavoriteRequestDto } from '../../api';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import { UserPlaylistActivityDto } from '../../api';
 
 // Define the YouTubePlayer interface
 interface YouTubePlayer {
@@ -61,7 +62,8 @@ const SongPlayerPage: React.FC = () => {
     queue,
     setQueue,
     currentPlayingId,
-    setCurrentPlayingId
+    setCurrentPlayingId,
+    setPlaylists,
   } = useSong();
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
@@ -82,7 +84,7 @@ const SongPlayerPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!song?.id) {return;}
+    if (!song?.id) { return; }
 
     (async () => {
       let currentFav = false;
@@ -143,29 +145,22 @@ const SongPlayerPage: React.FC = () => {
 
     const original = parseLyrics(song.lrcLyrics);
     const romanized = song.lrcRomanizedLyrics ? parseLyrics(song.lrcRomanizedLyrics) : [];
-    const translated = song.lrcTranslatedLyrics ? parseLyrics(song.lrcTranslatedLyrics) : [];
 
     const combined: string[] = [];
 
     for (const origLine of original) {
       const romLine = romanized.find(l => l.time === origLine.time);
-      const transLine = translated.find(l => l.time === origLine.time);
 
       const texts: string[] = [];
-
-      // Always include the original
-      if (origLine.text) {
-        texts.push(origLine.text);
-      }
 
       // Only include romanized if it's different from original (case insensitive)
       if (romLine && romLine.text && romLine.text.toLowerCase() !== origLine.text.toLowerCase()) {
         texts.push(romLine.text);
       }
 
-      // Only include translation if it's different from original (case insensitive)
-      if (transLine && transLine.text && transLine.text.toLowerCase() !== origLine.text.toLowerCase()) {
-        texts.push(transLine.text);
+      // Always include the original
+      if (origLine.text) {
+        texts.push(origLine.text);
       }
 
       const mergedText = texts.join(COMBINED_DELIMITER);
@@ -598,12 +593,26 @@ const SongPlayerPage: React.FC = () => {
       setQueue(prev => [...prev, ...newItems]);
       setPlaylistUrl('');
 
+      const favoriteDtos: UserPlaylistActivityDto[] = await userActivityApi.apiUserActivityFavoritePlaylistsGet();
+      const favoriteIds = favoriteDtos.map(dto => dto.playlistId);
+      const isAlreadyFavorite = favoriteIds.includes(playlistId);
+      setPlaylists(prev => {
+        const exists = prev.some(p => p.playlistId === playlistId);
+        if (exists) {return prev;}
+        return [...prev, {
+          playlistId,
+          title: response.playlistTitle || 'Unknown Playlist',
+          isFavorite: isAlreadyFavorite,
+        }];
+      });
+
+
       try {
         await userActivityApi.apiUserActivityFavoritePlaylistPatch({
           userPlaylistActivityFavoriteRequestDto: {
-            playlistId, 
+            playlistId,
             isPlayed: true,
-            isFavorite: true
+            isFavorite: isAlreadyFavorite
           }
         });
       } catch {
@@ -797,10 +806,10 @@ const SongPlayerPage: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   // Toggle favorite & call the PATCH endpoint
   const handleToggleFavorite = async () => {
-    if (!song?.id) {return;}
+    if (!song?.id) { return; }
     setFavLoading(true);
     try {
       await userActivityApi.apiUserActivityFavoriteSongPatch({
@@ -996,6 +1005,7 @@ const SongPlayerPage: React.FC = () => {
                 }
                 currentTime={currentTime + lyricsOffsetRef.current}
                 isPlaying={isPlaying}
+                tabIndex={selectedTab}
               />
             </Box>
           </Grid>
