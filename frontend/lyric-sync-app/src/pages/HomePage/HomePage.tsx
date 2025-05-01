@@ -29,7 +29,7 @@ const HomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [playlistLoading, setPlaylistLoading] = useState(false);
   const navigate = useNavigate();
-  const { setSong, queue, setQueue, setCurrentPlayingId } = useSong();
+  const { setSong, queue, setQueue, setCurrentPlayingId, playlists, setPlaylists, setSelectedPlaylistIndex } = useSong();
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [lyrics, setLyrics] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -118,6 +118,13 @@ const HomePage: React.FC = () => {
           lrcTranslatedLyrics: ''
         });
       }
+      setPlaylists([{
+        playlistId,
+        title: response.playlistTitle || 'Unknown Playlist',
+        isFavorite: false
+      }]);
+      setSelectedPlaylistIndex(playlists.length);
+
 
       navigate('/play-song');
     } catch (err) {

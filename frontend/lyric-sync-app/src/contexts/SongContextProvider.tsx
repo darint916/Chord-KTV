@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FullSongResponseDto, QuizQuestionDto } from '../api';
-import { SongContext } from './SongContext';
+import { SongContext, PlaylistInfo } from './SongContext';
 import { QueueItem } from './QueueTypes';
 
 // Provider component
@@ -52,8 +52,14 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [quizQuestions]);
 
+  const [playlists, setPlaylists] = useState<PlaylistInfo[]>([]);
+  const [selectedPlaylistIndex, setSelectedPlaylistIndex] = useState(0);
+
   return (
-    <SongContext.Provider value={{ song, setSong, queue, setQueue, currentPlayingId, setCurrentPlayingId, quizQuestions, setQuizQuestions, lyricsOffset, setLyricsOffset }}>
+    <SongContext.Provider value={{
+      song, setSong, queue, setQueue, currentPlayingId, setCurrentPlayingId, quizQuestions, setQuizQuestions, lyricsOffset, setLyricsOffset,
+      playlists, setPlaylists, selectedPlaylistIndex, setSelectedPlaylistIndex
+    }}>
       {children}
     </SongContext.Provider>
   );

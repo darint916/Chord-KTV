@@ -38,6 +38,10 @@
     .avatar {
       cursor: pointer;
     }
+
+    .playlist-title {
+      color: $text-primary;
+    }
   }
 }
 
@@ -48,6 +52,7 @@
   padding: 6px 16px;
   border-radius: $border-radius;
   transition: background-color 0.3s ease;
+
   &:hover {
     background-color: #333333 !important;
   }

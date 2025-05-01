@@ -61,7 +61,10 @@ const SongPlayerPage: React.FC = () => {
     queue,
     setQueue,
     currentPlayingId,
-    setCurrentPlayingId
+    setCurrentPlayingId,
+    playlists,
+    setPlaylists,
+    setSelectedPlaylistIndex
   } = useSong();
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
@@ -82,7 +85,7 @@ const SongPlayerPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!song?.id) {return;}
+    if (!song?.id) { return; }
 
     (async () => {
       let currentFav = false;
@@ -601,7 +604,7 @@ const SongPlayerPage: React.FC = () => {
       try {
         await userActivityApi.apiUserActivityFavoritePlaylistPatch({
           userPlaylistActivityFavoriteRequestDto: {
-            playlistId, 
+            playlistId,
             isPlayed: true,
             isFavorite: true
           }
@@ -609,6 +612,12 @@ const SongPlayerPage: React.FC = () => {
       } catch {
         // console.error('Failed to log playlist activity', err);
       }
+      setPlaylists(prev => [...prev, {
+        playlistId,
+        title: response.playlistTitle || 'Playlist',
+        isFavorite: false
+      }]);
+
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load playlist';
       setError(msg);
@@ -797,10 +806,10 @@ const SongPlayerPage: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   // Toggle favorite & call the PATCH endpoint
   const handleToggleFavorite = async () => {
-    if (!song?.id) {return;}
+    if (!song?.id) { return; }
     setFavLoading(true);
     try {
       await userActivityApi.apiUserActivityFavoriteSongPatch({
