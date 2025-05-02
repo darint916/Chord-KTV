@@ -96,12 +96,12 @@ public class UserContextService : IUserContextService
         var tokenHandler = new JwtSecurityTokenHandler();
         byte[] key = Encoding.UTF8.GetBytes(_jwtKey);
 
-        Claim[] claims = new[]
-        {
+        Claim[] claims =
+        [
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email ?? ""),
             new Claim(ClaimTypes.Name, user.Name ?? "")
-        };
+        ];
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
