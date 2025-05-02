@@ -18,24 +18,20 @@ import {
 import Grid from '@mui/material/Grid2';
 import { useSong } from '../../contexts/SongContext';
 import './HandwritingPage.scss';
-import { LanguageCode, QuizQuestionDto, UserHandwritingResultDto } from '../../api';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { quizApi, userActivityApi, handwritingApi } from '../../api/apiClient';
+import { LanguageCode, UserHandwritingResultDto } from '../../api';
+import { useNavigate } from 'react-router-dom';
+import { userActivityApi, handwritingApi } from '../../api/apiClient';
 import { IconButton, Tooltip } from '@mui/material';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import { Publish } from '@mui/icons-material';
-import type { Phrases } from '../../api';
 
 const HandwritingPage: React.FC = () => {
-  const { song, quizQuestions, setQuizQuestions, handwritingQuizQuestions } = useSong();
+  const { song, handwritingQuizQuestions } = useSong();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [completedWords, setCompletedWords] = useState<number[]>([]);
   const [currentWordCompleted, setCurrentWordCompleted] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const navigate = useNavigate();
-  const [recognizedText, setRecognizedText] = useState('');
-  const [matchPercentage, setMatchPercentage] = useState<number | null>(null);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info'>('info');
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -43,12 +39,12 @@ const HandwritingPage: React.FC = () => {
   const handwritingCanvasRef = useRef<{
     clearCanvas: () => void;
     getImageData: () => string | null;
-  }>(null);
+      }>(null);
 
   const handleSubmit = async () => {
-    if (!handwritingCanvasRef.current) return;
+    if (!handwritingCanvasRef.current) { return; }
     const imageData = handwritingCanvasRef.current.getImageData?.();
-    if (!imageData) return;
+    if (!imageData) { return; }
 
     try {
       const response = await handwritingApi.apiHandwritingOcrPost({
@@ -61,15 +57,13 @@ const HandwritingPage: React.FC = () => {
 
       const match = response.matchPercentage || 0;
       const recognized = response.recognizedText || '';
-      setRecognizedText(recognized);
-      setMatchPercentage(match);
 
       if (match === 100) {
         setSnackbarSeverity('success');
         setSnackbarMessage('Perfect match! Good job!');
       } else {
         setSnackbarSeverity('info');
-        setSnackbarMessage(`Partial match: ${match}%`);
+        setSnackbarMessage(`Partial match: ${match}% — Recognized: "${recognized}"`);
       }
 
       setSnackbarOpen(true);
@@ -262,7 +256,7 @@ const HandwritingPage: React.FC = () => {
           <Box className="handwriting-canvas-wrapper">
             <HandwritingCanvas
               ref={handwritingCanvasRef}
-              expectedText={currentWord.original ?? ""}
+              expectedText={currentWord.original ?? ''}
               selectedLanguage={song.geniusMetaData.language as LanguageCode}
               onComplete={handleWordCompletionAttempt}
             />

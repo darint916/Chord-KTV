@@ -10,7 +10,6 @@ import { LanguageCode } from '../../api';
 import './HandwritingCanvas.scss';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit'; // Marker
-import { CleaningServices } from '@mui/icons-material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 
@@ -33,14 +32,14 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
 
     React.useImperativeHandle(ref, () => ({
       clearCanvas: () => {
-        if (!canvasRef.current || !ctxRef.current) return;
+        if (!canvasRef.current || !ctxRef.current) {return;}
         ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         setFeedbackMessage('');
         setRecognizedText('');
         setMatchPercentage(null);
       },
       getImageData: () => {
-        if (!canvasRef.current) return null;
+        if (!canvasRef.current) {return null;}
 
         const offscreenCanvas = document.createElement('canvas');
         const ctx = offscreenCanvas.getContext('2d');

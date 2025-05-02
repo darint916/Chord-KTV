@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, IconButton, Slider } from '@mui/material';
+import { Box, Typography, Button, IconButton, Slider, Alert } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import { quizApi, userActivityApi, handwritingApi } from '../../api/apiClient';
@@ -41,6 +41,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [handwritingDifficulty, setHandwritingDifficulty] = useState<number>(5);
+  const [error, setError] = useState('');
 
   const handleStartQuiz = async (quizType: 'romanization' | 'audio') => {
     setIsLoading(true);
@@ -210,13 +211,13 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
   };
 
   const handleStartHandwritingQuiz = async () => {
-    if (!song?.id || !quizQuestions || quizQuestions.length === 0) return;
+    if (!song?.id || !quizQuestions || quizQuestions.length === 0) { return; }
 
     setIsRedirecting(true);
 
     try {
       const phrases = quizQuestions.map(q => {
-        if (q.lyricPhrase?.trim()) return q.lyricPhrase;
+        if (q.lyricPhrase?.trim()) { return q.lyricPhrase; }
         const idx = q.correctOptionIndex ?? 0;
         return q.options?.[idx] ?? '';
       });
@@ -230,7 +231,10 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
       setHandwritingQuizQuestions(translationResp);
       navigate('/handwriting-quiz');
     } catch (err) {
-      console.error('Failed to fetch handwriting quiz phrases:', err);
+      const errorMessage = err instanceof Error
+        ? `Failed to fetch handwriting quiz phrases: ${err.message}`
+        : 'Failed to fetch handwriting quiz phrases';
+      setError(errorMessage);
       setIsRedirecting(false);
     }
   };
@@ -258,6 +262,13 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
 
   return (
     <div>
+      {error && (
+        <Box mx="auto" width="fit-content" mt={2}>
+          <Alert severity="error" onClose={() => setError('')} variant="filled">
+            {error}
+          </Alert>
+        </Box>
+      )}
       {quizCompleted && (
         <Box display="flex" flexDirection="column" alignItems="center" gap={2} mt={2}>
           <Box width={300}>
