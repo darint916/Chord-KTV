@@ -86,9 +86,9 @@ public class AppDbContext : DbContext
             .Property(x => x.DatesPlayed)
             .HasColumnType("timestamp with time zone[]");
 
-        modelBuilder.Entity<UserSongActivity>()
-            .HasIndex(x => new { x.UserId, x.Song.Id })
-            .IsUnique();
+        // modelBuilder.Entity<UserSongActivity>()
+        //     .HasIndex(x => new { x.UserId, x.Song.Id })
+        //     .IsUnique();
     }
 }
 
