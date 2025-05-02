@@ -10,6 +10,7 @@ import './QuizComponent.scss';
 import AudioSnippetPlayer from '../AudioSnippetPlayer/AudioSnippetPlayer';
 import { parseTimeSpan } from '../../utils/timeUtils';
 import type { QuizResponseDto, LanguageCode, UserQuizResultDto, QuizQuestionDto } from '../../api/models';
+import CircularProgress from '@mui/material/CircularProgress';
 
 interface QuizData {
   quizTitle: string;
@@ -38,6 +39,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
   const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const handleStartQuiz = async (quizType: 'romanization' | 'audio') => {
     setIsLoading(true);
@@ -108,21 +110,41 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
     setQuizQuestions([]);
   }, []);
 
-  if (isLoading) {
-    return <Typography variant="h5">Loading quiz questions...</Typography>;
-  }
-
-  // If no quiz has been started yet, show buttons for the user to choose the quiz type.
   if (!quizData) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" gap={2} flexDirection="column">
         <Typography variant="h6">Choose Quiz Type</Typography>
         <Box display="flex" gap={2}>
-          <Button variant="contained" color="primary" onClick={() => handleStartQuiz('romanization')}>
-            Start Romanization Quiz
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleStartQuiz('romanization')}
+            disabled={isLoading}
+            startIcon={
+              isLoading && selectedQuizType === 'romanization' ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : undefined
+            }
+          >
+            {isLoading && selectedQuizType === 'romanization'
+              ? 'Preparing...'
+              : 'Start Romanization Quiz'}
           </Button>
-          <Button variant="outlined" color="secondary" onClick={() => handleStartQuiz('audio')}>
-            Do Audio Quiz Instead
+
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => handleStartQuiz('audio')}
+            disabled={isLoading}
+            startIcon={
+              isLoading && selectedQuizType === 'audio' ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : undefined
+            }
+          >
+            {isLoading && selectedQuizType === 'audio'
+              ? 'Preparing...'
+              : 'Do Audio Quiz Instead'}
           </Button>
         </Box>
       </Box>
@@ -189,6 +211,8 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
   const handleStartHandwritingQuiz = async () => {
     if (!song?.id || !quizQuestions || quizQuestions.length === 0) return;
 
+    setIsRedirecting(true);
+
     try {
       const phrases = quizQuestions.map(q => {
         if (q.lyricPhrase?.trim()) return q.lyricPhrase;
@@ -205,6 +229,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
       navigate('/handwriting-quiz');
     } catch (err) {
       console.error('Failed to fetch handwriting quiz phrases:', err);
+      setIsRedirecting(false);
     }
   };
 
@@ -233,8 +258,17 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
     <div>
       {quizCompleted && (
         <Box marginTop={2}>
-          <Button variant="contained" color="primary" onClick={handleStartHandwritingQuiz}>
+          {/* <Button variant="contained" color="primary" onClick={handleStartHandwritingQuiz}>
             Start Handwriting Quiz
+          </Button> */}
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleStartHandwritingQuiz}
+            disabled={isRedirecting}
+            startIcon={isRedirecting ? <CircularProgress size={20} color="inherit" /> : undefined}
+          >
+            {isRedirecting ? 'Preparing...' : 'Start Handwriting Quiz'}
           </Button>
         </Box>
       )}
