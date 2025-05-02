@@ -287,7 +287,7 @@ const UserStatsPage: React.FC = () => {
               <TopPlaylists data={topPls} onToggleFavorite={handlePlaylistToggleFavorite} />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ pl: 2 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <LearnedWords recent={recentWords} />
             </Grid>
           </Grid>
