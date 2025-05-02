@@ -25,7 +25,7 @@ const AppBarComponent: React.FC = () => {
 
   // Hide playlist on homepage (makes no sense to display it there)
   const location = useLocation();
-  const isHomePage = location.pathname === '/';
+  const isHomePage = location.pathname === '/' || location.pathname === '/stats';
 
   const currentPlaylist = playlists[selectedPlaylistIndex];
   const handlePrev = () => {

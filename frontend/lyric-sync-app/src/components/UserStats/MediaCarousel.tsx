@@ -40,7 +40,7 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Generate skeleton items if the array is empty
-  const displayItems = items.length > 0 ? items : Array(1).fill(null).map((_, index) => ({
+  const displayItems = items.length > 0 ? items : Array(6).fill(null).map((_, index) => ({
     id: `empty-${index}`,
     title: index === 0 ? emptyStateMessage : '---',
     coverUrl: '',
