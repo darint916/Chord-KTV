@@ -119,7 +119,7 @@ const UserStatsPage: React.FC = () => {
   const favPlaylists: MediaItem[] = useMemo(
     () =>
       favoritePlaylists.map(
-        ({ playlistId, title, playlistThumbnailUrl, datesPlayed }, index) => ({
+        ({ playlistId, title, playlistThumbnailUrl, datesPlayed, dateFavorited, isFavorite}, index) => ({
           id: playlistId ?? 'unknown-playlist',
           title: title ?? playlistId ?? 'Unknown Playlist',
           subtitle: undefined,
@@ -128,6 +128,8 @@ const UserStatsPage: React.FC = () => {
               ? playlistThumbnailUrl
               : placeholderImages[index % placeholderImages.length],
           plays: datesPlayed?.length ?? 0,
+          dateFavorited: dateFavorited ?? undefined,
+          isFavorite: isFavorite ?? false,
         })
       ),
     [favoritePlaylists],
@@ -144,6 +146,8 @@ const UserStatsPage: React.FC = () => {
           subtitle: song?.artist || undefined,
           coverUrl: song?.geniusThumbnailUrl || '', // fallback as needed
           plays,
+          dateFavorited: song?.dateFavorited || undefined,
+          isFavorite: song?.isFavorite || false,
         };
       });
   }, [songs]);
@@ -161,9 +165,11 @@ const UserStatsPage: React.FC = () => {
         title:   pl?.title  ?? id,
         // reuse subtitle if you want to show the raw ID under the name:
         subtitle: undefined,
-        coverUrl: pl?.playlistThumbnailUrl 
+        coverUrl: pl?.playlistThumbnailUrl
                    ?? placeholderImages[index % placeholderImages.length],
         plays,
+        dateFavorited: pl?.dateFavorited || undefined,
+        isFavorite: pl?.isFavorite || false,
       };
     });
   }, [playlists]);
@@ -249,21 +255,13 @@ const UserStatsPage: React.FC = () => {
           </Box>
 
           {/* ─────────────── 2) 4 stats panels ─────────────── */}
-          <Grid
-            container
-            spacing={3}
-            alignItems="stretch"
-            columns={12}
-          >
-            <Grid
-              size={{ xs: 12, sm: 6, md: 3 }}
-              sx={{ maxWidth: 300, minWidth: 260 }}
-            >
+          <Grid container spacing={3} alignItems="stretch">
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ maxWidth: 300, minWidth: 260 }} >
               <QuizResultsSection quizzes={sanitizedQuizzes} />
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{  maxWidth: 400, minWidth: 260 }}>
-              <TopSongsChart data={topSongs} />
+              <TopSongsChart mediaItems={topSongs} />
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{  pl: 8 }}>

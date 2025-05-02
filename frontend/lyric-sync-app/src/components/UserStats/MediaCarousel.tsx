@@ -16,6 +16,8 @@ export interface MediaItem {
   coverUrl: string;
   plays?: number;
   isEmptyState?: boolean;
+  dateFavorited?: Date;
+  isFavorite?: boolean;
 }
 
 interface MediaCarouselProps {

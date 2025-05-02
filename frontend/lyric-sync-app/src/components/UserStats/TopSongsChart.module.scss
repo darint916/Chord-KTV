@@ -29,9 +29,13 @@
   align-items: center;
   gap: 16px;
   margin-bottom: 8px;
+  flex-wrap: nowrap;
 }
 
 .songTitle {
+  flex: 1 1 0;
+  min-width: 0;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -40,6 +44,7 @@
 .songPlays {
   margin-left: auto;
   color: #757575; // matches 'text.secondary'
+  flex: 0 0 auto;
 }
 
 .progressBar {
@@ -67,4 +72,4 @@
   height: 32px;
   background: linear-gradient(to top, white, transparent);
   transition: opacity 0.2s;
-} 
+}
