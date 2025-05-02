@@ -527,6 +527,98 @@ Your task:
         return distractors;
     }
 
+    public async Task<TranslatePhrasesResponseDto> TranslateRomanizeAsync(string[] phrases, LanguageCode languageCode, int difficulty = 3)
+    {
+        if (phrases == null || phrases.Length == 0)
+        {
+            throw new ArgumentException("Phrases must not be empty", nameof(phrases));
+        }
+
+        string sysPrompt = $@"
+You are a JSON‐output specialist. You will be given:
+- A JSON array of user‐supplied phrases (order does not matter).
+- A complexity level from 1 to 10.
+Your task:
+1. Ignore all symbols and punctuation in the inputs.
+2. Extract individual, complete words and short phrases from the list that are appropriate for vocabulary‐practice at the specified complexity.
+3. For each extracted item, produce:
+   • ""original"": the word or phrase exactly as from the input (minus symbols)
+   • ""romanized"": the correct romanization (Revised Hepburn for Japanese, Pinyin for Chinese, ISO-9 for Cyrillic, ALA-LC for Arabic, etc.)
+   • ""translated"": a natural, idiomatic English translation
+4. Emit **exactly one** JSON object and nothing else, matching this schema:
+emit **exactly one** JSON object and nothing else. The output JSON must match this schema:
+{{
+  ""phrases"": [
+    {{
+      ""original"": ""<complete word or short phrase>"",
+      ""romanized"": ""<romanization>"",
+      ""translated"": ""<English translation>""
+    }},
+    …
+  ]
+}}
+
+Ensure there are no extra fields, comments, or markup in the output.";
+
+        string userPrompt = $@"
+LanguageHint: {languageCode}
+Phrases:
+{JsonSerializer.Serialize(phrases)}
+Complexity: {difficulty}";
+
+
+        var requestBody = new
+        {
+            model = Model,
+            messages = new object[]
+            {
+                new { role = "system", content = sysPrompt.Trim() },
+                new { role = "user",   content = userPrompt.Trim() }
+            },
+            temperature = 0.0,
+            top_p = 1.0
+        };
+        OpenAIResponseDto? openAIResponse = await GptChatCompletionAsync(JsonSerializer.Serialize(requestBody));
+        if (openAIResponse == null || openAIResponse.Choices.Count == 0)
+        {
+            throw new InvalidOperationException("No response choices from ChatGPT for TranslateRomanizeAsync.");
+        }
+        string messageContent = openAIResponse.Choices[0].Message.Content?.Trim()
+                   ?? throw new InvalidOperationException("Empty content in ChatGPT response.");
+
+        //Replace all unescaped quotes with escaped quotes
+        messageContent = Regex.Replace(
+            messageContent,
+            // look-behind for "original":", "romanized":", or "translated":"
+            // then capture any sequence (including already-escaped bits) up to the closing quote
+            @"(?<=\b(?:original|romanized|translated)""\s*:\s*"")((?:\\.|[^""\\])*)(?="")",
+            match =>
+            {
+                // in the captured value, escape any bare "
+                string val = match.Value;
+                string escaped = val.Replace("\"", "\\\"");
+                return escaped;
+            },
+            RegexOptions.Singleline
+        );
+        try
+        {
+            TranslatePhrasesResponseDto? translateResponseDto = JsonSerializer.Deserialize<TranslatePhrasesResponseDto>(messageContent, _jsonOptions);
+            if (translateResponseDto == null || translateResponseDto.Phrases.Length == 0)
+            {
+                _logger.LogError("No phrases were returned from the ChatGPT API for TranslateRomanize.");
+                throw new InvalidOperationException("No phrases were returned from the ChatGPT API.");
+            }
+            return translateResponseDto;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to deserialize the ChatGPT API response for TranslateRomanize. messageContent: {MessageContent}", messageContent);
+            throw new InvalidOperationException("Failed to deserialize the ChatGPT API response for TranslateRomanize.");
+        }
+    }
+
+
     private async Task<OpenAIResponseDto?> GptChatCompletionAsync(string jsonRequest, [CallerMemberName] string caller = "")
     {
         try
