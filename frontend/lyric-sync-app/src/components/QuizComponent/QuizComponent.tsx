@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, IconButton } from '@mui/material';
+import { Box, Typography, Button, IconButton, Slider } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import { quizApi, userActivityApi, handwritingApi } from '../../api/apiClient';
@@ -40,6 +40,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [handwritingDifficulty, setHandwritingDifficulty] = useState<number>(6);
 
   const handleStartQuiz = async (quizType: 'romanization' | 'audio') => {
     setIsLoading(true);
@@ -223,6 +224,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
       const translationResp = await handwritingApi.apiHandwritingOcrTranslateGet({
         phrases,
         languageCode: song.geniusMetaData?.language as LanguageCode,
+        difficulty: handwritingDifficulty
       });
 
       setHandwritingQuizQuestions(translationResp);
@@ -257,10 +259,21 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
   return (
     <div>
       {quizCompleted && (
-        <Box marginTop={2}>
-          {/* <Button variant="contained" color="primary" onClick={handleStartHandwritingQuiz}>
-            Start Handwriting Quiz
-          </Button> */}
+        <Box display="flex" flexDirection="column" alignItems="center" gap={2} mt={2}>
+          <Box width={300}>
+            <Typography gutterBottom className="difficulty-text">
+              Handwriting Quiz Difficulty: {handwritingDifficulty}
+            </Typography>
+            <Slider
+              value={handwritingDifficulty}
+              min={1}
+              max={10}
+              step={1}
+              valueLabelDisplay="auto"
+              onChange={(_, value) => setHandwritingDifficulty(value as number)}
+            />
+          </Box>
+
           <Button
             variant="contained"
             color="primary"
@@ -271,6 +284,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
             {isRedirecting ? 'Preparing...' : 'Start Handwriting Quiz'}
           </Button>
         </Box>
+
       )}
       <Box className="quiz-container">
         {selectedQuizType === 'audio' && !quizCompleted && (
