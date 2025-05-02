@@ -14,15 +14,9 @@ import { userActivityApi } from '../../api/apiClient';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 
-// interface SongDatum {
-//   id: string;
-//   title: string;
-//   plays: number;
-// }
-
 interface TopSongsChartProps {
-  // data: SongDatum[];
   mediaItems: MediaItem[];
+  onToggleFavorite: (_songId: string, _isFav: boolean) => void;
 }
 
 const TopSongsChart: React.FC<TopSongsChartProps> = ({ mediaItems, onToggleFavorite }) => {

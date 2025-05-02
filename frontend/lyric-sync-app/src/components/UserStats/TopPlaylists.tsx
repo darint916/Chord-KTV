@@ -8,24 +8,42 @@ import {
   Avatar,
   ListItemText,
   Typography,
+  IconButton,
 } from '@mui/material';
 import { MediaItem } from './MediaCarousel';
 import styles from './TopPlaylists.module.scss';
-
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 interface TopPlaylistsProps {
   data: MediaItem[];
+  onToggleFavorite: (playlistId: string, isFav: boolean) => void;
 }
 
-const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data }) => {
+const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data, onToggleFavorite}) => {
   const [scrollPct, setScrollPct] = React.useState(0);
   const ref = React.useRef<HTMLDivElement>(null);
 
   const handleScroll = () => {
-    if (!ref.current) {return;}
+    if (!ref.current) { return; }
     const { scrollTop, scrollHeight, clientHeight } = ref.current;
     const max = scrollHeight - clientHeight;
     setScrollPct(max > 0 ? scrollTop / max : 0);
   };
+
+  const [isFavMap, setIsFavMap] = React.useState<Record<string, boolean>>({});
+  React.useEffect(() => {
+    const map = data.reduce((acc, p) => {
+      acc[p.id] = p.isFavorite ?? false;
+      return acc;
+    }, {} as Record<string, boolean>);
+    setIsFavMap(map);
+  }, [data]);
+  const handleToggle = (id: string) => {
+    const next = !isFavMap[id];
+    setIsFavMap(m => ({ ...m, [id]: next }));
+    onToggleFavorite(id, next);
+  };
+
 
   return (
     <Paper elevation={0}>
@@ -46,7 +64,12 @@ const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data }) => {
           >
             <List dense disablePadding>
               {data.map((p) => (
-                <ListItem key={p.id}>
+                <ListItem key={p.id}
+                  secondaryAction={
+                    <IconButton edge="end" size='small' onClick={() => handleToggle(p.id)}>
+                      {isFavMap[p.id] ? <FavoriteIcon color="error" fontSize="small" /> : <FavoriteBorderIcon fontSize="small"/>}
+                    </IconButton>
+                  }>
                   <ListItemAvatar>
                     <Avatar
                       variant="square"

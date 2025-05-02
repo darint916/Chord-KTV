@@ -227,13 +227,22 @@ const UserStatsPage: React.FC = () => {
     dateCompleted: q.dateCompleted instanceof Date ? q.dateCompleted.toISOString() : q.dateCompleted ?? null,
   }));
 
-  const handleSongFavoriteToggle = (songId: string, isFavoriteNow: boolean
+  const handleSongToggleFavorite = (songId: string, isFavoriteNow: boolean
   ) => {
     if (isFavoriteNow) {
       const toAdd = songs.find(s => s.songId === songId);
       if (toAdd) { setFavoriteSongs((prev) => [...prev, toAdd]); }
     } else {
       setFavoriteSongs((prev) => prev.filter(s => s.songId !== songId));
+    }
+  };
+
+  const handlePlaylistToggleFavorite = (playlistId: string, isFavoriteNow: boolean) => {
+    if (isFavoriteNow) {
+      const toAdd = playlists.find(p => p.playlistId === playlistId);
+      if (toAdd) { setFavoritePlaylists((prev) => [...prev, toAdd]); }
+    } else {
+      setFavoritePlaylists((prev) => prev.filter(p => p.playlistId !== playlistId));
     }
   };
 
@@ -271,11 +280,11 @@ const UserStatsPage: React.FC = () => {
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{  maxWidth: 400, minWidth: 260 }}>
-              <TopSongsChart mediaItems={topSongs} onToggleFavorite={handleSongFavoriteToggle} />
+              <TopSongsChart mediaItems={topSongs} onToggleFavorite={handleSongToggleFavorite} />
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{  pl: 8 }}>
-              <TopPlaylists data={topPls} />
+              <TopPlaylists data={topPls} onToggleFavorite={handlePlaylistToggleFavorite} />
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ pl: 2 }}>
