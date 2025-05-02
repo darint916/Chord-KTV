@@ -121,48 +121,24 @@ builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = "https://accounts.google.com";
-        options.Audience = "626673404798-lc7pm62to3kkgp641d68bj691c9tk2u6.apps.googleusercontent.com";
-
-        options.TokenValidationParameters.ValidateIssuer = true;
-
-        options.Events = new JwtBearerEvents
+        string? jwtKey = builder.Configuration["Jwt:Key"];
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            OnMessageReceived = context =>
-            {
-                string? authHeader = context.Request.Headers.Authorization.ToString();
-                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                {
-                    context.Token = authHeader["Bearer ".Length..];
-                }
-                else
-                {
-                    context.Token = authHeader ?? string.Empty;
-                }
-
-                ILogger<Program> log = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                if (!string.IsNullOrEmpty(context.Token))
-                {
-                    log.LogDebug("JWT received. Length: {Len}, DotCount: {Dots}", context.Token.Length, context.Token.Count(c => c == '.'));
-                }
-                return Task.CompletedTask;
-            },
-
-            OnAuthenticationFailed = context =>
-            {
-                ILogger<Program> logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogError("JWT authentication failed: {Error}", context.Exception.Message);
-                return Task.CompletedTask;
-            }
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtKey!)),
+            ClockSkew = TimeSpan.FromMinutes(1)
         };
     });
 
 WebApplication app = builder.Build();
 
+app.UseCors();
+
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseCors();
 
 app.UseSwagger();
 app.UseSwaggerUI();

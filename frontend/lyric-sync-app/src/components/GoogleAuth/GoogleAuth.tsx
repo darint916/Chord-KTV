@@ -4,7 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../../contexts/AuthTypes';
 import { Configuration } from '../../api';
 import { AuthApi } from '../../api/apis/AuthApi';
-import { setAuthToken } from '../../utils/auth';
+import { setAuthToken, setRefreshToken } from '../../utils/auth';
 
 // Ensure the basePath includes the correct hostname and port.
 const authApi = new AuthApi(
@@ -35,19 +35,24 @@ const GoogleAuth: React.FC = () => {
         authorization: `Bearer ${credential}`,
       });
 
-      const jwt = authResponse.token;
+      // --- Store both tokens ---
+      const jwt = authResponse.accessToken;
+      const refresh = authResponse.refreshToken;
       if (jwt) {
         setAuthToken(jwt);
-
-        // Update React auth context with the user details.
-        setUser({
-          id: decoded.sub,
-          name: decoded.name,
-          email: decoded.email,
-          picture: decoded.picture,
-          idToken: jwt,
-        });
       }
+      if (refresh) {
+        setRefreshToken(refresh);
+      }
+
+      // Update React auth context with the user details.
+      setUser({
+        id: decoded.sub,
+        name: decoded.name,
+        email: decoded.email,
+        picture: decoded.picture,
+        idToken: jwt,
+      });
     } catch {
       handleLoginError();
     }

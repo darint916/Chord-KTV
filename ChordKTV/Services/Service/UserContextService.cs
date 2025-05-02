@@ -7,6 +7,9 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Google.Apis.Auth;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 
 namespace ChordKTV.Services.Service;
 
@@ -17,6 +20,7 @@ public class UserContextService : IUserContextService
     private readonly ILogger<UserContextService> _logger;
 
     private readonly string _googleClientId;
+    private readonly string _jwtKey;
 
     public UserContextService(
         IConfiguration configuration,
@@ -26,12 +30,14 @@ public class UserContextService : IUserContextService
     {
         _googleClientId = configuration["Authentication:Google:ClientId"] ??
             throw new ArgumentNullException(nameof(configuration), "Google Client ID is not configured");
+        _jwtKey = configuration["Jwt:Key"] ??
+            throw new ArgumentNullException(nameof(configuration), "JWT Key is not configured");
         _logger = logger;
         _userRepo = userRepo;
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<User?> AuthenticateGoogleUserAsync(string idToken)
+    public async Task<(User? user, string accessToken, string refreshToken)> AuthenticateGoogleUserAndIssueTokensAsync(string idToken)
     {
         try
         {
@@ -59,22 +65,76 @@ public class UserContextService : IUserContextService
                 if (!saved)
                 {
                     _logger.LogWarning("Failed to save new user: {Email}", payload.Email);
-                    return null;
+                    return (null, "", "");
                 }
             }
 
-            return user;
+            // Issue tokens
+            string accessToken = GenerateJwtToken(user);
+            string refreshToken = GenerateRefreshToken();
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(30);
+            await _userRepo.SaveChangesAsync();
+
+            return (user, accessToken, refreshToken);
         }
         catch (InvalidJwtException ex)
         {
             _logger.LogWarning(ex, "Invalid JWT token received");
-            return null;
+            return (null, "", "");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error during authentication");
-            return null;
+            return (null, "", "");
         }
+    }
+
+    public string GenerateJwtToken(User user)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        byte[] key = Encoding.UTF8.GetBytes(_jwtKey);
+
+        Claim[] claims =
+        [
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email ?? ""),
+            new Claim(ClaimTypes.Name, user.Name ?? "")
+        ];
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(claims),
+            Expires = DateTime.UtcNow.AddMinutes(15),
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
+    public string GenerateRefreshToken()
+    {
+        return Convert.ToBase64String(Guid.NewGuid().ToByteArray()) + Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+    }
+
+    public async Task<(User? user, string accessToken, string refreshToken)> RefreshTokenAsync(string refreshToken)
+    {
+        User? user = await _userRepo.GetUserByRefreshTokenAsync(refreshToken);
+        if (user == null || user.RefreshTokenExpiry < DateTime.UtcNow)
+        {
+            return (null, "", "");
+        }
+
+        string newAccessToken = GenerateJwtToken(user);
+        string newRefreshToken = GenerateRefreshToken();
+
+        user.RefreshToken = newRefreshToken;
+        user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(30);
+        await _userRepo.SaveChangesAsync();
+
+        return (user, newAccessToken, newRefreshToken);
     }
 
     public async Task<User?> GetCurrentUserAsync()

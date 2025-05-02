@@ -5,6 +5,7 @@ namespace ChordKTV.Services.Api;
 
 public interface IUserContextService
 {
-    Task<User?> AuthenticateGoogleUserAsync(string idToken);
+    Task<(User? user, string accessToken, string refreshToken)> AuthenticateGoogleUserAndIssueTokensAsync(string idToken);
+    Task<(User? user, string accessToken, string refreshToken)> RefreshTokenAsync(string refreshToken);
     Task<User?> GetCurrentUserAsync();
 }

@@ -199,7 +199,7 @@ export function SongDtoToJSONTyped(value?: SongDto | null, ignoreDiscriminator: 
         'artist': value['artist'],
         'featuredArtists': value['featuredArtists'],
         'albumNames': value['albumNames'],
-        'releaseDate': value['releaseDate'] === null ? null : ((value['releaseDate'] as any)?.toISOString().substring(0,10)),
+        'releaseDate': value['releaseDate'] == null ? undefined : ((value['releaseDate'] as any).toISOString().substring(0,10)),
         'genre': value['genre'],
         'duration': value['duration'],
         'plainLyrics': value['plainLyrics'],
