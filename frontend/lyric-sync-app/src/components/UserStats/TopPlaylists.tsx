@@ -46,10 +46,11 @@ const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data, onToggleFavorite}) =>
 
 
   return (
-    <Paper elevation={0}>
-      <Typography variant="h5" gutterBottom>
+    <Paper elevation={0} className={styles.topPlaylistsPaper}>
+      <Typography variant="h6" gutterBottom>
         Top Playlists
       </Typography>
+      <Box component="hr" className={styles.divider} />
 
       {data.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
