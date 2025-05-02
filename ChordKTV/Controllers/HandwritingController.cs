@@ -48,7 +48,7 @@ public class HandwritingController : Controller
     [ProducesResponseType(typeof(TranslatePhrasesResponseDto), 200)]
     [ProducesResponseType(typeof(string), 400)]
     [ProducesResponseType(typeof(string), 500)]
-    public async Task<IActionResult> TranslateRomanize([FromBody] TranslatePhrasesRequestDto request)
+    public async Task<IActionResult> TranslateRomanize([FromQuery] TranslatePhrasesRequestDto request)
     {
         try
         {

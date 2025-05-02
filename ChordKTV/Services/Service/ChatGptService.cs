@@ -540,7 +540,12 @@ You are a JSON‐output specialist. You will be given:
 - A complexity level from 1 to 10.
 Your task:
 1. Ignore all symbols and punctuation in the inputs.
-2. Extract individual, complete words and short phrases from the list that are appropriate for vocabulary‐practice at the specified complexity.
+2. Based on the complexity level:
+   • Determine **N = min(10, complexity + 2)** total items.
+   • If complexity ≤ 3: choose only **single words**.
+   • If complexity 4–7: choose **short phrases** of up to **3 words**.
+   • If complexity 8–10: you may use phrases up to around **5 words**, but **no more** preferably.
+3. Extract the top N **complete** words/phrases that make the best vocabulary practice for that complexity and difficulty to write.
 3. For each extracted item, produce:
    • ""original"": the word or phrase exactly as from the input (minus symbols)
    • ""romanized"": the correct romanization (Revised Hepburn for Japanese, Pinyin for Chinese, ISO-9 for Cyrillic, ALA-LC for Arabic, etc.)
