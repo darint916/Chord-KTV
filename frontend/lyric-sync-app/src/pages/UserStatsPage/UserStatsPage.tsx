@@ -227,6 +227,16 @@ const UserStatsPage: React.FC = () => {
     dateCompleted: q.dateCompleted instanceof Date ? q.dateCompleted.toISOString() : q.dateCompleted ?? null,
   }));
 
+  const handleSongFavoriteToggle = (songId: string, isFavoriteNow: boolean
+  ) => {
+    if (isFavoriteNow) {
+      const toAdd = songs.find(s => s.songId === songId);
+      if (toAdd) { setFavoriteSongs((prev) => [...prev, toAdd]); }
+    } else {
+      setFavoriteSongs((prev) => prev.filter(s => s.songId !== songId));
+    }
+  };
+
   /* render */
   return (
     <ThemeProvider theme={dashboardTheme}>
@@ -261,7 +271,7 @@ const UserStatsPage: React.FC = () => {
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{  maxWidth: 400, minWidth: 260 }}>
-              <TopSongsChart mediaItems={topSongs} />
+              <TopSongsChart mediaItems={topSongs} onToggleFavorite={handleSongFavoriteToggle} />
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{  pl: 8 }}>
