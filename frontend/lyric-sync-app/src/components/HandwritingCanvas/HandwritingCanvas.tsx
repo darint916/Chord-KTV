@@ -8,6 +8,10 @@ import {
 import { LanguageCode } from '../../api';
 import { handwritingApi } from '../../api/apiClient';
 import './HandwritingCanvas.scss';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit'; // Marker
+import GestureIcon from '@mui/icons-material/Gesture'; // Optional for 'Recognize'
+import { CleaningServices } from '@mui/icons-material';
 
 interface HandwritingCanvasProps {
   expectedText: string;
@@ -29,7 +33,7 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
 
     React.useImperativeHandle(ref, () => ({
       clearCanvas: () => {
-        if (!canvasRef.current || !ctxRef.current) {return;}
+        if (!canvasRef.current || !ctxRef.current) { return; }
         ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         setFeedbackMessage('');
         setRecognizedText('');
@@ -45,13 +49,13 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
           if (container) {
             const width = container.clientWidth;
             const height = container.clientHeight;
-            
+
             // Set canvas dimensions to match display
             canvasRef.current.width = width;
             canvasRef.current.height = height;
             gridCanvasRef.current.width = width;
             gridCanvasRef.current.height = height;
-            
+
             const ctx = canvasRef.current.getContext('2d');
             if (ctx) {
               ctx.lineCap = 'round';
@@ -194,21 +198,42 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
           />
         </Box>
 
+
         <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
-          <Button variant="contained" color="primary" onClick={exportImage}>
-              Recognize
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={exportImage}
+            startIcon={<GestureIcon />} // Optional: can remove this if you prefer text only
+          >
+            Check
           </Button>
-          <Button variant="outlined" color="secondary" onClick={clearCanvas}>
-              Clear
+
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={clearCanvas}
+          >
+            <DeleteIcon />
           </Button>
+
+          <Button
+            variant={isEraser ? 'outlined' : 'contained'}
+            color="secondary"
+            onClick={() => setIsEraser(false)}
+          >
+            <EditIcon />
+          </Button>
+
           <Button
             variant={isEraser ? 'contained' : 'outlined'}
             color="secondary"
-            onClick={() => setIsEraser((prev) => !prev)}
+            onClick={() => setIsEraser(true)}
           >
-            {isEraser ? 'Draw' : 'Erase'}
+            <CleaningServices />
           </Button>
         </Stack>
+
 
         <Typography variant="h6" mt={2}>
           {feedbackMessage}
@@ -216,13 +241,13 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
 
         {recognizedText && (
           <Typography variant="body1" mt={1}>
-              Recognized Text: {recognizedText}
+            Recognized Text: {recognizedText}
           </Typography>
         )}
 
         {matchPercentage !== null && (
           <Typography variant="body2" mt={1}>
-              Match: {matchPercentage}%
+            Match: {matchPercentage}%
           </Typography>
         )}
       </div>

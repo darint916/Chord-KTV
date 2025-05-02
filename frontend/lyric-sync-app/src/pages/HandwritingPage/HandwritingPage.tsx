@@ -5,14 +5,16 @@ import {
   Box,
   Typography,
   Button,
-  Grid,
+  // Grid,
   List,
   ListItem,
   ListItemText,
   ListItemButton,
   Stack,
   Chip,
+  Divider
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { useSong } from '../../contexts/SongContext';
 import './HandwritingPage.scss';
 import { LanguageCode, QuizQuestionDto, UserHandwritingResultDto } from '../../api';
@@ -141,17 +143,19 @@ const HandwritingPage: React.FC = () => {
     if (scoreOutOf5 > 0) {
       userActivityApi
         .apiUserActivityHandwritingPost({ userHandwritingResultDto: dto })
-        .catch(() => {});
+        .catch(() => { });
     }
 
     // locally mark complete at ≥98%
     if (matchPct >= 98) {
 
-      userActivityApi.apiUserActivityLearnedWordPost({ learnedWordDto: {
-        language,
-        word: currentWord,
-      } })
-        .catch(() => {});
+      userActivityApi.apiUserActivityLearnedWordPost({
+        learnedWordDto: {
+          language,
+          word: currentWord,
+        }
+      })
+        .catch(() => { });
 
       setCompletedWords(prev => [...new Set([...prev, currentWordIndex])]);
       setCurrentWordCompleted(true);
@@ -260,66 +264,33 @@ const HandwritingPage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" className="handwriting-page-container">
+      <Box display="flex" justifyContent="center" alignItems="center" mb={1}>
+        <Typography variant="h4" gutterBottom align="center" fontWeight="bold" component="h1">
+          Handwriting Practice
+        </Typography>
+      </Box>
+      <Typography variant="h5" gutterBottom align="center" fontWeight="bold" component="h1">
+        Current word: {currentWord}
+      </Typography>
       <Grid container spacing={3} className="grid-parent">
-        {/* Left column - blank for now */}
-        <Grid item xs={12} md={3}>
-        </Grid>
-
-        {/* Middle column - Canvas */}
-        <Grid item xs={12} md={6} className="grid-item">
-          <div className="handwriting-canvas-parent">
-            <Typography variant="h5" gutterBottom align="center">
-              Handwriting Practice
-            </Typography>
-            <Typography variant="h6" gutterBottom align="center">
-              Current word: {currentWord}
-            </Typography>
-
-            <Box className="handwriting-canvas-wrapper">
-              <HandwritingCanvas
-                ref={handwritingCanvasRef}
-                expectedText={currentWord}
-                selectedLanguage={song.geniusMetaData.language as LanguageCode}
-                onComplete={handleWordCompletionAttempt}
-              />
-            </Box>
-
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 6, mt: 1 }}>
-              {currentWordCompleted ? (
-                <Button
-                  variant="contained"
-                  color="success"
-                  onClick={moveToNextWord}
-                >
-                  Next Word
-                </Button>
-              ) : (
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={moveToNextWord}
-                >
-                  Skip Word
-                </Button>
-              )}
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={completeQuiz}
-              >
-                Complete Quiz
-              </Button>
-            </Box>
-          </div>
+        <Grid size={6} className="grid-item">
+          <Box className="handwriting-canvas-wrapper">
+            <HandwritingCanvas
+              ref={handwritingCanvasRef}
+              expectedText={currentWord}
+              selectedLanguage={song.geniusMetaData.language as LanguageCode}
+              onComplete={handleWordCompletionAttempt}
+            />
+          </Box>
         </Grid>
 
         {/* Right column - Word list */}
-        <Grid item xs={12} md={3}>
+        <Grid size={6}>
           <div className="grid-item">
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" fontWeight="bold" component="h1" align='center'>
               Words to Practice
             </Typography>
-            <List dense={true}>
+            <List dense={true} disablePadding>
               {wordsToPractice.map((word, index) => (
                 <ListItem
                   key={index}
@@ -360,6 +331,33 @@ const HandwritingPage: React.FC = () => {
                 </ListItem>
               ))}
             </List>
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 1 }}>
+              {currentWordCompleted ? (
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={moveToNextWord}
+                >
+                  Next Word
+                </Button>
+              ) : (
+                <Button
+                  variant="outlined"
+
+                  color="error"
+                  onClick={moveToNextWord}
+                >
+                  Skip Word
+                </Button>
+              )}
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={completeQuiz}
+              >
+                Complete Quiz
+              </Button>
+            </Box>
           </div>
         </Grid>
       </Grid>

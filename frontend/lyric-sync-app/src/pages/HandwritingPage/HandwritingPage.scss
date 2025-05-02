@@ -5,25 +5,30 @@
   margin-top: 40px;
   color: $text-primary;
 
-  .handwriting-canvas-parent {
+  .grid-parent {
+    margin-top: 25px;
     display: flex;
-    height: 100%;
+    flex-wrap: nowrap;
+    height: 480px;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .grid-item {
+    // height: 100%;
+    border-radius: $border-radius;
+    background: $gradient;
+    box-shadow: $box-shadow;
+    display: flex;
     flex-direction: column;
-    
-    .grid-parent {
-      height: 500px;
-      margin-top: auto;
-    }
+    // justify-content: space-between;
+    padding: 16px;
 
-    .grid-item {
-      height: 100%;
-      border-radius: $border-radius;
-
-      .handwriting-canvas-wrapper {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
+    .handwriting-canvas-wrapper {
+      flex-grow: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
   }
 }
