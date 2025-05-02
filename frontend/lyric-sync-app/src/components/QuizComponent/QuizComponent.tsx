@@ -40,7 +40,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [handwritingDifficulty, setHandwritingDifficulty] = useState<number>(6);
+  const [handwritingDifficulty, setHandwritingDifficulty] = useState<number>(5);
 
   const handleStartQuiz = async (quizType: 'romanization' | 'audio') => {
     setIsLoading(true);

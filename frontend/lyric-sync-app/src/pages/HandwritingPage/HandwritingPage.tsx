@@ -246,6 +246,17 @@ const HandwritingPage: React.FC = () => {
       <Typography variant="h5" gutterBottom align="center" fontWeight="bold" component="h1">
         Current word: {currentWord.original}
       </Typography>
+      {currentWord.romanized && (
+        <Typography variant="h6" align="center" className="italic-title">
+          Romanization: {currentWord.romanized}
+        </Typography>
+      )}
+
+      {currentWord.translated && (
+        <Typography variant="h6" align="center" className="italic-title">
+          Translation: {currentWord.translated}
+        </Typography>
+      )}
       <Grid container spacing={3} className="grid-parent">
         <Grid size={8} className="grid-item">
           <Box className="handwriting-canvas-wrapper">
