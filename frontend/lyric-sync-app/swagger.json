@@ -2496,12 +2496,18 @@
           "user": {
             "$ref": "#/components/schemas/UserDto"
           },
-          "token": {
-            "type": "string",
-            "nullable": true
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
           }
         },
-        "additionalProperties": false
+        "required": [
+          "user",
+          "accessToken",
+          "refreshToken"
+        ]
       },
       "FullSongRequestDto": {
         "type": "object",

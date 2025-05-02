@@ -199,7 +199,7 @@ export function FullSongResponseDtoToJSONTyped(value?: FullSongResponseDto | nul
         'artist': value['artist'],
         'featuredArtists': value['featuredArtists'],
         'albumNames': value['albumNames'],
-        'releaseDate': value['releaseDate'] === null ? null : ((value['releaseDate'] as any)?.toISOString().substring(0,10)),
+        'releaseDate': value['releaseDate'] == null ? undefined : ((value['releaseDate'] as any).toISOString().substring(0,10)),
         'duration': value['duration'],
         'genre': value['genre'],
         'plainLyrics': value['plainLyrics'],

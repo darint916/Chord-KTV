@@ -10,3 +10,15 @@ export function setAuthToken(token: string) {
 export function clearAuthToken() {
   localStorage.removeItem('authToken');
 }
+
+export function setRefreshToken(token: string) {
+  localStorage.setItem('refreshToken', token);
+}
+
+export function getRefreshToken(): string | null {
+  return localStorage.getItem('refreshToken');
+}
+
+export function clearRefreshToken() {
+  localStorage.removeItem('refreshToken');
+}

@@ -32,19 +32,28 @@ export interface AuthResponseDto {
      * @type {UserDto}
      * @memberof AuthResponseDto
      */
-    user?: UserDto;
+    user: UserDto;
     /**
      * 
      * @type {string}
      * @memberof AuthResponseDto
      */
-    token?: string | null;
+    accessToken: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AuthResponseDto
+     */
+    refreshToken: string;
 }
 
 /**
  * Check if a given object implements the AuthResponseDto interface.
  */
 export function instanceOfAuthResponseDto(value: object): value is AuthResponseDto {
+    if (!('user' in value) || value['user'] === undefined) return false;
+    if (!('accessToken' in value) || value['accessToken'] === undefined) return false;
+    if (!('refreshToken' in value) || value['refreshToken'] === undefined) return false;
     return true;
 }
 
@@ -58,8 +67,9 @@ export function AuthResponseDtoFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'user': json['user'] == null ? undefined : UserDtoFromJSON(json['user']),
-        'token': json['token'] == null ? undefined : json['token'],
+        'user': UserDtoFromJSON(json['user']),
+        'accessToken': json['accessToken'],
+        'refreshToken': json['refreshToken'],
     };
 }
 
@@ -75,7 +85,8 @@ export function AuthResponseDtoToJSONTyped(value?: AuthResponseDto | null, ignor
     return {
         
         'user': UserDtoToJSON(value['user']),
-        'token': value['token'],
+        'accessToken': value['accessToken'],
+        'refreshToken': value['refreshToken'],
     };
 }
 

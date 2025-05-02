@@ -19,4 +19,7 @@ public class User
     public List<UserSongActivity> SongActivities { get; set; } = new List<UserSongActivity>();
     public List<UserHandwritingResult> HandwritingResults { get; set; } = new List<UserHandwritingResult>();
     public List<LearnedWord> LearnedWords { get; set; } = new List<LearnedWord>();
+
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiry { get; set; }
 }

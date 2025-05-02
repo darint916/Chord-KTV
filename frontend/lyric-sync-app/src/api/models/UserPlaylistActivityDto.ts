@@ -109,7 +109,7 @@ export function UserPlaylistActivityDtoToJSONTyped(value?: UserPlaylistActivityD
         'datesPlayed': value['datesPlayed'],
         'lastPlayed': value['lastPlayed'] == null ? undefined : ((value['lastPlayed']).toISOString()),
         'isFavorite': value['isFavorite'],
-        'dateFavorited': value['dateFavorited'] === null ? null : ((value['dateFavorited'] as any)?.toISOString()),
+        'dateFavorited': value['dateFavorited'] == null ? undefined : ((value['dateFavorited'] as any).toISOString()),
     };
 }
 
