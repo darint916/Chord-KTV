@@ -169,7 +169,13 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
             onPointerMove={draw}
             onPointerUp={stopDrawing}
             onPointerOut={stopDrawing}
+            style={{
+              cursor: isEraser
+                ? 'url("data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%2732%27 height=%2732%27 viewBox=%270 0 32 32%27><rect x=%279%27 y=%279%27 width=%2714%27 height=%2714%27 fill=%27grey%27/></svg>") 16 16, auto'
+                : 'url("data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%2732%27 height=%2732%27 viewBox=%270 0 32 32%27><path d=%27M16 2 V6 M16 26 V30 M2 16 H6 M26 16 H30%27 stroke=%27black%27 stroke-width=%272%27/><circle cx=%2716%27 cy=%2716%27 r=%274%27 fill=%27none%27 stroke=%27black%27 stroke-width=%271%27/></svg>") 16 16, crosshair'
+            }}
           />
+
         </Box>
 
         <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
@@ -189,7 +195,7 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
               color="secondary"
               onClick={() => setIsEraser(true)}
             >
-             <FontAwesomeIcon icon={faEraser} /> 
+              <FontAwesomeIcon icon={faEraser} />
             </Button>
           </Tooltip>
 
