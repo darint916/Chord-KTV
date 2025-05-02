@@ -5,64 +5,78 @@ import {
   Box,
   Typography,
   Button,
-  Grid,
   List,
   ListItem,
   ListItemText,
   ListItemButton,
   Stack,
   Chip,
+  Divider,
+  Snackbar,
+  Alert
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { useSong } from '../../contexts/SongContext';
 import './HandwritingPage.scss';
-import { LanguageCode, QuizQuestionDto, UserHandwritingResultDto } from '../../api';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { quizApi, userActivityApi } from '../../api/apiClient';
+import { LanguageCode, UserHandwritingResultDto } from '../../api';
+import { useNavigate } from 'react-router-dom';
+import { userActivityApi, handwritingApi } from '../../api/apiClient';
+import { IconButton, Tooltip } from '@mui/material';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
+import { Publish } from '@mui/icons-material';
 
 const HandwritingPage: React.FC = () => {
-  const { song, quizQuestions, setQuizQuestions } = useSong();
+  const { song, handwritingQuizQuestions } = useSong();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [completedWords, setCompletedWords] = useState<number[]>([]);
   const [currentWordCompleted, setCurrentWordCompleted] = useState(false);
-  const handwritingCanvasRef = useRef<{ clearCanvas: () => void }>(null);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const navigate = useNavigate();
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info'>('info');
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const practicePhrases = handwritingQuizQuestions?.phrases ?? [];
+  const handwritingCanvasRef = useRef<{
+    clearCanvas: () => void;
+    getImageData: () => string | null;
+      }>(null);
 
-  /* ─────  URL params  ───── */
-  const [searchParams] = useSearchParams();
-  const urlSongId = searchParams.get('id');
+  const handleSubmit = async () => {
+    if (!handwritingCanvasRef.current) { return; }
+    const imageData = handwritingCanvasRef.current.getImageData?.();
+    if (!imageData) { return; }
 
-  /* fetch guard / loading flag */
-  const [loadingQuestions, setLoadingQuestions] = useState(false);
+    try {
+      const response = await handwritingApi.apiHandwritingOcrPost({
+        handwritingCanvasRequestDto: {
+          image: imageData,
+          language: song?.geniusMetaData?.language as LanguageCode,
+          expectedMatch: currentWord.original,
+        },
+      });
 
-  useEffect(() => {
-    const effectiveSongId =
-      urlSongId || (song?.id && song.id.trim() !== '' ? song.id : null);
+      const match = response.matchPercentage || 0;
+      const recognized = response.recognizedText || '';
 
-    if (!effectiveSongId) { return; }               // nothing to fetch with
-    if (quizQuestions && quizQuestions.length) { return; } // already loaded
-
-    (async () => {
-      try {
-        setLoadingQuestions(true);
-        const resp = await quizApi.apiQuizRomanizationPost({
-          quizRequestDto: {
-            songId: effectiveSongId,
-          }
-        });
-        setQuizQuestions(resp.questions ?? []);
-      } catch {
-        setQuizQuestions([]);
-      } finally {
-        setLoadingQuestions(false);
+      if (match === 100) {
+        setSnackbarSeverity('success');
+        setSnackbarMessage('Perfect match! Good job!');
+      } else {
+        setSnackbarSeverity('info');
+        setSnackbarMessage(`Partial match: ${match}% — Recognized: "${recognized}"`);
       }
-    })();
-  }, [urlSongId, song?.id, quizQuestions, setQuizQuestions]);
 
-  if (loadingQuestions || !quizQuestions) {
-    return <Typography variant="h5">Loading handwriting quiz…</Typography>;
-  }
-  if (quizQuestions.length === 0) {
+      setSnackbarOpen(true);
+      handleWordCompletionAttempt(match);
+    } catch {
+      setSnackbarSeverity('error');
+      setSnackbarMessage('Recognition failed. Please try again.');
+      setSnackbarOpen(true);
+      handleWordCompletionAttempt(-1);
+    }
+  };
+
+  if (!handwritingQuizQuestions?.phrases || handwritingQuizQuestions.phrases.length === 0) {
     return (
       <Typography variant="h5">
         Error: Could not load handwriting quiz questions
@@ -74,57 +88,13 @@ const HandwritingPage: React.FC = () => {
     return <Typography variant="h5">Error: Song data is undefined or corrupted</Typography>;
   }
 
-  /* ───── 2.  Robust segmenter (fallback to 'en' if UNK/empty) ───── */
-  const languageForSegmentation =
-    song.geniusMetaData.language && song.geniusMetaData.language !== 'UNK'
-      ? song.geniusMetaData.language
-      : 'en';
-
-  const segmenter = new Intl.Segmenter(languageForSegmentation, {
-    granularity: 'word',
-  });
-
-  const getLongestWord = (text: string): string => {
-    const segments = Array.from(segmenter.segment(text))
-      .filter(segment => segment.isWordLike)
-      .map(segment => segment.segment)
-      .filter(segment => !/[A-Za-z]/.test(segment));
-
-    if (segments.length === 0) { return ''; }
-
-    return segments.reduce((longest, current) =>
-      current.length > longest.length ? current : longest
-    );
-  };
-
-  /* ───── helper: pick a phrase even for AUDIO quizzes ───── */
-  const extractPhrase = (q: QuizQuestionDto): string => {
-    if (q.lyricPhrase && q.lyricPhrase.trim().length) {
-      return q.lyricPhrase;
-    }
-    const idx = q.correctOptionIndex ?? 0;
-    return q.options?.[idx] ?? '';
-  };
-
-  const wordsToPractice = quizQuestions
-    .map(q => getLongestWord(extractPhrase(q)))
-    .filter(word => word.length > 0);
-
-  /* guard: no usable words after extraction */
-  if (wordsToPractice.length === 0) {
-    return (
-      <Typography variant="h5">
-        Error: Could not extract practice words from the quiz data.
-      </Typography>
-    );
-  }
-  const currentWord = wordsToPractice[currentWordIndex % wordsToPractice.length];
+  const currentWord = practicePhrases[currentWordIndex % practicePhrases.length];
 
   useEffect(() => {
-    if (completedWords.length >= wordsToPractice.length && wordsToPractice.length > 0) {
+    if (completedWords.length >= practicePhrases.length && practicePhrases.length > 0) {
       setQuizCompleted(true);
     }
-  }, [completedWords, wordsToPractice.length]);
+  }, [completedWords, practicePhrases.length]);
 
   const handleWordCompletionAttempt = (raw: number): void => {
     const matchPct = raw;
@@ -135,23 +105,25 @@ const HandwritingPage: React.FC = () => {
     const dto: UserHandwritingResultDto = {
       language,
       score: scoreOutOf5,
-      wordTested: currentWord,
+      wordTested: currentWord.original,
     };
 
     if (scoreOutOf5 > 0) {
       userActivityApi
         .apiUserActivityHandwritingPost({ userHandwritingResultDto: dto })
-        .catch(() => {});
+        .catch(() => { });
     }
 
     // locally mark complete at ≥98%
     if (matchPct >= 98) {
 
-      userActivityApi.apiUserActivityLearnedWordPost({ learnedWordDto: {
-        language,
-        word: currentWord,
-      } })
-        .catch(() => {});
+      userActivityApi.apiUserActivityLearnedWordPost({
+        learnedWordDto: {
+          language,
+          word: currentWord.original,
+        }
+      })
+        .catch(() => { });
 
       setCompletedWords(prev => [...new Set([...prev, currentWordIndex])]);
       setCurrentWordCompleted(true);
@@ -166,8 +138,8 @@ const HandwritingPage: React.FC = () => {
     // Find the next uncompleted word index
     let nextIndex = currentWordIndex;
     do {
-      nextIndex = (nextIndex + 1) % wordsToPractice.length;
-    } while (completedWords.includes(nextIndex) && completedWords.length < wordsToPractice.length);
+      nextIndex = (nextIndex + 1) % practicePhrases.length;
+    } while (completedWords.includes(nextIndex) && completedWords.length < practicePhrases.length);
 
     setCurrentWordIndex(nextIndex);
     setCurrentWordCompleted(false);
@@ -201,7 +173,7 @@ const HandwritingPage: React.FC = () => {
 
 
   if (quizCompleted) {
-    const completedWordsList = completedWords.map(index => wordsToPractice[index]);
+    const completedWordsList = completedWords.map(index => practicePhrases[index]);
 
     return (
       <Container maxWidth="md" className="handwriting-page-container">
@@ -209,7 +181,7 @@ const HandwritingPage: React.FC = () => {
           Handwriting Practice Completed!
         </Typography>
         <Typography variant="h6" gutterBottom align="center">
-          You practiced {completedWords.length} out of {wordsToPractice.length} words successfully.
+          You practiced {completedWords.length} out of {practicePhrases.length} words successfully.
         </Typography>
 
         <Box sx={{ mt: 4, mb: 4 }}>
@@ -221,7 +193,7 @@ const HandwritingPage: React.FC = () => {
               completedWordsList.map((word, index) => (
                 <Chip
                   key={index}
-                  label={word}
+                  label={word.original}
                   color="success"
                   variant="outlined"
                   sx={{ mb: 1 }}
@@ -260,98 +232,64 @@ const HandwritingPage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" className="handwriting-page-container">
+      <Box display="flex" justifyContent="center" alignItems="center" mb={1}>
+        <Typography variant="h4" gutterBottom align="center" fontWeight="bold" component="h1">
+          Handwriting Practice
+        </Typography>
+      </Box>
+      <Typography variant="h5" gutterBottom align="center" fontWeight="bold" component="h1">
+        Current word: {currentWord.original}
+      </Typography>
+      {currentWord.romanized && (
+        <Typography variant="h6" align="center" className="italic-title">
+          Romanization: {currentWord.romanized}
+        </Typography>
+      )}
+
+      {currentWord.translated && (
+        <Typography variant="h6" align="center" className="italic-title">
+          Translation: {currentWord.translated}
+        </Typography>
+      )}
       <Grid container spacing={3} className="grid-parent">
-        {/* Left column - blank for now */}
-        <Grid item xs={12} md={3}>
-        </Grid>
-
-        {/* Middle column - Canvas */}
-        <Grid item xs={12} md={6} className="grid-item">
-          <div className="handwriting-canvas-parent">
-            <Typography variant="h5" gutterBottom align="center">
-              Handwriting Practice
-            </Typography>
-            <Typography variant="h6" gutterBottom align="center">
-              Current word: {currentWord}
-            </Typography>
-
-            <Box className="handwriting-canvas-wrapper">
-              <HandwritingCanvas
-                ref={handwritingCanvasRef}
-                expectedText={currentWord}
-                selectedLanguage={song.geniusMetaData.language as LanguageCode}
-                onComplete={handleWordCompletionAttempt}
-              />
-            </Box>
-
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 6, mt: 1 }}>
-              {currentWordCompleted ? (
-                <Button
-                  variant="contained"
-                  color="success"
-                  onClick={moveToNextWord}
-                >
-                  Next Word
-                </Button>
-              ) : (
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={moveToNextWord}
-                >
-                  Skip Word
-                </Button>
-              )}
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={completeQuiz}
-              >
-                Complete Quiz
-              </Button>
-            </Box>
-          </div>
+        <Grid size={8} className="grid-item">
+          <Box className="handwriting-canvas-wrapper">
+            <HandwritingCanvas
+              ref={handwritingCanvasRef}
+              expectedText={currentWord.original ?? ''}
+              selectedLanguage={song.geniusMetaData.language as LanguageCode}
+              onComplete={handleWordCompletionAttempt}
+            />
+          </Box>
         </Grid>
 
         {/* Right column - Word list */}
-        <Grid item xs={12} md={3}>
+        <Grid size={4}>
           <div className="grid-item">
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" fontWeight="bold" component="h1" align='center'>
               Words to Practice
             </Typography>
-            <List dense={true}>
-              {wordsToPractice.map((word, index) => (
+            <Divider variant="fullWidth" className="list-divider" />
+            <List dense={true} disablePadding>
+              {practicePhrases.map((word, index) => (
                 <ListItem
                   key={index}
                   disablePadding
-                  sx={{
-                    mb: 0.5,
-                    '& .MuiListItemButton-root': {
-                      borderRadius: 1,
-                      backgroundColor: completedWords.includes(index)
-                        ? 'success.light'
-                        : currentWordIndex === index
-                          ? 'action.selected'
-                          : 'transparent',
-                      '&:hover': {
-                        backgroundColor: completedWords.includes(index)
-                          ? 'success.light'
-                          : 'action.hover',
-                      }
-                    }
-                  }}
                 >
                   <ListItemButton
                     onClick={() => handleWordSelect(index)}
                     selected={currentWordIndex === index}
                   >
                     <ListItemText
-                      primary={word}
+                      primary={word.original}
                       secondary={completedWords.includes(index) ? '✓ Completed' : ''}
                       sx={{
                         color: completedWords.includes(index) ? 'success.dark' : 'text.primary',
                         '& .MuiListItemText-secondary': {
                           color: 'success.main',
+                          fontWeight: 'bold'
+                        },
+                        '& .MuiListItemText-primary': {
                           fontWeight: 'bold'
                         }
                       }}
@@ -360,9 +298,41 @@ const HandwritingPage: React.FC = () => {
                 </ListItem>
               ))}
             </List>
+            <Stack direction="row" justifyContent="center" spacing={2} mt={2}>
+              <Tooltip title={currentWordCompleted ? 'Next Word' : 'Skip Word'}>
+                <IconButton
+                  onClick={moveToNextWord}
+                  color={currentWordCompleted ? 'success' : 'error'}
+                  size="large"
+                >
+                  <SkipNextIcon />
+                </IconButton>
+              </Tooltip>
+
+              <Button variant="contained" className="submit-handwriting-button" onClick={handleSubmit}>
+                Submit Word
+              </Button>
+
+              <Tooltip title="Finish Quiz">
+                <IconButton onClick={completeQuiz} color="secondary" size="large">
+                  <Publish />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+
           </div>
         </Grid>
       </Grid>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} variant="filled">
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

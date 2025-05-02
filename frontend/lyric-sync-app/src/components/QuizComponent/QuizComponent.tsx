@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, IconButton } from '@mui/material';
+import { Box, Typography, Button, IconButton, Slider, Alert } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
-import { quizApi, userActivityApi } from '../../api/apiClient';
+import { quizApi, userActivityApi, handwritingApi } from '../../api/apiClient';
 import { useSong } from '../../contexts/SongContext';
 import Quiz from 'react-quiz-component';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ import './QuizComponent.scss';
 import AudioSnippetPlayer from '../AudioSnippetPlayer/AudioSnippetPlayer';
 import { parseTimeSpan } from '../../utils/timeUtils';
 import type { QuizResponseDto, LanguageCode, UserQuizResultDto, QuizQuestionDto } from '../../api/models';
+import CircularProgress from '@mui/material/CircularProgress';
 
 interface QuizData {
   quizTitle: string;
@@ -31,13 +32,16 @@ interface QuizData {
 const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ songId, lyricsOffset = 0 }) => {
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [quizId, setQuizId] = useState<string>('');
-  const { quizQuestions, setQuizQuestions, song } = useSong();
+  const { quizQuestions, setQuizQuestions, song, setHandwritingQuizQuestions } = useSong();
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedQuizType, setSelectedQuizType] = useState<'romanization' | 'audio' | null>(null);
   const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [handwritingDifficulty, setHandwritingDifficulty] = useState<number>(5);
+  const [error, setError] = useState('');
 
   const handleStartQuiz = async (quizType: 'romanization' | 'audio') => {
     setIsLoading(true);
@@ -108,28 +112,48 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
     setQuizQuestions([]);
   }, []);
 
-  if (isLoading) {
-    return <Typography variant="h5">Loading quiz questions...</Typography>;
-  }
-
-  // If no quiz has been started yet, show buttons for the user to choose the quiz type.
   if (!quizData) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" gap={2} flexDirection="column">
         <Typography variant="h6">Choose Quiz Type</Typography>
         <Box display="flex" gap={2}>
-          <Button variant="contained" color="primary" onClick={() => handleStartQuiz('romanization')}>
-            Start Romanization Quiz
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleStartQuiz('romanization')}
+            disabled={isLoading}
+            startIcon={
+              isLoading && selectedQuizType === 'romanization' ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : undefined
+            }
+          >
+            {isLoading && selectedQuizType === 'romanization'
+              ? 'Preparing...'
+              : 'Start Romanization Quiz'}
           </Button>
-          <Button variant="outlined" color="secondary" onClick={() => handleStartQuiz('audio')}>
-            Do Audio Quiz Instead
+
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => handleStartQuiz('audio')}
+            disabled={isLoading}
+            startIcon={
+              isLoading && selectedQuizType === 'audio' ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : undefined
+            }
+          >
+            {isLoading && selectedQuizType === 'audio'
+              ? 'Preparing...'
+              : 'Do Audio Quiz Instead'}
           </Button>
         </Box>
       </Box>
     );
   }
 
-  const handleQuizComplete = async (quizResult: {numberOfCorrectAnswers?: number; score?: number; questionSummary?: Array<{answers: string[]; correctAnswer: string;}>;}) => {
+  const handleQuizComplete = async (quizResult: { numberOfCorrectAnswers?: number; score?: number; questionSummary?: Array<{ answers: string[]; correctAnswer: string; }>; }) => {
     setQuizCompleted(true);
     setIsPlaying(false);
 
@@ -186,9 +210,35 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
     navigate('/');
   };
 
-  const handleStartHandwritingQuiz = () => {
-    navigate('/handwriting-quiz');
+  const handleStartHandwritingQuiz = async () => {
+    if (!song?.id || !quizQuestions || quizQuestions.length === 0) { return; }
+
+    setIsRedirecting(true);
+
+    try {
+      const phrases = quizQuestions.map(q => {
+        if (q.lyricPhrase?.trim()) { return q.lyricPhrase; }
+        const idx = q.correctOptionIndex ?? 0;
+        return q.options?.[idx] ?? '';
+      });
+
+      const translationResp = await handwritingApi.apiHandwritingOcrTranslateGet({
+        phrases,
+        languageCode: song.geniusMetaData?.language as LanguageCode,
+        difficulty: handwritingDifficulty
+      });
+
+      setHandwritingQuizQuestions(translationResp);
+      navigate('/handwriting-quiz');
+    } catch (err) {
+      const errorMessage = err instanceof Error
+        ? `Failed to fetch handwriting quiz phrases: ${err.message}`
+        : 'Failed to fetch handwriting quiz phrases';
+      setError(errorMessage);
+      setIsRedirecting(false);
+    }
   };
+
 
   const handleTogglePlay = () => {
     setIsPlaying(p => !p);
@@ -212,12 +262,52 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
 
   return (
     <div>
+      {error && (
+        <Box mx="auto" width="fit-content" mt={2}>
+          <Alert severity="error" onClose={() => setError('')} variant="filled">
+            {error}
+          </Alert>
+        </Box>
+      )}
       {quizCompleted && (
-        <Box marginTop={2}>
-          <Button variant="contained" color="primary" onClick={handleStartHandwritingQuiz}>
-            Start Handwriting Quiz
+        <Box display="flex" flexDirection="column" alignItems="center" gap={2} mt={2}>
+          <Box width={300}>
+            <Typography gutterBottom className="difficulty-text">
+              Handwriting Quiz Difficulty: {handwritingDifficulty}
+            </Typography>
+            <Slider
+              value={handwritingDifficulty}
+              min={1}
+              max={10}
+              step={1}
+              valueLabelDisplay="auto"
+              onChange={(_, value) => setHandwritingDifficulty(value as number)}
+              marks={[
+                { value: 1, label: '1' },
+                { value: 2, label: '2' },
+                { value: 3, label: '3' },
+                { value: 4, label: '4' },
+                { value: 5, label: '5' },
+                { value: 6, label: '6' },
+                { value: 7, label: '7' },
+                { value: 8, label: '8' },
+                { value: 9, label: '9' },
+                { value: 10, label: '10' }
+              ]}
+            />
+          </Box>
+
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleStartHandwritingQuiz}
+            disabled={isRedirecting}
+            startIcon={isRedirecting ? <CircularProgress size={20} color="inherit" /> : undefined}
+          >
+            {isRedirecting ? 'Preparing...' : 'Start Handwriting Quiz'}
           </Button>
         </Box>
+
       )}
       <Box className="quiz-container">
         {selectedQuizType === 'audio' && !quizCompleted && (

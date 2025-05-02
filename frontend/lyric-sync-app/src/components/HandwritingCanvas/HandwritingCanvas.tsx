@@ -4,10 +4,14 @@ import {
   Button,
   Typography,
   Stack,
+  Tooltip
 } from '@mui/material';
 import { LanguageCode } from '../../api';
-import { handwritingApi } from '../../api/apiClient';
 import './HandwritingCanvas.scss';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit'; // Marker
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEraser } from '@fortawesome/free-solid-svg-icons';
 
 interface HandwritingCanvasProps {
   expectedText: string;
@@ -17,7 +21,6 @@ interface HandwritingCanvasProps {
 
 const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, HandwritingCanvasProps>(
   (props, ref) => {
-    const { expectedText, selectedLanguage, onComplete } = props;
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
     const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -34,8 +37,25 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
         setFeedbackMessage('');
         setRecognizedText('');
         setMatchPercentage(null);
+      },
+      getImageData: () => {
+        if (!canvasRef.current) {return null;}
+
+        const offscreenCanvas = document.createElement('canvas');
+        const ctx = offscreenCanvas.getContext('2d');
+        offscreenCanvas.width = canvasRef.current.width;
+        offscreenCanvas.height = canvasRef.current.height;
+
+        if (ctx) {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+          ctx.drawImage(canvasRef.current, 0, 0);
+        }
+
+        return offscreenCanvas.toDataURL('image/png').split(',')[1]; // base64
       }
     }));
+
 
     useEffect(() => {
       const initializeCanvas = () => {
@@ -45,13 +65,13 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
           if (container) {
             const width = container.clientWidth;
             const height = container.clientHeight;
-            
+
             // Set canvas dimensions to match display
             canvasRef.current.width = width;
             canvasRef.current.height = height;
             gridCanvasRef.current.width = width;
             gridCanvasRef.current.height = height;
-            
+
             const ctx = canvasRef.current.getContext('2d');
             if (ctx) {
               ctx.lineCap = 'round';
@@ -132,56 +152,13 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
       setMatchPercentage(null);
     };
 
-    const exportImage = async () => {
-      if (!canvasRef.current) { return; }
-
-      const offscreenCanvas = document.createElement('canvas');
-      const ctx = offscreenCanvas.getContext('2d');
-      offscreenCanvas.width = canvasRef.current.width;
-      offscreenCanvas.height = canvasRef.current.height;
-
-      if (ctx) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-        ctx.drawImage(canvasRef.current, 0, 0);
-      }
-
-      const imageData = offscreenCanvas.toDataURL('image/png');
-
-      try {
-        const response = await handwritingApi.apiHandwritingOcrPost({
-          handwritingCanvasRequestDto: {
-            image: imageData.split(',')[1],
-            language: selectedLanguage,
-            expectedMatch: expectedText,
-          },
-        });
-
-        const match = response.matchPercentage || 0;
-        const recognizedText = response.recognizedText || '';
-        setRecognizedText(recognizedText);
-        setMatchPercentage(match);
-
-        if (match === 100) {
-          setFeedbackMessage('Good job!');
-          if (onComplete) { onComplete(100); }
-        } else {
-          setFeedbackMessage(`Try again! Match: ${match}%`);
-          if (onComplete) { onComplete(match); }
-        }
-      } catch {
-        setFeedbackMessage('Error in recognition. Please try again.');
-        if (onComplete) { onComplete(-1); }
-      }
-    };
-
     return (
       <div className="handwriting-canvas-card">
         <Box className="canvas-container">
           <canvas
             ref={gridCanvasRef}
-            width={500}
-            height={300}
+            width={700}
+            height={350}
             className="grid-canvas"
           />
           <canvas
@@ -191,24 +168,47 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
             onPointerMove={draw}
             onPointerUp={stopDrawing}
             onPointerOut={stopDrawing}
+            style={{
+              cursor: isEraser
+                ? 'url("data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%2732%27 height=%2732%27 viewBox=%270 0 32 32%27><rect x=%279%27 y=%279%27 width=%2714%27 height=%2714%27 fill=%27grey%27/></svg>") 16 16, auto'
+                : 'url("data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%2732%27 height=%2732%27 viewBox=%270 0 32 32%27><path d=%27M16 2 V6 M16 26 V30 M2 16 H6 M26 16 H30%27 stroke=%27black%27 stroke-width=%272%27/><circle cx=%2716%27 cy=%2716%27 r=%274%27 fill=%27none%27 stroke=%27black%27 stroke-width=%271%27/></svg>") 16 16, crosshair'
+            }}
           />
+
         </Box>
 
         <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
-          <Button variant="contained" color="primary" onClick={exportImage}>
-              Recognize
-          </Button>
-          <Button variant="outlined" color="secondary" onClick={clearCanvas}>
-              Clear
-          </Button>
-          <Button
-            variant={isEraser ? 'contained' : 'outlined'}
-            color="secondary"
-            onClick={() => setIsEraser((prev) => !prev)}
-          >
-            {isEraser ? 'Draw' : 'Erase'}
-          </Button>
+          <Tooltip title="Draw (Pen Tool)">
+            <Button
+              variant={isEraser ? 'outlined' : 'contained'}
+              color="secondary"
+              onClick={() => setIsEraser(false)}
+            >
+              <EditIcon />
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Erase">
+            <Button
+              variant={isEraser ? 'contained' : 'outlined'}
+              color="secondary"
+              onClick={() => setIsEraser(true)}
+            >
+              <FontAwesomeIcon icon={faEraser} />
+            </Button>
+          </Tooltip>
+
+          <Tooltip title="Clear Canvas">
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={clearCanvas}
+            >
+              <DeleteIcon />
+            </Button>
+          </Tooltip>
         </Stack>
+
 
         <Typography variant="h6" mt={2}>
           {feedbackMessage}
@@ -216,13 +216,13 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
 
         {recognizedText && (
           <Typography variant="body1" mt={1}>
-              Recognized Text: {recognizedText}
+            Recognized Text: {recognizedText}
           </Typography>
         )}
 
         {matchPercentage !== null && (
           <Typography variant="body2" mt={1}>
-              Match: {matchPercentage}%
+            Match: {matchPercentage}%
           </Typography>
         )}
       </div>

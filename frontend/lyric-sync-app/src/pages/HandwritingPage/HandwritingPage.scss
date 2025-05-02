@@ -5,25 +5,47 @@
   margin-top: 40px;
   color: $text-primary;
 
-  .handwriting-canvas-parent {
+  .grid-parent {
+    margin-top: 25px;
     display: flex;
-    height: 100%;
+    flex-wrap: nowrap;
+    height: 480px;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .grid-item {
+    border-radius: $border-radius;
+    background: $gradient;
+    box-shadow: $box-shadow;
+    display: flex;
     flex-direction: column;
-    
-    .grid-parent {
-      height: 500px;
-      margin-top: auto;
+    padding: 16px;
+
+    .list-divider {
+      background-color: black;
+      height: 2px;
+      width: 100%;
+      border: none;
+      flex-shrink: 0;
+      margin-top: 20px;
     }
 
-    .grid-item {
-      height: 100%;
-      border-radius: $border-radius;
+    .handwriting-canvas-wrapper {
+      flex-grow: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-      .handwriting-canvas-wrapper {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
+    .submit-handwriting-button {
+      box-shadow: 3;
+      padding: 10px 20px;
+      background: $secondary-color;
     }
   }
+}
+
+.italic-title {
+  font-style: italic;
 }

@@ -606,7 +606,7 @@ const SongPlayerPage: React.FC = () => {
       const isAlreadyFavorite = favoriteIds.includes(playlistId);
       setPlaylists(prev => {
         const exists = prev.some(p => p.playlistId === playlistId);
-        if (exists) {return prev;}
+        if (exists) { return prev; }
         return [...prev, {
           playlistId,
           title: response.playlistTitle || 'Unknown Playlist',
@@ -994,26 +994,25 @@ const SongPlayerPage: React.FC = () => {
           <Grid size={6} className='grid-parent'>
             <Box className='tabs-grid-parent'>
               <Tabs value={selectedTab} onChange={handleTabChange} aria-label="lyric-tabs" variant="fullWidth">
+                <Tab label="Combined Lyrics" />
                 <Tab label="Original Lyrics" />
                 <Tab label="Romanized Lyrics" />
                 <Tab label="Translated Lyrics" />
-                <Tab label="Combined Lyrics" />
               </Tabs>
             </Box>
             <Box className='lrc-grid-parent'>
               <LyricDisplay
                 rawLrcLyrics={
                   selectedTab === 0
-                    ? song.lrcLyrics ?? 'Not supported'
+                    ? getCombinedLyrics
                     : selectedTab === 1
-                      ? song.lrcRomanizedLyrics ?? 'Not supported'
+                      ? song.lrcLyrics ?? 'Not supported'
                       : selectedTab === 2
-                        ? song.lrcTranslatedLyrics ?? 'Not supported'
-                        : getCombinedLyrics
+                        ? song.lrcRomanizedLyrics ?? 'Not supported'
+                        : song.lrcTranslatedLyrics ?? 'Not supported'
                 }
                 currentTime={currentTime + lyricsOffsetRef.current}
                 isPlaying={isPlaying}
-                tabIndex={selectedTab}
               />
             </Box>
           </Grid>

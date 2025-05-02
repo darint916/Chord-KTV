@@ -3,13 +3,14 @@
 
 .handwriting-canvas-card {
   margin: auto;
+  margin-top: 24px;
   text-align: center;
   width: fit-content;
   height: 100%;
 }
 
 .canvas-container {
-  border: 2px solid $primary-color;
+  border: 2px solid black;
   border-radius: 8px;
   display: flex;
   justify-content: center;
@@ -18,8 +19,8 @@
   overflow: hidden;
   touch-action: none;
   position: relative;
-  height: 300px;
-  width: 500px;
+  height: 350px;
+  width: 700px;
 }
 
 .grid-canvas {

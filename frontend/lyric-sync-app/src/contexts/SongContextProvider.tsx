@@ -4,6 +4,7 @@ import { SongContext, PlaylistInfo } from './SongContext';
 import { QueueItem } from './QueueTypes';
 import { userActivityApi } from '../api/apiClient';
 import { UserPlaylistActivityDto } from '../api';
+import { TranslatePhrasesResponseDto } from '../api';
 
 // Provider component
 export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -91,10 +92,12 @@ export const SongProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [playlists.length]);
 
+  const [handwritingQuizQuestions, setHandwritingQuizQuestions] = useState<TranslatePhrasesResponseDto>({ phrases: null });
+
   return (
     <SongContext.Provider value={{
       song, setSong, queue, setQueue, currentPlayingId, setCurrentPlayingId, quizQuestions, setQuizQuestions, lyricsOffset, setLyricsOffset,
-      playlists, setPlaylists, selectedPlaylistIndex, setSelectedPlaylistIndex
+      playlists, setPlaylists, selectedPlaylistIndex, setSelectedPlaylistIndex, handwritingQuizQuestions, setHandwritingQuizQuestions
     }}>
       {children}
     </SongContext.Provider>
