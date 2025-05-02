@@ -5,30 +5,84 @@ import {
   Box,
   Typography,
   Button,
-  // Grid,
   List,
   ListItem,
   ListItemText,
   ListItemButton,
   Stack,
   Chip,
-  Divider
+  Divider,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useSong } from '../../contexts/SongContext';
 import './HandwritingPage.scss';
 import { LanguageCode, QuizQuestionDto, UserHandwritingResultDto } from '../../api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { quizApi, userActivityApi } from '../../api/apiClient';
+import { quizApi, userActivityApi, handwritingApi } from '../../api/apiClient';
+import { IconButton, Tooltip } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
+import SendIcon from '@mui/icons-material/Send';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+
 
 const HandwritingPage: React.FC = () => {
   const { song, quizQuestions, setQuizQuestions } = useSong();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [completedWords, setCompletedWords] = useState<number[]>([]);
   const [currentWordCompleted, setCurrentWordCompleted] = useState(false);
-  const handwritingCanvasRef = useRef<{ clearCanvas: () => void }>(null);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const navigate = useNavigate();
+  const [recognizedText, setRecognizedText] = useState('');
+  const [matchPercentage, setMatchPercentage] = useState<number | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info'>('info');
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const handwritingCanvasRef = useRef<{
+    clearCanvas: () => void;
+    getImageData: () => string | null;
+  }>(null);
+
+
+  const handleSubmit = async () => {
+    if (!handwritingCanvasRef.current) return;
+    const imageData = handwritingCanvasRef.current.getImageData?.();
+    if (!imageData) return;
+
+    try {
+      const response = await handwritingApi.apiHandwritingOcrPost({
+        handwritingCanvasRequestDto: {
+          image: imageData,
+          language: song?.geniusMetaData?.language as LanguageCode,
+          expectedMatch: currentWord,
+        },
+      });
+
+      const match = response.matchPercentage || 0;
+      const recognized = response.recognizedText || '';
+      setRecognizedText(recognized);
+      setMatchPercentage(match);
+
+      if (match === 100) {
+        setSnackbarSeverity('success');
+        setSnackbarMessage('Perfect match! Good job!');
+      } else {
+        setSnackbarSeverity('info');
+        setSnackbarMessage(`Partial match: ${match}%`);
+      }
+
+      setSnackbarOpen(true);
+      handleWordCompletionAttempt(match);
+    } catch {
+      setSnackbarSeverity('error');
+      setSnackbarMessage('Recognition failed. Please try again.');
+      setSnackbarOpen(true);
+      handleWordCompletionAttempt(-1);
+    }
+  };
 
   /* ─────  URL params  ───── */
   const [searchParams] = useSearchParams();
@@ -273,7 +327,7 @@ const HandwritingPage: React.FC = () => {
         Current word: {currentWord}
       </Typography>
       <Grid container spacing={3} className="grid-parent">
-        <Grid size={6} className="grid-item">
+        <Grid size={8} className="grid-item">
           <Box className="handwriting-canvas-wrapper">
             <HandwritingCanvas
               ref={handwritingCanvasRef}
@@ -285,11 +339,12 @@ const HandwritingPage: React.FC = () => {
         </Grid>
 
         {/* Right column - Word list */}
-        <Grid size={6}>
+        <Grid size={4}>
           <div className="grid-item">
             <Typography variant="h6" fontWeight="bold" component="h1" align='center'>
               Words to Practice
             </Typography>
+            <Divider variant="fullWidth" className="list-divider" />
             <List dense={true} disablePadding>
               {wordsToPractice.map((word, index) => (
                 <ListItem
@@ -331,36 +386,41 @@ const HandwritingPage: React.FC = () => {
                 </ListItem>
               ))}
             </List>
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 1 }}>
-              {currentWordCompleted ? (
-                <Button
-                  variant="contained"
-                  color="success"
+            <Stack direction="row" justifyContent="center" spacing={2} mt={2}>
+              <Tooltip title={currentWordCompleted ? 'Next Word' : 'Skip Word'}>
+                <IconButton
                   onClick={moveToNextWord}
+                  color={currentWordCompleted ? 'success' : 'error'}
+                  size="large"
                 >
-                  Next Word
-                </Button>
-              ) : (
-                <Button
-                  variant="outlined"
+                  <SkipNextIcon />
+                </IconButton>
+              </Tooltip>
 
-                  color="error"
-                  onClick={moveToNextWord}
-                >
-                  Skip Word
-                </Button>
-              )}
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={completeQuiz}
-              >
-                Complete Quiz
+              <Button variant="contained" color="primary" onClick={handleSubmit}>
+                Submit Word
               </Button>
-            </Box>
+
+              <Tooltip title="Complete Quiz">
+                <IconButton onClick={completeQuiz} color="secondary" size="large">
+                  <DoneAllIcon />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+
           </div>
         </Grid>
       </Grid>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} variant="filled">
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

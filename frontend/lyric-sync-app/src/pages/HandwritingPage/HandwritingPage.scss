@@ -24,6 +24,15 @@
     // justify-content: space-between;
     padding: 16px;
 
+    .list-divider {
+      background-color: black;
+      height: 2px;
+      width: 100%;
+      border: none;
+      flex-shrink: 0;
+      margin-top: 20px;
+    }
+
     .handwriting-canvas-wrapper {
       flex-grow: 1;
       display: flex;

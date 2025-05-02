@@ -4,14 +4,15 @@ import {
   Button,
   Typography,
   Stack,
+  Tooltip
 } from '@mui/material';
 import { LanguageCode } from '../../api';
-import { handwritingApi } from '../../api/apiClient';
 import './HandwritingCanvas.scss';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit'; // Marker
-import GestureIcon from '@mui/icons-material/Gesture'; // Optional for 'Recognize'
 import { CleaningServices } from '@mui/icons-material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEraser } from '@fortawesome/free-solid-svg-icons';
 
 interface HandwritingCanvasProps {
   expectedText: string;
@@ -21,7 +22,6 @@ interface HandwritingCanvasProps {
 
 const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, HandwritingCanvasProps>(
   (props, ref) => {
-    const { expectedText, selectedLanguage, onComplete } = props;
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
     const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -33,13 +33,30 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
 
     React.useImperativeHandle(ref, () => ({
       clearCanvas: () => {
-        if (!canvasRef.current || !ctxRef.current) { return; }
+        if (!canvasRef.current || !ctxRef.current) return;
         ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         setFeedbackMessage('');
         setRecognizedText('');
         setMatchPercentage(null);
+      },
+      getImageData: () => {
+        if (!canvasRef.current) return null;
+
+        const offscreenCanvas = document.createElement('canvas');
+        const ctx = offscreenCanvas.getContext('2d');
+        offscreenCanvas.width = canvasRef.current.width;
+        offscreenCanvas.height = canvasRef.current.height;
+
+        if (ctx) {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+          ctx.drawImage(canvasRef.current, 0, 0);
+        }
+
+        return offscreenCanvas.toDataURL('image/png').split(',')[1]; // base64
       }
     }));
+
 
     useEffect(() => {
       const initializeCanvas = () => {
@@ -136,56 +153,13 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
       setMatchPercentage(null);
     };
 
-    const exportImage = async () => {
-      if (!canvasRef.current) { return; }
-
-      const offscreenCanvas = document.createElement('canvas');
-      const ctx = offscreenCanvas.getContext('2d');
-      offscreenCanvas.width = canvasRef.current.width;
-      offscreenCanvas.height = canvasRef.current.height;
-
-      if (ctx) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-        ctx.drawImage(canvasRef.current, 0, 0);
-      }
-
-      const imageData = offscreenCanvas.toDataURL('image/png');
-
-      try {
-        const response = await handwritingApi.apiHandwritingOcrPost({
-          handwritingCanvasRequestDto: {
-            image: imageData.split(',')[1],
-            language: selectedLanguage,
-            expectedMatch: expectedText,
-          },
-        });
-
-        const match = response.matchPercentage || 0;
-        const recognizedText = response.recognizedText || '';
-        setRecognizedText(recognizedText);
-        setMatchPercentage(match);
-
-        if (match === 100) {
-          setFeedbackMessage('Good job!');
-          if (onComplete) { onComplete(100); }
-        } else {
-          setFeedbackMessage(`Try again! Match: ${match}%`);
-          if (onComplete) { onComplete(match); }
-        }
-      } catch {
-        setFeedbackMessage('Error in recognition. Please try again.');
-        if (onComplete) { onComplete(-1); }
-      }
-    };
-
     return (
       <div className="handwriting-canvas-card">
         <Box className="canvas-container">
           <canvas
             ref={gridCanvasRef}
-            width={500}
-            height={300}
+            width={600}
+            height={350}
             className="grid-canvas"
           />
           <canvas
@@ -198,40 +172,36 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
           />
         </Box>
 
-
         <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={exportImage}
-            startIcon={<GestureIcon />} // Optional: can remove this if you prefer text only
-          >
-            Check
-          </Button>
+          <Tooltip title="Draw (Pen Tool)">
+            <Button
+              variant={isEraser ? 'outlined' : 'contained'}
+              color="secondary"
+              onClick={() => setIsEraser(false)}
+            >
+              <EditIcon />
+            </Button>
+          </Tooltip>
 
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={clearCanvas}
-          >
-            <DeleteIcon />
-          </Button>
+          <Tooltip title="Erase">
+            <Button
+              variant={isEraser ? 'contained' : 'outlined'}
+              color="secondary"
+              onClick={() => setIsEraser(true)}
+            >
+             <FontAwesomeIcon icon={faEraser} /> 
+            </Button>
+          </Tooltip>
 
-          <Button
-            variant={isEraser ? 'outlined' : 'contained'}
-            color="secondary"
-            onClick={() => setIsEraser(false)}
-          >
-            <EditIcon />
-          </Button>
-
-          <Button
-            variant={isEraser ? 'contained' : 'outlined'}
-            color="secondary"
-            onClick={() => setIsEraser(true)}
-          >
-            <CleaningServices />
-          </Button>
+          <Tooltip title="Clear Canvas">
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={clearCanvas}
+            >
+              <DeleteIcon />
+            </Button>
+          </Tooltip>
         </Stack>
 
 
