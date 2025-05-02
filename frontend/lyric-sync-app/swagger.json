@@ -93,6 +93,102 @@
         }
       }
     },
+    "/api/handwriting/ocr/translate": {
+      "get": {
+        "tags": [
+          "Handwriting"
+        ],
+        "parameters": [
+          {
+            "name": "Phrases",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "LanguageCode",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/LanguageCode"
+            }
+          },
+          {
+            "name": "Difficulty",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslatePhrasesResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslatePhrasesResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslatePhrasesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/quiz/romanization": {
       "post": {
         "tags": [
@@ -2955,6 +3051,24 @@
         },
         "additionalProperties": false
       },
+      "Phrases": {
+        "type": "object",
+        "properties": {
+          "original": {
+            "type": "string",
+            "nullable": true
+          },
+          "romanized": {
+            "type": "string",
+            "nullable": true
+          },
+          "translated": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "PlaylistDetailsDto": {
         "type": "object",
         "properties": {
@@ -3390,6 +3504,19 @@
           },
           "geniusMetaData": {
             "$ref": "#/components/schemas/GeniusMetaDataDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TranslatePhrasesResponseDto": {
+        "type": "object",
+        "properties": {
+          "phrases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Phrases"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
