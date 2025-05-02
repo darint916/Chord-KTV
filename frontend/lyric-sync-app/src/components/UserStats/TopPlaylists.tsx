@@ -16,7 +16,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 interface TopPlaylistsProps {
   data: MediaItem[];
-  onToggleFavorite: (playlistId: string, isFav: boolean) => void;
+  onToggleFavorite: (_playlistId: string, _isFav: boolean) => void;
 }
 
 const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data, onToggleFavorite}) => {
@@ -39,9 +39,9 @@ const TopPlaylists: React.FC<TopPlaylistsProps> = ({ data, onToggleFavorite}) =>
     setIsFavMap(map);
   }, [data]);
   const handleToggle = (id: string) => {
-    const next = !isFavMap[id];
-    setIsFavMap(m => ({ ...m, [id]: next }));
-    onToggleFavorite(id, next);
+    const newVal = !isFavMap[id];
+    setIsFavMap(m => ({ ...m, [id]: newVal }));
+    onToggleFavorite(id, newVal);
   };
 
 
