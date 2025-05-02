@@ -1,26 +1,26 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Avatar,
   Box,
   Paper,
   Typography,
   LinearProgress,
+  IconButton,
 } from '@mui/material';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import styles from './TopSongsChart.module.scss';
-
-interface SongDatum {
-  id: string;
-  title: string;
-  plays: number;
-}
+import { MediaItem } from './MediaCarousel';
+import { userActivityApi } from '../../api/apiClient';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 
 interface TopSongsChartProps {
-  data: SongDatum[];
+  mediaItems: MediaItem[];
+  onToggleFavorite: (_songId: string, _isFav: boolean) => void;
 }
 
-const TopSongsChart: React.FC<TopSongsChartProps> = ({ data }) => {
-  const maxPlays = Math.max(1, ...data.map((d) => d.plays));
+const TopSongsChart: React.FC<TopSongsChartProps> = ({ mediaItems, onToggleFavorite }) => {
+  const maxPlays = Math.max(1, ...mediaItems.map((d) => d.plays).filter((plays): plays is number => plays !== undefined));
 
   // Manage scroll state for fade overlays
   const [scrollPercentage, setScrollPercentage] = React.useState(0);
@@ -38,15 +38,45 @@ const TopSongsChart: React.FC<TopSongsChartProps> = ({ data }) => {
     }
   };
 
+  const [favLoadingMap, setFavLoadingMap] = useState<Record<string, boolean>>({});
+  const [isFavMap, setIsFavMap] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    const map = mediaItems.reduce((acc, s) => {
+      acc[s.id] = s.isFavorite ?? false;
+      return acc;
+    }, {} as Record<string, boolean>);
+    setIsFavMap(map);
+  }, [mediaItems]);
+
+  // Toggle favorite & call the PATCH endpoint
+  const handleToggleFavorite = async (_songId: string) => {
+    if (!_songId) { return; }
+    const newVal = !isFavMap[_songId];
+    setFavLoadingMap((m: Record<string, boolean>) => ({ ...m, [_songId]: true }));
+    try {
+      await userActivityApi.apiUserActivityFavoriteSongPatch({
+        userSongActivityFavoriteRequestDto: {
+          songId: _songId,
+          isFavorite: newVal,
+        }
+      });
+      setIsFavMap((m: Record<string, boolean>) => ({ ...m, [_songId]: !m[_songId] }));
+      onToggleFavorite(_songId, newVal);
+    } finally {
+      setFavLoadingMap((m: Record<string, boolean>) => ({ ...m, [_songId]: false }));
+    }
+  };
+
+
   return (
     <Paper className={styles.topSongsPaper}>
       <Typography variant="h6" gutterBottom>
         Top Songs
       </Typography>
       <Box component="hr" className={styles.divider} />
-      
 
-      {data.length === 0 ? (
+
+      {mediaItems.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           No song activity yet.
         </Typography>
@@ -58,10 +88,11 @@ const TopSongsChart: React.FC<TopSongsChartProps> = ({ data }) => {
             onScroll={handleScroll}
             className={styles.scrollContainer}
           >
-            {data.map((s) => (
+            {mediaItems.map((s) => (
               <Box key={s.id} className={styles.songBox}>
                 <Box className={styles.songRow}>
-                  <Avatar variant="rounded">
+                  <Avatar variant="rounded"
+                    src={s.coverUrl}>
                     <MusicNoteIcon fontSize="small" />
                   </Avatar>
                   <Typography variant="subtitle2" className={styles.songTitle}>
@@ -71,12 +102,24 @@ const TopSongsChart: React.FC<TopSongsChartProps> = ({ data }) => {
                     variant="caption"
                     className={styles.songPlays}
                   >
-                    {s.plays} plays
+                    {s.plays} {s.plays === 1 ? 'play' : 'plays'}
                   </Typography>
+                  <IconButton
+                    className={styles.favoriteButton}
+                    size="small"
+                    onClick={() => handleToggleFavorite(s.id)}
+                    disabled={favLoadingMap[s.id]}
+                    sx={{ ml: 'auto' }}
+                  >
+                    {isFavMap[s.id]
+                      ? <FavoriteIcon color="error" fontSize="small" />
+                      : <FavoriteBorderIcon fontSize="small" />
+                    }
+                  </IconButton>
                 </Box>
                 <LinearProgress
                   variant="determinate"
-                  value={(s.plays / maxPlays) * 100}
+                  value={((s.plays ?? 0) / maxPlays) * 100}
                   className={styles.progressBar}
                 />
               </Box>

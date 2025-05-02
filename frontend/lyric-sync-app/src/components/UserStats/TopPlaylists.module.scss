@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-width: 260px;
+  min-width: 100px;
 }
 
 .headerRow {
@@ -49,4 +49,4 @@
   height: 32px;
   background: linear-gradient(to top, white, transparent);
   transition: opacity 0.2s;
-} 
+}

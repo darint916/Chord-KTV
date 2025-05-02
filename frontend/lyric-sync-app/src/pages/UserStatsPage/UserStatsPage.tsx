@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, CircularProgress, Container, ThemeProvider, Typography, } from '@mui/material';
+import { Alert, Avatar, Box, CircularProgress, Container, ThemeProvider, Typography, } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useAuth } from '../../contexts/AuthTypes';
 import { userActivityApi } from '../../api/apiClient';
@@ -18,7 +18,7 @@ import { UserSongActivityDto, UserPlaylistActivityDto, UserQuizResultDto, UserHa
 
 const UserStatsPage: React.FC = () => {
   const { user, logout } = useAuth();
-
+  const profilePicture = user?.picture;
   /* state */
   const [songs, setSongs] = useState<UserSongActivityDto[]>([]);
   const [playlists, setPlaylists] = useState<UserPlaylistActivityDto[]>([]);
@@ -119,7 +119,7 @@ const UserStatsPage: React.FC = () => {
   const favPlaylists: MediaItem[] = useMemo(
     () =>
       favoritePlaylists.map(
-        ({ playlistId, title, playlistThumbnailUrl, datesPlayed }, index) => ({
+        ({ playlistId, title, playlistThumbnailUrl, datesPlayed, dateFavorited, isFavorite}, index) => ({
           id: playlistId ?? 'unknown-playlist',
           title: title ?? playlistId ?? 'Unknown Playlist',
           subtitle: undefined,
@@ -128,6 +128,8 @@ const UserStatsPage: React.FC = () => {
               ? playlistThumbnailUrl
               : placeholderImages[index % placeholderImages.length],
           plays: datesPlayed?.length ?? 0,
+          dateFavorited: dateFavorited ?? undefined,
+          isFavorite: isFavorite ?? false,
         })
       ),
     [favoritePlaylists],
@@ -144,6 +146,8 @@ const UserStatsPage: React.FC = () => {
           subtitle: song?.artist || undefined,
           coverUrl: song?.geniusThumbnailUrl || '', // fallback as needed
           plays,
+          dateFavorited: song?.dateFavorited || undefined,
+          isFavorite: song?.isFavorite || false,
         };
       });
   }, [songs]);
@@ -161,9 +165,11 @@ const UserStatsPage: React.FC = () => {
         title:   pl?.title  ?? id,
         // reuse subtitle if you want to show the raw ID under the name:
         subtitle: undefined,
-        coverUrl: pl?.playlistThumbnailUrl 
+        coverUrl: pl?.playlistThumbnailUrl
                    ?? placeholderImages[index % placeholderImages.length],
         plays,
+        dateFavorited: pl?.dateFavorited || undefined,
+        isFavorite: pl?.isFavorite || false,
       };
     });
   }, [playlists]);
@@ -221,17 +227,43 @@ const UserStatsPage: React.FC = () => {
     dateCompleted: q.dateCompleted instanceof Date ? q.dateCompleted.toISOString() : q.dateCompleted ?? null,
   }));
 
+  const handleSongToggleFavorite = (songId: string, isFavoriteNow: boolean
+  ) => {
+    if (isFavoriteNow) {
+      const toAdd = songs.find(s => s.songId === songId);
+      if (toAdd) { setFavoriteSongs((prev) => [...prev, toAdd]); }
+    } else {
+      setFavoriteSongs((prev) => prev.filter(s => s.songId !== songId));
+    }
+  };
+
+  const handlePlaylistToggleFavorite = (playlistId: string, isFavoriteNow: boolean) => {
+    if (isFavoriteNow) {
+      const toAdd = playlists.find(p => p.playlistId === playlistId);
+      if (toAdd) { setFavoritePlaylists((prev) => [...prev, toAdd]); }
+    } else {
+      setFavoritePlaylists((prev) => prev.filter(p => p.playlistId !== playlistId));
+    }
+  };
+
   /* render */
   return (
     <ThemeProvider theme={dashboardTheme}>
       <div className={styles.userStatsPage}>
         <Container maxWidth="xl" className={styles.container}>
-          <Typography
+          <Box display="flex" justifyContent="center" alignItems="center" mb={4}>
+            <Avatar
+              src={profilePicture}
+              alt="User Profile"
+              sx={{ width: 120, height: 120 }} // Larger size for the avatar
+            />
+          </Box>
+          {/* <Typography
             variant="h4"
             className={styles.header}
           >
             Usage Stats
-          </Typography>
+          </Typography> */}
 
           <Box className={styles.titleSpacer} />
 
@@ -249,28 +281,20 @@ const UserStatsPage: React.FC = () => {
           </Box>
 
           {/* ─────────────── 2) 4 stats panels ─────────────── */}
-          <Grid
-            container
-            spacing={3}
-            alignItems="stretch"
-            columns={12}
-          >
-            <Grid
-              size={{ xs: 12, sm: 6, md: 3 }}
-              sx={{ maxWidth: 300, minWidth: 260 }}
-            >
+          <Grid container spacing={3} alignItems="stretch">
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ maxWidth: 300, minWidth: 260 }} >
               <QuizResultsSection quizzes={sanitizedQuizzes} />
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{  maxWidth: 400, minWidth: 260 }}>
-              <TopSongsChart data={topSongs} />
+              <TopSongsChart mediaItems={topSongs} onToggleFavorite={handleSongToggleFavorite} />
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{  pl: 8 }}>
-              <TopPlaylists data={topPls} />
+              <TopPlaylists data={topPls} onToggleFavorite={handlePlaylistToggleFavorite} />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ pl: 2 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <LearnedWords recent={recentWords} />
             </Grid>
           </Grid>
