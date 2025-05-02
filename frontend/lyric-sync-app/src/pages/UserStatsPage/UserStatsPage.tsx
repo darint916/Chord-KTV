@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, CircularProgress, Container, ThemeProvider, Typography, } from '@mui/material';
+import { Alert, Avatar, Box, CircularProgress, Container, ThemeProvider, Typography, } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useAuth } from '../../contexts/AuthTypes';
 import { userActivityApi } from '../../api/apiClient';
@@ -18,7 +18,7 @@ import { UserSongActivityDto, UserPlaylistActivityDto, UserQuizResultDto, UserHa
 
 const UserStatsPage: React.FC = () => {
   const { user, logout } = useAuth();
-
+  const profilePicture = user?.picture;
   /* state */
   const [songs, setSongs] = useState<UserSongActivityDto[]>([]);
   const [playlists, setPlaylists] = useState<UserPlaylistActivityDto[]>([]);
@@ -251,12 +251,19 @@ const UserStatsPage: React.FC = () => {
     <ThemeProvider theme={dashboardTheme}>
       <div className={styles.userStatsPage}>
         <Container maxWidth="xl" className={styles.container}>
-          <Typography
+          <Box display="flex" justifyContent="center" alignItems="center" mb={4}>
+            <Avatar
+              src={profilePicture}
+              alt="User Profile"
+              sx={{ width: 120, height: 120 }} // Larger size for the avatar
+            />
+          </Box>
+          {/* <Typography
             variant="h4"
             className={styles.header}
           >
             Usage Stats
-          </Typography>
+          </Typography> */}
 
           <Box className={styles.titleSpacer} />
 
