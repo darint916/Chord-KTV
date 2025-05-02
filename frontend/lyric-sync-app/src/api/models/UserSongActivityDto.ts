@@ -119,7 +119,7 @@ export function UserSongActivityDtoToJSONTyped(value?: UserSongActivityDto | nul
         'isFavorite': value['isFavorite'],
         'datesPlayed': value['datesPlayed'],
         'lastPlayed': value['lastPlayed'] == null ? undefined : ((value['lastPlayed']).toISOString()),
-        'dateFavorited': value['dateFavorited'] === null ? null : ((value['dateFavorited'] as any)?.toISOString()),
+        'dateFavorited': value['dateFavorited'] == null ? undefined : ((value['dateFavorited'] as any).toISOString()),
         'title': value['title'],
         'artist': value['artist'],
         'geniusThumbnailUrl': value['geniusThumbnailUrl'],

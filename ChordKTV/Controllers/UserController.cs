@@ -5,6 +5,7 @@ using ChordKTV.Utils.Extensions;
 using ChordKTV.Services.Api;
 using ChordKTV.Models.UserData;
 using ChordKTV.Dtos;
+using ChordKTV.Dtos.Auth;
 using AutoMapper;
 using AutoMapper.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -38,7 +39,7 @@ public class UserController : ControllerBase
         try
         {
             string idToken = authorization.Replace("Bearer ", "");
-            User? user = await _userContextService.AuthenticateGoogleUserAsync(idToken);
+            (User user, string accessToken, string refreshToken) = await _userContextService.AuthenticateGoogleUserAndIssueTokensAsync(idToken);
 
             if (user == null)
             {
@@ -48,7 +49,8 @@ public class UserController : ControllerBase
             var responseDto = new AuthResponseDto
             {
                 User = _mapper.Map<UserDto>(user),
-                Token = idToken
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
             };
             return Ok(responseDto);
         }
@@ -57,5 +59,26 @@ public class UserController : ControllerBase
             _logger.LogError(ex, "Unexpected error during authentication");
             return StatusCode(500, new { message = "An unexpected error occurred" });
         }
+    }
+
+    [HttpPost("auth/refresh")]
+    [ProducesResponseType(typeof(AuthResponseDto), 200)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto dto)
+    {
+        (User user, string accessToken, string refreshToken) = await _userContextService.RefreshTokenAsync(dto.RefreshToken);
+
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var responseDto = new AuthResponseDto
+        {
+            User = _mapper.Map<UserDto>(user),
+            AccessToken = accessToken,
+            RefreshToken = refreshToken
+        };
+        return Ok(responseDto);
     }
 }

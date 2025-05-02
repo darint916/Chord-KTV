@@ -35,9 +35,12 @@ This will start up a local containerized instance of PostgreSQL.
 Create a secrets.json file with these contents:
 ```
 {
-    "ConnectionStrings:PostgreSql": "Host=localhost;Port=<port-no-for-postgres>;Database=postgres;Username=<uname-for-postgres>;Password=<pwd-for-postgres>"
+    "ConnectionStrings:PostgreSql": "Host=localhost;Port=<port-no-for-postgres>;Database=postgres;Username=<uname-for-postgres>;Password=<pwd-for-postgres>",
+    "Jwt:Key": "<your-jwt-secret-key>"
 }
 ```
+> **Note:** The backend **requires** a JWT key to be set in your `secrets.json` as `"Jwt:Key"`.  
+> You can generate a random string for development, but keep it secret and do not commit it to version control.
 
 After building, if you see an error like this:
 ```

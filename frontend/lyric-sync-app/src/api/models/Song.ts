@@ -207,7 +207,7 @@ export function SongToJSONTyped(value?: Song | null, ignoreDiscriminator: boolea
         'artist': value['artist'],
         'featuredArtists': value['featuredArtists'],
         'albums': value['albums'] == null ? undefined : ((value['albums'] as Array<any>).map(AlbumToJSON)),
-        'releaseDate': value['releaseDate'] === null ? null : ((value['releaseDate'] as any)?.toISOString().substring(0,10)),
+        'releaseDate': value['releaseDate'] == null ? undefined : ((value['releaseDate'] as any).toISOString().substring(0,10)),
         'genre': value['genre'],
         'duration': value['duration'],
         'plainLyrics': value['plainLyrics'],

@@ -9,4 +9,5 @@ public interface IUserRepo
     public Task CreateUserAsync(User user);
     public Task UpdateUserAsync(User user);
     public Task<bool> SaveChangesAsync();
+    public Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
 }
