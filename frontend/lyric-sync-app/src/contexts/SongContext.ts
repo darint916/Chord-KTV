@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 import { FullSongResponseDto } from '../api';
 import { QuizQuestionDto } from '../api';
 import { QueueItem } from './QueueTypes';
+import { TranslatePhrasesResponseDto } from '../api';
 
 export interface PlaylistInfo {
   playlistId: string;
@@ -25,6 +26,8 @@ export interface SongContextType {
   setPlaylists: React.Dispatch<React.SetStateAction<PlaylistInfo[]>>;
   selectedPlaylistIndex: number;
   setSelectedPlaylistIndex: React.Dispatch<React.SetStateAction<number>>;
+  handwritingQuizQuestions: TranslatePhrasesResponseDto;
+  setHandwritingQuizQuestions: React.Dispatch<React.SetStateAction<TranslatePhrasesResponseDto>>;
 }
 
 // Create context

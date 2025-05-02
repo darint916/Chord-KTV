@@ -15,13 +15,11 @@
   }
 
   .grid-item {
-    // height: 100%;
     border-radius: $border-radius;
     background: $gradient;
     box-shadow: $box-shadow;
     display: flex;
     flex-direction: column;
-    // justify-content: space-between;
     padding: 16px;
 
     .list-divider {
@@ -38,6 +36,12 @@
       display: flex;
       justify-content: center;
       align-items: center;
+    }
+
+    .submit-handwriting-button {
+      box-shadow: 3;
+      padding: 10px 20px;
+      background: $secondary-color;
     }
   }
 }

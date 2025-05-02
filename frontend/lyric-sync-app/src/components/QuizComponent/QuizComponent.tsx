@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
-import { quizApi, userActivityApi } from '../../api/apiClient';
+import { quizApi, userActivityApi, handwritingApi } from '../../api/apiClient';
 import { useSong } from '../../contexts/SongContext';
 import Quiz from 'react-quiz-component';
 import { useNavigate } from 'react-router-dom';
@@ -31,7 +31,7 @@ interface QuizData {
 const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ songId, lyricsOffset = 0 }) => {
   const [quizData, setQuizData] = useState<QuizData | null>(null);
   const [quizId, setQuizId] = useState<string>('');
-  const { quizQuestions, setQuizQuestions, song } = useSong();
+  const { quizQuestions, setQuizQuestions, song, setHandwritingQuizQuestions } = useSong();
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedQuizType, setSelectedQuizType] = useState<'romanization' | 'audio' | null>(null);
@@ -129,7 +129,7 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
     );
   }
 
-  const handleQuizComplete = async (quizResult: {numberOfCorrectAnswers?: number; score?: number; questionSummary?: Array<{answers: string[]; correctAnswer: string;}>;}) => {
+  const handleQuizComplete = async (quizResult: { numberOfCorrectAnswers?: number; score?: number; questionSummary?: Array<{ answers: string[]; correctAnswer: string; }>; }) => {
     setQuizCompleted(true);
     setIsPlaying(false);
 
@@ -186,9 +186,28 @@ const QuizComponent: React.FC<{ songId: string, lyricsOffset?: number }> = ({ so
     navigate('/');
   };
 
-  const handleStartHandwritingQuiz = () => {
-    navigate('/handwriting-quiz');
+  const handleStartHandwritingQuiz = async () => {
+    if (!song?.id || !quizQuestions || quizQuestions.length === 0) return;
+
+    try {
+      const phrases = quizQuestions.map(q => {
+        if (q.lyricPhrase?.trim()) return q.lyricPhrase;
+        const idx = q.correctOptionIndex ?? 0;
+        return q.options?.[idx] ?? '';
+      });
+
+      const translationResp = await handwritingApi.apiHandwritingOcrTranslateGet({
+        phrases,
+        languageCode: song.geniusMetaData?.language as LanguageCode,
+      });
+
+      setHandwritingQuizQuestions(translationResp);
+      navigate('/handwriting-quiz');
+    } catch (err) {
+      console.error('Failed to fetch handwriting quiz phrases:', err);
+    }
   };
+
 
   const handleTogglePlay = () => {
     setIsPlaying(p => !p);

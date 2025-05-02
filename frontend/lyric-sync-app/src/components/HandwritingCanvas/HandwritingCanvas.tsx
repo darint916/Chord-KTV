@@ -158,7 +158,7 @@ const HandwritingCanvas = React.forwardRef<{ clearCanvas: () => void }, Handwrit
         <Box className="canvas-container">
           <canvas
             ref={gridCanvasRef}
-            width={600}
+            width={700}
             height={350}
             className="grid-canvas"
           />
