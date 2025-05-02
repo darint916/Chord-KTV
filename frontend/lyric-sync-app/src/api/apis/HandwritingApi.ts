@@ -17,16 +17,28 @@ import * as runtime from '../runtime';
 import type {
   HandwritingCanvasRequestDto,
   HandwritingCanvasResponseDto,
+  LanguageCode,
+  TranslatePhrasesResponseDto,
 } from '../models/index';
 import {
     HandwritingCanvasRequestDtoFromJSON,
     HandwritingCanvasRequestDtoToJSON,
     HandwritingCanvasResponseDtoFromJSON,
     HandwritingCanvasResponseDtoToJSON,
+    LanguageCodeFromJSON,
+    LanguageCodeToJSON,
+    TranslatePhrasesResponseDtoFromJSON,
+    TranslatePhrasesResponseDtoToJSON,
 } from '../models/index';
 
 export interface ApiHandwritingOcrPostRequest {
     handwritingCanvasRequestDto?: HandwritingCanvasRequestDto;
+}
+
+export interface ApiHandwritingOcrTranslateGetRequest {
+    phrases?: Array<string>;
+    languageCode?: LanguageCode;
+    difficulty?: number;
 }
 
 /**
@@ -62,6 +74,46 @@ export class HandwritingApi extends runtime.BaseAPI {
      */
     async apiHandwritingOcrPost(requestParameters: ApiHandwritingOcrPostRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HandwritingCanvasResponseDto> {
         const response = await this.apiHandwritingOcrPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async apiHandwritingOcrTranslateGetRaw(requestParameters: ApiHandwritingOcrTranslateGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TranslatePhrasesResponseDto>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['phrases'] != null) {
+            queryParameters['Phrases'] = requestParameters['phrases'];
+        }
+
+        if (requestParameters['languageCode'] != null) {
+            queryParameters['LanguageCode'] = requestParameters['languageCode'];
+        }
+
+        if (requestParameters['difficulty'] != null) {
+            queryParameters['Difficulty'] = requestParameters['difficulty'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // Bearer authentication
+        }
+
+        const response = await this.request({
+            path: `/api/handwriting/ocr/translate`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TranslatePhrasesResponseDtoFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async apiHandwritingOcrTranslateGet(requestParameters: ApiHandwritingOcrTranslateGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TranslatePhrasesResponseDto> {
+        const response = await this.apiHandwritingOcrTranslateGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

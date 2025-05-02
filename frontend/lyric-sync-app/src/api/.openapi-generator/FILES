@@ -21,6 +21,7 @@ models/LearnedWord.ts
 models/LearnedWordDto.ts
 models/LrcLyricsDto.ts
 models/MatchScores.ts
+models/Phrases.ts
 models/PlaylistDetailsDto.ts
 models/ProblemDetails.ts
 models/Quiz.ts
@@ -31,6 +32,7 @@ models/QuizRequestDto.ts
 models/QuizResponseDto.ts
 models/Song.ts
 models/SongDto.ts
+models/TranslatePhrasesResponseDto.ts
 models/TranslationRequestDto.ts
 models/User.ts
 models/UserDto.ts

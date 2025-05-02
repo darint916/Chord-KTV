@@ -12,4 +12,5 @@ public interface IChatGptService
     public Task<Quiz> GenerateRomanizationQuizAsync(string lyrics, int difficulty, int numQuestions, Guid songId);
     public Task<CandidateSongInfoListResponse> GetCandidateSongInfosAsync(string videoTitle, string channelName);
     public Task<List<string>> GenerateAudioQuizDistractorsAsync(string correctLyric, int difficulty);
+    public Task<TranslatePhrasesResponseDto> TranslateRomanizeAsync(string[] phrases, LanguageCode languageCode, int difficulty = 3);
 }
