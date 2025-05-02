@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Avatar,
   Box,
@@ -25,7 +25,7 @@ interface TopSongsChartProps {
   mediaItems: MediaItem[];
 }
 
-const TopSongsChart: React.FC<TopSongsChartProps> = ({ mediaItems }) => {
+const TopSongsChart: React.FC<TopSongsChartProps> = ({ mediaItems, onToggleFavorite }) => {
   const maxPlays = Math.max(1, ...mediaItems.map((d) => d.plays).filter((plays): plays is number => plays !== undefined));
 
   // Manage scroll state for fade overlays
@@ -45,27 +45,29 @@ const TopSongsChart: React.FC<TopSongsChartProps> = ({ mediaItems }) => {
   };
 
   const [favLoadingMap, setFavLoadingMap] = useState<Record<string, boolean>>({});
-  const [isFavMap, setIsFavMap] = useState<Record<string, boolean>>(
-    () => mediaItems.reduce((acc, s) => {
+  const [isFavMap, setIsFavMap] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    const map = mediaItems.reduce((acc, s) => {
       acc[s.id] = s.isFavorite ?? false;
       return acc;
-    }, {} as Record<string, boolean>)
-  );
+    }, {} as Record<string, boolean>);
+    setIsFavMap(map);
+  }, [mediaItems]);
 
   // Toggle favorite & call the PATCH endpoint
   const handleToggleFavorite = async (_songId: string) => {
     if (!_songId) { return; }
+    const newVal = !isFavMap[_songId];
     setFavLoadingMap((m: Record<string, boolean>) => ({ ...m, [_songId]: true }));
     try {
       await userActivityApi.apiUserActivityFavoriteSongPatch({
         userSongActivityFavoriteRequestDto: {
           songId: _songId,
-          isFavorite: !isFavMap[_songId],
+          isFavorite: newVal,
         }
       });
       setIsFavMap((m: Record<string, boolean>) => ({ ...m, [_songId]: !m[_songId] }));
-    } catch {
-      // console.error('Failed to toggle favorite', error);
+      onToggleFavorite(_songId, newVal);
     } finally {
       setFavLoadingMap((m: Record<string, boolean>) => ({ ...m, [_songId]: false }));
     }
