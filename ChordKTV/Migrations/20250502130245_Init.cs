@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -331,7 +331,7 @@ namespace ChordKTV.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_QuizOptions_QuestionId_OrderIndex",
                 table: "QuizOptions",
-                columns: new[] { "QuestionId", "OrderIndex" },
+                columns: ["QuestionId", "OrderIndex"],
                 unique: true);
 
             migrationBuilder.CreateIndex(
