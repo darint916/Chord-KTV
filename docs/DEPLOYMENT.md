@@ -12,7 +12,7 @@
 
 7. Find the "Connect" button that opens a window ssh-ed into the EC2 server.
 
-8. Connect to the server via ssh, make sure the open window shows you something like this:
+8. Connect to the server via the in-browser ssh.
 
 9. Do all basic installs (use wget first because apt-get is not installed by default. Then use "dnf" package manager/installer because its compatible with Amazon Linux. Here are some of the installs:
 ```
@@ -173,7 +173,13 @@ sudo docker run -d   --name chordktv-backend   --network chordktv-network   -p 5
 sudo docker ps -a
 ```
 
-If you see something like this, where the STATUS of both containers are UP, then you're done here.
+If you see something like this, where the STATUS of both containers are UP, then you're done here:
+```
+[ec2-user@ip-172-31-88-95 ~]$ sudo docker ps -a
+CONTAINER ID   IMAGE              COMMAND                  CREATED      STATUS      PORTS                                                      NAMES
+3ca5c358f9e5   chordktv-backend   "dotnet ChordKTV.dll"    5 days ago   Up 3 days   0.0.0.0:5259->5259/tcp, :::5259->5259/tcp, 8080-8081/tcp   chordktv-backend
+3b9fde4bb23c   postgres:15.4      "docker-entrypoint.s…"   5 days ago   Up 3 days   0.0.0.0:30011->5432/tcp, :::30011->5432/tcp                my-postgres-container
+```
 
 If you ever see that one of the containers exited (namely backend), find out why by running:
 ```
