@@ -160,7 +160,7 @@ ls ChordKTV/wwwroot/
 
 # Build backend, will serve static frontend build files from wwwroot
 sudo docker build -f ChordKTV/Dockerfile -t chordktv-backend . 
-
+```
 
 24. Final step: run the backend docker container.
 The "-e"s are ENV variables. You must fill them all from the secrets file. These can also be passed in more cleanly through a .env file. Just ask chatgpt how to do it.
