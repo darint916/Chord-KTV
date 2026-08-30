@@ -1,4 +1,5 @@
 namespace ChordKTV.Dtos.LrcLib;
+
 public class LrcLyricsDto
 {
     public int Id { get; set; } // ID of original language song in LRCLIB
