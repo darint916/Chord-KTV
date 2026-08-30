@@ -1,6 +1,7 @@
 using ChordKTV.Models.SongData;
 
 namespace ChordKTV.Data.Api.SongData;
+
 public interface IAlbumRepo
 {
     public Task<bool> SaveChangesAsync();
